@@ -1,0 +1,8 @@
+.*
+!/.gitignore
+!/.gitattributes
+!/.project
+!/.pydevproject
+*.pyc
+*.va
+*_ui.py
