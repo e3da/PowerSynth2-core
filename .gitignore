@@ -1,6 +1,7 @@
 .*
 !/.gitignore
 !/.gitattributes
+!.gitkeep
 !/.project
 !/.pydevproject
 *.pyc
