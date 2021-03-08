@@ -1,0 +1,25 @@
+"""
+Name: solution_structures.py
+
+Author: tmevans
+
+Description: A collection of classes and data structures used for storing PowerSynth layout solution information.
+This is meant to help facilitate API development by providing a single data structure containing all relevant information needed to export layout geometry, materials, and other parameters to external tools.
+
+Development Checklist:
+- Basic class with attributes necessary for export to ParaPower
+- Functions for retrieving PowerSynth layout features
+- JSON export
+"""
+
+class PSFeature(object):
+    """Class definition for individual features in a PowerSynth solution"""
+    def name():
+    """
+    
+    Returns:
+        
+
+    """
+    
+
