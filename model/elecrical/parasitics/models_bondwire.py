@@ -15,7 +15,7 @@ from math import fabs
 import matplotlib.pyplot as plt
 from pyDOE import *
 
-from powercad.interfaces.Q3D.Parasistic_Zihao_test import Generate_Zihao_Thesis_Q3D_Analysis_Resistance_and_Inductance
+from core.APIs.Q3D.Parasistic_Zihao_test import Generate_Zihao_Thesis_Q3D_Analysis_Resistance_and_Inductance
 
 LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 Quang as stated in Brett's thesis
 LOWEST_ASPECT_IND = 1.0

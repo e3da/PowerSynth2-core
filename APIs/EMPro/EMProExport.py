@@ -34,9 +34,10 @@ script that can be run inside EMPro.
 
 import numpy as np
 import pickle
-from powercad.design.library_structures import Lead
-from powercad.interfaces.EMPro.EMProFunctions import empro_func
-from powercad.sym_layout.testing_tools import load_symbolic_layout
+from core.MDK.Design.library_structures import Lead
+from core.APIs.EMPro.EMProFunctions import empro_func
+
+from powercad.sym_layout.testing_tools import load_symbolic_layout # No symbolic layout in new version. Need to replace this dependency.
 
 
 class BasePlate(object):

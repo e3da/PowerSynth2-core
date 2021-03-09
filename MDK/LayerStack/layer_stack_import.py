@@ -14,10 +14,10 @@ INPUT:
 import os
 import csv
 
-from powercad.design.project_structures import BaseplateInstance, SubstrateAttachInstance, SubstrateInstance
-from powercad.design.library_structures import *
-from powercad.general.material.material import *
-from powercad.general.settings.settings import MATERIAL_LIB_PATH
+
+from core.MDK.Design.library_structures import *
+from core.general.material.material import *
+from core.general.settings.settings import MATERIAL_LIB_PATH
 import getpass
 
 class LayerStackHandler:

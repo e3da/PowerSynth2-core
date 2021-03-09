@@ -3,10 +3,10 @@
 import datetime
 import getpass
 import subprocess
-from powercad.general.settings.Error_messages import InputError
-from powercad.interfaces.Q3D.Q3DGeometry import Q3D_rect_script
+from core.general.settings.Error_messages import InputError
+from core.APIs.Q3D.Q3DGeometry import Q3D_rect_script
 
-from powercad.interfaces.Q3D.Q3d_ipy_raw_script import *
+from core.APIs.Q3D.Q3d_ipy_raw_script import *
 
 
 class Q3D_ipy_script:

@@ -36,9 +36,9 @@ FUTURE WORK:
 Revised and added documentation comments - jhmain 7-1-16
 '''
 
-from powercad.spice_handler.spice_import.build_graph import LayoutBuilder
+from core.SpiceHandler.spice_import.build_graph import LayoutBuilder
 
-from powercad.spice_handler.spice_import.get_netlist import Netdata
+from core.SpiceHandler.spice_import.get_netlist import Netdata
 
 
 class Converter():

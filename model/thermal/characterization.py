@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import griddata
 
-from powercad.general.data_struct.util import Rect
-from powercad.thermal.fast_thermal import ContourRect, DieThermalFeatures
-from powercad.general.settings.save_and_load import load_file, save_file
+from core.general.data_struct.util import Rect
+from core.model.thermal.fast_thermal import ContourRect, DieThermalFeatures
+from core.general.settings.save_and_load import load_file, save_file
 
 
 def load_data(filename, flip_values=False):

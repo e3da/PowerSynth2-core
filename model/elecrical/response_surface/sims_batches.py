@@ -1,5 +1,5 @@
 # This code will create simulation files for FastHenry or Raphael for quick study on parameters impact
-from powercad.interfaces.FastHenry.Standard_Trace_Model import *
+from core.APIs.FastHenry.Standard_Trace_Model import *
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 import math

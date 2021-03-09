@@ -15,23 +15,23 @@ print(cur_path)
 sys.path.append(cur_path)
 from powercad.general.data_struct.Unit import Unit
 #from powercad.general.settings.Error_messages import InputError, Notifier
-from powercad.general.settings.save_and_load import save_file
-from powercad.interfaces.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file,Init,GroundPlane,Element,Run
-from powercad.interfaces.FastHenry.fh_layers import *
-from powercad.interfaces.Q3D.Electrical import rect_q3d_box
-from powercad.interfaces.Q3D.Ipy_script import Q3D_ipy_script
-from powercad.layer_stack.layer_stack_import import LayerStackHandler
-from powercad.layer_stack.layer_stack import LayerStack
-from powercad.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, load_mdl
-from powercad.response_surface.Layer_Stack import Layer_Stack
-from powercad.response_surface.Response_Surface import RS_model
+from core.general.settings.save_and_load import save_file
+from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file,Init,GroundPlane,Element,Run
+from core.APIs.FastHenry.fh_layers import *
+from core.APIs.Q3D.Electrical import rect_q3d_box
+from core.APIs.Q3D.Ipy_script import Q3D_ipy_script
+from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
+from ore.MDK.LayerStack.layer_stack import LayerStack
+from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, load_mdl
+from core.model.electrical.response_surface.Layer_Stack import Layer_Stack
+from core.model.electrical.response_surface.Response_Surface import RS_model
 import csv
-from powercad.general.settings import settings
+from core.general.settings import settings
 import platform
 import multiprocessing
 import psutil
 from multiprocessing import Pool
-from powercad.opt.optimizer import NSGAII_Optimizer, DesignVar
+from core.opt.optimizer import NSGAII_Optimizer, DesignVar
 from pykrige.ok import OrdinaryKriging as ok
 import random
 

@@ -1,24 +1,30 @@
-from powercad.corner_stitch.optimization_algorithm_support import new_engine_opt
+#@Author: Quang & Imam
+
 import os
-from powercad.cons_aware_en.database import create_connection, insert_record
-from powercad.corner_stitch.cs_solution import CornerStitchSolution, LayerSolution
-from powercad.corner_stitch.CornerStitch import CS_to_CG
-from powercad.corner_stitch.fixed_floorplan_algorithms import fixed_floorplan_algorithms
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from powercad.corner_stitch.input_script import ScriptInputMethod,save_constraint_table
-from powercad.corner_stitch.multi_layer_handler import Layer
-from powercad.cons_aware_en.cons_engine import New_layout_engine
-from powercad.design.layout_module_data import ModuleDataCornerStitch
-import copy
-from powercad.sol_browser.cs_solution_handler import pareto_solutions,export_solutions
 import time
 import matplotlib
-from powercad.electrical_mdl.cornerstitch_API import ElectricalMeasure
-from powercad.thermal.cornerstitch_API import ThermalMeasure
+import copy
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import collections
+
+
+
+from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
+from core.engine.LayoutSolution.database import create_connection, insert_record
+from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
+from core.engine.ConstrGraph.CGinterface import CS_to_CG
+from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms import fixed_floorplan_algorithms
+from core.engine.InputParser.input_script import ScriptInputMethod,save_constraint_table
+from core.engine.Structure3D.multi_layer_handler import Layer
+from core.engine.LayoutEngine.cons_engine import New_layout_engine
+from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
+from core.SolBrowser.cs_solution_handler import pareto_solutions,export_solutions
+from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
+from core.model.thermal.cornerstitch_API import ThermalMeasure
+
 # --------------Plot function---------------------
 def plot_fig_data(Layout_Rects,level,min_dimensions=None,Min_X_Loc=None,Min_Y_Loc=None):
     #global min_dimensions

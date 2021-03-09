@@ -1,17 +1,20 @@
-from powercad.corner_stitch.CornerStitch import Node
+
+
 
 from collections import defaultdict
 import networkx as nx
 import pandas as pd
 import copy
-from powercad.corner_stitch.constraintGraph_Dev import Edge
 import os
-from powercad.cons_aware_en.database import create_connection,insert_record
-from powercad.design.layout_module_data import ModuleDataCornerStitch
-from powercad.interfaces.PowerSynth.solution_structures import PSFeature, PSSolution
-from powercad.design.parts import Part
-from powercad.design.Routing_paths import RoutingPath
-from powercad.corner_stitch.cell_3D import Cell3D
+
+from core.engine.ConstrGraph.ConstraintGraph import Edge
+from core.engine.CornerStitch.CornerStitch import Node
+from core.engine.LayoutSolution.database import create_connection,insert_record
+from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
+from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution
+from core.MDK.Design.parts import Part
+from core.MDK.Design.Routing_paths import RoutingPath
+from core.engine.Structure3D.cell_3D import Cell3D
 
 class Structure_3D():
     def __init__(self):

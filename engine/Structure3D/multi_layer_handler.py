@@ -1,13 +1,16 @@
-from powercad.design.group import Island
-from powercad.corner_stitch.CornerStitch import *
-from powercad.cons_aware_en.cons_engine import *
-from powercad.design.parts import *
-from powercad.design.Routing_paths import *
-import re
-from powercad.corner_stitch.CornerStitch import Node
-from powercad.electrical_mdl.cornerstitch_API import *
-from powercad.thermal.cornerstitch_API import *
+#@Author: Imam
 from matplotlib.path import Path
+
+from core.MDK.Design.group import Island
+#from powercad.corner_stitch.CornerStitch import *
+#from powercad.cons_aware_en.cons_engine import *
+from core.MDK.Design.parts import *
+from core.MDK.Design.Routing_paths import *
+import re
+from core.engine.CornerStitch.CornerStitch import Node
+from core.model.electrical.electrical_mdl.cornerstitch_API import *
+from core.model.thermal.cornerstitch_API import *
+
 
 class Layer():
     def __init__(self):

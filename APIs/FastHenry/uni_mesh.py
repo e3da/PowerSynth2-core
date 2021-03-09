@@ -1,6 +1,8 @@
 import math
 import numpy as np
-from powercad.general.data_struct.util import Rect
+from core.general.data_struct.util import Rect
+
+
 class Connect_line:
     # Only 2 orientation for now for the Manhattan layout
     Horz=0

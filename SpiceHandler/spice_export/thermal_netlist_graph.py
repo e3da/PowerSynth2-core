@@ -28,10 +28,10 @@ import os
 
 import networkx as nx
 
-from powercad.spice_handler.spice_export.components import Resistor, Capacitor, Current_Source, Voltage_Source, SpiceNameError, \
+from core.SpiceHandler.spice_export.components import Resistor, Capacitor, Current_Source, Voltage_Source, SpiceNameError, \
     SpiceNodeError
-from powercad.general.data_struct.util import SolveVolume
-from powercad.thermal.fast_thermal import ThermalGeometry, DieThermal, TraceIsland, eval_island
+from core.general.data_struct.util import SolveVolume
+from core.model.thermal.fast_thermal import ThermalGeometry, DieThermal, TraceIsland, eval_island
 
 
 class Module_Full_Thermal_Netlist_Graph():

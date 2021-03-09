@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from .hspice_plot import *
 from pylab import figure, show
 from .netlist_graph import Module_SPICE_netlist_graph
-from powercad.sym_layout.symbolic_layout import build_test_layout
+#from powercad.sym_layout.symbolic_layout import build_test_layout
 
 def write_SPICE_netlist(directory, simulation, *modules):
     """

@@ -1,13 +1,13 @@
 import cProfile
 import pstats
 from timeit import default_timer as timer
-from powercad.electrical_mdl.spice_eval.peec_num_solver import *
-from powercad.spice_handler.spice_export.HSPICE import HSPICE
-from powercad.electrical_mdl.e_mesh_direct import *
-from powercad.electrical_mdl.spice_eval.rl_mat_eval import *
-from powercad.parasitics.mdl_compare import load_mdl
-from powercad.electrical_mdl.e_netlist import ENetlist
-from powercad.general.data_struct.util import draw_rect_list
+from core.model.electrical.electrical_mdl.spice_eval.peec_num_solver import *
+from core.SpiceHandler.spice_export.HSPICE import HSPICE
+from core.model.electrical.electrical_mdl.e_mesh_direct import *
+from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import *
+from core.model.electrical.parasitics.mdl_compare import load_mdl
+from core.model.electrical.electrical_mdl.e_netlist import ENetlist
+from core.general.data_struct.util import draw_rect_list
 
 def Module_for_journal_paper():
     print("design this")

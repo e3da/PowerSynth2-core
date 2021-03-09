@@ -19,20 +19,20 @@ from deap import tools
 
 
 import numpy as np
-from powercad.general.settings.save_and_load import save_file,load_file
+from core.general.settings.save_and_load import save_file,load_file
 import copy
 import math
-from powercad.opt.simulated_anneal import Annealer
+from core.opt.simulated_anneal import Annealer
 
 
 import time
 import platform
 if platform.system() == 'Windows': # Easygui doesnt work on linux, this must be fixed later
     import matlab
-    from powercad.interfaces.Matlab.Matlab_script import Matlab
+    from core.APIs.Matlab.Matlab_script import Matlab
     # These are win32pipes only work on Windows
-    from powercad.interfaces.Pipe.sender import sender
-    from powercad.interfaces.Pipe.listener import receiver
+    from core.APIs.Pipe.sender import sender
+    from core.APIs.Pipe.listener import receiver
 
 class Solution():
     def __init__(self, ind,fval):

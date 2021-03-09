@@ -7,7 +7,7 @@ Created on Aug 24, 2011
 
 import numpy as np
 
-from powercad.general.data_struct.util import Rect
+from core.general.data_struct.util import Rect
 
 
 class TFSMInputError(Exception):

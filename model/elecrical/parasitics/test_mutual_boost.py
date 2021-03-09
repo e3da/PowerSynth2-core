@@ -1,5 +1,5 @@
-from powercad.parasitics.mutual_inductance_saved import mutual_between_bars as m_cal_py# This is the Python file only
-from powercad.parasitics.mutual_inductance import mutual_mat_eval,mutual_between_bars
+from core.model.electrical.parasitics.mutual_inductance_saved import mutual_between_bars as m_cal_py# This is the Python file only
+from core.model.electrical.parasitics.mutual_inductance import mutual_mat_eval,mutual_between_bars
 
 from timeit import default_timer as timer
 from sklearn.svm import SVR

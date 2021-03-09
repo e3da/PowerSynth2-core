@@ -8,9 +8,9 @@ import time
 import networkx as nx
 import numpy as np
 import pandas as pd
-from powercad.spice_handler.spice_export.Touchstone import write_touchstone_v1
-from powercad.sym_layout.Recursive_test_cases.Netlist.LTSPICE import LTSPICE
-from powercad.spice_handler.spice_export.raw_read import SimData
+from core.SpiceHandler.spice_export.Touchstone import write_touchstone_v1
+#from powercad.sym_layout.Recursive_test_cases.Netlist.LTSPICE import LTSPICE
+from core.SpiceHandler.spice_export.raw_read import SimData
 
 
 class Circuit():

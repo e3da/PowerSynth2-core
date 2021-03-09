@@ -7,6 +7,8 @@ if platform.system() == 'Windows': # Easygui doesnt work on linux, this must be 
     import easygui as eg
 
 from collections import OrderedDict
+
+
 class Connection_Table:
     def __init__(self,name="",cons={},mode='macro',width=400,height=200):
         self.connections = cons

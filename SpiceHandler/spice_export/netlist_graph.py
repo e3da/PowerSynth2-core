@@ -32,7 +32,7 @@ import re
 import matplotlib.pyplot as plt
 from numpy import add
 
-from powercad.sym_layout.plot import plot_layout
+#from powercad.sym_layout.plot import plot_layout
 
 
 class Module_SPICE_lumped_graph():

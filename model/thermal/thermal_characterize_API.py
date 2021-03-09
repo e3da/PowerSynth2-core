@@ -1,8 +1,8 @@
 '''
 These are support functions between the new layer stack definition and the GMSH ELMER characterization
 '''
-from powercad.layer_stack.layer_stack import LayerStack
-from powercad.export.gmsh import create_box_stack_mesh
+from core.MDK.LayerStack.layer_stack import LayerStack
+from core.export.gmsh import create_box_stack_mesh
 
 
 class ThermalBoundary:

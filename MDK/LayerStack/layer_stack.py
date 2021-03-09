@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import OrderedDict
-from powercad.design.library_structures import *
+from core.MDK.Design.library_structures import *
 from mpl_toolkits.mplot3d import Axes3D
-from powercad.general.material.material import *
-from powercad.general.settings import settings
+from core.general.material.material import *
+from core.general.settings import settings
 import csv
 import getpass
 

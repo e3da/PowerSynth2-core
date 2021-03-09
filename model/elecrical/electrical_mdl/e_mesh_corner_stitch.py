@@ -3,10 +3,10 @@ author: Quang Le
 Getting mesh directly from CornerStitch points and islands data
 '''
 
-from powercad.electrical_mdl.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
-from powercad.general.data_struct.util import Rect, draw_rect_list
-from powercad.electrical_mdl.e_hierarchy import T_Node
-from powercad.general.data_struct.Tree import Tree
+from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
+from core.general.data_struct.util import Rect, draw_rect_list
+from core.model.electrical.electrical_mdl.e_hierarchy import T_Node
+from core.general.data_struct.Tree import Tree
 import matplotlib.patches as patches
 from .e_exceptions import *
 import numpy as np

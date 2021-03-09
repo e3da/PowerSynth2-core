@@ -6,11 +6,11 @@ import csv
 import math
 
 import numpy as np
-from powercad.general.data_struct.util import draw_rect_list
-from powercad.electrical_mdl.e_hierarchy import EHier
+from core.general.data_struct.util import draw_rect_list
+from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 import networkx as nx 
-from powercad.electrical_mdl.e_struct import E_plate,Sheet
-from powercad.parasitics.models_bondwire import wire_inductance, wire_partial_mutual_ind, wire_resistance, \
+from core.model.electrical.electrical_mdl.e_struct import E_plate,Sheet
+from core.model.electrical.parasitics.models_bondwire import wire_inductance, wire_partial_mutual_ind, wire_resistance, \
     ball_mutual_indutance, ball_self_inductance
 from collections import OrderedDict
 class Escript:

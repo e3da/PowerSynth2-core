@@ -6,8 +6,8 @@ Created on Sep 24, 2012
 
 import numpy as np
 
-from powercad.design.library_structures import Lead
-from powercad.design.module_design import ModuleDesign
+from core.MDK.Design.library_structures import Lead
+from core.MDK.Design.module_design import ModuleDesign
 
 
 def output_q3d_vbscript(md, filename):

@@ -7,8 +7,8 @@ from math import fabs
 import matplotlib.pyplot as plt
 import numpy as np
 
-from powercad.general.settings.save_and_load import load_file
-from powercad.response_surface.RS_build_function import f_ms
+from core.general.settings.save_and_load import load_file
+from core.model.electrical.response_surface.RS_build_function import f_ms
 LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 Quang as stated in Brett's thesis
 LOWEST_ASPECT_IND = 1.0
 # Constants:

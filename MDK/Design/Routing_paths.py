@@ -1,6 +1,8 @@
 
 
-from powercad.design.parts import Part
+from core.MDK.Design.parts import Part
+
+
 class RoutingPath():
     def __init__(self,name=None,type=None,layout_component_id=None,layer_id=None):
         '''

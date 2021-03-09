@@ -12,7 +12,7 @@ import time
 import networkx as nx
 import numpy as np
 
-from powercad.general.data_struct.util import Rect
+from core.general.data_struct.util import Rect
 
 
 #quang:

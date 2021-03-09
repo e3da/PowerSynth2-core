@@ -1,4 +1,4 @@
-from powercad.corner_stitch.cs_solution import CornerStitchSolution
+from core.engine.LayoutSolution.cs_solution import CornerStitchSolution
 import numpy as np
 import matplotlib.pyplot as plt
 import os

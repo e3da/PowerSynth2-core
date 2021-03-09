@@ -1,9 +1,9 @@
 import copy
 
-from powercad.interfaces.Q3D.Ipy_script import Q3D_ipy_script
+from core.APIs.Q3D.Ipy_script import Q3D_ipy_script
 
-from powercad.general.data_struct.BasicsFunction import *         # group of BasicFunction that can be used for any classes
-from powercad.interfaces.Q3D.Electrical import rect_q3d_box
+from core.general.data_struct.BasicsFunction import *         # group of BasicFunction that can be used for any classes
+from core.APIs.Q3D.Electrical import rect_q3d_box
 
 
 class Layer_Stack:

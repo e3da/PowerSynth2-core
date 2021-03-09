@@ -5,20 +5,20 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 3. Can be used for post optimization extraction
 '''
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
-from powercad.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
-from powercad.electrical_mdl.e_mesh_direct import EMesh
-from powercad.electrical_mdl.e_mesh_corner_stitch import EMesh_CS
+from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
+from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh
+from core.model.electrical.electrical_mdl.e_mesh_corner_stitch import EMesh_CS
 #from corner_stitch.input_script import *
-from powercad.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
-from powercad.electrical_mdl.e_hierarchy import EHier
-from powercad.design.parts import Part
-from powercad.general.data_struct.util import Rect
-from powercad.electrical_mdl.e_netlist import ENetlist
-from powercad.design.Routing_paths import RoutingPath
-from powercad.parasitics.mdl_compare import load_mdl
-from powercad.interfaces.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file
-from powercad.interfaces.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text
-from powercad.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
+from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
+from core.model.electrical.electrical_mdl.e_hierarchy import EHier
+from core.model.electrical.design.parts import Part
+from core.general.data_struct.util import Rect
+from core.model.electrical.electrical_mdl.e_netlist import ENetlist
+from core.MDK.Design.Routing_paths import RoutingPath
+from core.model.electrical.parasitics.mdl_compare import load_mdl
+from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file
+from core.APIs.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text
+from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
 import os
 from datetime import datetime;
 import networkx as nx

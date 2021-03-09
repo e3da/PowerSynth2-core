@@ -1,7 +1,7 @@
-from powercad.interfaces.Q3D.Electrical import rect_q3d_box
-from powercad.interfaces.Q3D.Ipy_script import Q3D_ipy_script
-from powercad.response_surface.Layer_Stack import Layer_Stack
-from powercad.response_surface.Response_Surface import RS_model
+from core.APIs.Q3D.Electrical import rect_q3d_box
+from core.APIs.Q3D.Ipy_script import Q3D_ipy_script
+from core.model.electrical.response_surface.Layer_Stack import Layer_Stack
+from core.model.electrical.response_surface.Response_Surface import RS_model
 
 if __name__ == '__main__':
     '''First we set up layer stack with material properties '''

@@ -1,27 +1,26 @@
 # for corner stitch need to use analytical model since the layout size can be changed
 #from PySide.QtGui import QFileDialog
 import sys
-from powercad.layer_stack.layer_stack_import import LayerStackHandler
-#from PySide import QtCore, QtGui
-from powercad.design.module_data import ModuleData
-from powercad.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, \
+from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
+from core.MDK.Design.module_data import ModuleData
+from core.model.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, \
     compound_top_surface_avg
-from powercad.design.parts import Part
-import powercad.interfaces.ParaPower.ParaPowerAPI as pp
+from core.MDK.Design.parts import Part
+import core.APIs.ParaPower.ParaPowerAPI as pp
 import sys
 from collections import deque
-import powercad.general.settings.settings as settings
+import core.general.settings.settings as settings
 import shutil
-from powercad.export.gmsh import gmsh_setup_layer_stack
-from powercad.export.elmer import write_module_elmer_sif_layer_stack
-from powercad.export.elmer import elmer_solve, get_nodes_near_z_value
+from core.export.gmsh import gmsh_setup_layer_stack
+from core.export.elmer import write_module_elmer_sif_layer_stack
+from core.export.elmer import elmer_solve, get_nodes_near_z_value
 from numpy import min, max, array, average
-from powercad.thermal.characterization import characterize_dist
-from powercad.thermal.elmer_characterize import gen_cache_hash,check_for_cached_char,CachedCharacterization
-from powercad.thermal.fast_thermal import DieThermalFeatures, SublayerThermalFeatures
-from powercad.thermal.fast_thermal import ThermalGeometry, TraceIsland, DieThermal, solve_TFSM
-from powercad.general.data_struct.util import Rect
-from powercad.general.settings.save_and_load import load_file, save_file
+from core.model.thermal.characterization import characterize_dist
+from core.model.thermal.elmer_characterize import gen_cache_hash,check_for_cached_char,CachedCharacterization
+from core.model.thermal.fast_thermal import DieThermalFeatures, SublayerThermalFeatures
+from core.model.thermal.fast_thermal import ThermalGeometry, TraceIsland, DieThermal, solve_TFSM
+from core.general.data_struct.util import Rect
+from core.general.settings.save_and_load import load_file, save_file
 import numpy as np
 import os
 import pickle

@@ -4,9 +4,9 @@ from scipy import *
 from scipy.sparse.linalg import gmres
 from sympy import *
 import time
-from powercad.electrical_mdl.e_mesh_direct import plot_combined_I_quiver_map_layer
-from powercad.spice_handler.spice_export.LTSPICE import *
-from powercad.spice_handler.spice_export.raw_read import *
+from core.model.electrical.electrical_mdl.e_mesh_direct import plot_combined_I_quiver_map_layer
+from core.SpiceHandler.spice_export.LTSPICE import *
+from core.SpiceHandler.spice_export.raw_read import *
 
 
 class diag_prec:

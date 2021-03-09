@@ -11,11 +11,11 @@ import shutil
 
 from numpy import min, max, array, average
 
-import powercad.general.settings.settings as settings
-from powercad.export.elmer import write_module_elmer_sif, elmer_solve, get_nodes_near_z_value
-from powercad.export.gmsh import create_box_stack_mesh
-from powercad.thermal.characterization import characterize_dist
-from powercad.thermal.fast_thermal import DieThermalFeatures, SublayerThermalFeatures
+import core.general.settings.settings as settings
+from core.export.elmer import write_module_elmer_sif, elmer_solve, get_nodes_near_z_value
+from core.export.gmsh import create_box_stack_mesh
+from core.model.thermal.characterization import characterize_dist
+from core.model.thermal.fast_thermal import DieThermalFeatures, SublayerThermalFeatures
 
 MIN_LAYER_THICKNESS = 0.01 # minimum layer thickness in mm
 

@@ -14,14 +14,14 @@ import math
 from matplotlib import cm
 import networkx as nx
 # PowerCad
-from powercad.electrical_mdl.e_module import EModule
-from powercad.electrical_mdl.plot3D import network_plot_3D,plot_combined_I_map_layer,plot_v_map_3D,plot_J_map_3D
-from powercad.general.data_struct.util import Rect
-from powercad.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
+from core.model.electrical.electrical_mdl.e_module import EModule
+from core.model.electrical.electrical_mdl.plot3D import network_plot_3D,plot_combined_I_map_layer,plot_v_map_3D,plot_J_map_3D
+from core.general.data_struct.util import Rect
+from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
     trace_inductance,trace_resistance_full,trace_ind_lm
-from powercad.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
-from powercad.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
-from powercad.electrical_mdl.e_module import EComp
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
+from core.model.electrical.electrical_mdl.e_module import EComp
 class TraceCell(Rect):
     def __init__(self, **kwargs):
         if 'rect' in kwargs:  # init by keyword rect

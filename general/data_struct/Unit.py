@@ -3,7 +3,7 @@ Created on Feb 16, 2017
 
 @author: qmle
 '''
-from powercad.general.settings.Error_messages import Notifier
+from core.general.settings.Error_messages import Notifier
 class Unit(object):
     '''
     This class is mainly used for Unit conversion in PowerSynth

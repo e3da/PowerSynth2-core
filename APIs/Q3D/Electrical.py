@@ -1,4 +1,4 @@
-from powercad.interfaces.Q3D.Q3DGeometry import Q3D_rect_script
+from core.APIs.Q3D.Q3DGeometry import Q3D_rect_script
 
 
 class rect_q3d_box(Q3D_rect_script):

@@ -9,8 +9,7 @@ import subprocess
 
 import numpy as np
 import math
-#from powercad.general.settings.settings import ELMER_BIN_PATH
-from powercad.general.settings import settings
+from core.general.settings import settings
 
 
 elmer_sif = """

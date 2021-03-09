@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from core.engine.CornerStitch.CornerStitch import Substrate, Tree
 from core.general.data_struct.util import Rect
-from core.general.color_list import color_list_generator
+from core.engine.LayoutSolution.color_list import color_list_generator
 
 debug=False
 
@@ -132,13 +132,8 @@ class CornerStitch():
         
         N = len(types)
         all_colors=color_list_generator()
-        colors=[all_colors[i] for i in range(N)]
+        colors=[all_colors[i] for i in range(N)] # taking first N colors from the list
 
-        '''HSV_tuples = [(x*1.0/N, 1, 1) for x in range(N)]
-        colors = []
-        for rgb in HSV_tuples:
-            rgb = map(lambda x: int(x*255),colorsys.hsv_to_rgb(*rgb))
-            colors.append("".join(map(lambda x: chr(x).encode("utf-8").hex(),rgb)))'''
         
         Patches = {}
 

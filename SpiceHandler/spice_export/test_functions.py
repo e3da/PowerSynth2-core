@@ -9,9 +9,9 @@ Added documentation comments - jhmain 7-1-16
 '''
 
 import networkx as nx
-from powercad.design.library_structures import Device
-from powercad.design.project_structures import DeviceInstance
-from powercad.sym_layout.symbolic_layout import SymPoint
+from core.MDK.Design.library_structures import Device
+from core.MDK.Design.project_structures import DeviceInstance
+#from powercad.sym_layout.symbolic_layout import SymPoint
 
 
 # ------ GRAPH TEST FUNCTIONS -------

@@ -6,10 +6,10 @@ Created on Nov 2, 2012
 '''
 
 import numpy as np
-from powercad.thermal.fast_thermal import ThermalGeometry, TraceIsland, DieThermal, solve_TFSM,\
+from core.model.thermal.fast_thermal import ThermalGeometry, TraceIsland, DieThermal, solve_TFSM,\
     ThermalProperties
-from powercad.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, compound_top_surface_avg
-from powercad.electro_thermal.ElectroThermal_toolbox import *
+from core.model.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, compound_top_surface_avg
+from core.model.electro_thermal.ElectroThermal_toolbox import *
 TFSM_MODEL = 1
 RECT_FLUX_MODEL = 2
 Successive_approximation_model=3

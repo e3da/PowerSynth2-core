@@ -1,4 +1,4 @@
-from powercad.general.data_struct.Tree import T_Node,Tree
+from core.general.data_struct.Tree import T_Node,Tree
 import warnings
 warnings.filterwarnings("ignore")
 

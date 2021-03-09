@@ -21,11 +21,11 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.svm import SVR
 
 from .RS_build_function import *
-from powercad.general.data_struct.Abstract_Data import *
-from powercad.general.data_struct.BasicsFunction import *
-from powercad.general.data_struct.Unit import Unit
-from powercad.general.settings.Error_messages import InputError, Notifier
-from powercad.parasitics.mdl_compare import trace_inductance
+from core.general.data_struct.Abstract_Data import *
+from core.general.data_struct.BasicsFunction import *
+from core.general.data_struct.Unit import Unit
+from core.general.settings.Error_messages import InputError, Notifier
+from core.model.electrical.parasitics.mdl_compare import trace_inductance
 
 
 class RS_model:

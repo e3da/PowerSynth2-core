@@ -1,14 +1,14 @@
-from powercad.corner_stitch.input_script import *
+from core.engine.InputParser.input_script import *
 import cProfile
 import pstats
 from timeit import default_timer as timer
-from powercad.electrical_mdl.e_mesh_direct import *
-from powercad.electrical_mdl.spice_eval.rl_mat_eval import *
-from powercad.design.parts import *
-from powercad.electrical_mdl.cornerstitch_API import *
-from powercad.parasitics.mdl_compare import load_mdl
-from powercad.electrical_mdl.e_netlist import ENetlist
-from powercad.general.data_struct.util import draw_rect_list
+from core.model.electrical.electrical_mdl.e_mesh_direct import *
+from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import *
+from core.design.parts import *
+from core.model.electrical.electrical_mdl.cornerstitch_API import *
+from core.model.electrical.parasitics.mdl_compare import load_mdl
+from core.model.electrical.electrical_mdl.e_netlist import ENetlist
+from core.general.data_struct.util import draw_rect_list
 from psidialogs import *
 # This is the initial attempt to link between layout engine and electrical model
 def test_file(input_script=None, bond_wire_info=None):

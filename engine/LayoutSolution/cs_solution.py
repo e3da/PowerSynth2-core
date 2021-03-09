@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib
 from matplotlib.path import Path
 
-from powercad.corner_stitch.CornerStitch import Rectangle
-from powercad.cons_aware_en.database import create_connection,create_table,retrieve_data
+from core.engine.CornerStitch.CSinterface import Rectangle
+from core.engine.LayoutSolution.database import create_connection,create_table,retrieve_data
 import copy
 
 class LayerSolution():

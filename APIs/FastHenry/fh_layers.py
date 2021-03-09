@@ -3,18 +3,19 @@
 """
 
 import numpy as np
-#import sobol as sb
 import time
 import operator
 import itertools
-from powercad.interfaces.FastHenry.uni_mesh import Connect_line,form_conn_line,Conn_point,two_pt_dis,group_dis,ave_pt,trace_splits_rect
-from powercad.general.data_struct.util import translate_pt
-from powercad.general.data_struct.util import Rect, draw_rect_list
-from powercad.design.module_design import ModuleDesign
+from core.APIs.FastHenry.uni_mesh import Connect_line,form_conn_line,Conn_point,two_pt_dis,group_dis,ave_pt,trace_splits_rect
+from core.general.data_struct.util import translate_pt
+from core.general.data_struct.util import Rect, draw_rect_list
+from core.MDK.Design.module_design import ModuleDesign
 import matplotlib.pyplot as plt
 import math
 import networkx as nx
 import os
+
+
 class Plane(object):
     """Object for creating planes to be written out as a text file for use in FastHenry"""
     def __init__(self, name=None, id_number=None, pt1=[0,0,0], pt2=[0,0,0], pt3=[0,0,0], thickness=None, conductivity=None, seg1=5, seg2=5):

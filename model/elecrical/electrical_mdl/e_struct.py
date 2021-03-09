@@ -1,8 +1,8 @@
-from powercad.general.data_struct.util import Rect
+from core.general.data_struct.util import Rect
 import mpl_toolkits.mplot3d as a3d
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-from powercad.design.library_structures import Lead
+from core.MDK.Design.library_structures import Lead
 
 
 

@@ -1,7 +1,7 @@
 ''' list of function that can be used outside of the main data structure , or to be organized later'''
 
 
-from powercad.general.data_struct.util import Rect
+from core.general.data_struct.util import Rect
 import numpy as np
 
 class E_Rect(Rect):
