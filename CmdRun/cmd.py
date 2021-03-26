@@ -1,15 +1,16 @@
 # This is the layout generation and optimization flow using command line only
 import sys, os
-
-# Set relative location
+sys.path.append('..')
+'''# Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-16] #exclude "power/cmd_run"
-sys.path.append(cur_path)
+sys.path.append(cur_path)'''
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
-from core.CmdRun.cmd_layout_handler import generate_optimize_layout, script_translator, eval_single_layout
-from core.SolBrowser.database import create_connection, insert_record, create_table
+from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout
+from core.engine.InputParser.input_script import script_translator
+from core.engine.LayoutSolution.database import create_connection, insert_record, create_table
 from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 from core.engine.Structure3D.structure_3D import Structure_3D
@@ -62,7 +63,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        print ("settings.GMSH",settings.GMSH_BIN_PATH)
+        #print ("settings.GMSH",settings.GMSH_BIN_PATH)
 		
 class Cmd_Handler: 
     def __init__(self,debug=False):
@@ -79,7 +80,6 @@ class Cmd_Handler:
         self.new_mode=1 # 1: constraint table setup required, 0: constraint file will be reloaded
         self.flexible=False # bondwire connection is flexible or strictly horizontal and vertical
         self.plot=False # flag for plotting solution layouts
-		
         # Data storage
         self.db_file = None  # A file to store layout database
 
@@ -90,7 +90,7 @@ class Cmd_Handler:
         self.wire_table = {}
         self.raw_layout_info = {}
         self.min_size_rect_patches = {}
-        # Structure
+        # Struture
         self.layer_stack = None
         # APIs
         self.measures = []
@@ -98,13 +98,13 @@ class Cmd_Handler:
         self.t_api = None
         # Solutions
         self.soluions = None
+
         self.macro =None
         self.layout_ori_file = None
         # Macro mode
         self.output_option= False
         self.thermal_mode = None
         self.electrical_mode = None
-		
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -189,7 +189,7 @@ class Cmd_Handler:
                 if info[0] == "Floor_plan:":
                     floor_plan = info[1]
                     floor_plan = floor_plan.split(",")
-                    floor_plan = [int(i) for i in floor_plan]
+                    floor_plan = [float(i) for i in floor_plan]
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
                 if info[0]== 'Thermal_Setup:':
@@ -220,7 +220,12 @@ class Cmd_Handler:
                         power = info[1].split(",")
                         power = [float(i) for i in power]
                     if info[0] == 'Heat_Convection:':
-                        h_conv = float(info[1])
+                        try:
+                            h_conv = float(info[1])
+                            h_conv=[h_conv,0]
+                        except:
+                            h_val = info[1].split(",")
+                            h_conv = [float(i) for i in h_val]
                     if info[0] == 'Ambient_Temperature:':
                         t_amb = float(info[1])
                 if self.electrical_mode != None:
@@ -254,8 +259,8 @@ class Cmd_Handler:
                and check_file(self.rs_model_file) \
                and check_file(self.constraint_file)
         # make dir if they are not existed
-        print(("self.new_mode",self.new_mode))
-        print(("self.flex",self.flexible))
+        #print(("self.new_mode",self.new_mode))
+        #print(("self.flex",self.flexible))
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -275,8 +280,8 @@ class Cmd_Handler:
             else:
                 print ("Normal meshing algorithm is used")
 
-            print ("run the optimization")
-            self.init_cs_objects()
+            print ("run layout generation and (or) evaluation")
+            self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented out
 
             if run_option == 0:
@@ -299,19 +304,23 @@ class Cmd_Handler:
                     t_measure_data={'name':t_name,'devices':devices}
                     self.setup_thermal(mode='macro', setup_data=t_setup_data,meas_data=t_measure_data,model_type=thermal_model)
 
-                # Convert a list of patch to rectangles
-                patch_dict = self.engine.init_data[0]
-                init_data_islands = self.engine.init_data[3]
+
+                md_data=self.structure_3D.module_data
+
+                for i in range(len(self.structure_3D.layers)):
+                    layer=self.structure_3D.layers[i]
+                    patch_dict = layer.New_engine.init_data[0]
+                    init_data_islands = layer.New_engine.init_data[3]
                 #print init_data_islands
-                init_cs_islands=self.engine.init_data[2]
-                fp_width, fp_height = self.engine.init_size
+                    init_cs_islands=layer.New_engine.init_data[2]
+                    fp_width, fp_height = layer.New_engine.init_size
                 fig_dict = {(fp_width, fp_height): []}
                 for k, v in list(patch_dict.items()):
                     fig_dict[(fp_width, fp_height)].append(v)
                 init_rects = {}
                 #print self.engine.init_data
                 #print "here"
-                for k, v in list(self.engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
+                for k, v in list(layer.New_engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
 
                     rect=v[0]
                     x,y,width,height= [rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]]
@@ -323,7 +332,11 @@ class Cmd_Handler:
                     init_rects[k] = rect_up
                 s1=1000
                 s=1000
+                if fp_width>1000:
+                    s1=1
+                    s=1
                 cs_sym_info = {(fp_width * s, fp_height * s): init_rects}
+                layer.updated_cs_sym_info=[cs_sym_info]
                 for isl in init_cs_islands:
                     for node in isl.mesh_nodes:
                         node.pos[0] = node.pos[0] * s1
@@ -350,20 +363,56 @@ class Cmd_Handler:
                         if isl.name==island.name:
                             island.mesh_nodes= copy.deepcopy(isl.mesh_nodes)
 
+                md_data.islands[layer.name] = init_data_islands
+                md_data.footprint[layer.name] = (fp_width * s1, fp_height * s1)
                 #for island in init_data_islands:
                     #island.print_island(True,size=[60000,60000])
 
 
-                md_data = ModuleDataCornerStitch()
-                md_data.islands[0] = init_data_islands
-                md_data.footprint = [fp_width * s1, fp_height * s1]
-                md_data.layer_stack = self.layer_stack
+                #md_data = ModuleDataCornerStitch()
 
 
-                self.solutions = eval_single_layout(layout_engine=self.engine, layout_data=cs_sym_info,
-                                                    apis={'E': self.e_api,
-                                                          'T': self.t_api}, measures=self.measures,
-                                                    module_info=md_data)
+                #md_data.layer_stack = self.layer_stack
+
+                solution = CornerStitchSolution(index=0)
+                solution.module_data=md_data #updated module data is in the solution
+
+                for i in range(len(self.structure_3D.layers)):
+                    self.structure_3D.layers[i].layout_info= self.structure_3D.layers[i].updated_cs_sym_info[0]
+
+                    self.structure_3D.layers[i].abstract_info= self.structure_3D.layers[i].form_abs_obj_rect_dict()
+                    layer_sol=LayerSolution(name=self.structure_3D.layers[i].name)
+                    layer_sol.layout_plot_info=self.structure_3D.layers[i].layout_info
+                    layer_sol.abstract_infos=self.structure_3D.layers[i].abstract_info
+                    layer_sol.layout_rects=self.structure_3D.layers[i].layer_layout_rects
+                    layer_sol.min_dimensions=self.structure_3D.layers[i].New_engine.min_dimensions
+
+                    layer_sol.update_objects_3D_info(initial_input_info=self.structure_3D.layers[i].initial_layout_objects_3D,mode=-1)
+                    #print(self.structure_3D.layers[i].layout_info)
+                    solution.layer_solutions.append(layer_sol)
+
+                initial_solutions=[solution]
+                md_data=[solution.module_data]
+                PS_solutions=[] #  PowerSynth Generic Solution holder
+
+                for i in range(len(initial_solutions)):
+                    solution=initial_solutions[i]
+                    sol=PSSolution(solution_id=solution.index)
+                    sol.make_solution(mode=-1,cs_solution=solution,module_data=solution.module_data)
+                    #plot_solution_structure(sol)
+                    PS_solutions.append(sol)
+                measure_names=[None,None]
+                if len(self.measures)>0:
+                    for m in self.measures:
+                        if isinstance(m,ElectricalMeasure):
+                            measure_names[0]=m.name
+                        if isinstance(m,ThermalMeasure):
+                            measure_names[1]=m.name
+                opt_problem = new_engine_opt( seed=None,level=2, method=None,apis={'E': self.e_api,'T': self.t_api}, measures=self.measures)
+                self.structure_3D.solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                #self.structure_3D.solutions=eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+                #self.solutions = eval_single_layout(layout_engine=self.engine, layout_data=cs_sym_info,
+                                                    #apis={'E': self.e_api,'T': self.t_api}, measures=self.measures,module_info=md_data)
             if run_option == 2:
 
                 self.measures = []
@@ -378,14 +427,16 @@ class Cmd_Handler:
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data)
 
 
-                self.solutions=generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,rel_cons=self.i_v_constraint,
+                '''self.solutions=generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot,
                                          apis={'E': self.e_api, 'T': self.t_api}, num_layouts=num_layouts, seed=seed,
-                                         algorithm=algorithm, floor_plan=floor_plan,num_gen=num_gen,measures=self.measures)
+                                         algorithm=algorithm, floor_plan=floor_plan,num_gen=num_gen,measures=self.measures)'''
+                self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
+                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
+                                         floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen)
 
                 
-                
-                self.export_solution_params(self.fig_dir,self.db_dir,self.solutions,layout_mode)
+                self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode)
         else:
             # First check all file path
             if not (check_file(self.layout_script)):
@@ -541,7 +592,7 @@ class Cmd_Handler:
         
         self.db_file = os.path.join(database,'layout.db')
         self.db_file = os.path.abspath(self.db_file)
-        print (self.db_file)
+        #print (self.db_file)
         conn = create_connection(self.db_file)
         with conn:
             create_table(conn)
@@ -558,41 +609,97 @@ class Cmd_Handler:
         self.rel_cons_request()
         self.cons_file_edit_request()
 
-    def init_cs_objects(self):
+    def init_cs_objects(self,run_option=None):
         '''
         Initialize some CS objects
         :return:
         '''
-        self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file)
-        print (self.layer_stack.all_layers_info)
-        all_layers,via_connecting_layers= script_translator(
-            input_script=self.layout_script, bond_wire_info=self.bondwire_setup, fig_dir=self.fig_dir, constraint_file=self.constraint_file,rel_cons=self.i_v_constraint,flexible=self.flexible,mode=self.new_mode, layer_stack_info=self.layer_stack)
-        
-        #print(all_layers)
-        #print(via_connecting_layers)
+        self.dbunit=1000 # in um
+        self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
+
+        #calling script parser function to parse the geometry and bondwire setup script
+        all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+        # adding wire table info for each layer
+        for layer in all_layers:
+            self.wire_table[layer.name] = layer.wire_table
+        #populating 3D structure components
+        self.structure_3D.via_connection_raw_info = via_connecting_layers
+        if len(via_connecting_layers)>0:
+            self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
         self.structure_3D.layers=all_layers
-        self.structure_3D.via_connected_layer_info=via_connecting_layers
+        self.structure_3D.cs_type_map=cs_type_map
+
+        #updating constraint table
+        self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
+        self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
+
+        input()
+        for i in range(len(self.structure_3D.layers)):
+            layer=self.structure_3D.layers[i]
+            input_info = [layer.input_rects, layer.size, layer.origin]
+            layer.populate_bondwire_objects()
+            layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer layout
+            layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=voltage_info,current_info=current_info,dbunit=dbunit) # added bondwires to populate node id information
+
+            for comp in layer.new_engine.all_components:
+                self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
+
+
+        
+        
+        #No need to handle inter-layer constraints
+        # taking info for inter-layer constraints
+        if self.new_mode==0:
+            try:
+                cons_df = pd.read_csv(self.constraint_file)
+                self.structure_3D.layer_constraints_info=cons_df
+            except:
+                self.structure_3D.layer_constraints_info=None
+        else:
+            pass# need to edit later
+            '''
+            self.structure_3D.create_inter_layer_constraints()
+            if self.constraint_file!=None and self.structure_3D.layer_constraints_info!=None:
+                self.structure_3D.layer_constraints_info.to_csv(self.constraint_file, sep=',', header=None, index=None)
+            flag = input("Please edit the inter-layer constraint table {} :\n Enter 1 on completion: ".format(self.constraint_file))
+            if flag == '1':
+                try:
+                    self.structure_3D.layer_constraints_info = pd.read_csv(self.constraint_file)
+                except:
+                    print("constraint file is not ready to read in")
+            '''
+        #print(self.structure_3D.layer_constraints_info)
+        #input()
+        self.structure_3D.create_module_data_info(layer_stack=self.layer_stack)
+        self.structure_3D.populate_initial_layout_objects_3D()
+        #self.structure_3D.create_sample_solution()
         self.structure_3D.create_root()
         self.structure_3D.assign_floorplan_size()
         
         for i in range(len(self.structure_3D.layers)):
             for comp in self.structure_3D.layers[i].New_engine.all_components:
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
+                #print(comp.layout_component_id)
+                self.comp_dict[comp.layout_component_id] = comp
         
-
-
-        
-
+        for layer in all_layers:
+            self.wire_table[layer.name]=layer.wire_table
 
 
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={}):
-        print("init api")
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
+        print("init api:", type)
+        if type == 'PowerSynthPEEC':
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
+            self.e_api.load_rs_model(self.rs_model_file)
 
-        self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
-        self.e_api.load_rs_model(self.rs_model_file)
+        elif type == 'FastHenry':
+            self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
+            self.e_api.rs_model = None
+            self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+
         #print mode
         if mode == 'command':
             self.e_api.form_connection_table(mode='command')
@@ -815,9 +922,10 @@ class Cmd_Handler:
             elif opt == 'quit':
                 cont = False
 
-    def find_pareto_dataset(self,sol_dir=None,opt=None,fig_dir=None):
+
+    def find_pareto_dataset(self,sol_dir=None,opt=None,fig_dir=None,perf_names=None):
         #print "so",sol_dir
-        
+        """
         folder_name = sol_dir+'\\'+'Layout_Solutions'
         if (os.path.exists(folder_name)):
             all_data = []
@@ -843,87 +951,90 @@ class Cmd_Handler:
                     i += 1
             # for data in all_data:
             # print data
-            if opt>0:
-                file_name = sol_dir+'\\all_data.csv'
-                with open(file_name, 'w',newline='') as my_csv:
+        """
+        if opt>0:
+            file_name = sol_dir+'/all_data.csv'
+            with open(file_name, 'w',newline='') as my_csv:
+                csv_writer = csv.writer(my_csv, delimiter=',')
+
+                csv_writer.writerow(['Layout_ID', perf_names[0], perf_names[1]])
+
+            for i in range(len(self.structure_3D.solutions)):
+                sol=self.structure_3D.solutions[i]
+                data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
+                csv_writer.writerow(data)
+                my_csv.close()
+        # '''
+            sol_data = {}
+            file = file_name
+            with open(file) as csvfile:
+                readCSV = csv.reader(csvfile, delimiter=',')
+                for row in readCSV:
+                    if row[0] == 'Layout_ID':
+                        #sol_data[row[0]]=[row[2],row[1]]
+                        continue
+                    else:
+                        #print("here",row[0],row[1],row[2])
+                        sol_data[row[0]] = ([float(row[2]), float(row[1])])
+            # sol_data = np.array(sol_data)
+            #print (sol_data)
+            if len(sol_data)>0:
+                pareto_data = pareto_frontiter2D(sol_data)
+                #print len(pareto_data)
+                file_name = sol_dir+'/final_pareto.csv'
+                with open(file_name, 'w', newline='') as my_csv:
                     csv_writer = csv.writer(my_csv, delimiter=',')
-                    csv_writer.writerow(['Layout_ID', 'Temperature', 'Inductance'])
-                    for data in all_data:
-                        #if data[2] > 20: # special case to handle invalid electrical evaluations
-                        try:
-                            data = [data[0].rsplit('.csv')[0], data[1], data[2]]
-                        except:
-                            data=[None,None,None]
+                    csv_writer.writerow(['Layout_ID', perf_names[0], perf_names[1]])
+                    for k, v in list(pareto_data.items()):
+                        data = [k, v[0], v[1]]
                         csv_writer.writerow(data)
-                    my_csv.close()
-            # '''
-                sol_data = {}
-                file = file_name
-                with open(file) as csvfile:
-                    readCSV = csv.reader(csvfile, delimiter=',')
-                    for row in readCSV:
-                        if row[0] == 'Layout_ID':
-                            #sol_data[row[0]]=[row[2],row[1]]
-                            continue
-                        else:
-                            #print("here",row[0],row[1],row[2])
-                            sol_data[row[0]] = ([float(row[2]), float(row[1])])
-                # sol_data = np.array(sol_data)
-                #print (sol_data)
-                if len(sol_data)>0:
-                    pareto_data = pareto_frontiter2D(sol_data)
-                    #print len(pareto_data)
-                    file_name = sol_dir+'\\final_pareto.csv'
-                    with open(file_name, 'w', newline='') as my_csv:
-                        csv_writer = csv.writer(my_csv, delimiter=',')
-                        csv_writer.writerow(['Layout_ID', 'Temperature', 'Inductance'])
-                        for k, v in list(pareto_data.items()):
-                            data = [k, v[0], v[1]]
-                            csv_writer.writerow(data)
-                    my_csv.close()
+                my_csv.close()
 
-                    data_x = []
-                    data_y = []
-                    for id, value in list(pareto_data.items()):
-                        #print id,value
-                        data_x.append(value[0])
-                        data_y.append(value[1])
+                data_x = []
+                data_y = []
+                for id, value in list(pareto_data.items()):
+                    #print id,value
+                    data_x.append(value[0])
+                    data_y.append(value[1])
 
-                    #print data_x
-                    #print data_y
-                    plt.cla()
+                #print data_x
+                #print data_y
+                plt.cla()
 
-                    plt.scatter(data_x, data_y)
+                plt.scatter(data_x, data_y)
 
-                    x_label = 'Inductance'
-                    y_label = 'Max_Temperature'
+                x_label = perf_names[0]
+                y_label = perf_names[1]
 
-                    plt.xlim(min(data_x) - 2, max(data_x) + 2)
-                    plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
-                    # naming the x axis
-                    plt.xlabel(x_label)
-                    # naming the y axis
-                    plt.ylabel(y_label)
+                plt.xlim(min(data_x) - 2, max(data_x) + 2)
+                plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
+                # naming the x axis
+                plt.xlabel(x_label)
+                # naming the y axis
+                plt.ylabel(y_label)
 
-                    # giving a title to my graph
-                    plt.title('Pareto-front Solutions')
+                # giving a title to my graph
+                plt.title('Pareto-front Solutions')
 
-                    # function to show the plot
-                    # plt.show()
-                    plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
+                # function to show the plot
+                # plt.show()
+                plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
 
     def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
-        if len(self.measures)==2:
-            self.find_pareto_dataset(sol_dir,opt,fig_dir)
+
 
         data_x=[]
         data_y=[]
+        perf_metrices=[]
+        for sol in solutions:
+            for key in sol.parameters:
+                perf_metrices.append(key)
         for sol in solutions:
             #if sol.params['Inductance']>50:
                 #continue
-            data_x.append(sol.params['Inductance'])
-            if (len(sol.params)>=2):
-                data_y.append(sol.params['Max_Temperature'])
+            data_x.append(sol.parameters[perf_metrices[0]])
+            if (len(sol.parameters)>=2):
+                data_y.append(sol.parameters[perf_metrices[1]])
             else:
                 data_y.append(sol.index)
 
@@ -932,12 +1043,16 @@ class Cmd_Handler:
         #print (data_x,data_y)
         plt.scatter(data_x, data_y)
         for solution in solutions:
-            labels=list(solution.params.keys())
+            labels=list(solution.parameters.keys())
             break
         #if len(labels)==2:
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
+        else:
+            x_label=labels[0]
+            y_label=labels[1]
+        '''
         if labels[0]=='Inductance':
             x_label = labels[0]
         else:
@@ -946,7 +1061,8 @@ class Cmd_Handler:
             y_label = labels[1]
         else:
             y_label='index'
-        
+        '''
+
 
         plt.xlim(min(data_x)-2, max(data_x)+2)
         plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
@@ -961,6 +1077,10 @@ class Cmd_Handler:
         # function to show the plot
         #plt.show()
         plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+        if len(self.measures)==2:
+            self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
+
+
 
 
 if __name__ == "__main__":
@@ -987,6 +1107,10 @@ if __name__ == "__main__":
            
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro_data_collection_final.txt
             cmd.cmd_handler_flow(arguments= args)
+        elif sel==5:
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            cmd.cmd_handler_flow(arguments=args)
+           
 
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default

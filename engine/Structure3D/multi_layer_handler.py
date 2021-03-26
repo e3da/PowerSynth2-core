@@ -1,7 +1,10 @@
 #@Author: Imam
 from matplotlib.path import Path
-
+import matplotlib
 from core.MDK.Design.group import Island
+from core.engine.LayoutEngine.cons_engine import New_layout_engine
+from core.engine.LayoutSolution.color_list import color_list_generator
+from core.engine.CornerStitch.CSinterface import Rectangle
 #from powercad.corner_stitch.CornerStitch import *
 #from powercad.cons_aware_en.cons_engine import *
 from core.MDK.Design.parts import *
@@ -24,19 +27,12 @@ class Layer():
         self.all_parts_info={}
         self.info_files={}
         self.all_route_info={}
-        self.all_components_type_mapped_dict={}
-        self.all_components_list=[]
+        #self.all_components_type_mapped_dict={}
+        self.all_components_types=[]
+        self.all_cs_types=[]
         self.wire_table={}
         self.comp_dict={}
         self.direction='Z+' # direction of the layer and their elements (Z+/-)
-        
-       
-        self.rs_model=None
-        self.e_api=None
-        self.measures=[]
-        self.t_api=None
-        self.results=[]
-
         self.size=[]
         self.cs_info=[] # list of rectanges to be used as cornerstitch input information
         self.component_to_cs_type = {}
@@ -45,9 +41,9 @@ class Layer():
         self.input_rects=[]
         self.bondwires=[]
         self.bondwire_landing_info=[]
-        self.New_engine=New_layout_engine()
+        self.new_engine=New_layout_engine()
         self.df=None
-        self.Types=None
+        self.types=None
         self.via_locations=[] # list of dictionary for each via with name as key and bottom left corner coordinate as value
         #self.min_location_h={}
         #self.min_location_v={}
@@ -65,7 +61,57 @@ class Layer():
 
 
 
-    
+    def plot_layout(self,fig_data=None, rects=None,origin=None, size=None, fig_dir=None,name=None,dbunit=1000):
+
+        N = len(types)
+        all_colors=color_list_generator()
+        colors=[all_colors[i] for i in range(N)] 
+        if rects != None:
+            colors = ['green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
+            type = ['Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
+            # zorders = [1,2,3,4,5]
+            Patches = {}
+
+            for r in rects:
+                
+                i = type.index(r[0])
+                # print i,r.name
+                P = patches.Rectangle(
+                    (r[1]/dbunit, r[2]/dbunit),  # (x,y)
+                    r[3]/dbunit,  # width
+                    r[4]/dbunit,  # height
+                    facecolor=colors[i],
+                    alpha=0.5,
+                    # zorder=zorders[i],
+                    edgecolor='black',
+                    linewidth=1,
+                )
+                Patches[r[5]] = P
+            fig_data = Patches
+
+        fig, ax = plt.subplots()
+
+        Names = list(fig_data.keys())
+        Names.sort()
+        for k, p in list(fig_data.items()):
+
+            if k[0] == 'T':
+                x = p.get_x()
+                y = p.get_y()
+                ax.text(x + 0.1, y + 0.1, k)
+                ax.add_patch(p)
+            elif k[0] != 'T':
+                x = p.get_x()
+                y = p.get_y()
+                ax.text(x + 0.1, y + 0.1, k, weight='bold')
+                ax.add_patch(p)
+
+        ax.set_xlim(origin[0]/dbunit, (origin[0]+size[0])/dbunit)
+        ax.set_ylim(origin[1]/dbunit, (origin[1]+size[1])/dbunit)
+        ax.set_aspect('equal')
+
+        plt.savefig(fig_dir + '/_init_layout' + name+'.png')
+        plt.close()
 
 
     def print_layer(self):
@@ -377,6 +423,52 @@ class Layer():
         #-------------------------------------------------------------------------
         return islands
 
+    def populate_bondwire_objects(self):
+
+        '''
+        populates bonswire objects for each layer
+        '''
+        bondwire_objects=[]
+        bondwire_landing_info=self.bondwire_landing_info
+        if len(self.wire_table)>0:
+            bondwires=self.wire_table
+            for k,v in list(bondwires.items()):
+                if 'BW_object' in v:
+                    wire=copy.deepcopy(v['BW_object'])
+                    #print k,v
+                    if '_' in v['Source']:
+                        head, sep, tail = v['Source'].partition('_')
+                        wire.source_comp = head  # layout component id for wire source location
+                    else:
+                        wire.source_comp = v['Source']
+                    if '_' in v['Destination']:
+                        head, sep, tail = v['Destination'].partition('_')
+                        wire.dest_comp = head  # layout component id for wire source location
+                    else:
+                        wire.dest_comp = v['Destination']
+
+                    if v['source_pad'] in bondwire_landing_info:
+
+                        wire.source_coordinate = [float(bondwire_landing_info[v['source_pad']][0]),
+                                                float(bondwire_landing_info[v['source_pad']][1])]
+                    if v['destination_pad'] in bondwire_landing_info:
+                        wire.dest_coordinate = [float(bondwire_landing_info[v['destination_pad']][0]),
+                                                float(bondwire_landing_info[v['destination_pad']][1])]
+
+
+                    wire.source_node_id = None  # node id of source comp from nodelist
+                    wire.dest_node_id = None  # nodeid of destination comp from node list
+                    #wire.set_dir_type() # horizontal:0,vertical:1
+                    wire.wire_id=k
+                    wire.num_of_wires=int(v['num_wires'])
+                    wire.cs_type= self.component_to_cs_type['bonding wire pad']
+                    bondwire_objects.append(wire)
+        
+        self.bondwires=bondwire_objects
+        return 
+
+
+
     # generate initial constraint table based on the types in the input script and saves information in the given csv file as constraint
     def update_constraint_table(self,rel_cons=0,islands=None,types_init=None, all_components=None,component_to_cs_type=None):
         if types_init==None:
@@ -634,56 +726,89 @@ class Layer():
         return input_rects, bondwire_landing_info
     
     #plots initial layout for each layer
-    def plot_init_layout(self,fig_dir=None,bw_wires=None,dbunit=1000):
+    def plot_init_layout(self,fig_dir=None,dbunit=1000):
+
+        #print(self.bondwire_landing_info)
+        #print(self.bondwires)
+        #print(len(self.input_rects))
+        
+
+
+        types_unsorted=[]
+        for rect in self.input_rects:
+            if rect.type not in types_unsorted:
+                types_unsorted.append(rect.type)
+
+        if len(self.bondwires)>0:
+            wire_type=self.bondwires[0].cs_type
+        else:
+            wire_type=None
+        if wire_type!=None:
+            types_unsorted.append(wire_type)
+
+        types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
+        types_sorted.sort()
+        types=['Type_'+str(i) for i in types_sorted]
+        
+
+        n = len(types)
+        all_colors=color_list_generator()
+        colors=[all_colors[i] for i in range(n)]
+        
+
         rectlist=[]
-        colors = ['green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
-        type = ['Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
-        for rect in self.cs_info:
+        max_hier_level=0
+        for rect in self.input_rects:
             #print (rect)
             try:
-                color_ind=type.index(rect[0])
+                type_= rect.type
+                color_ind = types.index(type_)
                 color=colors[color_ind]
             except:
+                print("Corner Sticth type couldn't find for atleast one component")
                 color='black'
             
         
-
-            r=[rect[1]/dbunit,rect[2]/dbunit,rect[3]/dbunit,rect[4]/dbunit,color,rect[-2]]# x,y,w,h,cs_type,zorder
+            if rect.hier_level>max_hier_level:
+                max_hier_level=rect.hier_level
+            r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level]# x,y,w,h,cs_type,zorder
             rectlist.append(r)
 
         Patches = []
+        
+        if len(self.bondwires)>0:
+            for wire in self.bondwires:
+                source = [wire.source_coordinate[0]/dbunit, wire.source_coordinate[1]/dbunit]
+                dest = [wire.dest_coordinate[0]/dbunit, wire.dest_coordinate[1]/dbunit]
+                point1 = (source[0], source[1])
+                point2 = (dest[0], dest[1])
+                verts = [point1, point2]
+                #print"here", verts
+                codes = [Path.MOVETO, Path.LINETO]
+                path = Path(verts, codes)
+                type_= wire.cs_type
+                color_ind = types.index(type_)
+                color=colors[color_ind]
+                patch = matplotlib.patches.PathPatch(path, edgecolor=color, lw=0.5,zorder=max_hier_level+1)
+                Patches.append(patch)
 
         for r in rectlist:
-            # print i,r.name
-            #print(r)
-            if bw_wires!=None:
-                if r[4] == "blue":
-                    
-
-                    point1 = (float(row[0]), float(row[1]))
-                    point2 = (float(row[2]), float(row[3]))
-                    verts = [point1, point2]
-                    #print"here", verts
-                    codes = [Path.MOVETO, Path.LINETO]
-                    path = Path(verts, codes)
-                    colour = row[4]
-                    patch = matplotlib.patches.PathPatch(path, edgecolor=colour, lw=0.5,zorder=3)
-                    Patches.append(patch)
-            else:
-                P = patches.Rectangle(
-                    (r[0], r[1]),  # (x,y)
-                    r[2],  # width
-                    r[3],  # height
-                    facecolor=r[4],
-                    zorder=r[-1],
-                    linewidth=1,
-                )
-                Patches.append(P)
+            
+            P = patches.Rectangle(
+                (r[0], r[1]),  # (x,y)
+                r[2],  # width
+                r[3],  # height
+                facecolor=r[4],
+                zorder=r[-1],
+                linewidth=1,
+            )
+            Patches.append(P)
 
         fig,ax=plt.subplots()
         for p in Patches:
             ax.add_patch(p)
 
+        
         ax.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
         ax.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         
@@ -735,230 +860,4 @@ class Layer():
 
         return layout_symb_dict
 
-class Structure():
-    def __init__(self):
-        self.layers=[] # list of layer objects in the structure
-        self.Htree=[] # list of horizontal cs tree from each layer
-        self.Vtree=[] # list of vertical cs tree from each layer
-        self.solutions=None
-        self.floorplan_size=[]
-        self.root_node_h=None
-        self.root_node_v = None
-        self.root_node_h_edges=[] # hcg edges for root node
-        self.root_node_v_edges=[] # vcg edges for root node
-        self.root_node_ZDL_H=[]
-        self.root_node_ZDL_V=[]
-        self.root_node_removed_h={}
-        self.root_node_removed_v={}
-        self.reference_node_removed_h={}
-        self.reference_node_removed_v={}
-        self.root_node_locations_h={}
-        self.root_node_locations_v={}
-        self.min_location_h = {} # to capture the final location of each layer's horizontal cg node in the structure
-        self.min_location_v = {}# to capture the final location of each layer's vertical cg node in the structure
-        self.mode_2_locations_v={}
-        self.mode_2_locations_h={}
-        #self.layer_updated_info = []
-        #self.layer_layout_rects = []
-        '''
-        self.bottom_up_h_locations=[]
-        self.bottom_up_v_locations=[]
-        self.hcg_edges=[]
-        self.vcg_edges=[]
-        self.removed_h=[]
-        self.removed_v=[]
-        self.reference_h=[]
-        self.reference_v=[]
-        self.top_down_edges_h=[]
-        self.top_down_edges_v=[]
-        self.ZDL_H=[]
-        self.ZDL_V=[]
-        
-        
-        
-        '''
 
-
-
-
-    def assign_floorplan_size(self):
-        width=0.0
-        height=0.0
-        for layer in self.layers:
-            if layer.width>width:
-                width=layer.width
-            if layer.height>height:
-                height=layer.height
-        self.floorplan_size=[width,height]
-
-    def create_root(self):
-        self.root_node_h=Node_3D(id=-1)
-        self.root_node_v = Node_3D(id=-1)
-        self.root_node_h.edges=[]
-        self.root_node_v.edges=[]
-        for layer in self.layers:
-            self.root_node_h.child.append(layer.New_engine.Htree.hNodeList[0])
-            self.root_node_v.child.append(layer.New_engine.Vtree.vNodeList[0])
-            for node in layer.New_engine.Htree.hNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.x,rect.cell.x+rect.getWidth()] not in layer.via_locations:
-                                 layer.via_locations.append([rect.cell.x,rect.cell.x+rect.getWidth()])
-            for node in layer.New_engine.Vtree.vNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.y,rect.cell.y+rect.getHeight()] not in layer.via_locations:
-                                layer.via_locations.append([rect.cell.y,rect.cell.y+rect.getHeight()])
-
-
-
-    def calculate_min_location_root(self):
-        edgesh_root=self.root_node_h_edges
-        edgesv_root=self.root_node_v_edges
-        ZDL_H=self.root_node_ZDL_H
-        ZDL_V=self.root_node_ZDL_V
-
-        ZDL_H=list(set(ZDL_H))
-        ZDL_H.sort()
-        ZDL_V = list(set(ZDL_V))
-        ZDL_V.sort()
-        #print"root", ZDL_H
-        #print ZDL_V
-        #raw_input()
-        # G2 = nx.MultiDiGraph()
-        dictList1 = []
-        # print self.edgesh
-        for foo in edgesh_root:
-            # print "EDGE",foo.getEdgeDict()
-            dictList1.append(foo.getEdgeDict())
-        # print dictList1
-        d = defaultdict(list)
-        for i in dictList1:
-            k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
-            d[k].append(v)
-        edge_labels1 = d
-        # print "d",ID, edge_labels1
-        nodes = [x for x in range(len(ZDL_H))]
-        # G2.add_nodes_from(nodes)
-
-        edge_label = []
-        for branch in edge_labels1:
-            lst_branch = list(branch)
-            data = []
-            for internal_edge in edge_labels1[branch]:
-                data.append((lst_branch[0], lst_branch[1], internal_edge))
-                edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
-
-            # G2.add_weighted_edges_from(data)
-        # mem = Top_Bottom(ID, parentID, G2, label)  # top to bottom evaluation purpose
-        # self.Tbeval.append(mem)
-
-        edge_label_h=edge_label
-        location=self.min_location_eval(ZDL_H,edge_label_h)
-
-        for i in list(location.keys()):
-            self.root_node_locations_h[ZDL_H[i]] = location[i]
-        #print"root", self.root_node_locations_h
-        #raw_input()
-        #GV = nx.MultiDiGraph()
-        dictList1 = []
-        # print self.edgesh
-        for foo in edgesv_root:
-            # print foo.getEdgeDict()
-            dictList1.append(foo.getEdgeDict())
-        # print dictList1
-
-        ######
-        d = defaultdict(list)
-        for i in dictList1:
-            k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
-            d[k].append(v)
-        edge_labels1 = d
-        edge_label = []
-        for branch in edge_labels1:
-            lst_branch = list(branch)
-            data = []
-            for internal_edge in edge_labels1[branch]:
-                # print lst_branch[0], lst_branch[1]
-                # print internal_edge
-                # if (lst_branch[0], lst_branch[1], internal_edge) not in data:
-                data.append((lst_branch[0], lst_branch[1], internal_edge))
-                edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
-                # print data,label
-
-            #GV.add_weighted_edges_from(data)
-
-
-
-        edge_label_v=edge_label
-        location=self.min_location_eval(ZDL_V,edge_label_v)
-        for i in list(location.keys()):
-            self.root_node_locations_v[ZDL_V[i]] = location[i]
-
-
-    def min_location_eval(self, ZDL, edge_label):
-        d3 = defaultdict(list)
-        for i in edge_label:
-            k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
-            d3[k].append(v)
-        # print d3
-        X = {}
-        H = []
-        for i, j in list(d3.items()):
-            X[i] = max(j)
-        #print"rootX",  X
-        for k, v in list(X.items()):
-            H.append((k[0], k[1], v))
-        G = nx.MultiDiGraph()
-        n = [x for x in range(len(ZDL))]
-        G.add_nodes_from(n)
-        # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-        G.add_weighted_edges_from(H)
-
-        A = nx.adjacency_matrix(G)
-        B = A.toarray()
-        # print B
-        Location = {}
-        for i in range(len(n)):
-            if n[i] == 0:
-                Location[n[i]] = 0
-            else:
-                k = 0
-                val = []
-                # for j in range(len(B)):
-                for j in range(0, i):
-                    if B[j][i] > k:
-                        # k=B[j][i]
-                        pred = j
-                        val.append(Location[n[pred]] + B[j][i])
-                # loc1=Location[n[i-1]]+X[(n[i-1],n[i])]
-                # loc2=Location[n[pred]]+k
-                Location[n[i]] = max(val)
-        # print Location
-        # Graph_pos_h = []
-
-        dist = {}
-        for node in Location:
-            key = node
-
-            dist.setdefault(key, [])
-            dist[node].append(node)
-            dist[node].append(Location[node])
-        return Location
-
-
-
-
-
-class Node_3D(Node):
-    def __init__(self,id):
-        self.id=id
-        self.parent=None
-        self.child=[]
-        self.edges=[]
-
-        Node.__init__(self, parent=self.parent,boundaries=None,stitchList=None,id=self.id)

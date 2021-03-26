@@ -15,7 +15,7 @@ from random import randrange
 import numpy as np
 import math
 from bisect import bisect_left
-from powercad.corner_stitch.constraint import constraint
+#from powercad.corner_stitch.constraint import constraint
 #########################################################################################################################
 
 

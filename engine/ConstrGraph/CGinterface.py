@@ -1,13 +1,55 @@
-
-
 # creating constraint graph from corner-stitched layout
+
+
+class CS_Type_Map():
+    '''
+    To map components in corner stitch types so that the corner stitch can be generated using these types
+
+    '''
+    def __init__(self):
+        self.comp_cluster_types={'Flexible_Dim':[],'Fixed_Dim':[]} # cluster type of components: Flexible_Dim: traces, Fixed_Dim: devices, leads, vias, etc.
+        self.all_component_types = ['EMPTY'] # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
+        self.types_name=['EMPTY'] # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
+        self.types_index=[0] # list of index for each type (integer). To search quickly
+        #self.populate_type_names_index()
+    
+    def populate_types_name_index(self):
+        for i in range(len(self.all_component_types)):
+            if self.all_component_types[i] == 'EMPTY':
+                continue
+            else:
+                t = 'Type_' + str(i)
+                if t not in self.types_name:
+                    self.types_name.append(t)
+                    self.types_index.append(i)
+
+    '''component_to_component_type = {}
+    for i in range(len(type_name)):
+        component_to_component_type[all_component_types[i]] = type_name[i]'''
+
+    def add_component_type(self,component_name_type=None,routing=False):
+        '''
+        adding new component and making corresponding new type
+        '''
+        if component_name_type not in self.all_component_types:
+            self.all_component_types.append(component_name_type)
+        t=self.all_component_types.index(component_name_type)
+        t_in="Type_"+str(t)
+        self.types_name.append(t_in)
+        self.types_index.append(t)
+        #component_to_component_type[component_name_type] = t_in
+        if routing==False:
+            self.comp_cluster_types['Fixed_Dim'].append(t_in)
+
+
+
 class CS_to_CG():
-    def __init__(self, level):
+    def __init__(self, all_components=None):
         '''
         Args:
             level: Mode of operation
         '''
-        self.level = level
+        self.all_components = all_components
 
     def getConstraints(self, constraint_file, sigs=3):
         '''

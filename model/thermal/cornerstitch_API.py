@@ -2,7 +2,6 @@
 #from PySide.QtGui import QFileDialog
 import sys
 from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
-from core.MDK.Design.module_data import ModuleData
 from core.model.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, \
     compound_top_surface_avg
 from core.MDK.Design.parts import Part

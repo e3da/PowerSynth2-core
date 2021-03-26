@@ -1,12 +1,16 @@
+import os,sys
+sys.path.append('..')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import OrderedDict
-from core.MDK.Design.library_structures import *
+import csv
+import getpass
+
+
 from mpl_toolkits.mplot3d import Axes3D
 from core.general.material.material import *
 from core.general.settings import settings
-import csv
-import getpass
+
 
 
 class Layer:
@@ -115,7 +119,7 @@ class LayerStack:
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                print(row['Origin'].split(','))
+                #print(row['Origin'].split(','))
                 layer_id = int(row['ID'])
                 layer_name = row['Name']
                 layer_width = float(row['Width'])
@@ -152,6 +156,7 @@ class LayerStack:
         self.foot_print=[max_width,max_length]
         if debug:
             self.plot_layer_2d(view=0)
+        
 
     def set_material(self, id, material):
         '''
@@ -281,10 +286,11 @@ def test_load_layer_stack_from_csv():
     5,I1,40,50,0.2,copper,p
     6,C1,40,50,0.2,None,a
     """
-    new_layer_stack_file = "C:\\Users\qmle\Desktop\\New_Layout_Engine\Quang_Journal\layer_stack_new.csv"
-    layer_stack = LayerStack()
+    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/layer_stack.csv"
+    layer_stack = LayerStack(debug=False)
     layer_stack.import_layer_stack_from_csv(filename=new_layer_stack_file)
+    #print(layer_stack.all_layers_info)
 
 if __name__ == "__main__":
-    test_simple_layer_stack()
+    test_load_layer_stack_from_csv()
     #test_load_layer_stack_from_csv()

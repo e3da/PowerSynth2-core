@@ -13,7 +13,7 @@ from core.engine.LayoutSolution.database import create_connection,insert_record
 from core.MDK.Design import parts
 from core.MDK.Design.group import Island
 from core.model.electrical.electrical_mdl.e_mesh_direct import MeshNode
-from core.engine.ConstrGraph.ConstraintGraph import constraintGraph
+#from core.engine.ConstrGraph.ConstraintGraph import constraintGraph
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 
 # GLOBAL VARIABLE FOR DEBUG ONLY
@@ -22,47 +22,16 @@ plot_CS = False
 
 class New_layout_engine():
     def __init__(self):
-        self.W = None
-        self.H = None
-        self.origin=(0,0)
-        self.window = None
-        self.Htree = None
-        self.Vtree = None
-        self.bondwires=None
-        self.cons_df = None
-        self.Min_X = None
-        self.Min_Y = None
-        self.cons_info = None
-        self.flexible=False
-        self.ledge_width=1000.0
-        self.ledge_height=1000.0
-
-        self.Types = None  # added for new flow (list of all cs_type)
-        self.all_components = None  # added for new flow (holds all layout component objects)
-        self.init_size = []
-        self.reliability_constraints=None # reliability constraint flag: 0: No reliability constraints are applied, 1: worst case, 2: Average case
 
         # for initialize only
         self.init_data = []
         self.cornerstitch = CornerStitch()
         self.min_dimensions = {}
+        self.islands=None
         # current solutions
         self.cur_fig_data = None
 
-        # only activate when the sym_layout API is used
-        self.sym_layout = None
-        self.layout_sols = {}
-
-    def open_new_layout_engine(self, window):
-        self.window = window
-        patches = self.init_data[0]
-        graph = self.init_data[2]
-        num_cols = self.init_data[-1]
-        self.new_layout_engine = New_layout_engine_dialog(self.window, patches, W=self.W, H=self, engine=self,
-                                                          graph=graph)
-        self.new_layout_engine.show()
-        self.new_layout_engine.exec_()
-
+    
  
 
     def init_layout(self,input_format=None,islands=None,bondwires=None,flexible=None,voltage_info=None,current_info=None,dbunit=1000):
@@ -76,17 +45,17 @@ class New_layout_engine():
         '''
         
         
-		input_rects=input_format[0] # list of rectangle objects for corner stitch input
-		size=input_format[1] # list [width,height] initial floorplan size given by user
-		origin=input_format[2] #origin given be user in input script
-		self.origin=origin #(x,y) coordinate of the referenc epoint of each layer
-		self.W=size[0] # width
-		self.H=size[1] # hieght
-		self.flexible=flexible
-		# creates horizontal and vertical corner stitch
-		#print("SIZE",origin,size)
-		
-		self.create_cornerstitch(input_rects,origin,size,islands,bondwires,voltage_info,current_info,dbunit=dbunit)
+        input_rects=input_format[0] # list of rectangle objects for corner stitch input
+        size=input_format[1] # list [width,height] initial floorplan size given by user
+        origin=input_format[2] #origin given be user in input script
+        self.origin=origin #(x,y) coordinate of the referenc epoint of each layer
+        self.W=size[0] # width
+        self.H=size[1] # hieght
+        self.flexible=flexible
+        # creates horizontal and vertical corner stitch
+        #print("SIZE",origin,size)
+        
+        self.create_cornerstitch(input_rects,origin,size,islands,bondwires,voltage_info,current_info,dbunit=dbunit)
 
 
 

@@ -295,7 +295,7 @@ class CornerStitch():
                     for j in i.stitchList:
                         k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
                         rectlist.append(k)
-                    fig,ax=plt.subplots()
+                    #fig,ax=plt.subplots()
                     self.draw_rect_list_cs(rectlist,ax=ax,x_max=57,y_max=51)
 
             for i in Vtree.vNodeList:
@@ -369,8 +369,7 @@ if __name__== "__main__":
     def plotrectH_old(node,format=None):###plotting each node in HCS before minimum location evaluation
         """
         Draw all cells in this cornerStitch with stitches pointing to their stitch neighbors
-        TODO:
-         Also should probably change the dimensions of the object window depending on the cornerStitch size.
+        
         """
 
         # fig2 = matplotlib.pyplot.figure()

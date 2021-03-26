@@ -1,6 +1,0 @@
-mutual_inductance.c
-setup.py
-multithreads_mutual.egg-info/PKG-INFO
-multithreads_mutual.egg-info/SOURCES.txt
-multithreads_mutual.egg-info/dependency_links.txt
-multithreads_mutual.egg-info/top_level.txt

@@ -15,6 +15,7 @@ from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution
 from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.engine.Structure3D.cell_3D import Cell3D
+from core.MDK.Constraint.constraint_up import constraint_name_list
 
 class Structure_3D():
     def __init__(self):
@@ -32,6 +33,10 @@ class Structure_3D():
         self.via_connected_layer_info=None
         self.sample_solution=None
         self.module_data=None # holds ModuleDataCornerStitch object
+        self.all_components=['EMPTY'] # accumulated component list from each layer. 'EMPTY' is the default component for CS
+        self.all_components_cs_types={} # mapped cs types for each component in all_components
+        self.cs_type_map=None # CS_Type_Map object populated from input script parser
+        self.constraint_df=None # constraint dataframe
         
         
     def create_module_data_info(self,layer_stack=None):
@@ -92,7 +97,224 @@ class Structure_3D():
             df = pd.DataFrame(all_rows)
             self.layer_constraints_info=df
             
+    # generate initial constraint table based on the types in the input script and saves information in the given csv file as constraint
+    def update_constraint_table(self,rel_cons=0):
+    
+        all_components=[]
+        component_to_cs_type={}
+        for i in range(len(self.layers)):
+            layer=self.layers[i]
+            all_components+=layer.all_components
+            component_to_cs_type.update(layer.component_to_cs_type)
+        
+        self.all_components=all_components
+        self.all_components_cs_types=component_to_cs_type
+        
+        all_types=self.cs_type_map.types_name
+        
+        Types = [0 for i in range(len(all_types))]
+        for i in all_types:
+            if i=='EMPTY':
+                Types[0]=i
+            else:
+                t=i.strip('Type_')
+                ind=int(t)
+                Types[ind]=i
+
+        all_rows = []
+        r1 = ['Min Dimensions'] # first row in constraint table . Header row with all component names
+        r1_c=[]
+        for i in range(len(Types)):
+            for k,v in list(self.all_components_cs_types.items()):
+                if v==Types[i]:
+                    r1_c.append(k)
+        r1+=r1_c
+        all_rows.append(r1)
+
+
+        for i in range(len(constraint_name_list)-4): # minimum dimension constraints (1D values)
+            cons_name=constraint_name_list[i]
+            r2 = [cons_name]
+            r2_c=[0 for i in range(len(Types))]
+            for i in range(len(Types)):
+                if Types[i]=='EMPTY':
+                    r2_c[i]=1
+                else:
+                    for k,v in list(component_to_cs_type.items()):
+                        if v==Types[i]:
+                            for comp in all_components:
+                                if k==comp.name and isinstance(comp,Part):
+                                    if r2_c[i]==0:
+                                        if 'Width' in cons_name or 'Hor' in cons_name:
+                                            r2_c[i]=comp.footprint[0] #width/horizontal extension
+                                        elif 'Length' in cons_name or 'Ver' in cons_name:
+                                            r2_c[i]=comp.footprint[1] #length/vertical extension
+                                        break
+                                elif k==comp.name.split('_')[0] and isinstance(comp,Part): # rotated component cases
+                                    if r2_c[i]==0:
+                                        if 'Width' in cons_name or 'Hor' in cons_name:
+                                            r2_c[i]=comp.footprint[0]
+                                        elif 'Length' in cons_name or 'Ver' in cons_name:
+                                            r2_c[i]=comp.footprint[1]
+                                        break
             
+            for i in range(len(r2_c)):
+                if r2_c[i]==0:       
+                    r2_c[i]=2
+            
+            
+            for i in range(len(r2_c)):
+                #if r2_c[i]==0:
+                type_=self.cs_type_map.types_name[i]
+                for key,type_name in self.all_components_cs_types.items():
+                    if type_name==type_ and key=='bonding wire pad':
+                        r2_c[i]=0 # no width/length value for bondig wire pads (These are point connection)
+                            
+                    
+            
+                
+            r2+=r2_c
+            all_rows.append(r2)
+        
+        for i in range(4,len(constraint_name_list)): # 2D contraints: spacing, enclosure
+            cons_name=constraint_name_list[i]
+            r5 = [cons_name]
+            r5_c = []
+            for i in range(len(Types)):
+                for k, v in list(component_to_cs_type.items()):
+                    if v == Types[i]:
+                        r5_c.append(k)
+            r5 += r5_c
+            all_rows.append(r5)
+            space_rows=[]
+            for i in range(len(Types)):
+                for k,v in list(component_to_cs_type.items()):
+
+                    if v==Types[i]:
+
+                        row=[k]
+                        for j in range(len(Types)):
+                            row.append(2.0)
+                        space_rows.append(row)
+                        all_rows.append(row)
+        
+        
+        # Voltage-Current dependent constraints application
+        if rel_cons!=0:
+            # Populating voltage input table
+            islands=[]
+            for i in range(len(self.layers)):
+                layer=self.layers[i]
+                islands+=layer.islands
+            r7= ['Voltage Specification']
+            all_rows.append(r7)
+            r8=['Component Name','DC magnitude','AC magnitude','Frequency (Hz)', 'Phase angle (degree)']
+            all_rows.append(r8)
+            if len(islands)>0:
+                for island in islands:
+                    all_rows.append([island.element_names[0],0,0,0,0])
+
+            # Populating Current input table
+            r9 = ['Current Specification']
+            all_rows.append(r9)
+            r10 = ['Component Name','DC magnitude','AC magnitude','Frequency (Hz)', 'Phase angle (degree)']
+            all_rows.append(r10)
+            if len(islands)>0:
+                for island in islands:
+                    all_rows.append([island.element_names[0],0,0,0,0])
+
+            r10=['Voltage Difference','Minimum Spacing']
+            all_rows.append(r10)
+            r11=[0,2] # sample value
+            all_rows.append(r11)
+            r12 = ['Current Rating', 'Minimum Width']
+            all_rows.append(r12)
+            r13 = [1, 2]  # sample value
+            all_rows.append(r13)
+
+
+        df = pd.DataFrame(all_rows)
+        self.constraint_df=df
+
+        #-----------------------for debugging---------------------------------
+        #print "constraint_Table"
+        #print df
+        #---------------------------------------------------------------------
+        return 
+
+    def save_constraint_table(self,cons_df=None,file=None):
+        '''
+        Saves constraint pandas dataframe to given file.
+        :param cons_df: pandas dataframe with constraint information
+        :param file: constraint file name
+        '''
+        if file!=None:
+            cons_df.to_csv(file, sep=',', header=None, index=None)
+        else:
+            print("ERROR: No constraint file found to save constraints.")
+
+
+    def read_constraint_table(self,rel_cons=0,mode=0, constraint_file=None):
+        '''
+        Initializes constraint table.
+        :param rel_cons: flag to check if reliability-awareness flag is raised/not. 0: No eliability-awareness, 1: Reliability-aware
+        :param mode: flag to check if the constraint table needs to be initialized or not. 0: initialization not required. Just read in. 1: initialization required.
+        :param constraint_file: given csv filelocation from user for constraints.
+        '''
+        for i in range(len(self.layers)):
+            self.layers[i].new_engine.reliability_constraints=rel_cons
+
+        if mode==0:
+            
+            #name = constraint_file.split('.')
+            #file_name = name[0] + '_' + all_layers[i].name + '.' + name[1] 
+            cons_df = pd.read_csv(constraint_file) #reading constraint info from csv file.
+
+        else:
+            
+            #name=constraint_file.split('.')
+            #file_name=name[0]+'_'+all_layers[i].name+'.'+name[1]
+
+            self.save_constraint_table(cons_df=self.constraint_df, file=constraint_file)
+            flag = input("Please edit the constraint table located at {}:\n Enter 1 on completion: ".format(constraint_file))
+            if flag == '1':
+                cons_df = pd.read_csv(constraint_file)
+
+        # if reliability constraints are available creates two dictionaries to have voltage and current values, where key=layout component id and value=[min voltage,max voltage], value=max current
+        if rel_cons != 0:
+            for index, row in cons_df.iterrows():
+                if row[0] == 'Voltage Specification':
+                    v_start = index + 2
+                if row[0] == 'Current Specification':
+                    v_end = index - 1
+                    c_start = index + 2
+                if row[0]=='Voltage Difference':
+                    c_end = index-1
+            voltage_info = {}
+            current_info = {}
+            for index, row in cons_df.iterrows():
+                if index in range(v_start, v_end + 1):
+                    name = row[0]
+                    #voltage_range = [float(row[1]), float(row[2])]
+                    voltage_range = {'DC': float(row[1]), 'AC': float(row[2]), 'Freq': float(row[3]), 'Phi': float(row[4])}
+                    voltage_info[name] = voltage_range
+                if index in range(c_start, c_end + 1):
+                    name = row[0]
+                    #current_info[name] = max_current
+                    current_info[name] = {'DC': float(row[1]), 'AC': float(row[2]), 'Freq': float(row[3]),
+                                          'Phi': float(row[4])}
+        else:
+            voltage_info=None
+            current_info=None
+
+        
+
+        self.constraint_df = cons_df
+
+
+
+
+
     def populate_initial_layout_objects_3D(self):
         '''
         populates 3D object list for initial layout given by user
