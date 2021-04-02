@@ -118,7 +118,7 @@ class CornerStitch():
         return Modified_input
 
     # function to generate initial layout
-    def draw_layout(self, types=None,rects=None,ZDL_H=None,ZDL_V=None, dbunit=1000):
+    def draw_layout(self, rects=None,types=None,colors=None,ZDL_H=None,ZDL_V=None, dbunit=1000):
         '''
         :param types: list of corner stitch types in a layout ['EMPTY', 'Type_1', 'Type_2',....]
         :param rects: list of rectangle object for a layout
@@ -129,10 +129,17 @@ class CornerStitch():
         generates initial layout patches with layout component id
 
         '''
+        if ZDL_H==None and ZDL_V==None:
         
-        N = len(types)
-        all_colors=color_list_generator()
-        colors=[all_colors[i] for i in range(N)] # taking first N colors from the list
+            
+            ZDL_H=[]
+            ZDL_V=[]
+            for rect in rects:
+                
+                ZDL_H.append(rect.x)
+                ZDL_H.append(rect.x+rect.width)
+                ZDL_V.append(rect.y)
+                ZDL_V.append(rect.y+rect.height)
 
         
         Patches = {}
@@ -158,6 +165,8 @@ class CornerStitch():
             ZDL.append((rect.x, (rect.y + rect.height)/dbunit))
             ZDL.append(((rect.x + rect.width)/dbunit, (rect.y + rect.height)/dbunit))
         
+    
+    
         ZDL_UP = []
         for i in ZDL:
             if i[0] in ZDL_H or i[1] in ZDL_V:
@@ -336,7 +345,7 @@ class CornerStitch():
 
         return Htree, Vtree
 
-    def draw_rect_list_cs(self,rectlist, ax, dbunit=1000,x_max=None, y_max=None):
+    def draw_rect_list_cs(self,rectlist, ax, dbunit=1000,x_min=0,y_min=0,x_max=None, y_max=None):
         
         types=[]
         for r in rectlist:
@@ -354,8 +363,11 @@ class CornerStitch():
                                 edgecolor='black', facecolor=color, linewidth=1)
             patch.append(p)
             ax.add_patch(p)
-        plt.xlim(0, x_max)
-        plt.ylim(0, y_max)
+
+        if x_min>0: x_min=x_min/dbunit
+        if y_min>0: y_min=y_min/dbunit
+        plt.xlim(x_min, x_min+x_max/dbunit)
+        plt.ylim(y_min, y_min+y_max/dbunit)
         plt.gca().set_aspect('equal', adjustable='box')
         plt.show()
 

@@ -1,5 +1,8 @@
-# creating constraint graph from corner-stitched layout
-
+# Preparing constraints and passing necessary info to call constraint graph generation and evaluation function
+import sys
+sys.path.append('..')
+import math
+from core.MDK.Constraint.constraint_up import constraint_name_list, Constraint
 
 class CS_Type_Map():
     '''
@@ -44,59 +47,123 @@ class CS_Type_Map():
 
 
 class CS_to_CG():
-    def __init__(self, all_components=None):
+    def __init__(self, all_cs_types=None):
         '''
-        Args:
-            level: Mode of operation
+        : param: all_cs_types: list of corner stitch types
         '''
-        self.all_components = all_components
+        self.all_cs_types = all_cs_types
+        if all_cs_types!=None:
+            self.constraints=[] # list of constraint objects initialized with names declared in 'Constraint_up.py'
+            self.initialize_constraint_info()
+            self.voltage_constraints={}
+            self.current_constraints={}
+        
 
-    def getConstraints(self, constraint_file, sigs=3):
+    
+    def initialize_constraint_info(self):
+        '''
+        creates constraint object for type of constaint in the constraint_name_list
+        '''
+        for i in range(len(constraint_name_list)):
+            name=constraint_name_list[i]
+            constraint=Constraint(name)
+            self.constraints.append(constraint)
+
+            """
+            if 'Width' in name:  # 1D array
+                self.MinWidth=[0 for i in range(len(self.all_cs_types))]
+            elif 'Length' in name:  # 1D array
+                self.MinLength=[0 for i in range(len(self.all_cs_types))]
+            elif 'HorExtension' in name:  # 1D array
+                self.MinHorExtension=[0 for i in range(len(self.all_cs_types))]
+            elif 'VerExtension' in name:  # 1D array
+                self.MinVerExtension=[0 for i in range(len(self.all_cs_types))]
+            elif 'Enclosure' in name or 'Spacing' in name: # 2D matrix
+                if name =='MinHorEnclosure':
+                    self.MinHorEnclosure =  np.zeros(shape=(self.all_cs_types, self.all_cs_types))
+                if name == 'MinVerEnclosure':
+                    self.MinVerEnclosure =  np.zeros(shape=(self.all_cs_types, self.all_cs_types))
+                if name == 'MinHorSpacing':
+                    self.MinHorSpacing = np.zeros(shape=(self.all_cs_types, self.all_cs_types))
+                if name == 'MinVerSpacing':
+                    self.MinVerSpacing = np.zeros(shape=(self.all_cs_types, self.all_cs_types))
+            """
+        
+    
+    def getConstraints(self, constraint_df=None, dbunit=1000):
         '''
         :param constraint_file: data frame for constraints
         :param sigs: multiplier of significant digits (converts float to integer)
         :return: set up constraint values for layout engine
         '''
-        mult = 10 ** sigs
-        # print "layout multiplier", mult
-        data = constraint_file
+        
+        
+        data = constraint_df
 
-        Types = len(data.columns)
+        all_types_len = len(data.columns)# 1st column is for constraint name
+        
+        if all_types_len-1 == len(self.all_cs_types):
+            width = [int(math.floor(float(w) * dbunit)) for w in ((data.iloc[0, 1:]).values.tolist())] # all elements starting from 2nd column to end
+            length = [int(math.floor(float(h) * dbunit)) for h in ((data.iloc[1, 1:]).values.tolist())]
+            horextension = [int(math.floor(float(ext) * dbunit)) for ext in ((data.iloc[2, 1:]).values.tolist())]
+            verextension= [int(math.floor(float(ext) * dbunit)) for ext in ((data.iloc[3, 1:]).values.tolist())]
+            
+            hor_spacing=[]
+            ver_spacing=[]
+            hor_enclosure=[]
+            ver_enclosure=[]
+            for j in range(len(data)):
+                if j > 4 and j < (4 + all_types_len):
+                    hor_enclosure_row = [int(math.floor(float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    hor_enclosure.append(hor_enclosure_row)
 
-        SP = []
-        EN = []
-        width = [int(math.floor(float(w) * mult)) for w in ((data.iloc[0, 1:]).values.tolist())]
-        height = [int(math.floor(float(h) * mult)) for h in ((data.iloc[1, 1:]).values.tolist())]
-        extension = [int(math.floor(float(ext) * mult)) for ext in ((data.iloc[2, 1:]).values.tolist())]
+                elif j > (4 + all_types_len) and j < (4+ 2 * all_types_len):
+                    ver_enclosure_row = [int(math.floor(float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    ver_enclosure.append(ver_enclosure_row)
+                
+                elif j > (4 + 2 * all_types_len) and j < (4 + 3 * all_types_len):
+                    hor_spacing_row = [int(math.floor(float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    hor_spacing.append(hor_spacing_row)
 
-        for j in range(len(data)):
-            if j > 3 and j < (3 + Types):
-                SP1 = [int(math.floor(float(spa) * mult)) for spa in (data.iloc[j, 1:(Types)]).values.tolist()]
-                SP.append(SP1)
+                elif j > (4 + 3 * all_types_len) and j < (4 + 4 * all_types_len):
+                    ver_spacing_row = [int(math.floor(float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    ver_spacing.append(ver_spacing_row)
+                
+                else:
+                    continue
 
-            elif j > (3 + Types) and j < (3 + 2 * Types):
-                EN1 = [int(math.floor(float(enc) * mult)) for enc in (data.iloc[j, 1:(Types)]).values.tolist()]
-                EN.append(EN1)
-
-            else:
-                continue
-
-        minWidth = list(map(int, width))
-        minExtension = list(map(int, extension))
-        minHeight = list(map(int, height))
-        minSpacing = [list(map(int, i)) for i in SP]
-        minEnclosure = [list(map(int, i)) for i in EN]
-        # print minWidth
-        # print minExtension
-        # print minHeight
-        # print minSpacing
-        # print minEnclosure
-        CONSTRAINT = constraint()
-        CONSTRAINT.setupMinWidth(minWidth)
-        CONSTRAINT.setupMinHeight(minHeight)
-        CONSTRAINT.setupMinExtension(minExtension)
-        CONSTRAINT.setupMinSpacing(minSpacing)
-        CONSTRAINT.setupMinEnclosure(minEnclosure)
+            MinWidth = list(map(int, width))
+            MinLength = list(map(int, length))
+            MinHorExtension = list(map(int, horextension))
+            MinVerExtension = list(map(int, verextension))
+            MinHorEnclosure = [list(map(int, i)) for i in hor_enclosure]
+            MinVerEnclosure = [list(map(int, i)) for i in ver_enclosure]
+            MinHorSpacing = [list(map(int, i)) for i in hor_spacing]
+            MinVerSpacing = [list(map(int, i)) for i in ver_enclosure]
+            for constraint in self.constraints:
+                if constraint.name=='MinWidth':
+                    constraint.value= MinWidth
+                elif constraint.name=='MinLength':
+                    constraint.value= MinLength
+                elif constraint.name=='MinHorExtension':
+                    constraint.value= MinHorExtension
+                elif constraint.name=='MinVerExtension':
+                    constraint.value= MinVerExtension
+                elif constraint.name=='MinHorEnclosure':
+                    constraint.value= MinHorEnclosure
+                elif constraint.name=='MinVerEnclosure':
+                    constraint.value= MinVerEnclosure
+                elif constraint.name=='MinHorSpacing':
+                    constraint.value= MinHorSpacing
+                elif constraint.name=='MinVerSpacing':
+                    constraint.value= MinVerSpacing
+                else:
+                    print("New constraint has been declared, which is not considered yet. Contact developer. ")
+                    exit()
+                
+            
+        
+        
 
         start_v = None
         end_v = None
@@ -116,12 +183,45 @@ class CS_to_CG():
             current_constraints = []
             for index, row in data.iterrows():
                 if index in range(start_v, end_v + 1):
-                    voltage_constraints.append([float(row[0]), float(row[1]) * mult])  # voltage rating,minimum spacing
+                    voltage_constraints.append([float(row[0]), float(row[1]) * dbunit])  # voltage rating,minimum spacing
                 if index in range(start_c, end_c + 1):
-                    current_constraints.append([float(row[0]), float(row[1]) * mult])  # current rating,minimum width
+                    current_constraints.append([float(row[0]), float(row[1]) * dbunit])  # current rating,minimum width
 
-            CONSTRAINT.setup_I_V_constraints(voltage_constraints, current_constraints)
+            self.setup_I_V_constraints(voltage_constraints, current_constraints)
 
+    
+    
+    def setup_I_V_constraints(self,voltage_constraints, current_constraints):
+        for cons in voltage_constraints:
+            self.voltage_constraints[cons[0]]=cons[1]
+        for cons in current_constraints:
+            self.current_constraints[cons[0]]=cons[1]
+
+    
+
+    # returns constraint value of given edge
+    def getConstraintVal(self,source=None,dest=None,type_=None, cons_name=None):
+        for constraint in self.constraints:
+            if constraint.name == cons_name and source==None and dest==None:
+                index_=self.all_cs_types.index(type_)
+                return constraint.value[index_]
+            elif constraint.name == cons_name and source!=None and dest!=None:
+                return constraint.value[source][dest]
+            else:
+                print("ERROR: Constraint Not Found")
+                exit()
+        
+
+    def get_ledgeWidth(self,dest=None,cons_name=None):
+        source='EMPTY'
+        for constraint in self.constraints:
+            if constraint.name == cons_name and dest!=None:
+                ledgewidth= constraint.value[source][dest]
+        
+        return ledgewidth
+    
+    
+    
     def Sym_to_CS(self, Input_rects, Htree, Vtree):
         '''
 
@@ -336,4 +436,13 @@ class CS_to_CG():
 
         return cs_sym_info, layout_rects
 
-    
+if __name__== "__main__":
+
+    import pandas as pd
+    all_cs_types=['EMPTY','Type_1','Type_2','Type_3','Type_4','Type_5','Type_6','Type_7']
+    cs_to_cg=CS_to_CG(all_cs_types)
+    constraint_df=pd.read_csv('/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/constraint.csv')
+    cs_to_cg.getConstraints(constraint_df)
+    for constraint in cs_to_cg.constraints:
+        print(constraint.name)
+        print(constraint.value)

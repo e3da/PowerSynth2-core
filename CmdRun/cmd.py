@@ -6,9 +6,12 @@ cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-16] #exclude "power/cmd_run"
 sys.path.append(cur_path)'''
 
-from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
+from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
+from core.model.thermal.cornerstitch_API import ThermalMeasure
+from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
-from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout
+from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
+from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
 from core.engine.InputParser.input_script import script_translator
 from core.engine.LayoutSolution.database import create_connection, insert_record, create_table
 from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
@@ -23,6 +26,8 @@ import copy
 import csv
 from core.general.settings import settings
 
+
+from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
 
 
 def read_settings_file(filepath): #reads settings file given by user in the argument
@@ -283,11 +288,11 @@ class Cmd_Handler:
             print ("run layout generation and (or) evaluation")
             self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented out
-
+            
             if run_option == 0:
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan)
+                                         floor_plan=floor_plan,dbunit=self.dbunit)
 
 
 
@@ -305,92 +310,8 @@ class Cmd_Handler:
                     self.setup_thermal(mode='macro', setup_data=t_setup_data,meas_data=t_measure_data,model_type=thermal_model)
 
 
-                md_data=self.structure_3D.module_data
-
-                for i in range(len(self.structure_3D.layers)):
-                    layer=self.structure_3D.layers[i]
-                    patch_dict = layer.New_engine.init_data[0]
-                    init_data_islands = layer.New_engine.init_data[3]
-                #print init_data_islands
-                    init_cs_islands=layer.New_engine.init_data[2]
-                    fp_width, fp_height = layer.New_engine.init_size
-                fig_dict = {(fp_width, fp_height): []}
-                for k, v in list(patch_dict.items()):
-                    fig_dict[(fp_width, fp_height)].append(v)
-                init_rects = {}
-                #print self.engine.init_data
-                #print "here"
-                for k, v in list(layer.New_engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
-
-                    rect=v[0]
-                    x,y,width,height= [rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]]
-                    type = v[2]
-                    #rect = Rectangle(x=x * 1000, y=y * 1000, width=width * 1000, height=height * 1000, type=type)
-                    rect_up=[type,x,y,width,height]
-                    #print rect_up
-                    #rects.append(rect)
-                    init_rects[k] = rect_up
-                s1=1000
-                s=1000
-                if fp_width>1000:
-                    s1=1
-                    s=1
-                cs_sym_info = {(fp_width * s, fp_height * s): init_rects}
-                layer.updated_cs_sym_info=[cs_sym_info]
-                for isl in init_cs_islands:
-                    for node in isl.mesh_nodes:
-                        node.pos[0] = node.pos[0] * s1
-                        node.pos[1] = node.pos[1] * s1
-                for island in init_data_islands:
-                    for element in island.elements:
-
-
-                        element[1]=element[1]*s1
-                        element[2] = element[2] * s1
-                        element[3] = element[3] * s1
-                        element[4] = element[4] * s1
-
-                    if len(island.child)>0:
-                        for element in island.child:
-
-
-                            element[1] = element[1] * s1
-                            element[2] = element[2] * s1
-                            element[3] = element[3] * s1
-                            element[4] = element[4] * s1
-
-                    for isl in init_cs_islands:
-                        if isl.name==island.name:
-                            island.mesh_nodes= copy.deepcopy(isl.mesh_nodes)
-
-                md_data.islands[layer.name] = init_data_islands
-                md_data.footprint[layer.name] = (fp_width * s1, fp_height * s1)
-                #for island in init_data_islands:
-                    #island.print_island(True,size=[60000,60000])
-
-
-                #md_data = ModuleDataCornerStitch()
-
-
-                #md_data.layer_stack = self.layer_stack
-
-                solution = CornerStitchSolution(index=0)
-                solution.module_data=md_data #updated module data is in the solution
-
-                for i in range(len(self.structure_3D.layers)):
-                    self.structure_3D.layers[i].layout_info= self.structure_3D.layers[i].updated_cs_sym_info[0]
-
-                    self.structure_3D.layers[i].abstract_info= self.structure_3D.layers[i].form_abs_obj_rect_dict()
-                    layer_sol=LayerSolution(name=self.structure_3D.layers[i].name)
-                    layer_sol.layout_plot_info=self.structure_3D.layers[i].layout_info
-                    layer_sol.abstract_infos=self.structure_3D.layers[i].abstract_info
-                    layer_sol.layout_rects=self.structure_3D.layers[i].layer_layout_rects
-                    layer_sol.min_dimensions=self.structure_3D.layers[i].New_engine.min_dimensions
-
-                    layer_sol.update_objects_3D_info(initial_input_info=self.structure_3D.layers[i].initial_layout_objects_3D,mode=-1)
-                    #print(self.structure_3D.layers[i].layout_info)
-                    solution.layer_solutions.append(layer_sol)
-
+                
+                solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
                 initial_solutions=[solution]
                 md_data=[solution.module_data]
                 PS_solutions=[] #  PowerSynth Generic Solution holder
@@ -427,13 +348,10 @@ class Cmd_Handler:
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data)
 
 
-                '''self.solutions=generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,rel_cons=self.i_v_constraint,
-                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot,
-                                         apis={'E': self.e_api, 'T': self.t_api}, num_layouts=num_layouts, seed=seed,
-                                         algorithm=algorithm, floor_plan=floor_plan,num_gen=num_gen,measures=self.measures)'''
+                
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen)
+                                         floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
 
                 
                 self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode)
@@ -585,7 +503,7 @@ class Cmd_Handler:
             try:
                 os.remove(f)
             except:
-                print("can't remove file")
+                print("can't remove db file")
 
         if not os.path.exists(database):
             os.makedirs(database)
@@ -632,22 +550,22 @@ class Cmd_Handler:
         #updating constraint table
         self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
         self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
-
-        input()
+        
         for i in range(len(self.structure_3D.layers)):
             layer=self.structure_3D.layers[i]
             input_info = [layer.input_rects, layer.size, layer.origin]
             layer.populate_bondwire_objects()
-            layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer layout
-            layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=voltage_info,current_info=current_info,dbunit=dbunit) # added bondwires to populate node id information
-
-            for comp in layer.new_engine.all_components:
+            
+            layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
+            layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
+            layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
+            self.wire_table[layer.name]=layer.wire_table # for electriical model
+            for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
-
-
-        
-        
-        #No need to handle inter-layer constraints
+                self.comp_dict[comp.layout_component_id] = comp # for electrical model
+       
+        #No need to handle inter-layer constraints for now
+        """
         # taking info for inter-layer constraints
         if self.new_mode==0:
             try:
@@ -670,26 +588,38 @@ class Cmd_Handler:
             '''
         #print(self.structure_3D.layer_constraints_info)
         #input()
+        """
         self.structure_3D.create_module_data_info(layer_stack=self.layer_stack)
         self.structure_3D.populate_initial_layout_objects_3D()
-        #self.structure_3D.create_sample_solution()
+
+        ##------------------------Debugging-----------------------------------------###
+        debug=False
+        if debug:
+            print("Plotting 3D layout structure")
+            solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
+            initial_solutions=[solution]
+            
+            
+            for i in range(len(initial_solutions)):
+                solution=initial_solutions[i]
+                sol=PSSolution(solution_id=solution.index)
+                sol.make_solution(mode=-1,cs_solution=solution,module_data=solution.module_data)
+                for f in sol.features_list:
+                    f.printFeature()
+                plot_solution_structure(sol)
+                
+        ##--------------------------------------------------------------------------####
         self.structure_3D.create_root()
         self.structure_3D.assign_floorplan_size()
+        #self.structure_3D.root_node_h.printNode()
+        #self.structure_3D.root_node_v.printNode()
         
-        for i in range(len(self.structure_3D.layers)):
-            for comp in self.structure_3D.layers[i].New_engine.all_components:
-                self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
-                #print(comp.layout_component_id)
-                self.comp_dict[comp.layout_component_id] = comp
         
-        for layer in all_layers:
-            self.wire_table[layer.name]=layer.wire_table
-
-
+    
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
         print("init api:", type)
         if type == 'PowerSynthPEEC':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
@@ -846,7 +776,7 @@ class Cmd_Handler:
                     self.set_up_db()
                     self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan)
+                                         floor_plan=floor_plan,dbunit=self.dbunit)
                 
 
             if opt == 1:

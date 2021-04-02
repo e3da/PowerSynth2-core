@@ -34,11 +34,9 @@ class New_layout_engine():
     
  
 
-    def init_layout(self,input_format=None,islands=None,bondwires=None,flexible=None,voltage_info=None,current_info=None,dbunit=1000):
+    def init_layout(self,input_format=None,islands=None,all_cs_types=None,all_colors=None,bondwires=None,flexible=None,voltage_info=None,current_info=None,dbunit=1000):
         '''
-
-        :param sym_layout: old symbolic layout
-        :param input_format: a list: [list of rectangle objects to create corner stitch ,initial_floorplan_size]
+        :param input_format: a list: [list of rectangle objects to create corner stitch ,initial_floorplan_size, given origin coordinate of the floorplan]
         :param islands: list of island objects created from initial layout input script
         :return: creates corner stitch data structure from initial layout and creates islands with corner stitch tiles, updates mesh node objects for each island,
         creates a map between input rectangle to corner stitch tile. If it's a connected group (island), mapping is done by group wise, else it is one-to-one
@@ -53,9 +51,9 @@ class New_layout_engine():
         self.H=size[1] # hieght
         self.flexible=flexible
         # creates horizontal and vertical corner stitch
-        #print("SIZE",origin,size)
         
-        self.create_cornerstitch(input_rects,origin,size,islands,bondwires,voltage_info,current_info,dbunit=dbunit)
+        
+        self.create_cornerstitch(input_rects,origin,size,islands,all_cs_types,all_colors,bondwires,voltage_info,current_info,dbunit=dbunit)
 
 
 
@@ -157,7 +155,7 @@ class New_layout_engine():
         #plt.xlim(0, 60)
 
 
-    def create_cornerstitch(self,input_rects=None,origin=None,size=None,islands=None,bondwires=None,voltage_info=None,current_info=None,dbunit=1000):
+    def create_cornerstitch(self,input_rects=None,origin=None,size=None,islands=None,all_cs_types=None,all_colors=None,bondwires=None,voltage_info=None,current_info=None,dbunit=1000):
         '''
         :param input_rects: list of rectangle objects for corner stitch input
         :param size: floorplan size given by user
@@ -167,7 +165,7 @@ class New_layout_engine():
 
         input_ = self.cornerstitch.read_input('list',Rect_list=input_rects)  # Makes the rectangles compaitble to new layout engine input format
         self.Htree, self.Vtree = self.cornerstitch.input_processing(input_, origin,size[0],size[1])  # creates horizontal and vertical corner stitch layouts
-        patches, combined_graph = self.cornerstitch.draw_layout(rects=input_rects, Htree=self.Htree,Vtree=self.Vtree,dbunit=dbunit)  # collects initial layout patches and combined HCS,VCS points as a graph for mode-3 representation
+        patches, combined_graph = self.cornerstitch.draw_layout(rects=input_rects,types=all_cs_types,colors=all_colors,dbunit=dbunit)  # collects initial layout patches and combined HCS,VCS points as a graph for mode-3 representation
 
         for node in self.Htree.hNodeList:
             node.Final_Merge()
@@ -180,50 +178,22 @@ class New_layout_engine():
             for node in self.Htree.hNodeList:
                 self.plotrectH_old(node)
         
-        #-------------------------------------------------------
-        #'''
-        #plot = False
-        #if plot:
-            #fig2, ax2 = plt.subplots()
-            #Names = patches.keys()
-            #Names.sort()
-            #for k, p in patches.items():
-
-                #if k[0] == 'T':
-                    #x = p.get_x()
-                    #y = p.get_y()
-                    #ax2.text(x + 0.1, y + 0.1, k)
-                    #ax2.add_patch(p)
-
-            #for k, p in patches.items():
-
-                #if k[0] != 'T':
-                    #x = p.get_x()
-                    #y = p.get_y()
-                    #ax2.text(x + 0.1, y + 0.1, k, weight='bold')
-                    #ax2.add_patch(p)
-            #ax2.set_xlim(0, size[0])
-            #ax2.set_ylim(0, size[1])
-            #ax2.set_aspect('equal')
-            #plt.savefig('D:\Demo\New_Flow_w_Hierarchy\Figs'+'/_initial_layout.png')
-        #'''
+        
 
         # creating corner stitch islands and map between input rectangle(s) and corner stitch tile(s)
         cs_islands,sym_to_cs= self.form_cs_island(islands, self.Htree, self.Vtree) # creates a list of island objects populated with corner stitch tiles
-        # populates mesh node objects for each island for electrical evaluation
-
-        #cs_islands=self.populate_mesh_nodes(cs_islands,self.Htree,self.Vtree) # adding mesh nodes to the islands
-        '''for island in cs_islands:
+       
+        #--------------------------------------for debugging----------------------
+        """
+        for island in cs_islands:
             #print(island.name)
+            island.print_island(plot=True,origin=origin,size=size,dbunit=dbunit)
             for element in island.elements:
                 print(element)
             for child in island.child:
                 print("c",child)
-        input()'''
-        #--------------------------------------for debugging----------------------
-        #for island in cs_islands:
-            #island.print_island(plot=True,size=[57,75])
-        #raw_input()
+        input()
+        """
         #for k,v in sym_to_cs.items():
             #print k,v
         #--------------------------------------------------------------------------
@@ -232,9 +202,7 @@ class New_layout_engine():
 
             self.apply_IV_loading(cs_islands,voltage_info,current_info)
 
-        #--------------------------------------------for debugging----------------------
-
-
+       
         # populating node ids in bondwire objects
         bondwire_to_trace = {}  # to find traces on which bondwire pads are located
         for wire in bondwires:
@@ -251,8 +219,7 @@ class New_layout_engine():
                         if wire.dest_comp in element:
                             bondwire_to_trace[wire.dest_comp] = island.name
 
-        #flexible=True
-        #if flexible==False:
+        
         if self.flexible==False:
             # adding source and destination node ids for each wire
             for wire in bondwires:
@@ -284,31 +251,15 @@ class New_layout_engine():
                             for element in island.elements:
                                 wire.source_node_id=element[-1] # node id
                                 break
-        self.bondwires = copy.deepcopy(bondwires)  # to pass bondwire info to CG
+        #self.bondwires = copy.deepcopy(bondwires)  # to pass bondwire info to CG
         #for wire in self.bondwires:
             #print("here", wire.printWire())
-        #raw_input()
+        #input()
 
 
 
 
-        """
-        rectlist1=[]
-        rectlist2=[]
-        for rect in self.Htree.hNodeList[0].stitchList:
-            if rect.voltage!=None:
-                r=[rect.cell.x,rect.cell.y,rect.getWidth(),rect.getHeight()]
-                rectlist1.append(r)
-        for rect in self.Vtree.vNodeList[0].stitchList:
-            if rect.voltage!=None:
-                r = [rect.cell.x, rect.cell.y, rect.getWidth(), rect.getHeight()]
-                rectlist2.append(r)
-        fig,ax=plt.subplots()
-        draw_rect_list_cs(rectlist=rectlist1,ax=ax,x_max=80,y_max=80)
-
-        fig, ax = plt.subplots()
-        draw_rect_list_cs(rectlist=rectlist2, ax=ax,x_max=80,y_max=80)
-        """
+        
         #------------------------------------------------------------------------------------
 
         #To access globally, patches=initial input rectangle patch list, sym_to_cs= dictionary mapped between input rectangle(s) and corner stitch tile(s)

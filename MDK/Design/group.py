@@ -1,7 +1,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+from core.engine.CornerStitch.CSinterface import CornerStitch
 
 class Island():
     def __init__(self):
@@ -26,7 +26,7 @@ class Island():
                 devices[name]=dev_center
         return devices
 
-    def print_island(self,plot=False,size=None):
+    def print_island(self,plot=False,origin=None,size=None,dbunit=1000):
         print("Name", self.name)
         print("Num_elements", len(self.elements))
         for i in range(len(self.elements)):
@@ -36,7 +36,7 @@ class Island():
             for i in range(len(self.child)):
                 print(self.child[i])
         if plot == True and size!=None:
-            self.plot_island_rects(size=size)
+            self.plot_island_rects(origin=origin,size=size,dbunit=1000)
         if len(self.mesh_nodes)>0:
             if plot==True:
 
@@ -61,13 +61,15 @@ class Island():
                 self.plot_points(all_points,all_boundaries,size)
         '''
 
-    def plot_island_rects(self,size=None):
+    def plot_island_rects(self,origin=None,size=None,dbunit=1000):
         rectlist=[]
         for element in self.elements:
-            rectlist.append([element[1],element[2],element[3],element[4],element[0]])
+            
+            rectlist.append([element[1],element[2],element[3],element[4],element[5],element[0]])
 
         fig,ax=plt.subplots()
-        #draw_rect_list_cs(rectlist,ax,x_max=size[0],y_max=size[1])
+        cs=CornerStitch()
+        cs.draw_rect_list_cs(rectlist,ax,dbunit=dbunit,x_min=origin[0],y_min=origin[1],x_max=size[0],y_max=size[1])
 
     def plot_points(self,all_points,all_boundaries,size=None):
         s = set(tuple(x) for x in all_points)

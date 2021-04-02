@@ -108,7 +108,7 @@ class BondingWires():
             print("type: Vertical")
         else:
             print("type",self.dir_type)
-
+        print("cs_type",self.cs_type)
 
 
     def set_dir_type(self):

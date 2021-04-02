@@ -1,0 +1,252 @@
+         325324 function calls in 0.655 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.291    0.291    0.471    0.471 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:362(update_mutual)
+        1    0.087    0.087    0.087    0.087 {powercad.parasitics.mutual_inductance.mutual_mat_eval}
+    23528    0.037    0.000    0.050    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:831(__iter__)
+        1    0.034    0.034    0.034    0.034 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:464(inv)
+        3    0.028    0.009    0.056    0.019 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:953(mesh_nodes)
+        1    0.020    0.020    0.020    0.020 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:315(solve)
+    23127    0.016    0.000    0.021    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:628(nodes)
+        1    0.014    0.014    0.014    0.014 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:286(matrix_formation)
+    69109    0.013    0.000    0.013    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:177(__getitem__)
+     8198    0.011    0.000    0.014    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:823(add_edge)
+    37017    0.010    0.000    0.010    0.000 {method 'items' of 'dict' objects}
+      206    0.008    0.000    0.008    0.000 {numpy.core.multiarray.array}
+        1    0.007    0.007    0.014    0.014 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:186(m_graph_read)
+        2    0.007    0.003    0.007    0.004 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\basic.py:907(inv)
+        1    0.007    0.007    0.072    0.072 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:534(mesh_grid_hier)
+    22914    0.007    0.000    0.007    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:1047(has_edge)
+    19804    0.005    0.000    0.005    0.000 {method 'sort' of 'list' objects}
+    23127    0.004    0.000    0.004    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:167(__init__)
+    23392    0.004    0.000    0.004    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:787(<lambda>)
+        1    0.004    0.004    0.018    0.018 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:212(update_trace_RL_val)
+     4096    0.004    0.000    0.004    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:108(_graph_add_M)
+     1710    0.003    0.000    0.005    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:112(include)
+        8    0.003    0.000    0.003    0.000 {numpy.core.multiarray.dot}
+     4109    0.003    0.000    0.003    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:717(__iter__)
+        3    0.002    0.001    0.004    0.001 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:767(mesh_edges)
+    22038    0.002    0.000    0.002    0.000 {method 'append' of 'list' objects}
+     8609    0.002    0.000    0.002    0.000 {method 'update' of 'dict' objects}
+        1    0.001    0.001    0.001    0.001 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:228(build_current_info)
+        1    0.001    0.001    0.002    0.002 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:133(_graph_read)
+       13    0.001    0.000    0.001    0.000 {numpy.core.multiarray.concatenate}
+        4    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\pykrige\variogram_models.py:53(exponential_variogram_model)
+     8219    0.001    0.000    0.001    0.000 {method 'get' of 'dict' objects}
+     1710    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:103(find_line)
+        1    0.001    0.001    0.075    0.075 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:432(solve_iv)
+     5724    0.001    0.000    0.001    0.000 {abs}
+       26    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\function_base.py:25(linspace)
+        2    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:1107(find_node)
+      371    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\defchararray.py:1851(__getitem__)
+     4102    0.001    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:655(<lambda>)
+        1    0.000    0.000    0.001    0.001 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:244(update_hier_edge_RL)
+      478    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:416(__getitem__)
+      172    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:331(add_edge)
+     1148    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:153(equal)
+      402    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\_abcoll.py:416(values)
+      134    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:143(store_edge_info)
+       98    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:136(add_node)
+       52    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:2908(_update_from)
+       32    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:2934(__array_finalize__)
+      478    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:283(adj)
+        4    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1007(__call__)
+      478    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\coreviews.py:102(__getitem__)
+        4    0.000    0.000    0.000    0.000 {scipy.spatial._distance_wrap.cdist_euclidean_double_wrap}
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:115(_broadcast_to)
+       19    0.000    0.000    0.000    0.000 {numpy.core.multiarray.zeros}
+      478    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\coreviews.py:81(__getitem__)
+      387    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:200(encloses)
+        1    0.000    0.000    0.001    0.001 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:383(J_mat)
+      172    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:302(new_edge_key)
+        2    0.000    0.000    0.011    0.005 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\pykrige\ok.py:458(_exec_vector)
+       24    0.000    0.000    0.000    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+      172    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:54(__init__)
+     1434    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\coreviews.py:45(__init__)
+      526    0.000    0.000    0.000    0.000 {method 'keys' of 'dict' objects}
+      485    0.000    0.000    0.000    0.000 {getattr}
+       13    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\function_base.py:4568(meshgrid)
+      629    0.000    0.000    0.000    0.000 {isinstance}
+      232    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:442(add_node)
+        2    0.000    0.000    0.000    0.000 {method 'repeat' of 'numpy.ndarray' objects}
+      134    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:166(__init__)
+       24    0.000    0.000    0.000    0.000 {range}
+       38    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:344(add_hier_edge)
+      443    0.000    0.000    0.000    0.000 {method 'format' of 'str' objects}
+        5    0.000    0.000    0.000    0.000 {method 'tolist' of 'numpy.ndarray' objects}
+      402    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\coreviews.py:51(__iter__)
+       98    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:19(__init__)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:378(V_mat)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\pykrige\core.py:113(_adjust_for_anisotropy)
+      173    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:102(_graph_add_comp)
+      134    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:224(height_eval)
+       13    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:195(broadcast_arrays)
+      451    0.000    0.000    0.000    0.000 {math.sqrt}
+      275    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\defchararray.py:1846(__array_finalize__)
+       60    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:516(check_bound_type)
+       82    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3372(__setattr__)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:403(Vi_mat)
+      478    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\coreviews.py:54(__getitem__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\spatial\distance.py:2285(cdist)
+       13    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:176(_broadcast_shape)
+        2    0.000    0.000    0.012    0.006 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\pykrige\ok.py:556(execute)
+       32    0.000    0.000    0.000    0.000 {method 'copy' of 'numpy.ndarray' objects}
+      617    0.000    0.000    0.000    0.000 {iter}
+        2    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\pykrige\ok.py:442(_get_kriging_matrix)
+       93    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:495(asanyarray)
+      183    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:174(__iter__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\lapack.py:590(_compute_lwork)
+        1    0.000    0.000    0.007    0.007 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\parasitics\mdl_compare.py:185(trace_res_krige)
+        1    0.000    0.000    0.001    0.001 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:424(A_mat)
+      134    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:220(width_eval)
+       26    0.000    0.000    0.000    0.000 {numpy.core.multiarray.arange}
+       30    0.000    0.000    0.000    0.000 {method 'astype' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.005    0.005 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\parasitics\mdl_compare.py:223(trace_ind_krige)
+       40    0.000    0.000    0.000    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+       13    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:291(get_all_lines)
+      134    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:611(has_edge)
+       26    0.000    0.000    0.000    0.000 {numpy.core.multiarray.result_type}
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3186(__getitem__)
+      173    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\type_check.py:147(imag)
+      189    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:189(__call__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:2771(__new__)
+       26    0.000    0.000    0.000    0.000 {method 'flatten' of 'numpy.ndarray' objects}
+        9    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:305(_save_hier_node_data)
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3570(_get_data)
+      177    0.000    0.000    0.000    0.000 {len}
+      173    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\type_check.py:106(real)
+        3    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:270(__init__)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:95(__init__)
+       24    0.000    0.000    0.001    0.000 {method 'view' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:391(Ii_mat)
+       12    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:2460(seterr)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\blas.py:297(_get_funcs)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3383(__setmask__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\function_base.py:1170(asarray_chkfinite)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_mesh.py:529(update_E_comp_parasitics)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:4538(reshape)
+        1    0.000    0.000    0.002    0.002 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:2342(multi_dot)
+        9    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:906(__init__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:4961(sum)
+       20    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:424(asarray)
+       98    0.000    0.000    0.000    0.000 {method 'rstrip' of 'str' objects}
+        7    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:933(__call__)
+       12    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:2560(geterr)
+       23    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:228(center)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\_lib\_util.py:192(_asarray_validated)
+        2    0.000    0.000    0.000    0.000 {built-in method __new__ of type object at 0x1D537628}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3004(__array_wrap__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\spatial\distance.py:240(_validate_cdist_input)
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\function_base.py:13(_index_deprecate)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:2574(wrapped_method)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:643(get_masked_subclass)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:138(_commonType)
+       46    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1360(getmask)
+       26    0.000    0.000    0.000    0.000 {any}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\getlimits.py:507(__init__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\index_tricks.py:676(fill_diagonal)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_module.py:38(update_edges)
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:251(<genexpr>)
+        1    0.000    0.000    0.002    0.002 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:2453(_multi_dot_three)
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\function_base.py:213(iterable)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:5834(tolist)
+        9    0.000    0.000    0.000    0.000 {max}
+       52    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:96(__init__)
+        8    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:670(getdata)
+        7    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:642(__init__)
+       13    0.000    0.000    0.000    0.000 {hasattr}
+       13    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\general\data_struct\util.py:288(get_all_corners)
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:1917(isscalar)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\defchararray.py:1811(__new__)
+       78    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:120(<genexpr>)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:1778(sum)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:100(get_linalg_error_extobj)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3669(filled)
+       14    0.000    0.000    0.000    0.000 {method 'any' of 'numpy.ndarray' objects}
+        4    0.000    0.000    0.000    0.000 {numpy.core.multiarray.empty}
+       26    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\lib\stride_tricks.py:25(_maybe_view_as_subclass)
+        3    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:105(_makearray)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:1934(any)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\blas.py:236(find_best_blas_type)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:444(_check_fill_value)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\shape_base.py:11(atleast_1d)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:6345(array)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:19(__init__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3064(view)
+        7    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\graph.py:1132(edges)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\shape_base.py:63(atleast_2d)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1313(_replace_dtype_fields)
+       18    0.000    0.000    0.000    0.000 {issubclass}
+       60    0.000    0.000    0.000    0.000 {method 'pop' of 'dict' objects}
+       12    0.000    0.000    0.000    0.000 {numpy.core.umath.seterrobj}
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:253(__iter__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:208(_assertNdSquareness)
+       14    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\_methods.py:37(_any)
+        4    0.000    0.000    0.001    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:4090(__mul__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:769(__init__)
+        6    0.000    0.000    0.000    0.000 {zip}
+       13    0.000    0.000    0.000    0.000 {all}
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1646(make_mask_none)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:247(__init__)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\shape_base.py:182(vstack)
+        8    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:547(ascontiguousarray)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1424(getmaskarray)
+        4    0.000    0.000    0.000    0.000 {min}
+        8    0.000    0.000    0.000    0.000 {method 'index' of 'list' objects}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:1108(__call__)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:421(X_mat)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1281(_replace_dtype_fields_recursive)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:7759(asarray)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:50(_wrapfunc)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:197(_assertRankAtLeast2)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\_methods.py:40(_all)
+        6    0.000    0.000    0.000    0.000 {method 'all' of 'numpy.ndarray' objects}
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1327(make_mask_descr)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:2862(__exit__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:1819(_check_mask_axis)
+        8    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\spatial\distance.py:183(_convert_to_type)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\multigraph.py:667(edges)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:417(Z_mat)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:6985(reshape)
+        8    0.000    0.000    0.000    0.000 {method 'transpose' of 'numpy.ndarray' objects}
+        2    0.000    0.000    0.000    0.000 {method 'values' of 'dict' objects}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\lapack.py:520(get_lapack_funcs)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:2857(__enter__)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numeric.py:2853(__init__)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\networkx\classes\reportviews.py:235(__init__)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\e_module.py:42(build_graph)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:98(assign_freq)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:5831(<lambda>)
+        4    0.000    0.000    0.000    0.000 {method 'sum' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.000    0.000 {time.time}
+        3    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:123(_realType)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numerictypes.py:962(find_common_type)
+       24    0.000    0.000    0.000    0.000 {numpy.core.umath.geterrobj}
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:1190(squeeze)
+        6    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3200(_is_scalar)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\spatial\distance.py:187(_filter_deprecated_kwargs)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\ma\core.py:3962(_delegate_binop)
+       26    0.000    0.000    0.000    0.000 {operator.index}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:382(repeat)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\getlimits.py:532(max)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\_methods.py:31(_sum)
+        4    0.000    0.000    0.000    0.000 {method 'ravel' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:128(_add_termial)
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\numerictypes.py:939(_can_coerce_all)
+        4    0.000    0.000    0.000    0.000 {method 'lower' of 'unicode' objects}
+        4    0.000    0.000    0.000    0.000 {method 'squeeze' of 'numpy.ndarray' objects}
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:191(_assertRank2)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:114(ind      2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\sparse\base.py:1187(isspmatrix)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\PowerCAD-full\src\powercad\electrical_mdl\spice_eval\rl_mat_eval.py:114(indep_current_source)
+        2    0.000    0.000    0.000    0.000 {_functools.reduce}
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\core\fromnumeric.py:1613(shape)
+        1    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\numpy\linalg\linalg.py:191(_assertRank2)
+        2    0.000    0.000    0.000    0.000 {method '__array_prepare__' of 'numpy.ndarray' objects}
+        4    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\spatial\distance.py:126(_args_to_kwargs_xdist)
+        2    0.000    0.000    0.000    0.000 C:\PowerSynth_git\Mutual_Inductance\env_mutual\env2\lib\site-packages\scipy\linalg\misc.py:177(_datacopied)
+        4    0.000    0.000    0.000    0.000 {callable}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+
+

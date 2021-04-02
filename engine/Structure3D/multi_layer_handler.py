@@ -30,6 +30,7 @@ class Layer():
         #self.all_components_type_mapped_dict={}
         self.all_components_types=[]
         self.all_cs_types=[]
+        self.colors=[]
         self.wire_table={}
         self.comp_dict={}
         self.direction='Z+' # direction of the layer and their elements (Z+/-)
@@ -61,33 +62,13 @@ class Layer():
 
 
 
-    def plot_layout(self,fig_data=None, rects=None,origin=None, size=None, fig_dir=None,name=None,dbunit=1000):
+    def plot_layout(self,fig_data=None, fig_dir=None,name=None,dbunit=1000):
 
-        N = len(types)
-        all_colors=color_list_generator()
-        colors=[all_colors[i] for i in range(N)] 
-        if rects != None:
-            colors = ['green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
-            type = ['Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
-            # zorders = [1,2,3,4,5]
-            Patches = {}
-
-            for r in rects:
-                
-                i = type.index(r[0])
-                # print i,r.name
-                P = patches.Rectangle(
-                    (r[1]/dbunit, r[2]/dbunit),  # (x,y)
-                    r[3]/dbunit,  # width
-                    r[4]/dbunit,  # height
-                    facecolor=colors[i],
-                    alpha=0.5,
-                    # zorder=zorders[i],
-                    edgecolor='black',
-                    linewidth=1,
-                )
-                Patches[r[5]] = P
-            fig_data = Patches
+        '''
+        plots initial layout with layout component id on each trace.
+        :param: fig_data: patches created after corner stitch operation.
+        '''
+        
 
         fig, ax = plt.subplots()
 
@@ -106,11 +87,11 @@ class Layer():
                 ax.text(x + 0.1, y + 0.1, k, weight='bold')
                 ax.add_patch(p)
 
-        ax.set_xlim(origin[0]/dbunit, (origin[0]+size[0])/dbunit)
-        ax.set_ylim(origin[1]/dbunit, (origin[1]+size[1])/dbunit)
+        ax.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
+        ax.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         ax.set_aspect('equal')
 
-        plt.savefig(fig_dir + '/_init_layout' + name+'.png')
+        plt.savefig(fig_dir + '/_init_layout_w_names_' + name+'.png')
         plt.close()
 
 
@@ -462,6 +443,7 @@ class Layer():
                     wire.wire_id=k
                     wire.num_of_wires=int(v['num_wires'])
                     wire.cs_type= self.component_to_cs_type['bonding wire pad']
+                    wire.set_dir_type() #dsetting direction: Horizontal/vertical
                     bondwire_objects.append(wire)
         
         self.bondwires=bondwire_objects
@@ -754,6 +736,9 @@ class Layer():
         n = len(types)
         all_colors=color_list_generator()
         colors=[all_colors[i] for i in range(n)]
+        #print(types)
+        self.all_cs_types=types
+        self.colors=colors
         
 
         rectlist=[]

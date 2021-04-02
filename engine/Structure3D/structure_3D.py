@@ -11,6 +11,7 @@ from core.engine.ConstrGraph.ConstraintGraph import Edge
 from core.engine.CornerStitch.CornerStitch import Node
 from core.engine.LayoutSolution.database import create_connection,insert_record
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
+from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution
 from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath
@@ -37,6 +38,9 @@ class Structure_3D():
         self.all_components_cs_types={} # mapped cs types for each component in all_components
         self.cs_type_map=None # CS_Type_Map object populated from input script parser
         self.constraint_df=None # constraint dataframe
+        self.voltage_info=None # voltage information from the user for reliability awareness case
+        self.current_info= None # current information from the user for reliability awareness case
+        self.objects_3D =[] # duplicated 3D objects.
         
         
     def create_module_data_info(self,layer_stack=None):
@@ -46,8 +50,7 @@ class Structure_3D():
         module_data=ModuleDataCornerStitch()
         module_data.layer_stack=layer_stack
         module_data.via_connectivity_info=self.via_connected_layer_info
-        #print(module_data.via_connectivity_info)
-        #input()
+        
         for layer in self.layers:
             module_data.footprint[layer.name]=[layer.width, layer.height] # footprint={'I1':[30,40]}
             module_data.islands[layer.name]=layer.islands
@@ -97,6 +100,89 @@ class Structure_3D():
             df = pd.DataFrame(all_rows)
             self.layer_constraints_info=df
             
+    def create_initial_solution(self,dbunit=1000):
+        '''
+        Creates initial solution object for debugging if 3D layout is correct or not. Also, for single layout evaluation, this is necessary.
+        '''
+        md_data=self.module_data
+
+        for i in range(len(self.layers)):
+            layer=self.layers[i]
+            patch_dict = layer.new_engine.init_data[0]
+            init_data_islands = layer.new_engine.init_data[3]
+            init_cs_islands=layer.new_engine.init_data[2]
+            fp_width, fp_height = layer.size
+        fig_dict = {(fp_width, fp_height): []}
+        for k, v in list(patch_dict.items()):
+            fig_dict[(fp_width, fp_height)].append(v)
+        init_rects = {}
+        for k, v in list(layer.new_engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
+            rect=v[0]
+            x,y,width,height= [rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]]
+            type = v[2]
+            rect_up=[type,x,y,width,height]
+            init_rects[k] = rect_up
+        
+        if fp_width>dbunit:
+            
+            s=1
+        else:
+            s=dbunit
+        cs_sym_info = {(fp_width * s, fp_height * s): init_rects}
+        layer.updated_cs_sym_info=[cs_sym_info]
+        for isl in init_cs_islands:
+            for node in isl.mesh_nodes:
+                node.pos[0] = node.pos[0] * s
+                node.pos[1] = node.pos[1] * s
+        for island in init_data_islands:
+            for element in island.elements:
+
+
+                element[1]=element[1]*s
+                element[2] = element[2] * s
+                element[3] = element[3] * s
+                element[4] = element[4] * s
+
+            if len(island.child)>0:
+                for element in island.child:
+
+
+                    element[1] = element[1] * s
+                    element[2] = element[2] * s
+                    element[3] = element[3] * s
+                    element[4] = element[4] * s
+
+            for isl in init_cs_islands:
+                if isl.name==island.name:
+                    island.mesh_nodes= copy.deepcopy(isl.mesh_nodes)
+
+        md_data.islands[layer.name] = init_data_islands
+        md_data.footprint[layer.name] = (fp_width * s, fp_height * s)
+
+        solution = CornerStitchSolution(index=0)
+        solution.module_data=md_data #updated module data is in the solution
+
+        for i in range(len(self.layers)):
+            self.layers[i].layout_info= self.layers[i].updated_cs_sym_info[0]
+
+            self.layers[i].abstract_info= self.layers[i].form_abs_obj_rect_dict()
+            layer_sol=LayerSolution(name=self.layers[i].name)
+            layer_sol.layout_plot_info=self.layers[i].layout_info
+            layer_sol.abstract_infos=self.layers[i].abstract_info
+            layer_sol.layout_rects=self.layers[i].layer_layout_rects
+            layer_sol.min_dimensions=self.layers[i].new_engine.min_dimensions
+
+            layer_sol.update_objects_3D_info(initial_input_info=self.layers[i].initial_layout_objects_3D,mode=-1)
+            solution.layer_solutions.append(layer_sol)
+
+        return solution
+        
+
+
+
+
+        
+    
     # generate initial constraint table based on the types in the input script and saves information in the given csv file as constraint
     def update_constraint_table(self,rel_cons=0):
     
@@ -310,22 +396,24 @@ class Structure_3D():
         
 
         self.constraint_df = cons_df
+        self.voltage_info= voltage_info
+        self.current_info= current_info
 
 
 
 
 
-    def populate_initial_layout_objects_3D(self):
+    def populate_initial_layout_objects_3D(self,dbunit=1000):
         '''
         populates 3D object list for initial layout given by user
         '''
-        s=1000 #multiplier for layout engine
+        #s=1000 #multiplier for layout engine
         for layer in self.layers:
             objects_3D=[]
             #print(layer.name,layer.direction)
             
             comps_names=[]
-            for comp in layer.New_engine.all_components:
+            for comp in layer.all_components:
                 name=(comp.layout_component_id)
                 if name[0]!='B':
                     comps_names.append(name)
@@ -336,8 +424,8 @@ class Structure_3D():
                         else:
                             height=0.18 # fixed for now ; need to implement properly
                         material=comp.material_id # assumed that components have material id from component file
-                        width=comp.footprint[0]*s # width from component file
-                        length=comp.footprint[1]*s # length from component file
+                        width=comp.footprint[0]*dbunit # width from component file
+                        length=comp.footprint[1]*dbunit # length from component file
                         z=-1 # initialize with negative z value, later will be replaced by actual z value
                     elif isinstance(comp,RoutingPath): # routing path involves traces, bonding wire pads. Here we have excluded bonding wire pads.
                         for id, layer_object in self.module_data.layer_stack.all_layers_info.items():
@@ -352,21 +440,16 @@ class Structure_3D():
                     cell_3D_object=Cell3D(name=name,z=z,w=width,l=length,h=height,material=material)
                     objects_3D.append(cell_3D_object)
             for rect in layer.input_geometry:
-                #print(rect)
                 for f in objects_3D:
                     rect_name=f.name.split('.')[0]
                     if rect_name in rect:
                         ind=rect.index(rect_name)
-                        #print(rect_name)
-                        #print(rect[ind+2])
-                        f.x=float(rect[ind+2])*s # gathering x,y,w,l info from input script
-                        f.y=float(rect[ind+3])*s
+                        f.x=float(rect[ind+2])*dbunit # gathering x,y,w,l info from input script
+                        f.y=float(rect[ind+3])*dbunit
                         if f.w==0:
-                            f.w=float(rect[ind+4])*s
-                            f.l=float(rect[ind+5])*s
+                            f.w=float(rect[ind+4])*dbunit
+                            f.l=float(rect[ind+5])*dbunit
                         if f.z<0:
-                            #print (layer.id)
-                            #print(rect)
                             dots=0
                             for i in range(len(rect)):
                                 if rect[i]=='.':
@@ -376,8 +459,7 @@ class Structure_3D():
                                 if 'V' in rect_name or 'L' in rect_name or 'D' in rect_name:
                                     layer_id=int(rect[-2].strip('_'))-1
                                     rect[-2]=layer_id
-                            #print(rect[-2])
-                            #input()
+
                             if layer.id==int(rect[-2])-1 and  layer.direction=='Z+':
                                 if layer.id in self.module_data.layer_stack.all_layers_info: 
                                     f1=self.module_data.layer_stack.all_layers_info[layer.id]
@@ -389,26 +471,26 @@ class Structure_3D():
                                     f.z=f1.z_level-f.h*dots
                                     f.z=round(f.z,3)
             
-            layer_x=self.module_data.layer_stack.all_layers_info[layer.id].x*s
-            layer_y=self.module_data.layer_stack.all_layers_info[layer.id].y*s
+            layer_x=self.module_data.layer_stack.all_layers_info[layer.id].x*dbunit
+            layer_y=self.module_data.layer_stack.all_layers_info[layer.id].y*dbunit
             layer_z=self.module_data.layer_stack.all_layers_info[layer.id].z_level
-            layer_width=self.module_data.layer_stack.all_layers_info[layer.id].width*s
-            layer_length=self.module_data.layer_stack.all_layers_info[layer.id].length*s
+            layer_width=self.module_data.layer_stack.all_layers_info[layer.id].width*dbunit
+            layer_length=self.module_data.layer_stack.all_layers_info[layer.id].length*dbunit
             layer_height=self.module_data.layer_stack.all_layers_info[layer.id].thick
             layer_material=self.module_data.layer_stack.all_layers_info[layer.id].material.name
             
             layer_substarte_object=Cell3D(name='Substrate',x=layer_x,y=layer_y,z=layer_z,w=layer_width,l=layer_length,h=layer_height,material=layer_material)
             objects_3D.append(layer_substarte_object)
-            #print("Layer_",layer.name)
+           
             removed_objects=[]
             for object_ in objects_3D:
                 if object_.z<0:
-                    #print("RE",object_.print_cell_3D())
+                    
                     removed_objects.append(object_)
 
             for object_ in objects_3D:
                 if object_ not in removed_objects:
-                    #object_.print_cell_3D()
+                    
                     layer.initial_layout_objects_3D.append(object_)
         
         
@@ -445,7 +527,7 @@ class Structure_3D():
         for layer in self.layers:
             #print(layer.name)
             comps_names=[]
-            for comp in layer.New_engine.all_components:
+            for comp in layer.new_engine.all_components:
                 name=(comp.layout_component_id)
                 if name[0]!='B':
                     comps_names.append(name)
@@ -654,34 +736,35 @@ class Structure_3D():
         if self.via_connected_layer_info!=None:
             id=-2 # virtual node id for via nodes
             for via_name, layer_name_list in self.via_connected_layer_info.items():
-                via_node_h=Node_3D(id=id)
-                via_node_v=Node_3D(id=id)
+                via_node_h=Node_3D(id=id) # for each via connected layer group
+                via_node_v=Node_3D(id=id) # for each via connected layer group
                 via_node_h.name=via_name
                 via_node_v.name=via_name
-                via_node_h.parent=self.root_node_h
-                self.root_node_h.child.append(via_node_h)
+                via_node_h.parent=self.root_node_h # assigning root node as the parent node
+                self.root_node_h.child.append(via_node_h) # assigning each via connected group as child node
                 via_node_v.parent=self.root_node_v
                 self.root_node_v.child.append(via_node_v)
                 
                 for layer in self.layers:
                     if layer.name in layer_name_list:
-                        #if origin_x>layer.origin[0]:
-                        origin_x=layer.origin[0]
-                        #if origin_y>layer.origin[1]:
+                        # assuming all layers in the same via connected group have same origin and dimensions
+                        origin_x=layer.origin[0] 
                         origin_y=layer.origin[1]
-                        #if width<layer.width:
-                        width=layer.width
-                        #if height<layer.height:
-                        height=layer.height
-                        via_node_h.child.append(layer.New_engine.Htree.hNodeList[0])
-                        via_node_h.child_names.append(layer.name)
-                        if layer.New_engine.Htree.hNodeList[0].parent==None:
-                            layer.New_engine.Htree.hNodeList[0].parent=via_node_h
+                        width=layer.width # dimmension along x-axis
+                        height=layer.height # dimension along y-axis
+                        # adding the root node of the layer sub-tree as the child node of the via connected group
+                        if layer.new_engine.Htree.hNodeList[0].parent==None:
+                            layer.new_engine.Htree.hNodeList[0].parent=via_node_h
+                            via_node_h.child.append(layer.new_engine.Htree.hNodeList[0])
+                            via_node_h.child_names.append(layer.name)
 
-                        via_node_v.child.append(layer.New_engine.Vtree.vNodeList[0])
-                        via_node_v.child_names.append(layer.name)
-                        if layer.New_engine.Vtree.vNodeList[0].parent==None:
-                            layer.New_engine.Vtree.vNodeList[0].parent=via_node_v
+                        # adding the root node of the layer sub-tree as the child node of the via connected group
+                        if layer.new_engine.Vtree.vNodeList[0].parent==None:
+                            layer.new_engine.Vtree.vNodeList[0].parent=via_node_v
+                            via_node_v.child.append(layer.new_engine.Vtree.vNodeList[0])
+                            via_node_v.child_names.append(layer.name)
+
+                    #populating boundary coordinates for each via connected group
                     if origin_x not in via_node_h.boundary_coordinates:
                         via_node_h.boundary_coordinates.append(origin_x)
                     if origin_x+width not in via_node_h.boundary_coordinates:
@@ -691,7 +774,7 @@ class Structure_3D():
                     if origin_y+height not in via_node_v.boundary_coordinates:
                         via_node_v.boundary_coordinates.append(origin_y+height)
                     
-                    for name,via_location in layer.via_locations.items():
+                    for via_location in list(layer.via_locations.values()):
                         via_node_h.via_coordinates.append(via_location[0]) #x
                         via_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width
                         via_node_v.via_coordinates.append(via_location[1]) #y
@@ -701,63 +784,23 @@ class Structure_3D():
                 via_node_v.boundary_coordinates=list(set(via_node_v.boundary_coordinates)) 
                 via_node_h.boundary_coordinates.sort()
                 via_node_v.boundary_coordinates.sort()
+                via_node_h.via_coordinates=list(set(via_node_h.via_coordinates))
+                via_node_v.via_coordinates=list(set(via_node_v.via_coordinates))
                 via_node_h.via_coordinates.sort()
                 via_node_v.via_coordinates.sort()
-                #print("B_C",via_node_h.boundary_coordinates,via_node_v.boundary_coordinates)
-                self.sub_roots[via_name]=[via_node_h,via_node_v]
-                id-=1
-        else:
+
+                self.sub_roots[via_name]=[via_node_h,via_node_v] #sub root node for each via connected group
+                
+                id-=1 #decrementing id to assign next via connected group
+        else: # 2D case (only one layer is available)
             if len(self.layers)==1:
-                self.root_node_h.child.append(self.layers[0].New_engine.Htree.hNodeList[0])
-                self.layers[0].New_engine.Htree.hNodeList[0].parent=self.root_node_h
-                self.root_node_v.child.append(self.layers[0].New_engine.Vtree.vNodeList[0])
-                self.layers[0].New_engine.Vtree.vNodeList[0].parent=self.root_node_v
+                self.root_node_h.child.append(self.layers[0].new_engine.Htree.hNodeList[0])
+                self.layers[0].new_engine.Htree.hNodeList[0].parent=self.root_node_h
+                self.root_node_v.child.append(self.layers[0].new_engine.Vtree.vNodeList[0])
+                self.layers[0].new_engine.Vtree.vNodeList[0].parent=self.root_node_v
         
-        '''
-        for layer in self.layers:
-            self.root_node_h.child.append(layer.New_engine.Htree.hNodeList[0])
-            self.root_node_v.child.append(layer.New_engine.Vtree.vNodeList[0])
-            for node in layer.New_engine.Htree.hNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.x,rect.cell.x+rect.getWidth()] not in layer.via_locations:
-                                 layer.via_locations.append([rect.cell.x,rect.cell.x+rect.getWidth()])
-            for node in layer.New_engine.Vtree.vNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.y,rect.cell.y+rect.getHeight()] not in layer.via_locations:
-                                layer.via_locations.append([rect.cell.y,rect.cell.y+rect.getHeight()])
-        '''
-    """
-    def create_root(self):
-        self.root_node_h=Node_3D(id=-1)
-        self.root_node_v = Node_3D(id=-1)
-        self.root_node_h.edges=[]
-        self.root_node_v.edges=[]
-        for layer in self.layers:
-            self.root_node_h.child.append(layer.New_engine.Htree.hNodeList[0])
-            self.root_node_v.child.append(layer.New_engine.Vtree.vNodeList[0])
-            for node in layer.New_engine.Htree.hNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.x,rect.cell.x+rect.getWidth()] not in layer.via_locations:
-                                 layer.via_locations.append([rect.cell.x,rect.cell.x+rect.getWidth()])
-            for node in layer.New_engine.Vtree.vNodeList:
-                for rect in node.stitchList:
-                    if 'Via' in constraint.constraint.all_component_types:
-                        via_index=constraint.constraint.all_component_types.index('Via')
-                        if rect.cell.type==layer.New_engine.Types[via_index]:
-                            if [rect.cell.y,rect.cell.y+rect.getHeight()] not in layer.via_locations:
-                                layer.via_locations.append([rect.cell.y,rect.cell.y+rect.getHeight()])
-
-
-    """
+        
+    
     def calculate_min_location_root(self):
         edgesh_root=self.root_node_h_edges
         edgesv_root=self.root_node_v_edges
@@ -1033,9 +1076,9 @@ class Node_3D(Node):
         #self.via_coordinates_v=[]# list of via y coordinates from each layer under same via node
         self.ZDL=[] # x/y coordinates
         
-        self.removed_nodes=[]
+        '''self.removed_nodes=[]
         self.reference_nodes={}
-        self.top_down_eval_edges={}
+        self.top_down_eval_edges={}'''
         #self.reference_node_removed_v={}
         self.node_locations={}
         #self.root_node_locations_v={}
@@ -1047,127 +1090,24 @@ class Node_3D(Node):
         Node.__init__(self, parent=self.parent,boundaries=None,stitchList=None,id=self.id)
     
     
-    def get_inter_layer_spacings(self,structure=None):
+    def printNode(self):
         '''
-        generates keep out zone depnding on via location
+        for debugging
         '''
-        print(structure.via_connection_raw_info)
-        id_maped_info={}
-        propagation_dict={}
-        for via, layer_list in structure.via_connection_raw_info.items():
-            id_maped_info[via]=[]
-            for layer2 in layer_list:
-                id=int(list(layer2)[-1])
-                id_maped_info[via].append(id)
-        for via_name,id_list in id_maped_info.items():
-            if(any(abs(i-j)>1 for i,j in zip(id_list, id_list[1:]))):
-                propagation_dict[via_name]=id_list         
-        #print(id_maped_info)
-        '''
-        spacing_required={}
-        for via_name, layer_list in structure.via_connection_raw_info.items():
-            if via_name in propagation_dict:
-                for 
-        input()
-        '''
-    def get_inter_layer_constraints(self,structure=None):
-        '''
-        applying inter-layer constraints
-        '''
-        inter_layer_constraints=[]
-        if structure!=None:
-            inter_layer_spacing_info=structure.layer_constraints_info
-            #print(inter_layer_spacing_info)
-            parts=[]
-            for index, row in inter_layer_spacing_info.iterrows():
-                #print(index,row[0])
-                if row[0]=='Y-directional Spacings':
-                    #print(index)
-                    x_end=index
-                    y_start=index+1
-                    parts.append(x_end)
-                    parts.append(y_start)
-                    #print (inter_layer_spacing_info.index(row))
-            
-            parts.append(len(inter_layer_spacing_info))
-            l_mod = [0] + parts + [max(parts)+1]
-            #print(l_mod)
-            
-            list_of_dfs = [inter_layer_spacing_info.iloc[l_mod[n]:l_mod[n+1]] for n in range(len(l_mod)-1)]
-            inter_layer_spacing_info_x=list_of_dfs[0]
-            inter_layer_spacing_info_x.columns = range(inter_layer_spacing_info_x.shape[1]) #removed header row
-            inter_layer_spacing_info_x.columns = inter_layer_spacing_info_x.iloc[0]
-            inter_layer_spacing_info_y=list_of_dfs[2]
-            inter_layer_spacing_info_y.columns = range(inter_layer_spacing_info_y.shape[1]) #removed header row
-            #print((inter_layer_spacing_info_x))
-
-            inter_layer_spacing_info_y.columns = inter_layer_spacing_info_y.iloc[0]
-            #print((inter_layer_spacing_info_y))
-            layer_bopundary_coordinates_h={}
-            layer_bopundary_coordinates_v={}
-            for layer in structure.layers:
-                layer_bopundary_coordinates_h[layer.name]=[layer.origin[0],layer.origin[0]+layer.width]
-                layer_bopundary_coordinates_v[layer.name]=[layer.origin[1],layer.origin[1]+layer.height]
-            inter_layer_constraints_h=[]
-            inter_layer_constraints_v=[]
-            layer_names=list(layer_bopundary_coordinates_v.keys())
-            
-            for i in range(len(layer_names)):
-                layer_1=layer_names[i]
-                #print("L_1",layer_1)
-                #layer_2=layer_names[i+1]
-                for j in range(len(inter_layer_spacing_info_x)-1) : 
-                    #print(j,inter_layer_spacing_info_y.loc[j, layer_1])
-                    #print(inter_layer_spacing_info.loc[j, layer_1]) 
-                    src_coords=layer_bopundary_coordinates_h[layer_1]
-                    src_coords.sort()
-                    if j>i:
-                        #print(j)
-                        layer_2=layer_names[j]
-                        #print("L_2",layer_2)
-                        dest_coords=layer_bopundary_coordinates_h[layer_2]
-                        dest_coords.sort()
-                        #print(inter_layer_spacing_info_y.loc[j, layer_1])
-                        if float(inter_layer_spacing_info_x.loc[j, layer_1])>0:
-                            for k in range(len(src_coords)):
-                                src_coord=src_coords[k]
-                                dest_coord=dest_coords[k]
-                                #for dest_coord in dest_coords:
-                                if dest_coord>src_coord :
-                                    #print(inter_layer_spacing_info_y.loc[j, layer_1])
-                                    constraint_info={(src_coord,dest_coord):float(inter_layer_spacing_info_x.loc[j, layer_1])}
-                                    if constraint_info not in inter_layer_constraints_h:
-                                        inter_layer_constraints_h.append(constraint_info)
-            
-            for i in range(len(layer_names)):
-                layer_1=layer_names[i]
-                #print("L_1",layer_1)
-                #layer_2=layer_names[i+1]
-                for j in range(y_start+1,y_start+len(inter_layer_spacing_info_y)) : 
-                    #print(j,inter_layer_spacing_info_y.loc[j, layer_1])
-                    #print(inter_layer_spacing_info.loc[j, layer_1]) 
-                    src_coords=layer_bopundary_coordinates_v[layer_1]
-                    src_coords.sort()
-                    if j>i+y_start:
-                        #print(j)
-                        layer_2=layer_names[j-y_start-1]
-                        #print("L_2",layer_2)
-                        dest_coords=layer_bopundary_coordinates_v[layer_2]
-                        dest_coords.sort()
-                        #print(inter_layer_spacing_info_y.loc[j, layer_1])
-                        if float(inter_layer_spacing_info_y.loc[j, layer_1])>0:
-                            for k in range(len(src_coords)):
-                                src_coord=src_coords[k]
-                                dest_coord=dest_coords[k]
-                                #for dest_coord in dest_coords:
-                                #print("DS",src_coord,dest_coord)
-                                if dest_coord>src_coord:
-                                    #print(inter_layer_spacing_info_y.loc[j, layer_1])
-                                    constraint_info={(src_coord,dest_coord):float(inter_layer_spacing_info_y.loc[j, layer_1])}
-                                    if constraint_info not in inter_layer_constraints_v:
-                                        inter_layer_constraints_v.append(constraint_info)
-            #print(inter_layer_constraints_h,inter_layer_constraints_v)
-            return inter_layer_constraints_h,inter_layer_constraints_v
+        print("Node_ID:", self.id)
+        print("Name:", self.name)
+        if self.parent==None:
+            print("Parent", self.parent)
+        else:
+            print("Parent ID:",self.parent.id, "Parent Name :",self.parent.name)
+        if len(self.child)>0:
+            for child in self.child:
+                if isinstance(child,Node_3D):
+                    print("Child_ID:",child.id,"Child_Name:",child.name)
+        print("Bondary Coordinates:", self.boundary_coordinates)
+        print("Via Coordinates:",self.via_coordinates)
+    
+    
     
     def calculate_min_location(self,structure=None,h=False):
         '''
@@ -1436,4 +1376,128 @@ class Node_3D(Node):
         self.node_min_locations = final
         #print "minx",self.minX[node.id]
         
+    # No need now. It can be used for inter layer constraints application
+    """
     
+    def get_inter_layer_spacings(self,structure=None):
+        '''
+        generates keep out zone depnding on via location
+        '''
+        print(structure.via_connection_raw_info)
+        id_maped_info={}
+        propagation_dict={}
+        for via, layer_list in structure.via_connection_raw_info.items():
+            id_maped_info[via]=[]
+            for layer2 in layer_list:
+                id=int(list(layer2)[-1])
+                id_maped_info[via].append(id)
+        for via_name,id_list in id_maped_info.items():
+            if(any(abs(i-j)>1 for i,j in zip(id_list, id_list[1:]))):
+                propagation_dict[via_name]=id_list         
+        #print(id_maped_info)
+        '''
+        spacing_required={}
+        for via_name, layer_list in structure.via_connection_raw_info.items():
+            if via_name in propagation_dict:
+                for 
+        input()
+        '''
+    def get_inter_layer_constraints(self,structure=None):
+        '''
+        applying inter-layer constraints
+        '''
+        inter_layer_constraints=[]
+        if structure!=None:
+            inter_layer_spacing_info=structure.layer_constraints_info
+            #print(inter_layer_spacing_info)
+            parts=[]
+            for index, row in inter_layer_spacing_info.iterrows():
+                #print(index,row[0])
+                if row[0]=='Y-directional Spacings':
+                    #print(index)
+                    x_end=index
+                    y_start=index+1
+                    parts.append(x_end)
+                    parts.append(y_start)
+                    #print (inter_layer_spacing_info.index(row))
+            
+            parts.append(len(inter_layer_spacing_info))
+            l_mod = [0] + parts + [max(parts)+1]
+            #print(l_mod)
+            
+            list_of_dfs = [inter_layer_spacing_info.iloc[l_mod[n]:l_mod[n+1]] for n in range(len(l_mod)-1)]
+            inter_layer_spacing_info_x=list_of_dfs[0]
+            inter_layer_spacing_info_x.columns = range(inter_layer_spacing_info_x.shape[1]) #removed header row
+            inter_layer_spacing_info_x.columns = inter_layer_spacing_info_x.iloc[0]
+            inter_layer_spacing_info_y=list_of_dfs[2]
+            inter_layer_spacing_info_y.columns = range(inter_layer_spacing_info_y.shape[1]) #removed header row
+            #print((inter_layer_spacing_info_x))
+
+            inter_layer_spacing_info_y.columns = inter_layer_spacing_info_y.iloc[0]
+            #print((inter_layer_spacing_info_y))
+            layer_bopundary_coordinates_h={}
+            layer_bopundary_coordinates_v={}
+            for layer in structure.layers:
+                layer_bopundary_coordinates_h[layer.name]=[layer.origin[0],layer.origin[0]+layer.width]
+                layer_bopundary_coordinates_v[layer.name]=[layer.origin[1],layer.origin[1]+layer.height]
+            inter_layer_constraints_h=[]
+            inter_layer_constraints_v=[]
+            layer_names=list(layer_bopundary_coordinates_v.keys())
+            
+            for i in range(len(layer_names)):
+                layer_1=layer_names[i]
+                #print("L_1",layer_1)
+                #layer_2=layer_names[i+1]
+                for j in range(len(inter_layer_spacing_info_x)-1) : 
+                    #print(j,inter_layer_spacing_info_y.loc[j, layer_1])
+                    #print(inter_layer_spacing_info.loc[j, layer_1]) 
+                    src_coords=layer_bopundary_coordinates_h[layer_1]
+                    src_coords.sort()
+                    if j>i:
+                        #print(j)
+                        layer_2=layer_names[j]
+                        #print("L_2",layer_2)
+                        dest_coords=layer_bopundary_coordinates_h[layer_2]
+                        dest_coords.sort()
+                        #print(inter_layer_spacing_info_y.loc[j, layer_1])
+                        if float(inter_layer_spacing_info_x.loc[j, layer_1])>0:
+                            for k in range(len(src_coords)):
+                                src_coord=src_coords[k]
+                                dest_coord=dest_coords[k]
+                                #for dest_coord in dest_coords:
+                                if dest_coord>src_coord :
+                                    #print(inter_layer_spacing_info_y.loc[j, layer_1])
+                                    constraint_info={(src_coord,dest_coord):float(inter_layer_spacing_info_x.loc[j, layer_1])}
+                                    if constraint_info not in inter_layer_constraints_h:
+                                        inter_layer_constraints_h.append(constraint_info)
+            
+            for i in range(len(layer_names)):
+                layer_1=layer_names[i]
+                #print("L_1",layer_1)
+                #layer_2=layer_names[i+1]
+                for j in range(y_start+1,y_start+len(inter_layer_spacing_info_y)) : 
+                    #print(j,inter_layer_spacing_info_y.loc[j, layer_1])
+                    #print(inter_layer_spacing_info.loc[j, layer_1]) 
+                    src_coords=layer_bopundary_coordinates_v[layer_1]
+                    src_coords.sort()
+                    if j>i+y_start:
+                        #print(j)
+                        layer_2=layer_names[j-y_start-1]
+                        #print("L_2",layer_2)
+                        dest_coords=layer_bopundary_coordinates_v[layer_2]
+                        dest_coords.sort()
+                        #print(inter_layer_spacing_info_y.loc[j, layer_1])
+                        if float(inter_layer_spacing_info_y.loc[j, layer_1])>0:
+                            for k in range(len(src_coords)):
+                                src_coord=src_coords[k]
+                                dest_coord=dest_coords[k]
+                                #for dest_coord in dest_coords:
+                                #print("DS",src_coord,dest_coord)
+                                if dest_coord>src_coord:
+                                    #print(inter_layer_spacing_info_y.loc[j, layer_1])
+                                    constraint_info={(src_coord,dest_coord):float(inter_layer_spacing_info_y.loc[j, layer_1])}
+                                    if constraint_info not in inter_layer_constraints_v:
+                                        inter_layer_constraints_v.append(constraint_info)
+        #print(inter_layer_constraints_h,inter_layer_constraints_v)
+        return inter_layer_constraints_h,inter_layer_constraints_v
+    """
