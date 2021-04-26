@@ -294,7 +294,7 @@ class Cmd_Handler:
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,dbunit=self.dbunit)
 
-
+                
 
             elif run_option == 1:
                 self.measures=[]
@@ -555,7 +555,7 @@ class Cmd_Handler:
             layer=self.structure_3D.layers[i]
             input_info = [layer.input_rects, layer.size, layer.origin]
             layer.populate_bondwire_objects()
-            
+            layer.new_engine.rel_cons=self.i_v_constraint
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
             layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
@@ -1022,13 +1022,13 @@ if __name__ == "__main__":
         sel= int(input("select a test case to run: 1-quang_simple_test_quang_pc 2-Imam_journal_quang_pc 3-quang_journal_quang_pc 4-Imam_journal_Imam_pc"))
         if sel == 1: 
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/Mutual_IND_Case/two_dev_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            cmd.cmd_handler_flow(arguments= args)
+            
         elif sel ==2:
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/PSV2_Testing/Cmd_flow_case/Half_bridge_Imam/half_bridge_pm_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            cmd.cmd_handler_flow(arguments= args)
+            
         elif sel ==3:
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/Case1_S-param/Layout1_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            cmd.cmd_handler_flow(arguments= args)
+            
         elif sel==4:
             args = ['python','cmd.py','-m','D:/Demo/3D_Layout_Engine_Testing/Cmd_flow_case/ECCE_Case/cmd_macro_hier_updated.txt','-settings',"D:/Demo/New_Flow_w_Hierarchy/Journal_Case/settings.info"]
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
@@ -1036,10 +1036,18 @@ if __name__ == "__main__":
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Testing_Journal_case_w_Py_3/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
            
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro_data_collection_final.txt
-            cmd.cmd_handler_flow(arguments= args)
+            
         elif sel==5:
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-            cmd.cmd_handler_flow(arguments=args)
+            
+        elif sel==6:
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_5/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+        
+        elif sel==7:
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_4/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+        
+        
+        cmd.cmd_handler_flow(arguments=args)
            
 
     else:

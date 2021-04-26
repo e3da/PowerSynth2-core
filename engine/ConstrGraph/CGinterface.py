@@ -2,7 +2,9 @@
 import sys
 sys.path.append('..')
 import math
+import copy
 from core.MDK.Constraint.constraint_up import constraint_name_list, Constraint
+from core.engine.ConstrGraph.CGCreation import ConstraintGraph
 
 class CS_Type_Map():
     '''
@@ -10,7 +12,7 @@ class CS_Type_Map():
 
     '''
     def __init__(self):
-        self.comp_cluster_types={'Flexible_Dim':[],'Fixed_Dim':[]} # cluster type of components: Flexible_Dim: traces, Fixed_Dim: devices, leads, vias, etc.
+        self.comp_cluster_types={'Flexible':[],'Fixed':[]} # cluster type of components: Flexible_Dim: traces, Fixed_Dim: devices, leads, vias, etc.
         self.all_component_types = ['EMPTY'] # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
         self.types_name=['EMPTY'] # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
         self.types_index=[0] # list of index for each type (integer). To search quickly
@@ -42,17 +44,22 @@ class CS_Type_Map():
         self.types_index.append(t)
         #component_to_component_type[component_name_type] = t_in
         if routing==False:
-            self.comp_cluster_types['Fixed_Dim'].append(t_in)
+            self.comp_cluster_types['Fixed'].append(t_in)
 
 
 
 class CS_to_CG():
-    def __init__(self, all_cs_types=None):
+    def __init__(self, cs_type_map=None):
         '''
         : param: all_cs_types: list of corner stitch types
         '''
-        self.all_cs_types = all_cs_types
-        if all_cs_types!=None:
+        
+        
+        self.comp_type = cs_type_map.comp_cluster_types # cluster type of components: Flexible_Dim: traces, Fixed_Dim: devices, leads, vias, etc.
+        self.component_types = cs_type_map.all_component_types # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
+        self.all_cs_types = cs_type_map.types_name # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
+        self.types_index = cs_type_map.types_index
+        if cs_type_map != None:
             self.constraints=[] # list of constraint objects initialized with names declared in 'Constraint_up.py'
             self.initialize_constraint_info()
             self.voltage_constraints={}
@@ -140,6 +147,7 @@ class CS_to_CG():
             MinVerEnclosure = [list(map(int, i)) for i in ver_enclosure]
             MinHorSpacing = [list(map(int, i)) for i in hor_spacing]
             MinVerSpacing = [list(map(int, i)) for i in ver_enclosure]
+            
             for constraint in self.constraints:
                 if constraint.name=='MinWidth':
                     constraint.value= MinWidth
@@ -201,13 +209,19 @@ class CS_to_CG():
 
     # returns constraint value of given edge
     def getConstraintVal(self,source=None,dest=None,type_=None, cons_name=None):
+        
+        cons_found=False
         for constraint in self.constraints:
+            
             if constraint.name == cons_name and source==None and dest==None:
                 index_=self.all_cs_types.index(type_)
+                cons_found=True
                 return constraint.value[index_]
             elif constraint.name == cons_name and source!=None and dest!=None:
+                cons_found=True
                 return constraint.value[source][dest]
-            else:
+                
+        if cons_found==False:
                 print("ERROR: Constraint Not Found")
                 exit()
         
@@ -265,6 +279,71 @@ class CS_to_CG():
                             continue
         return SYM_CS
 
+    
+    
+    def create_cg(self, Htree, Vtree, bondwires, cs_islands, rel_cons,root,flexible,constraint_info):
+        '''
+        :param Htree: Horizontal corner stitch (HCS) tree
+        :param Vtree: Vertical corner stitch (VCS) tree
+        :param bondwires: List of bondwire objects
+        :param cs_islands: list of corner stitch islands
+        :param rel_cons: reliability constraints # reliability constraint flag: 0: No reliability constraints are applied, 1: worst case, 2: Average case
+        :param root: list of horizontal tree root node vertical tree root node 
+        :param flexible: False means rigid bondwire/ True means flexible bond wires
+
+        '''
+        forward_cg= ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible,constraint_info=constraint_info) # left-to-right/ bottom-to-top
+        forward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
+        forward_cg.get_x_y_coordinates(direction='forward')
+        forward_cg.create_vertices(propagated=False)
+        '''
+        for id,vertex in forward_cg.hcg_vertices.items():
+            print(id,len(vertex))
+            for v in vertex:
+                v.printVertex()'''
+        forward_cg.populate_via_bw_propagation_dict(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
+        forward_cg.update_x_y_coordinates(direction='forward')
+        forward_cg.create_vertices(propagated=True)
+        forward_cg.update_indices()
+        '''print("A")
+        for id,vertex in forward_cg.hcg_vertices.items():
+            print(id,len(vertex))
+            #for v in vertex:
+                #v.printVertex()'''
+        
+        forward_cg.add_edges(direction='forward',Types=self.all_cs_types,all_component_types=self.component_types,comp_type=self.comp_type)
+        
+        # perform edge removal and prepare to propagate edges to parent node
+        
+        forward_cg.create_forward_cg(level=0)
+        '''for tb in forward_cg.tb_eval_h:
+            print (tb.ID)
+            for edge in tb.graph.edges:
+                edge.printEdge()'''
+
+
+
+        #input()
+        #print("X_Y_Coordinates", forward_cg.x_coordinates, forward_cg.y_coordinates)
+        #forward_hcg,forward_vcg = forward_cg.graphFromLayer(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
+
+        backward_cg = ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible) # right-to-left/ top-to-bottom
+        backward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
+        backward_cg.get_x_y_coordinates(direction='backward')
+        backward_cg.populate_via_bw_propagation_dict(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
+        backward_cg.update_x_y_coordinates(direction='backward')
+        #print("Backward X_Y_Coordinates", backward_cg.x_coordinates, backward_cg.y_coordinates)
+        #input()
+        #backward_hcg,backward_vcg = backward_cg.graphFromLayer(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList ,cs_islands=cs_islands)
+
+        return forward_cg, backward_cg
+    
+    def evaluate_cg():
+        '''
+        performs cg evaluation to get top-down location propagation done
+        '''
+
+    
     ## Evaluates constraint graph depending on modes of operation
     def evaluation(self, Htree, Vtree, bondwires, N, cs_islands, W, H, XLoc, YLoc, seed, individual, Types, rel_cons,root,flexible):
         '''
@@ -381,9 +460,10 @@ class CS_to_CG():
             top = coordinates[3]
             nodeids = v[1]
             type = v[2]
+            
             hier_level = v[3]
             rotation_index = v[4]
-            # print "UP",k,rect.cell.x,rect.cell.y,rect.EAST.cell.x,rect.NORTH.cell.y
+            #print ("UP",k,rect.cell.x,rect.cell.y,rect.EAST.cell.x,rect.NORTH.cell.y
             for nodeid in nodeids:
                 if left in minx[nodeid] and bottom in miny[nodeid] and top in miny[nodeid] and right in minx[nodeid]:
                     x = minx[nodeid][left]
@@ -439,9 +519,13 @@ class CS_to_CG():
 if __name__== "__main__":
 
     import pandas as pd
-    all_cs_types=['EMPTY','Type_1','Type_2','Type_3','Type_4','Type_5','Type_6','Type_7']
-    cs_to_cg=CS_to_CG(all_cs_types)
-    constraint_df=pd.read_csv('/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/constraint.csv')
+    cs_type_map=CS_Type_Map()
+    cs_type_map.comp_cluster_types={'Flexible':[],'Fixed':[]} # cluster type of components: Flexible_Dim: traces, Fixed_Dim: devices, leads, vias, etc.
+    cs_type_map.all_component_types = ['EMPTY','power_trace','signal_trace','bonding wire pad','power_lead','signal_lead','cap'] # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
+    cs_type_map.types_name=['EMPTY','Type_1','Type_2','Type_3','Type_4','Type_5','Type_6','Type_7'] # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
+    cs_type_map.types_index=[0,1,2,3,4,5,6,7] 
+    cs_to_cg=CS_to_CG(cs_type_map)
+    constraint_df=pd.read_csv('/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/constraint.csv')
     cs_to_cg.getConstraints(constraint_df)
     for constraint in cs_to_cg.constraints:
         print(constraint.name)

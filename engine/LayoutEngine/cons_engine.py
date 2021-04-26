@@ -28,6 +28,8 @@ class New_layout_engine():
         self.cornerstitch = CornerStitch()
         self.min_dimensions = {}
         self.islands=None
+        self.flexible=False
+        self.rel_cons=0
         # current solutions
         self.cur_fig_data = None
 
@@ -182,7 +184,7 @@ class New_layout_engine():
 
         # creating corner stitch islands and map between input rectangle(s) and corner stitch tile(s)
         cs_islands,sym_to_cs= self.form_cs_island(islands, self.Htree, self.Vtree) # creates a list of island objects populated with corner stitch tiles
-       
+        
         #--------------------------------------for debugging----------------------
         """
         for island in cs_islands:
@@ -271,15 +273,20 @@ class New_layout_engine():
 
 
 
-    def get_min_dimensions(self):
-        for comp in self.all_components:
+    def get_min_dimensions(self,all_components=None):
+        '''
+        :param all_components: list of part/routing path objects in given layout
+        returns a dictionary with key as cs type and [footprint,parent type] as value. parent type is the cs type of parent island component
+        '''
+        for comp in all_components:
             if isinstance(comp, parts.Part):
-                #name=comp.name
                 type=comp.cs_type
                 footprint=comp.footprint
                 for island in self.init_data[2]:
+                    
                     if comp.layout_component_id in island.child_names:
                         parent_type=island.elements[0][0] # type of 1st element in parent island. Assumption: all traces on same island have same type
+                        break
                     else:
                         parent_type='EMPTY'
 

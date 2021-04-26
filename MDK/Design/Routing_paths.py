@@ -59,13 +59,13 @@ class BondingWires():
         self.mat_resistivity=0.0
         self.radius=0.0
         self.num_of_wires=0
-        self.wire_id=None # wire id from wire table ('BW1', BW2,...)
+        self.wire_id=0 # wire id from wire table ('BW1', BW2,...)
         self.source_comp=None # layout component id for wire source location
         self.dest_comp=None # layout component id for wire destination location
-        self.source_coordinate=None # coordinate for wire source location
-        self.dest_coordinate=None # coordinate for wire destination location
-        self.source_node_id=None # node id of source comp from nodelist
-        self.dest_node_id=None # nodeid of destination comp from node list
+        self.source_coordinate=[] # coordinate for wire source location
+        self.dest_coordinate=[] # coordinate for wire destination location
+        self.source_node_id=0 # node id of source comp from nodelist
+        self.dest_node_id=0 # nodeid of destination comp from node list
         self.dir_type=None # horizontal:0,vertical:1
         self.cs_type=None #corner stitch type to handle constraints
 

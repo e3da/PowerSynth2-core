@@ -1018,7 +1018,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         #---------for debugging----------------------#
         
         bw_items=list(all_layers[i].wire_table.values())
-        all_layers[i].new_engine.islands=all_layers[i].islands # passing island info before removing any item (i.e.,extra child on device for layout engine only)
+        all_layers[i].new_engine.islands=copy.deepcopy(all_layers[i].islands) # passing island info before removing any item (i.e.,extra child on device for layout engine only)
         
         removed_child=[] # removing extra child which are redundant for electrical model and only required for layout engine
         for  wire_id in range(len(bw_items)):

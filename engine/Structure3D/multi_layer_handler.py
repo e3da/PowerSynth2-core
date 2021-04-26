@@ -43,12 +43,13 @@ class Layer():
         self.bondwires=[]
         self.bondwire_landing_info=[]
         self.new_engine=New_layout_engine()
-        self.df=None
-        self.types=None
+        
         self.via_locations=[] # list of dictionary for each via with name as key and bottom left corner coordinate as value
         #self.min_location_h={}
         #self.min_location_v={}
         self.c_g=None
+        self.forward_cg=None
+        self.backward_cg=None
         self.updated_cs_sym_info = []
         self.layer_layout_rects = []
         self.cs_islands_up=[] # updated cs islands info
@@ -70,7 +71,7 @@ class Layer():
         '''
         
 
-        fig, ax = plt.subplots()
+        ax = plt.subplots()[1]
 
         Names = list(fig_data.keys())
         Names.sort()
@@ -451,178 +452,7 @@ class Layer():
 
 
 
-    # generate initial constraint table based on the types in the input script and saves information in the given csv file as constraint
-    def update_constraint_table(self,rel_cons=0,islands=None,types_init=None, all_components=None,component_to_cs_type=None):
-        if types_init==None:
-            Types_init=list(self.component_to_cs_type.values()) # already three types are there: 'power_trace','signal_trace','bonding_wire_pad'
-            #print(Types_init)
-        else:
-            Types_init=types_init
-        #print(Types_init)
-        
-        Types = [0 for i in range(len(Types_init))]
-        for i in Types_init:
-            if i=='EMPTY':
-                Types[0]=i
-            else:
-                t=i.strip('Type_')
-                ind=int(t)
-                Types[ind]=i
-
-        all_rows = []
-        r1 = ['Min Dimensions']
-        r1_c=[]
-        for i in range(len(Types)):
-            for k,v in list(component_to_cs_type.items()):
-                if v==Types[i]:
-                    r1_c.append(k)
-        r1+=r1_c
-        all_rows.append(r1)
-
-        r2 = ['Min Width']
-        r2_c=[0 for i in range(len(Types))]
-        for i in range(len(Types)):
-            if Types[i]=='EMPTY':
-                r2_c[i]=1
-            else:
-                for k,v in list(component_to_cs_type.items()):
-                    if v==Types[i]:
-                        for comp in all_components:
-                            if k==comp.name and isinstance(comp,Part):
-                                if r2_c[i]==0:
-                                    r2_c[i]=comp.footprint[0]
-                                    break
-                            elif k==comp.name.split('_')[0] and isinstance(comp,Part):
-                                if r2_c[i]==0:
-                                    r2_c[i]=comp.footprint[0]
-                                    break
-        for i in range(len(r2_c)):
-            if r2_c[i]==0:
-                r2_c[i]=2
-        r2+=r2_c
-        all_rows.append(r2)
-
-        r3 = ['Min Height']
-        r3_c = [0 for i in range(len(Types))]
-        for i in range(len(Types)):
-            if Types[i]=='EMPTY':
-                r3_c[i]=1
-            else:
-                for k, v in list(component_to_cs_type.items()):
-                    if v == Types[i]:
-                        for comp in self.all_components:
-                            if k == comp.name and isinstance(comp,Part):
-                                if r3_c[i] == 0:
-                                    r3_c[i] = comp.footprint[1]
-                                    break
-                            elif k==comp.name.split('_')[0] and isinstance(comp,Part):
-                                if r3_c[i]==0:
-                                    r3_c[i]=comp.footprint[1]
-                                    break
-        for i in range(len(r3_c)):
-            if r3_c[i]==0:
-                r3_c[i]=2.0
-
-        r3 += r3_c
-        all_rows.append(r3)
-
-        r4 = ['Min Extension']
-        r4_c = [0 for i in range(len(Types))]
-        for i in range(len(Types)):
-            if Types[i]=='EMPTY':
-                r4_c[i]=1.0
-            else:
-                for k, v in list(component_to_cs_type.items()):
-                    if v == Types[i]:
-                        for comp in all_components:
-                            if k == comp.name and isinstance(comp,Part):
-                                if r4_c[i] == 0:
-                                    val = max(comp.footprint)
-                                    r4_c[i] = val
-                                    break
-        for i in range(len(r4_c)):
-            if r4_c[i]==0:
-                r4_c[i]=2.0
-        r4 += r4_c
-        all_rows.append(r4)
-
-        r5 = ['Min Spacing']
-        r5_c = []
-        for i in range(len(Types)):
-            for k, v in list(component_to_cs_type.items()):
-                if v == Types[i]:
-                    r5_c.append(k)
-        r5 += r5_c
-        all_rows.append(r5)
-        space_rows=[]
-        for i in range(len(Types)):
-            for k,v in list(component_to_cs_type.items()):
-
-                if v==Types[i]:
-
-                    row=[k]
-                    for j in range(len(Types)):
-                        row.append(2.0)
-                    space_rows.append(row)
-                    all_rows.append(row)
-
-        r6 = ['Min Enclosure']
-        r6_c = []
-        for i in range(len(Types)):
-            for k, v in list(component_to_cs_type.items()):
-                if v == Types[i]:
-                    r6_c.append(k)
-        r6 += r6_c
-        all_rows.append(r6)
-        enclosure_rows=[]
-        for i in range(len(Types)):
-            for k,v in list(component_to_cs_type.items()):
-                if v==Types[i]:
-                    row=[k]
-                    for j in range(len(Types)):
-                        row.append(1.0)
-                    enclosure_rows.append(row)
-                    all_rows.append(row)
-
-        # Voltage-Current dependent constraints application
-        if rel_cons!=0:
-            # Populating voltage input table
-            r7= ['Voltage Specification']
-            all_rows.append(r7)
-            r8=['Component Name','DC magnitude','AC magnitude','Frequency (Hz)', 'Phase angle (degree)']
-            all_rows.append(r8)
-            if islands!=None:
-                for island in islands:
-                    all_rows.append([island.element_names[0],0,0,0,0])
-
-            # Populating Current input table
-            r9 = ['Current Specification']
-            all_rows.append(r9)
-            r10 = ['Component Name','DC magnitude','AC magnitude','Frequency (Hz)', 'Phase angle (degree)']
-            all_rows.append(r10)
-            if islands!=None:
-                for island in islands:
-                    all_rows.append([island.element_names[0],0,0,0,0])
-
-            r10=['Voltage Difference','Minimum Spacing']
-            all_rows.append(r10)
-            r11=[0,2] # sample value
-            all_rows.append(r11)
-            r12 = ['Current Rating', 'Minimum Width']
-            all_rows.append(r12)
-            r13 = [1, 2]  # sample value
-            all_rows.append(r13)
-
-
-        df = pd.DataFrame(all_rows)
-        self.Types=Types
-        self.df=df
-
-        #-----------------------for debugging---------------------------------
-        #print "constraint_Table"
-        #print df
-        #---------------------------------------------------------------------
-        return self.df,self.Types
+   
     # if there is change in the order of traces given by user to ensure connected order among the traces, this function updates the input rectangles into corner stitch input
     #It replaces all unordered traces with the proper ordered one for each island (group)
     def update_cs_info(self,islands=None):
@@ -789,7 +619,7 @@ class Layer():
             )
             Patches.append(P)
 
-        fig,ax=plt.subplots()
+        ax=plt.subplots()[1]
         for p in Patches:
             ax.add_patch(p)
 
@@ -802,6 +632,7 @@ class Layer():
             plt.savefig(fig_dir+'/initial_layout_'+self.name+'.png')
         else:
             plt.show()
+        plt.close()
 
     def form_abs_obj_rect_dict(self, div=1000):
         '''

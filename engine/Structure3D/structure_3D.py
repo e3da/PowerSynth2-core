@@ -6,7 +6,8 @@ import networkx as nx
 import pandas as pd
 import copy
 import os
-
+from colormap import rgb2hex
+import matplotlib
 from core.engine.ConstrGraph.ConstraintGraph import Edge
 from core.engine.CornerStitch.CornerStitch import Node
 from core.engine.LayoutSolution.database import create_connection,insert_record
@@ -17,6 +18,7 @@ from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.engine.Structure3D.cell_3D import Cell3D
 from core.MDK.Constraint.constraint_up import constraint_name_list
+from core.engine.LayoutSolution.color_list import color_list_generator
 
 class Structure_3D():
     def __init__(self):
@@ -239,14 +241,14 @@ class Structure_3D():
                                 elif k==comp.name.split('_')[0] and isinstance(comp,Part): # rotated component cases
                                     if r2_c[i]==0:
                                         if 'Width' in cons_name or 'Hor' in cons_name:
-                                            r2_c[i]=comp.footprint[0]
+                                            r2_c[i]=comp.footprint[1] # still the width and length will be same as unrotated one
                                         elif 'Length' in cons_name or 'Ver' in cons_name:
-                                            r2_c[i]=comp.footprint[1]
+                                            r2_c[i]=comp.footprint[0]
                                         break
             
             for i in range(len(r2_c)):
                 if r2_c[i]==0:       
-                    r2_c[i]=2
+                    r2_c[i]=1
             
             
             for i in range(len(r2_c)):
@@ -280,7 +282,7 @@ class Structure_3D():
 
                         row=[k]
                         for j in range(len(Types)):
-                            row.append(2.0)
+                            row.append(1)
                         space_rows.append(row)
                         all_rows.append(row)
         
@@ -884,27 +886,24 @@ class Structure_3D():
         for i in list(location.keys()):
             self.root_node_locations_v[ZDL_V[i]] = location[i]
     
-    def sub_tree_root_handler(self,CG1=None,root=None):
+    def sub_tree_root_handler(self,cg_interface=None,root=None,dbunit=1000):
         '''
         creates constraint graph for each layer connected with same via
-        CG1:CS_to_CG_object, root:[via_node_h,via_node_v]
+        cg_interface:CS_to_CG_object, root:[via_node_h,via_node_v]
         '''
         for i in range(len(self.layers)):
             #print("L_name",self.layers[i].name)
-            if self.layers[i].New_engine.Htree.hNodeList[0].parent==root[0] and self.layers[i].New_engine.Vtree.vNodeList[0].parent==root[1]:
+            if self.layers[i].new_engine.Htree.hNodeList[0].parent==root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==root[1]:
+                self.layers[i].new_engine.constraint_info = cg_interface.getConstraints(self.constraint_df)
+                self.layers[i].new_engine.get_min_dimensions(all_components=self.all_components)
+                input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary
+                cs_islands = self.layers[i].new_engine.init_data[2] #corner stitch islands
+                initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
                 
-                self.layers[i].New_engine.constraint_info = CG1.getConstraints(self.layers[i].New_engine.cons_df)
-                self.layers[i].New_engine.get_min_dimensions()
-                #module_data = []  # list of ModuleDataCornerstitch objects
-                sym_to_cs = self.layers[i].New_engine.init_data[1]
-                cs_islands = self.layers[i].New_engine.init_data[2]
-                #for island in cs_islands:
-                    #island.print_island(plot=True)
-                #raw_input()
-                initial_islands = self.layers[i].New_engine.init_data[3]
-                scaler = 1000
-
-                self.layers[i].c_g= CG1.evaluation(
+                self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
+                #input()
+                '''
+                self.layers[i].c_g= cg_interface.evaluation(
                     Htree=self.layers[i].New_engine.Htree, Vtree=self.layers[i].New_engine.Vtree,
                     bondwires=self.layers[i].New_engine.bondwires,
                     N=None, cs_islands=cs_islands, W=None, H=None,
@@ -912,7 +911,7 @@ class Structure_3D():
                     Types=self.layers[i].New_engine.Types,
                     rel_cons=self.layers[i].New_engine.reliability_constraints,
                     root=root,flexible=self.layers[i].New_engine.flexible)  # for minimum sized layout only one solution is generated
-        
+                '''
         #----------------------------------------for debugging-----------------------------------------#
         '''
         for i in range(len(structure.layers)):
@@ -951,27 +950,33 @@ class Structure_3D():
 
         raw_input()
         '''
-    def save_layouts(self,Layout_Rects=None,layer_name=None,min_dimensions=None,count=None, db=None,bw_type=None):
-        max_x = 0
-        max_y = 0
-        min_x = 1e30
-        min_y = 1e30
+    def save_layouts(self,Layout_Rects=None,layer_name=None,min_dimensions=None,count=None, db=None,bw_type=None,size=None):
+        
         Total_H = {}
-        for i in Layout_Rects:
-            if i[4]!=bw_type:
-                if i[0] + i[2] > max_x:
-                    max_x = i[0] + i[2]
-                if i[1] + i[3] > max_y:
-                    max_y = i[1] + i[3]
-                if i[0] < min_x:
-                    min_x = i[0]
-                if i[1] < min_y:
-                    min_y = i[1]
-                key = (max_x, max_y)
+        max_x=size[0]
+        max_y=size[1]
+        key=(max_x, max_y)
         Total_H.setdefault(key, [])
         Total_H[(max_x, max_y)].append(Layout_Rects)
-        colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
-        type = ['EMPTY', 'Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
+        #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
+        #type = ['EMPTY', 'Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
+        type=list(self.all_components_cs_types.values())
+        n = len(type)
+        all_colors=color_list_generator()
+        colors_rgb=[all_colors[i] for i in range(n)]
+        
+        colors=[]
+        for i in colors_rgb:
+            #print(i)
+            hex_val=matplotlib.colors.to_hex([i[0],i[1],i[2]])
+            colors.append(hex_val)
+        #print(colors)
+        #print(type)
+        #print(colors)
+        
+
+        
+
         if count == None:
             j = 0
         else:
@@ -981,6 +986,7 @@ class Structure_3D():
                 data = []
                 Rectangles = v[c]
                 for i in Rectangles:
+                    #print(i)
                     if i[4]==bw_type:
                         #print(i[4])
                         #input()
@@ -991,15 +997,16 @@ class Structure_3D():
                     else:
                         for t in type:
                             if i[4] == t:
+                                #print(i[4])
                                 type_ind = type.index(t)
                                 colour = colors[type_ind]
                                 if type[type_ind] in min_dimensions :
-                                    if i[-1]==1 or i[-1]==3:  # rotation_index
-                                        h = min_dimensions[t][0][0]
-                                        w = min_dimensions[t][0][1]
-                                    else:
+                                    if i[-1]==0 or i[-1]==2:  # rotation_index
                                         w = min_dimensions[t][0][0]
                                         h = min_dimensions[t][0][1]
+                                    else:
+                                        w = min_dimensions[t][0][1]
+                                        h = min_dimensions[t][0][0]
 
                                     parent_type=min_dimensions[t][1]
                                     p_type_ind = type.index(parent_type)
@@ -1022,11 +1029,12 @@ class Structure_3D():
                             center_y = (i[1] + i[1] + i[3]) / float(2)
                             x = center_x - w / float(2)
                             y = center_y - h / float(2)
-                            R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', 'black']
+                            R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', '#000000']
                             R_in1 = [x, y, w, h, colour,i[4], i[-2], 'None', 'None']
                             data.append(R_in1)
                     data.append(R_in)
                 data.append([k[0], k[1]])
+                
 
                 
 
@@ -1042,7 +1050,7 @@ class Structure_3D():
                         #line=[i for i in item]
                     #line.append('\n')
                     #f.write(json.dumps(line))
-                    f.writelines(["%s\n" % item for item in data])
+                    f.writelines(['%s\n' % item for item in data])
                 conn = create_connection(db)
                 with conn:
                     #print ("L_DATA",l_data)
@@ -1052,6 +1060,7 @@ class Structure_3D():
                 if count == None:
                     j += 1
             conn.close()
+        
 
         
     
@@ -1133,7 +1142,7 @@ class Node_3D(Node):
                     end=self.ZDL.index(dest)
                     edge=Edge(source=start,dest=end,constraint=constraint*1000,index=1,type=None,id=None)
                     self.edges.append(edge)
-        #'''
+        '''
         for removed_node,edge in self.top_down_eval_edges.items():
             for (source,dest), constraint in edge.items():
                 if constraint>0:
@@ -1141,6 +1150,7 @@ class Node_3D(Node):
                     end=dest
                     edge=Edge(source=start,dest=end,constraint=constraint,index=1,type=None,id=None)
                     self.edges.append(edge)
+        '''
 
         dictList1 = []
         for foo in self.edges:
@@ -1149,16 +1159,17 @@ class Node_3D(Node):
         for i in dictList1:
             k, v = list(i.items())[0]
             d1[k].append(v)
+        
         nodes = [x for x in range(len(self.ZDL))]
         for i in range(len(nodes) - 1):
             if (nodes[i], nodes[i + 1]) not in list(d1.keys()):
                 # print (nodes[i], nodes[i + 1])
                 source = nodes[i]
                 destination = nodes[i + 1]
-                index = 1
-                value = 1000      # still there maybe some missing edges .Adding a value of spacing to maintain relative  location
-                e=Edge(source, destination, value, index, type='missing', Weight=2 * value, id=None)
-                self.edges.append(Edge(source, destination, value, index, type='missing', Weight=2 * value, id=None))
+                index = 6 #horspacing
+                value = 100     # still there maybe some missing edges .Adding a value of spacing to maintain relative  location
+                e=Edge(source, destination, value, index, type='non-fixed', Weight=2 * value,comp_type='Flexible')
+                self.edges.append(e)
         #'''
         
         edges=self.edges

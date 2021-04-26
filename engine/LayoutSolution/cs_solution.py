@@ -141,6 +141,17 @@ class CornerStitchSolution():
                     feature=PSFeature(name=name,z=z,width=width,length=length,height=height,material_name=material)
                     dummy_features.append(feature) 
 
+    def hex_to_rgb(self,value):
+        value=str(value)
+        value=value.lstrip(" '#")
+        value=value.rstrip("'")
+        
+        
+        lv = len(value)
+        
+        conv_value= list(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
+        return tuple([i/255 for i in conv_value])
+        
 
     def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None):
         fig1, ax1 = plt.subplots()
@@ -172,6 +183,7 @@ class CornerStitchSolution():
             #'''
             data=data.rstrip()
             lines=data.split('\n')
+            
             #lines=lines.rstrip()
             lines_bytes=[]
             for line in lines:
@@ -225,10 +237,10 @@ class CornerStitchSolution():
             '''
 
 
-            colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple','pink','magenta','orange','violet','black']
+            #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple','pink','magenta','orange','violet','black']
 
-            colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
-
+            #colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
+            
 
             for row in all_lines:
                 #print("R", row)
@@ -251,8 +263,9 @@ class CornerStitchSolution():
                         codes = [Path.MOVETO, Path.LINETO]
                         path = Path(verts, codes)
                         colour = (row[4])
-                        ind = colours.index(colour)
-                        colour = colors[ind]
+                        #print("CB",self.hex_to_rgb(colour))
+                        colour=self.hex_to_rgb(colour)
+                        
                        
                         patch = matplotlib.patches.PathPatch(path, edgecolor=colour, lw=0.8,zorder=int(row[6]))
                         v1.append(patch)
@@ -264,14 +277,17 @@ class CornerStitchSolution():
                         w = float(row[2])
                         h = float(row[3])
                         colour = (row[4])
-                        ind=colours.index(colour)
-                        colour=colors[ind]
+                        colour=self.hex_to_rgb(colour)
+                        #ind=colours.index(colour)
+                        #colour=colours[ind]
+                        #print(colour,row)
                         order = int(row[6])
                         if row[7] != " 'None'" :
                             linestyle = row[7]
-                            edgecolor = row[8]
-                            ind = colours.index(edgecolor)
-                            edgecolor = colors[ind]
+                            edgecolour = row[8]
+                            #ind = colours.index(edgecolor)
+                            #edgecolor = colours[ind]
+                            edgecolor=self.hex_to_rgb(edgecolour)
 
                         if row[7] == " 'None'":
                             #print "IN"

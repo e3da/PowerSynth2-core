@@ -11,7 +11,7 @@ import pandas as pd
 import collections
 
 
-
+from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
 from core.engine.LayoutSolution.database import create_connection, insert_record
 from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
@@ -360,7 +360,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
     if mode == 0:
 
-        structure,CG1=get_min_size_sol_info(structure=structure)
+        structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
         
         if structure.via_connected_layer_info!=None:
             # assign locations to each sub_root nodes (via nodes)
@@ -388,27 +388,32 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree
         
         for i in range(len(structure.layers)):
-            if structure.layers[i].New_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].New_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                structure.layers[i].c_g.minLocationH[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                structure.layers[i].c_g.minLocationV[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-                structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+            if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+                structure.layers[i].forward_cg.minLocationH[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                structure.layers[i].forward_cg.minLocationV[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+                structure.layers[i].forward_cg.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                structure.layers[i].forward_cg.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
                 #print(structure.layers[i].c_g.minX[sub_tree_root[0].id])
                 #print(structure.layers[i].c_g.minX[sub_tree_root[1].id])
-                structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
+                structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
 
-
+        '''print("Minh",structure.layers[i].min_location_h)
+        print("Minv",structure.layers[i].min_location_v)
+        input()'''
+        
         module_data=structure.module_data
         bw_type=None
         for i in range(len(structure.layers)):
 
-            if structure.layers[i].New_engine.bondwires!=None:
-                for wire in structure.layers[i].New_engine.bondwires:
+            if structure.layers[i].bondwires!=None:
+                for wire in structure.layers[i].bondwires:
                     bw_type=wire.cs_type
                     break
             
-            CS_SYM_information, Layout_Rects = CG1.update_min(structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].New_engine.init_data[1], structure.layers[i].New_engine.bondwires,structure.layers[i].origin,dbunit)
+            CS_SYM_information, Layout_Rects = cg_interface.update_min(structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].new_engine.init_data[1], structure.layers[i].bondwires,structure.layers[i].origin,dbunit)
             #print(CS_SYM_information['Substrate'])
+            '''for name,info in CS_SYM_information.items():
+                print(name, info)'''
             cur_fig_data = plot_fig_data(Layout_Rects, mode,bw_type=bw_type)
 
             CS_SYM_Updated = {}
@@ -421,8 +426,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             structure.layers[i].updated_cs_sym_info.append(cs_sym_info)
             structure.layers[i].layer_layout_rects.append(Layout_Rects)
 
-            cs_islands_up = structure.layers[i].New_engine.update_islands(CS_SYM_information, structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].New_engine.init_data[2],
-                                                                          structure.layers[i].New_engine.init_data[3])
+            cs_islands_up = structure.layers[i].new_engine.update_islands(CS_SYM_information, structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].new_engine.init_data[2],
+                                                                          structure.layers[i].new_engine.init_data[3])
             module_data.islands[structure.layers[i].name]=cs_islands_up
             module_data.footprint[structure.layers[i].name]=k # (wdith, height)
 
@@ -441,17 +446,19 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             layer_sol.layout_plot_info=structure.layers[i].layout_info
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects
-            layer_sol.min_dimensions=structure.layers[i].New_engine.min_dimensions
+            layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
-
+       
         Solutions.append(solution)
         db = db_file
         count = None
         if db != None:
             for i in range(len(Solutions)):
                 for j in range(len(solution.layer_solutions)):
-                    structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects[0],layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=i, db=db,bw_type=bw_type)
+                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                    size=[size[0] / dbunit, size[1] / dbunit]
+                    structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects[0],layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=i, db=db,bw_type=bw_type,size=size)
         
         if plot:
             sol_path = fig_dir + '/Mode_0'
@@ -471,7 +478,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
-            plot_solution_structure(sol)
+            #plot_solution_structure(sol)
             PS_solutions.append(sol)
 
         #------------------------for debugging---------------------------#
@@ -1011,9 +1018,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
     return Solutions
 
-def get_min_size_sol_info(structure=None, mode=0):
+def get_min_size_sol_info(structure=None, dbunit=1000):
     
-    CG1=CS_to_CG(mode)
+    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map)
     for via_name, sub_root_node_list in structure.sub_roots.items():
         sub_tree_root=sub_root_node_list # root of each via connected layes subtree
         structure.sub_tree_root_handler(CG1=CG1,root=sub_tree_root) #getting constraint graph created from bottom -to-top (upto via root node)
@@ -1132,33 +1139,47 @@ def get_min_size_sol_info(structure=None, mode=0):
         structure.assign_root_node_edges()
         structure.root_node_h.calculate_min_location()
         structure.root_node_v.calculate_min_location()
-    else: # no via connected layers
+    else: # no via connected layers (2D Case)
         root=[structure.root_node_h,structure.root_node_v]
-        #if structure.layers[0].New_engine.Htree.hNodeList[0].parent==structure.root_node_h:
-        structure.sub_tree_root_handler(CG1=CG1,root=root) #getting constraint graph created from bottom -to-top (upto root node)
-        if structure.layers[0].New_engine.Htree.hNodeList[0].parent==root[0] and structure.layers[0].New_engine.Vtree.vNodeList[0].parent==root[1]:
+        structure.sub_tree_root_handler(cg_interface=cg_interface,root=root,dbunit=dbunit) #getting constraint graph created from bottom -to-top (upto root node)
+        
+        if structure.layers[0].new_engine.Htree.hNodeList[0].parent==root[0] and structure.layers[0].new_engine.Vtree.vNodeList[0].parent==root[1]:
 
-            for node_id,ZDL_H in list(structure.layers[0].c_g.ZDL_H.items()):
+            for node_id,ZDL_H in list(structure.layers[0].forward_cg.x_coordinates.items()):
                     if node_id==root[0].id:
                         root[0].ZDL+=ZDL_H
                         root[0].ZDL=list(set(root[0].ZDL))
                         root[0].ZDL.sort()
                         break
-            for node_id,edgelist in list(structure.layers[0].c_g.edgesh_new.items()):
+            
+            '''
+            for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
                 if node_id==root[0].id:
                     root[0].edges+=edgelist
                     break
-
+            '''
+            for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
+                if node_id==root[0].id:
+                    root[0].edges+=edgelist
+                    break
+                
+            
+            '''
             for node_id,edgelist in list(structure.layers[0].c_g.edgesv_new.items()):
                 if node_id==root[1].id:
 
                     root[1].edges+=edgelist
                     break
-            for node_id,ZDL_V in list(structure.layers[0].c_g.ZDL_V.items()):
+            '''
+            for node_id,ZDL_V in list(structure.layers[0].forward_cg.y_coordinates.items()):
                 if node_id==root[1].id:
                     root[1].ZDL+=ZDL_V
                     root[1].ZDL=list(set(root[1].ZDL))
                     root[1].ZDL.sort()
+                    break
+            for node_id,edgelist in list(structure.layers[0].forward_cg.edgesv_forward.items()):
+                if node_id==root[1].id:
+                    root[1].edges+=edgelist
                     break
 
         structure.root_node_h.calculate_min_location()
@@ -1177,7 +1198,7 @@ def get_min_size_sol_info(structure=None, mode=0):
     structure.root_node_v.node_min_locations=structure.root_node_v.node_locations
    
 
-    return structure, CG1
+    return structure,cg_interface
 
 def get_unique_edges(edge_list=None):
     '''
@@ -1211,7 +1232,7 @@ def get_unique_edges(edge_list=None):
 
 
 
-def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,seed=None):
+def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,seed=None,dbunit=1000):
     '''
     :param structure: 3D structure object
     :param num_layouts int -- provide a number of layouts used in NG RANDOM(macro mode)
@@ -1221,7 +1242,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
 
     '''
 
-    structure,CG0=get_min_size_sol_info(structure=structure)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
+    structure,CG0=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():
@@ -1476,7 +1497,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
     return structure, CG0
 
 def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None):
+                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,dbunit=1000):
     '''
 
     :param structure: 3D structure object
@@ -1499,7 +1520,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     '''
     width=floor_plan[0]
     height=floor_plan[1]
-    structure,CG0=get_min_size_sol_info(structure=structure)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only) 
+    structure,CG0=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only) 
  
     ZDL_H = {}
     ZDL_V = {}
