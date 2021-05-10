@@ -1064,6 +1064,8 @@ if __name__ == "__main__":
         
         elif sel==7:
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+        elif sel==8:
+            args = ['python','cmd.py','-m','/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         #f = open('output.txt','w')
         #sys.stdout = f
