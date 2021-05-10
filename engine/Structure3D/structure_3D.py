@@ -8,7 +8,7 @@ import copy
 import os
 from colormap import rgb2hex
 import matplotlib
-from core.engine.ConstrGraph.ConstraintGraph import Edge
+from core.engine.ConstrGraph.CGStructures import Vertex, Edge, Graph, find_longest_path, fixed_edge_handling
 from core.engine.CornerStitch.CornerStitch import Node
 from core.engine.LayoutSolution.database import create_connection,insert_record
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
@@ -27,6 +27,8 @@ class Structure_3D():
         self.Htree=[] # list of horizontal cs tree from each layer
         self.Vtree=[] # list of vertical cs tree from each layer
         self.sub_roots={} # dictionary of  virtual root nodes for each group of layers connected with same via , via name is the key
+        self.interfacing_layer_nodes={} #dictionary of  virtual nodes for each group of layers connected with same via , via name is the key (child of sub_roots)
+        self.interfacing_layer_info={} #{('V1', 'V2', 'V3', 'V6', 'V7'): ['I1', 'I2'], ('V1', 'V4', 'V5', 'V8', 'V9'): ['I3', 'I4']}
         self.layer_constraints_info=None # pd dataframe for holding inter-layer constraint info
         self.via_connection_raw_info=None #holds raw info of via connectivity given by user
         self.solutions=None
@@ -412,14 +414,14 @@ class Structure_3D():
         #s=1000 #multiplier for layout engine
         for layer in self.layers:
             objects_3D=[]
-            #print(layer.name,layer.direction)
+            
             
             comps_names=[]
             for comp in layer.all_components:
                 name=(comp.layout_component_id)
                 if name[0]!='B':
                     comps_names.append(name)
-                    #print (name,comp.material_id, comp.thickness)
+                    
                     if isinstance(comp,Part):
                         if name[0]=='D': # only device thickness is considered
                             height=comp.thickness
@@ -663,14 +665,22 @@ class Structure_3D():
     def assign_floorplan_size(self):
         width=0.0
         height=0.0
+        origin_x=100000
+        origin_y=100000
         for layer in self.layers:
             if layer.origin[0]+layer.width>width:
                 width=layer.origin[0]+layer.width
+            if layer.origin[0]<origin_x:
+                origin_x=layer.origin[0]
+            if layer.origin[1]<origin_y:
+                origin_y=layer.origin[1]
             if layer.origin[1]+layer.height>height:
                 height=layer.origin[1]+layer.height
         self.floorplan_size=[width,height]
-        self.root_node_h.boundary_coordinates=[0,width]
-        self.root_node_v.boundary_coordinates=[0,height]
+        self.root_node_h.boundary_coordinates=[origin_x,width]
+        self.root_node_v.boundary_coordinates=[origin_y,height]
+        self.root_node_h.create_vertices()
+        self.root_node_v.create_vertices()
     
     
     def assign_via_connected_layer_info(self,info=None):
@@ -681,7 +691,13 @@ class Structure_3D():
         #info={'V1':['I1','I4'],'V2':['I2','I3']}
         #info={'V1':['I1','I4'],'V2':['I2','I1'],'V3':['I3','I4'],'V4':['I3','I2']}
         #print(info)
+        through_vias=[]
         info=copy.deepcopy(info)
+        for key,value in info.items():
+            if len(value)>2 and 'Through' in value:
+                value.remove('Through')
+                through_vias.append(key)
+        
         if len(info)>0:
             all_vias=list(info.keys()) # list of all via names from input script
             connected_vias=[[via] for via in all_vias] # initialize as all vias are dis connected
@@ -700,8 +716,7 @@ class Structure_3D():
                                             connected_vias[j].remove(via_name2)
             
             connected_vias=[x for x in connected_vias if x!=[]]
-            #print(connected_vias)
-            #input()
+            
         via_connected_layer_info={}
         if len(connected_vias)>0:
             for i in range(len(connected_vias)):
@@ -718,14 +733,162 @@ class Structure_3D():
                                     layers.append(layer)
                 
                 via_connected_layer_info[via_name]=layers
-        #print(via_connected_layer_info)
-        #input()
+        
+        layer_wise_vias={}
+        for i in range(len(self.layers)):
+            layer_wise_vias[self.layers[i].name]=[]
+        
+        for via_name, layers in info.items():
+            for layer_name in layers:
+                if layer_name in layer_wise_vias:
+                    layer_wise_vias[layer_name].append(via_name)
+
+        via_names=(layer_wise_vias.values())
+        via_names_list = []
+        [via_names_list.append(x) for x in via_names if x not in via_names_list]
+        via_names_list=[tuple(i) for i in via_names_list]
+        interfacing_layer_info={}
+        for via_name in via_names_list:
+            interfacing_layer_info[via_name]=[]
+
+        for layer_name, via_name_list in layer_wise_vias.items():
+            if tuple(via_name_list) in interfacing_layer_info:
+                if layer_name not in interfacing_layer_info[tuple(via_name_list)]:
+                    interfacing_layer_info[tuple(via_name_list)].append(layer_name)
+        #print(interfacing_layer_info)
+        for via_name_list in interfacing_layer_info:
+            count=0
+            name=via_name_list[count]
+            while name in through_vias:
+                count+=1
+                if len(via_name_list)>count:
+                    name=via_name_list[count]
+                else:
+                    break
+              
+            if name not in through_vias:
+                for i in range(count+1,len(via_name_list)):
+                    via=via_name_list[i]
+                    name+='_'+via
+            
+
+            self.interfacing_layer_info[name]=interfacing_layer_info[via_name_list]
+        #print(self.interfacing_layer_info)
         self.via_connected_layer_info=via_connected_layer_info
                 
+    def create_root(self):
+        '''
+        creates all necessary virtual nodes and a virtaul root node.
+        '''
+        self.root_node_h=Node_3D(id=-1)
+        self.root_node_v = Node_3D(id=-1)
+        
+        
+        if self.via_connected_layer_info!=None:
+            id=-2 # virtual node id for via nodes
+            for via_name, layer_name_list in self.via_connected_layer_info.items():
+                via_root_node_h=Node_3D(id=id) # for each via connected layer group
+                via_root_node_v=Node_3D(id=id) # for each via connected layer group
+                via_root_node_h.name=via_name
+                via_root_node_v.name=via_name
+                via_root_node_h.parent=self.root_node_h # assigning root node as the parent node
+                self.root_node_h.child.append(via_root_node_h) # assigning each via connected group as child node
+                via_root_node_v.parent=self.root_node_v
+                self.root_node_v.child.append(via_root_node_v)
                 
-        
-        
+                for layer in self.layers:
+                    if layer.name in layer_name_list:
+                        # assuming all layers in the same via connected group have same origin and dimensions
+                        origin_x=layer.origin[0] 
+                        origin_y=layer.origin[1]
+                        width=layer.width # dimmension along x-axis
+                        height=layer.height # dimension along y-axis
+                        
 
+                    #populating boundary coordinates for each via connected group
+                    if origin_x not in via_root_node_h.boundary_coordinates:
+                        via_root_node_h.boundary_coordinates.append(origin_x)
+                    if origin_x+width not in via_root_node_h.boundary_coordinates:
+                        via_root_node_h.boundary_coordinates.append(origin_x+width)
+                    if origin_y not in via_root_node_v.boundary_coordinates:
+                        via_root_node_v.boundary_coordinates.append(origin_y)
+                    if origin_y+height not in via_root_node_v.boundary_coordinates:
+                        via_root_node_v.boundary_coordinates.append(origin_y+height)
+                    
+                    for via_location in list(layer.via_locations.values()):
+                        via_root_node_h.via_coordinates.append(via_location[0]) #x
+                        via_root_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width
+                        via_root_node_v.via_coordinates.append(via_location[1]) #y
+                        via_root_node_v.via_coordinates.append(via_location[1]+via_location[3]) #y+height
+                
+                via_root_node_h.boundary_coordinates=list(set(via_root_node_h.boundary_coordinates))  
+                via_root_node_v.boundary_coordinates=list(set(via_root_node_v.boundary_coordinates)) 
+                via_root_node_h.boundary_coordinates.sort()
+                via_root_node_v.boundary_coordinates.sort()
+                via_root_node_h.via_coordinates=list(set(via_root_node_h.via_coordinates))
+                via_root_node_v.via_coordinates=list(set(via_root_node_v.via_coordinates))
+                via_root_node_h.via_coordinates.sort()
+                via_root_node_v.via_coordinates.sort()
+                
+                if len(self.interfacing_layer_info)>0:
+                    self.create_interfacing_layer_nodes(id=id-1,name=via_name,via_root_node_h=via_root_node_h,via_root_node_v=via_root_node_v)
+               
+                self.sub_roots[via_name]=[via_root_node_h,via_root_node_v] #sub root node for each via connected group
+                
+                id-=1 #decrementing id to assign next via connected group
+        else: # 2D case (only one layer is available)
+            if len(self.layers)==1:
+                self.root_node_h.child.append(self.layers[0].new_engine.Htree.hNodeList[0])
+                self.layers[0].new_engine.Htree.hNodeList[0].parent=self.root_node_h
+                self.root_node_v.child.append(self.layers[0].new_engine.Vtree.vNodeList[0])
+                self.layers[0].new_engine.Vtree.vNodeList[0].parent=self.root_node_v                
+        
+    
+    def create_interfacing_layer_nodes(self,id=None,name=None,via_root_node_h=None,via_root_node_v=None):  
+        # adding interfacing layer node information
+        if len(self.interfacing_layer_info)>0:
+            for via_name,layers in self.interfacing_layer_info.items():
+                
+                via_node_h=Node_3D(id=id) # for each via connected layer group
+                via_node_v=Node_3D(id=id) # for each via connected layer group
+                via_node_h.name=via_name
+                via_node_v.name=via_name
+                #for name in self.sub_roots:
+                    
+                if via_name in name:
+                    via_node_h.parent=via_root_node_h # assigning root node as the parent node
+                    via_root_node_h.child.append(via_node_h) # assigning each via connected group as child node
+                    via_node_v.parent=via_root_node_v
+                    via_root_node_v.child.append(via_node_v)
+
+                for layer in self.layers:
+                    
+                    if layer.name in layers:
+                        # adding the root node of the layer sub-tree as the child node of the via connected group
+                        if layer.new_engine.Htree.hNodeList[0].parent==None:
+                            layer.new_engine.Htree.hNodeList[0].parent=via_node_h
+                            via_node_h.child.append(layer.new_engine.Htree.hNodeList[0])
+                            via_node_h.child_names.append(layer.name)
+                            via_node_h.boundary_coordinates=[layer.origin[0],layer.origin[0]+layer.width]
+                            for via_location in list(layer.via_locations.values()):
+                                via_node_h.via_coordinates.append(via_location[0]) #x
+                                via_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width
+                                
+
+                        # adding the root node of the layer sub-tree as the child node of the via connected group
+                        if layer.new_engine.Vtree.vNodeList[0].parent==None:
+                            layer.new_engine.Vtree.vNodeList[0].parent=via_node_v
+                            via_node_v.child.append(layer.new_engine.Vtree.vNodeList[0])
+                            via_node_v.child_names.append(layer.name)
+                            via_node_v.boundary_coordinates=[layer.origin[1],layer.origin[1]+layer.height]
+                            for via_location in list(layer.via_locations.values()):
+                                
+                                via_node_v.via_coordinates.append(via_location[1]) #y
+                                via_node_v.via_coordinates.append(via_location[1]+via_location[3]) #y+height
+                id-=1
+                self.interfacing_layer_nodes[via_name]=[via_node_h,via_node_v]
+           
+    """
     def create_root(self):
         '''
         creates all necessary virtual nodes and a virtaul root node.
@@ -801,9 +964,9 @@ class Structure_3D():
                 self.root_node_v.child.append(self.layers[0].new_engine.Vtree.vNodeList[0])
                 self.layers[0].new_engine.Vtree.vNodeList[0].parent=self.root_node_v
         
-        
+    """   
     
-    def calculate_min_location_root(self):
+    def calculate_min_location_root(self): # need to get rid of this function
         edgesh_root=self.root_node_h_edges
         edgesv_root=self.root_node_v_edges
         ZDL_H=self.root_node_ZDL_H
@@ -813,24 +976,21 @@ class Structure_3D():
         ZDL_H.sort()
         ZDL_V = list(set(ZDL_V))
         ZDL_V.sort()
-        #print"root", ZDL_H
-        #print ZDL_V
-        #raw_input()
-        # G2 = nx.MultiDiGraph()
+        
         dictList1 = []
-        # print self.edgesh
+        
         for foo in edgesh_root:
-            # print "EDGE",foo.getEdgeDict()
+            
             dictList1.append(foo.getEdgeDict())
-        # print dictList1
+        
         d = defaultdict(list)
         for i in dictList1:
             k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
             d[k].append(v)
         edge_labels1 = d
-        # print "d",ID, edge_labels1
+        
         nodes = [x for x in range(len(ZDL_H))]
-        # G2.add_nodes_from(nodes)
+       
 
         edge_label = []
         for branch in edge_labels1:
@@ -840,26 +1000,20 @@ class Structure_3D():
                 data.append((lst_branch[0], lst_branch[1], internal_edge))
                 edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
 
-            # G2.add_weighted_edges_from(data)
-        # mem = Top_Bottom(ID, parentID, G2, label)  # top to bottom evaluation purpose
-        # self.Tbeval.append(mem)
+           
 
         edge_label_h=edge_label
         location=self.min_location_eval(ZDL_H,edge_label_h)
 
         for i in list(location.keys()):
             self.root_node_locations_h[ZDL_H[i]] = location[i]
-        #print"root", self.root_node_locations_h
-        #raw_input()
-        #GV = nx.MultiDiGraph()
+        
         dictList1 = []
-        # print self.edgesh
+        
         for foo in edgesv_root:
-            # print foo.getEdgeDict()
+            
             dictList1.append(foo.getEdgeDict())
-        # print dictList1
-
-        ######
+        
         d = defaultdict(list)
         for i in dictList1:
             k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
@@ -870,14 +1024,10 @@ class Structure_3D():
             lst_branch = list(branch)
             data = []
             for internal_edge in edge_labels1[branch]:
-                # print lst_branch[0], lst_branch[1]
-                # print internal_edge
-                # if (lst_branch[0], lst_branch[1], internal_edge) not in data:
+                
                 data.append((lst_branch[0], lst_branch[1], internal_edge))
                 edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
-                # print data,label
-
-            #GV.add_weighted_edges_from(data)
+                
 
 
 
@@ -891,27 +1041,36 @@ class Structure_3D():
         creates constraint graph for each layer connected with same via
         cg_interface:CS_to_CG_object, root:[via_node_h,via_node_v]
         '''
+        
         for i in range(len(self.layers)):
-            #print("L_name",self.layers[i].name)
+            
             if self.layers[i].new_engine.Htree.hNodeList[0].parent==root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==root[1]:
                 self.layers[i].new_engine.constraint_info = cg_interface.getConstraints(self.constraint_df)
                 self.layers[i].new_engine.get_min_dimensions(all_components=self.all_components)
                 input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary
                 cs_islands = self.layers[i].new_engine.init_data[2] #corner stitch islands
                 initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
+                #print(self.layers[i].name)
                 
                 self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
-                #input()
-                '''
-                self.layers[i].c_g= cg_interface.evaluation(
-                    Htree=self.layers[i].New_engine.Htree, Vtree=self.layers[i].New_engine.Vtree,
-                    bondwires=self.layers[i].New_engine.bondwires,
-                    N=None, cs_islands=cs_islands, W=None, H=None,
-                    XLoc=None, YLoc=None, seed=None, individual=None,
-                    Types=self.layers[i].New_engine.Types,
-                    rel_cons=self.layers[i].New_engine.reliability_constraints,
-                    root=root,flexible=self.layers[i].New_engine.flexible)  # for minimum sized layout only one solution is generated
-                '''
+                """
+                for tb_eval in self.layers[i].forward_cg.tb_eval_h:
+                    print("ID",tb_eval.ID)
+                    for edge in tb_eval.graph.edges:
+                        edge.printEdge()
+                    for vert in tb_eval.graph.vertices:
+                        print(vert.coordinate, vert.min_loc)
+                
+                print("Ver")
+                for tb_eval in self.layers[i].forward_cg.tb_eval_v:
+                    print("ID",tb_eval.ID)
+                    for edge in tb_eval.graph.edges:
+                        edge.printEdge()
+                    for vert in tb_eval.graph.vertices:
+                        print(vert.coordinate, vert.min_loc)
+                input()
+                """
+               
         #----------------------------------------for debugging-----------------------------------------#
         '''
         for i in range(len(structure.layers)):
@@ -967,12 +1126,9 @@ class Structure_3D():
         
         colors=[]
         for i in colors_rgb:
-            #print(i)
+            
             hex_val=matplotlib.colors.to_hex([i[0],i[1],i[2]])
             colors.append(hex_val)
-        #print(colors)
-        #print(type)
-        #print(colors)
         
 
         
@@ -986,18 +1142,17 @@ class Structure_3D():
                 data = []
                 Rectangles = v[c]
                 for i in Rectangles:
-                    #print(i)
+                    
                     if i[4]==bw_type:
-                        #print(i[4])
-                        #input()
+                        
                         type_ind = type.index(bw_type)
                         colour = colors[type_ind]
                         R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-1], 'None', 'None'] # i[-1]=zorder
-                        #print (layer_name,R_in)
+                        
                     else:
                         for t in type:
                             if i[4] == t:
-                                #print(i[4])
+                                
                                 type_ind = type.index(t)
                                 colour = colors[type_ind]
                                 if type[type_ind] in min_dimensions :
@@ -1039,30 +1194,94 @@ class Structure_3D():
                 
 
                 l_data = [j,data]
-                #print(l_data[0],layer_name)
+                
                 directory = os.path.dirname(db)
                 temp_file = directory + '/out.txt'
                 with open(temp_file, 'w+') as f:
-                    #res = [''.join(format(ord(i), 'b') for i in data)]
                     
-                    #for item in data:
-                        #line=[str(i).encode('utf-8') for i in item]
-                        #line=[i for i in item]
-                    #line.append('\n')
-                    #f.write(json.dumps(line))
                     f.writelines(['%s\n' % item for item in data])
                 conn = create_connection(db)
                 with conn:
-                    #print ("L_DATA",l_data)
-                    #layer_name=str(count)+'_'+layer_name
+                    
                     insert_record(conn, l_data,layer_name, temp_file)
 
                 if count == None:
                     j += 1
             conn.close()
         
+    
+
+
+    def create_interfacing_layer_forward_cg(self,sub_root):
+        '''
+        creates cg for interfacing layer nodes.
+        :param sub_root: list of horizontal and vertical tree node for each interfacing layer
+        '''
+        hor_node=sub_root[0]
+        ver_node=sub_root[1]
+        
+        for i in range(len(self.layers)):
+            if self.layers[i].new_engine.Htree.hNodeList[0].parent==hor_node:
+                for tb_eval in self.layers[i].forward_cg.tb_eval_h:
+                    if tb_eval.ID==self.layers[i].new_engine.Htree.hNodeList[0].id:
+                        for vertex in tb_eval.graph.vertices:
+                            if vertex.coordinate not in hor_node.ZDL:
+                                hor_node.ZDL.append(vertex.coordinate)
+
+            if self.layers[i].new_engine.Vtree.vNodeList[0].parent==ver_node:
+                for tb_eval in self.layers[i].forward_cg.tb_eval_v:
+                    if tb_eval.ID==self.layers[i].new_engine.Vtree.vNodeList[0].id:
+                        for vertex in tb_eval.graph.vertices:
+                            if vertex.coordinate not in ver_node.ZDL:
+                                ver_node.ZDL.append(vertex.coordinate)
+        
+        hor_node.ZDL.sort()
+        ver_node.ZDL.sort()
+        hor_node.create_vertices()
+        ver_node.create_vertices()
 
         
+        
+        for i in range(len(self.layers)):
+            if self.layers[i].new_engine.Htree.hNodeList[0].parent==hor_node:
+                for tb_eval in self.layers[i].forward_cg.tb_eval_h:
+                    if tb_eval.ID==self.layers[i].new_engine.Htree.hNodeList[0].id:
+                       
+                        for edge in tb_eval.graph.edges:
+                        
+                            if edge.source.coordinate in hor_node.ZDL and edge.dest.coordinate in hor_node.ZDL:
+                                origin=next((x for x in hor_node.vertices if x.coordinate == edge.source.coordinate), None)
+                                dest=next((x for x in hor_node.vertices if x.coordinate == edge.dest.coordinate), None)
+                                if origin!=None and dest!=None:
+                                    new_edge=Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
+                                    hor_node.edges.append(new_edge)
+            
+            if self.layers[i].new_engine.Vtree.vNodeList[0].parent==ver_node:
+                for tb_eval in self.layers[i].forward_cg.tb_eval_v:
+                    if tb_eval.ID==self.layers[i].new_engine.Vtree.vNodeList[0].id:
+                       
+                        for edge in tb_eval.graph.edges:
+                            
+                            if edge.source.coordinate in ver_node.ZDL and edge.dest.coordinate in ver_node.ZDL:
+                                origin=next((x for x in ver_node.vertices if x.coordinate == edge.source.coordinate), None)
+                                dest=next((x for x in ver_node.vertices if x.coordinate == edge.dest.coordinate), None)
+                                if origin!=None and dest!=None:
+                                    new_edge=Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
+                                    ver_node.edges.append(new_edge)
+        
+        
+        
+        
+        hor_node.create_forward_cg(constraint_info='MinHorSpacing')
+        ver_node.create_forward_cg(constraint_info='MinVerSpacing')
+
+        
+        #propagating to parent node cg
+        
+        
+        
+
+
     
 
 
@@ -1079,12 +1298,14 @@ class Node_3D(Node):
         self.parent=None
         self.child=[]
         self.edges=[]
+        self.vertices=[]
+        self.tb_eval_graph=None
         self.child_names=[] # for via node (virtual)
         self.boundary_coordinates=[] # for via node (virtual) for via_node_h:coordinates=[origin, origin+floorplan width], for via_node_v:coordinates=[origin, origin+fllorplan height]
         self.via_coordinates=[]# list of via x/y coordinates from each layer under same via node
         #self.via_coordinates_v=[]# list of via y coordinates from each layer under same via node
         self.ZDL=[] # x/y coordinates
-        
+        self.removable_vertices={}
         '''self.removed_nodes=[]
         self.reference_nodes={}
         self.top_down_eval_edges={}'''
@@ -1116,22 +1337,290 @@ class Node_3D(Node):
         print("Bondary Coordinates:", self.boundary_coordinates)
         print("Via Coordinates:",self.via_coordinates)
     
+    def create_vertices(self):
+        '''
+
+        '''
+        if len(self.ZDL)>0:
+            self.ZDL.sort()
+            for i in range(len(self.ZDL)):
+                coord=self.ZDL[i]
+                vert=Vertex(coordinate=coord,index=i)
+                self.vertices.append(vert)
+        else:
+            self.ZDL+=self.boundary_coordinates
+            self.ZDL.sort()
+            for i in range(len(self.ZDL)):
+                coord=self.ZDL[i]
+                vert=Vertex(coordinate=coord,index=i)
+                self.vertices.append(vert)
+        
+    def create_forward_cg(self, constraint_info=None):
+        '''
+        creates forward cg and returns tb_val_graph for top-down location propagation.
+        '''
+       
+
+
+        vertices_index=[i.index for i in self.vertices]
+        vertices_index.sort()
+        self.vertices.sort(key=lambda x: x.index, reverse=False) 
+        
+        graph=Graph(vertices=vertices_index,edges=self.edges)
+        graph.create_nx_graph()
+        
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        
+        redundant_edges=[]
+        for edge in graph.nx_graph_edges:
+            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+                redundant_edges.append(edge)
+                
+        for edge in redundant_edges:
+            if edge.constraint>0:
+                graph.nx_graph_edges.remove(edge)
+                graph.modified_edges.remove(edge)
+        
+        
+        if len(graph.nx_graph_edges)>0:
+            removable_vertex_dict,graph=fixed_edge_handling(graph,ID=self.id)
+        
+        
+        for vert in removable_vertex_dict:
+            
+            edge_list=removable_vertex_dict[vert]
+            if len(edge_list)>1:
+                for edge1 in edge_list:
+                    for edge2 in edge_list:
+                        if edge1!=edge2:
+                            if (edge1.source.coordinate==edge2.source.coordinate) and (edge1.dest.coordinate==edge2.dest.coordinate) and (edge1.constraint>=edge2.constraint) :
+                                
+                                edge_list.remove(edge2)
+
+                removable_vertex_dict[vert]=edge_list                    
+        
+        removable_vertex={}
+        for vert, edge_list in removable_vertex_dict.items():
+            for edge in edge_list:
+                removable_vertex[vert.coordinate]=[edge.source.coordinate,edge.constraint]
+
+        self.removable_vertices=removable_vertex
+        removable_vertices=list(removable_vertex_dict.keys())
+        for vert in removable_vertices:
+            
+            for vertex in self.vertices:
+                if vertex.coordinate==vert.coordinate:
+                    vertex.removable=True
+            for edge in graph.nx_graph_edges:
+                if edge.dest.coordinate== vert.coordinate:
+                    edge.dest.removable=True   
+        #cleaning up redundant edges
+        graph.nx_graph_edges=list(set(graph.nx_graph_edges))
+        graph.modified_edges=list(set(graph.modified_edges))
+        for edge1 in graph.nx_graph_edges:
+            for edge2 in graph.nx_graph_edges:
+                if edge1!=edge2:
+                    
+                    if (edge1.source.coordinate==edge2.source.coordinate) and (edge1.dest.coordinate==edge2.dest.coordinate) and (edge1.constraint>=edge2.constraint) and (edge2.comp_type!='Fixed'):
+                        
+                        graph.nx_graph_edges.remove(edge2)
+                        if edge2 in graph.modified_edges:
+                            graph.modified_edges.remove(edge2)
+                        
+        
+        adj_matrix=graph.generate_adjacency_matrix()
+        #if ID==8:
+        
+        src=vertices_index[0]
+        
+        for i in range(len(self.vertices)):
+            vertex=self.vertices[i]
+            dest=vertex.index
+            
+            if dest!=src:
+                
+                max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                
+                if max_dist!=0:
+                    vertex.min_loc=max_dist
+                else:
+                    print("ERROR: No path found from {} to {} in Node ID".format(src,dest,self.id))
+            else:
+                vertex.min_loc=0
+        
+        
+
+
+            
+        self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
+        
+
+        if self.parent!=None: # root node is not considered
+            self.propagate_edges(constraint_info)
+        
+        
+    def propagate_edges(self,constraint_info):
+        '''
+        propagate necessary edges from child node to parent node. For interfacing layer node to it's parent node.
+        '''
+        parent_coord=self.parent.ZDL
+        parent_coord=list(set(parent_coord))
+        parent_coord.sort()
+        
+        removable_coords={}
+        for edge in self.tb_eval_graph.edges:
+            for vert in self.vertices:
+                if vert.removable==True and edge.dest.coordinate==vert.coordinate  and edge.dest.coordinate in parent_coord:
+                
+                    removable_coords[edge.dest.coordinate]=[edge.source.coordinate,edge.constraint]
+                    if edge.source.coordinate not in parent_coord:
+                        parent_coord.append(edge.source.coordinate)    
+        
+        parent_coord.sort()
+        
+        
+        # propagating necessary vertices to the parent node
+        for coord in parent_coord:
+            coord_found=False
+            for vertex in self.parent.vertices:
+                if vertex.coordinate==coord:
+                    coord_found=True
+                    break
+            if coord_found==False:
+                propagated_vertex=Vertex(coordinate=coord)
+                propagated_vertex.propagated=True
+                self.parent.vertices.append(propagated_vertex)
+        
+        #preparing to make adjacency matrix
+        
+        all_coord=[vert.coordinate for vert in self.parent.vertices]
+        all_coord.sort()
+        for vertex in self.parent.vertices:
+            vertex.index=all_coord.index(vertex.coordinate)
+        self.parent.vertices.sort(key=lambda x: x.index, reverse=False) # inplace sorting
+
     
+        vertices_index=[i.index for i in self.parent.vertices]
+        vertices_index.sort()
+        
+
+        parent_graph=Graph(vertices=vertices_index,edges=self.parent.edges)
     
-    def calculate_min_location(self,structure=None,h=False):
+        parent_graph.create_nx_graph()
+       
+        parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
+        
+
+        
+        
+        for i in range(len(parent_coord)):
+            for j in range(len(parent_coord)):
+                
+                coord1=parent_coord[i]
+                coord2=parent_coord[j]
+                if coord1!=coord2:
+                    for vertex in self.parent.vertices:
+                        if vertex.coordinate==coord1:
+                            origin=vertex
+                        elif vertex.coordinate==coord2:
+                            dest=vertex
+                    
+                    added_constraint=0
+                    #for edge in self.tb_eval_graph.edges:
+                    for edge in self.tb_eval_graph.edges:
+                        if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            
+                                e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
+                                if e not in self.parent.edges:
+                                    self.parent.edges.append(e) #edge.type
+                                    added_constraint=edge.constraint
+                                    
+                            elif edge.constraint<0:
+                                e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
+                                if e not in self.parent.edges:
+                                    self.parent.edges.append(e)
+                                    
+                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        continue
+   
+                    removable_coord_list=list(removable_coords.keys())
+                    if coord2>coord1:
+                        if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
+                            continue
+
+                        else:
+                            src=None
+                            target=None
+                            for vertex in self.vertices:
+                                if vertex.coordinate==coord1:
+                                    src=vertex
+                                    break
+                            for vertex in self.vertices:       
+                                if vertex.coordinate==coord2:
+                                    target=vertex
+                                    break
+                                
+                            if src!=None and target!=None:        
+                                
+                                cons_name=constraint_info
+                                
+                                index= constraint_name_list.index(cons_name)
+                                min_room=target.min_loc-src.min_loc 
+                                
+                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
+                                
+                                if min_room>added_constraint and min_room>distance_in_parent_graph:
+                                    e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
+                                    if e not in self.parent.edges :
+                                        self.parent.edges.append(e)
+                                        
+                                
+            vertices_index=[i.index for i in self.parent.vertices]
+            vertices_index.sort()
+            
+
+            parent_graph=Graph(vertices=vertices_index,edges=self.parent.edges)
+            parent_graph.create_nx_graph()
+        
+            parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
+                 
+
+    def remove_redundant_edges(self,graph_in=None):
+        '''
+        :param vertices:list of vertex objects
+        : param edges:list of edge objects
+        '''
+
+        
+        graph=copy.deepcopy(graph_in)
+        graph.nx_graph_edges=list(set(graph.nx_graph_edges))
+        
+    
+        graph.modified_edges=list(set(graph.modified_edges))
+        for edge1 in graph.nx_graph_edges:
+            for edge2 in graph.nx_graph_edges:
+                if edge1!=edge2:
+                    
+                    if (edge1.source.coordinate==edge2.source.coordinate) and (edge1.dest.coordinate==edge2.dest.coordinate) and (edge1.constraint>=edge2.constraint) and (edge2.comp_type!='Fixed'):
+                        
+                        graph.nx_graph_edges.remove(edge2)
+                        if edge2 in graph.modified_edges:
+                            graph.modified_edges.remove(edge2)
+                        
+        
+        adj_matrix=graph.generate_adjacency_matrix()
+        return adj_matrix
+
+    
+    def calculate_min_location(self,structure=None,h=False): # for root node evaluation only. Need to replace this function later
         '''
         calculates minimum locations for each vertex in a node cg
         '''
         
         if structure!=None:
             inter_layer_boundary_edges=None
-            '''
-            inter_layer_boundary_edges_h,inter_layer_boundary_edges_v=self.get_inter_layer_constraints(structure=structure)
-            if h==True:
-                inter_layer_boundary_edges=inter_layer_boundary_edges_h
-            else:
-                inter_layer_boundary_edges=inter_layer_boundary_edges_v
-            '''
+            
         else:
             inter_layer_boundary_edges=None
         
@@ -1142,15 +1631,7 @@ class Node_3D(Node):
                     end=self.ZDL.index(dest)
                     edge=Edge(source=start,dest=end,constraint=constraint*1000,index=1,type=None,id=None)
                     self.edges.append(edge)
-        '''
-        for removed_node,edge in self.top_down_eval_edges.items():
-            for (source,dest), constraint in edge.items():
-                if constraint>0:
-                    start=source
-                    end=dest
-                    edge=Edge(source=start,dest=end,constraint=constraint,index=1,type=None,id=None)
-                    self.edges.append(edge)
-        '''
+        
 
         dictList1 = []
         for foo in self.edges:
@@ -1160,7 +1641,8 @@ class Node_3D(Node):
             k, v = list(i.items())[0]
             d1[k].append(v)
         
-        nodes = [x for x in range(len(self.ZDL))]
+        nodes = [x for x in range(len(self.vertices))]
+        
         for i in range(len(nodes) - 1):
             if (nodes[i], nodes[i + 1]) not in list(d1.keys()):
                 # print (nodes[i], nodes[i + 1])
@@ -1168,7 +1650,7 @@ class Node_3D(Node):
                 destination = nodes[i + 1]
                 index = 6 #horspacing
                 value = 100     # still there maybe some missing edges .Adding a value of spacing to maintain relative  location
-                e=Edge(source, destination, value, index, type='non-fixed', Weight=2 * value,comp_type='Flexible')
+                e=Edge(source, destination, value, index, type='non-fixed', weight=2 * value,comp_type='Flexible')
                 self.edges.append(e)
         #'''
         
@@ -1206,7 +1688,7 @@ class Node_3D(Node):
         for i in list(location.keys()):
             self.node_locations[ZDL[i]] = location[i]
         
-        #print("LOC",self.node_locations)
+        
     def min_location_eval(self, ZDL, edge_label):
         d3 = defaultdict(list)
         for i in edge_label:
@@ -1245,11 +1727,9 @@ class Node_3D(Node):
                         # k=B[j][i]
                         pred = j
                         val.append(Location[n[pred]] + B[j][i])
-                # loc1=Location[n[i-1]]+X[(n[i-1],n[i])]
-                # loc2=Location[n[pred]]+k
+                
                 Location[n[i]] = max(val)
-        #print (Location)
-        # Graph_pos_h = []
+       
 
         dist = {}
         for node in Location:
@@ -1260,6 +1740,67 @@ class Node_3D(Node):
             dist[node].append(Location[node])
         return Location
 
+
+    def set_min_loc1(self):
+        for vertex in self.tb_eval_graph.vertices:
+            self.node_locations[vertex.coordinate]=vertex.min_loc
+        L = self.node_locations# minimum locations of vertices of that node in the tree (result of bottom-up constraint propagation)
+        
+        P_ID = self.parent.id # parent node id
+        #ZDL_H = [i.coordinate for i in PARENT.vertices] # x-cut points for the node
+        PARENT=self.parent
+        ZDL_H = [i.coordinate for i in PARENT.vertices] 
+
+        # deleting multiple entries
+        P = set(ZDL_H)
+        ZDL_H = list(P)
+        ZDL_H.sort() # sorted list of coordinates
+        
+        # to find the range of minimum location for each coordinate a dictionary with key as initial coordinate and value as list of evaluated minimum coordinate is initiated
+        # all locations propagated from parent node are appended in the list
+        min_loc={}
+        vertices_coords=[i.coordinate for i in self.vertices]
+        
+
+        for coord in ZDL_H:
+            if coord in min_loc:
+                min_loc[coord]=PARENT.node_min_locations[coord]
+        
+        vertices_index=[i.index for i in self.vertices]
+        vertices_index.sort()
+        '''print(ID,len(vertices),len(edgev))
+        for vert in vertices:
+            vert.printVertex()
+            print(vert.associated_type)
+        for edge in edgev:
+            edge.printEdge()
+        input()'''
+        graph=Graph(vertices=vertices_index,edges=self.tb_eval_graph.edges)
+        graph.create_nx_graph()
+        adj_matrix=graph.generate_adjacency_matrix()
+        self.tb_eval_graph.vertices.sort(key=lambda x: x.index, reverse=False) 
+        for vertex in self.tb_eval_graph.vertices:
+            dest=vertex.index
+            if vertex.coordinate not in min_loc:
+                for coord in min_loc:
+                    for vert in self.vertices:
+                        if coord==vert.coord:
+                            src=vert.index
+                            max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                            if max_dist!=0:
+                                min_loc[vertex.coordinate]=min_loc[coord]+max_dist
+        #print(min_loc)
+        
+        for vertex in self.vertices:
+            if vertex.coordinate not in min_loc:
+                if self.vertices[0].coordinate in min_loc:
+                    min_loc[vertex.coordinate]=min_loc[self.vertices[0].coordinate]+L[vertex.coordinate]
+        self.node_min_locations = min_loc
+        #print "minx",self.minX[node.id]
+        #print("ID",self.id)
+        #print(min_loc)    
+
+    
     # only minimum  location evaluation for each node (top down location propagation)
     def set_min_loc(self):
         '''
@@ -1268,24 +1809,30 @@ class Node_3D(Node):
         :return: evaluated minimum-sized HCG for the node
         '''
         #if self.id in list(self.minLocationH.keys()):
+        #print(self.id)
+        for vertex in self.tb_eval_graph.vertices:
+            self.node_locations[vertex.coordinate]=vertex.min_loc
         L = self.node_locations# minimum locations of vertices of that node in the tree (result of bottom-up constraint propagation)
+        
         P_ID = self.parent.id # parent node id
-        ZDL_H = self.ZDL # x-cut points for the node
+        #ZDL_H = [i.coordinate for i in PARENT.vertices] # x-cut points for the node
         PARENT=self.parent
+        ZDL_H = [i.coordinate for i in PARENT.vertices] 
 
         # deleting multiple entries
         P = set(ZDL_H)
         ZDL_H = list(P)
-        ZDL_H.sort() # sorted list of HCG vertices which are propagated from parent
-
+        ZDL_H.sort() # sorted list of coordinates
+        
         # to find the range of minimum location for each coordinate a dictionary with key as initial coordinate and value as list of evaluated minimum coordinate is initiated
         # all locations propagated from parent node are appended in the list
         min_loc={}
-        for coord in ZDL_H:
+        vertices_coords=[i.coordinate for i in self.vertices]
+        for coord in vertices_coords:
             min_loc[coord]=[]
 
         for coord in ZDL_H:
-            if coord in PARENT.node_min_locations:
+            if coord in min_loc:
                 min_loc[coord].append(PARENT.node_min_locations[coord])
 
         #print("MIN_b",self.id,min_loc)
@@ -1293,42 +1840,20 @@ class Node_3D(Node):
 
         # making a list of fixed constraint values as tuples (source coordinate(reference),destination coordinate,fixed constraint value),....]
         removed_coord=[]
-        if len(self.removed_nodes)>0:
-            for vertex in self.removed_nodes:
-                if ZDL_H[vertex] in min_loc:
-                    #print(self.reference_nodes)
-                    reference=self.reference_nodes[vertex][0]
-                    value=self.reference_nodes[vertex][1]
-                    reference_coord=ZDL_H[reference]
-                    removed_coord.append([reference_coord,ZDL_H[vertex],value])
-        #print ("MIN", min_loc,removed_coord)
+        removable_vertices=[]
+        if len(self.removable_vertices)>0:
+            for key, value in self.removable_vertices.items():
+                #print(key,value)
+                removed_coord.append([value[0],key,value[1]])
+                removable_vertices.append(key)
+        
 
 
         K = list(L.keys())  # coordinates in the node
         V = list(L.values())  # minimum constraint values for the node
 
-        # adding backward edge information
-        top_down_locations = self.top_down_eval_edges
-        tp_dn_loc = []
-        for k, v in list(top_down_locations.items()): # k=node, v=dictionary of backward edges{(source,destination):weight}
-            for k1, v1 in list(v.items()): # iterate through backward edges
-                tp_dn_loc.append([k1[0], k1[1], v1])
-
-        L2 = {}
-        for i in range(len(K)): # iterate over each vertex in HCG
-            if K[i] in ZDL_H:
-                for loc in tp_dn_loc:
-                    if ZDL_H.index(K[i]) == loc[0]:
-                        if K[i] in PARENT.node_min_locations:
-                            L2[ZDL_H[loc[1]]] = PARENT.node_min_locations[K[i]] + loc[2]
-
-
-
-        #print("L2", self.id,L2)
-
-        for k, v in list(L2.items()):
-            if k in min_loc:
-                min_loc[k].append(v)
+        
+        
 
 
 
@@ -1338,12 +1863,13 @@ class Node_3D(Node):
 
         if len(removed_coord) > 0:
             for i in range(len(K)):
-                if K[i] not in ZDL_H and self.ZDL.index(K[i]) not in self.removed_nodes:
-                    for removed_node,reference in list(self.reference_nodes.items()):
+                if K[i] not in ZDL_H and K[i] not in removable_vertices:
+                    #for removed_node,reference in list(self.reference_nodes_h[node.id].items()):
                         #for removed_node,reference in reference_info.items():
-                        if reference[0]==self.ZDL.index(K[i]):
-                            if self.ZDL[removed_node] in ZDL_H:
-                                location=max(min_loc[self.ZDL[removed_node]])-reference[1]
+                    for element in removed_coord:
+                        if element[0]==K[i]:
+                            if element[1] in ZDL_H:
+                                location=max(min_loc[element[1]])-element[2]
                                 min_loc[K[i]].append(location)
 
                     V2 = V[i]
@@ -1386,6 +1912,8 @@ class Node_3D(Node):
                 final[k]=max(v)
         self.node_min_locations = final
         #print "minx",self.minX[node.id]
+        #print("ID",self.id)
+        #print(final)
         
     # No need now. It can be used for inter layer constraints application
     """

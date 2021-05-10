@@ -99,6 +99,7 @@ class Part:
         self.rotate_angle= 0 #0:0 degree, 1:90 degree, 2:180 degree, 3:270 degree
         self.material_id = None # A string represent selected material in material lib
         self.parent_component_id=None # in hierarchy parent component layout id
+        self.via_type=None # only for 'via' part objects. Two options: 'Through'--> connects two metal layers of a DBC (Through DBC). 'Buried'--> connects two inner layer (for Device Paad/Metallic Post type connection)
 
     def load_part(self):
         # Update part info from file

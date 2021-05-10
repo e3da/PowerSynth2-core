@@ -184,7 +184,9 @@ class New_layout_engine():
 
         # creating corner stitch islands and map between input rectangle(s) and corner stitch tile(s)
         cs_islands,sym_to_cs= self.form_cs_island(islands, self.Htree, self.Vtree) # creates a list of island objects populated with corner stitch tiles
-        
+        #for k,v in sym_to_cs.items():
+            #print (k,v)
+        #input()
         #--------------------------------------for debugging----------------------
         """
         for island in cs_islands:
@@ -1007,7 +1009,7 @@ class New_layout_engine():
             cs_island.name = island.name
             elements = island.elements
             cs_island.element_names=island.element_names
-
+            
             child = island.child
             cs_elements = []
             cs_elements_v = []
@@ -1020,6 +1022,7 @@ class New_layout_engine():
 
 
                 for element in elements:
+                    
                     zdl_h.append(element[1])
                     zdl_h.append(element[1]+element[3])
                     zdl_v.append(element[2])
@@ -1050,7 +1053,7 @@ class New_layout_engine():
                 for i in range(len(cs_tiles_h)):
 
                     r = [cs_tiles_h[i].cell.type, cs_tiles_h[i].cell.x, cs_tiles_h[i].cell.y, cs_tiles_h[i].getWidth(), cs_tiles_h[i].getHeight(), cs_tiles_h[i].nodeId]  # type,x,y,width,height,name, hierarchy_level, nodeId
-
+                    
                     cs_elements.append(r)
                 for i in range(len(cs_tiles_v)):
 
@@ -1062,8 +1065,10 @@ class New_layout_engine():
                 for rect in elements:
                     for node in HorizontalNodeList:
                         for i in node.stitchList:
+                           
                             if rect[1] == i.cell.x and rect[2] == i.cell.y and rect[3] == i.getWidth() and rect[4] == i.getHeight() and rect[0] == i.cell.type:
                                 r = [rect[0], rect[1], rect[2], rect[3], rect[4], i.nodeId]  # type,x,y,width,height,name, hierarchy_level, nodeId
+                                
                                 cs_elements.append(r)
                     for node in VerticalNodeList:
                         for i in node.stitchList:
@@ -1073,7 +1078,7 @@ class New_layout_engine():
 
             cs_island.elements = cs_elements
             cs_island.elements_v=cs_elements_v
-
+            
 
             shared=True
             #shared=False

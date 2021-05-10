@@ -540,12 +540,14 @@ class Cmd_Handler:
         # adding wire table info for each layer
         for layer in all_layers:
             self.wire_table[layer.name] = layer.wire_table
+        self.structure_3D.layers=all_layers
+        self.structure_3D.cs_type_map=cs_type_map
         #populating 3D structure components
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
-        self.structure_3D.layers=all_layers
-        self.structure_3D.cs_type_map=cs_type_map
+        
+        
 
         #updating constraint table
         self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
@@ -611,6 +613,21 @@ class Cmd_Handler:
         ##--------------------------------------------------------------------------####
         self.structure_3D.create_root()
         self.structure_3D.assign_floorplan_size()
+        
+
+        """
+        for node in self.structure_3D.root_node_h.child:
+            node.printNode()
+            if len(node.child)>0:
+                for child in node.child:
+                    print("C")
+                    child.printNode()
+                    if len(child.child)>0:
+                        print("G")
+                        for grand in child.child:
+                            print(grand.id)
+        input()
+        """
         #self.structure_3D.root_node_h.printNode()
         #self.structure_3D.root_node_v.printNode()
         
@@ -1015,6 +1032,8 @@ class Cmd_Handler:
 
 if __name__ == "__main__":
     print("----------------------PowerSynth Version 1.4: Command line version------------------")
+    
+
     cmd = Cmd_Handler(debug=False)
     print (str(sys.argv))
     debug = True
@@ -1044,9 +1063,10 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_5/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_4/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
-        
+        #f = open('output.txt','w')
+        #sys.stdout = f
         cmd.cmd_handler_flow(arguments=args)
            
 

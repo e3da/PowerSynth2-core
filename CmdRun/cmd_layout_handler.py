@@ -18,6 +18,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 from core.engine.ConstrGraph.CGinterface import CS_to_CG
 from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms import fixed_floorplan_algorithms
 from core.engine.InputParser.input_script import ScriptInputMethod
+from core.engine.ConstrGraph.CGStructures import Vertex
 
 from core.engine.LayoutEngine.cons_engine import New_layout_engine
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
@@ -364,42 +365,53 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         
         if structure.via_connected_layer_info!=None:
             # assign locations to each sub_root nodes (via nodes)
+            
             for child in structure.root_node_h.child:
                 child.set_min_loc()
-                #print (child.node_min_locations)
+                
+                
+            
+            #print("V")
+            #print(structure.root_node_v.node_min_locations)
             for child in structure.root_node_v.child:
+                
                 child.set_min_loc()
                 #print (child.node_min_locations)
-            for via_name, sub_root_node_list in structure.sub_roots.items():
-                sub_tree_root=sub_root_node_list # root of each via connected layes subtree
+            for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+                #print(via_name,sub_root_node_list )
+                for node in sub_root_node_list:
+                    node.set_min_loc()
+                    #print (node.node_min_locations)
+            
+
+            for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+                sub_root=sub_root_node_list # root of each via connected layes subtree
+                
                 for i in range(len(structure.layers)):
-                    if structure.layers[i].New_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].New_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                        structure.layers[i].c_g.minLocationH[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                        structure.layers[i].c_g.minLocationV[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-                        structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                        structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+                    if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
+                        structure.layers[i].forward_cg.minLocationH[sub_root[0].id]=sub_root[0].node_min_locations
+                        structure.layers[i].forward_cg.minLocationV[sub_root[1].id]=sub_root[1].node_min_locations
+                        structure.layers[i].forward_cg.minX[sub_root[0].id]=sub_root[0].node_min_locations
+                        structure.layers[i].forward_cg.minY[sub_root[1].id]=sub_root[1].node_min_locations
 
-                        #print ("minLocationH", structure.layers[i].c_g.minLocationH)
-                        #print ("minLocationV", structure.layers[i].c_g.minLocationV)
+                       
 
-
-                        structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
+                        structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
+        
+                
         else: # handling 2D layer only (no via case)
             sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree
         
-        for i in range(len(structure.layers)):
-            if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                structure.layers[i].forward_cg.minLocationH[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                structure.layers[i].forward_cg.minLocationV[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-                structure.layers[i].forward_cg.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                structure.layers[i].forward_cg.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-                #print(structure.layers[i].c_g.minX[sub_tree_root[0].id])
-                #print(structure.layers[i].c_g.minX[sub_tree_root[1].id])
-                structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
+            for i in range(len(structure.layers)):
+                if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+                    structure.layers[i].forward_cg.minLocationH[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                    structure.layers[i].forward_cg.minLocationV[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+                    structure.layers[i].forward_cg.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                    structure.layers[i].forward_cg.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+                    
+                    structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
 
-        '''print("Minh",structure.layers[i].min_location_h)
-        print("Minv",structure.layers[i].min_location_v)
-        input()'''
+        
         
         module_data=structure.module_data
         bw_type=None
@@ -411,9 +423,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     break
             
             CS_SYM_information, Layout_Rects = cg_interface.update_min(structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].new_engine.init_data[1], structure.layers[i].bondwires,structure.layers[i].origin,dbunit)
-            #print(CS_SYM_information['Substrate'])
-            '''for name,info in CS_SYM_information.items():
-                print(name, info)'''
+            
             cur_fig_data = plot_fig_data(Layout_Rects, mode,bw_type=bw_type)
 
             CS_SYM_Updated = {}
@@ -469,7 +479,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
 
                     print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-                solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
+                    solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
 
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
@@ -1021,122 +1031,91 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 def get_min_size_sol_info(structure=None, dbunit=1000):
     
     cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map)
-    for via_name, sub_root_node_list in structure.sub_roots.items():
-        sub_tree_root=sub_root_node_list # root of each via connected layes subtree
-        structure.sub_tree_root_handler(CG1=CG1,root=sub_tree_root) #getting constraint graph created from bottom -to-top (upto via root node)
-        for i in range(len(structure.layers)):
-            if structure.layers[i].New_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].New_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+    if structure.via_connected_layer_info!=None:
+        for via_name, sub_root_node_list in structure.sub_roots.items():
+            #print(via_name)
+            sub_tree_root=sub_root_node_list # root of each via connected layes subtree
 
-                for node_id,ZDL_H in list(structure.layers[i].c_g.ZDL_H.items()):
-                    if node_id==sub_tree_root[0].id:
-                        sub_tree_root[0].ZDL+=ZDL_H
-                        sub_tree_root[0].ZDL=list(set(sub_tree_root[0].ZDL))
-                        sub_tree_root[0].ZDL.sort()
-                        break
-                #print ("H",i,sub_tree_root[0].ZDL)
-                for node_id,ZDL_V in list(structure.layers[i].c_g.ZDL_V.items()):
-                    if node_id==sub_tree_root[1].id:
-                        sub_tree_root[1].ZDL+=ZDL_V
-                        sub_tree_root[1].ZDL=list(set(sub_tree_root[1].ZDL))
-                        sub_tree_root[1].ZDL.sort()
-                        break
-                #print ("V",i,sub_tree_root[1].ZDL)
-    for via_name, sub_root_node_list in structure.sub_roots.items():
-        sub_tree_root=sub_root_node_list # root of each via connected layes subtree
-        structure.sub_tree_root_handler(CG1=CG1,root=sub_tree_root) #getting constraint graph created from bottom -to-top (upto via root node)
-        for i in range(len(structure.layers)):
-            if structure.layers[i].New_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].New_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                '''
-                for node_id,ZDL_H in list(structure.layers[i].c_g.ZDL_H.items()):
-                    if node_id==sub_tree_root[0].id:
-                        sub_tree_root[0].ZDL+=ZDL_H
-                        sub_tree_root[0].ZDL=list(set(sub_tree_root[0].ZDL))
-                        sub_tree_root[0].ZDL.sort()
-                        break
-                #print ("H",i,sub_tree_root[0].ZDL)
-                for node_id,ZDL_V in list(structure.layers[i].c_g.ZDL_V.items()):
-                    if node_id==sub_tree_root[1].id:
-                        sub_tree_root[1].ZDL+=ZDL_V
-                        sub_tree_root[1].ZDL=list(set(sub_tree_root[1].ZDL))
-                        sub_tree_root[1].ZDL.sort()
-                        break
-                '''
-                for node_id,edgelist in list(structure.layers[i].c_g.edgesh_new.items()):
-                    if node_id==sub_tree_root[0].id:
-                        sub_tree_root[0].edges+=edgelist
-                        break
+            # in the sub_tree_root, there will be only bounday coordinates and via coordinates. All other coordinates will be evaluated in interfacing layer
+            sub_tree_root[0].ZDL+=sub_tree_root[0].boundary_coordinates
+            sub_tree_root[1].ZDL+=sub_tree_root[1].boundary_coordinates
+            sub_tree_root[0].ZDL+=sub_tree_root[0].via_coordinates
+            sub_tree_root[1].ZDL+=sub_tree_root[1].via_coordinates
 
-                for node_id,edgelist in list(structure.layers[i].c_g.edgesv_new.items()):
-                    if node_id==sub_tree_root[1].id:
-                        sub_tree_root[1].edges+=edgelist
-                        break
-                for node_id, edgelist in list(structure.layers[i].c_g.removable_nodes_h.items()):
+            sub_tree_root[0].ZDL=list(set(sub_tree_root[0].ZDL))
+            sub_tree_root[0].ZDL.sort()
+            sub_tree_root[0].create_vertices()
+            sub_tree_root[1].ZDL=list(set(sub_tree_root[1].ZDL))
+            sub_tree_root[1].ZDL.sort()
+            sub_tree_root[1].create_vertices()
+            
+            interfacing_layer_node_lists=[]
+            interfacing_layer_node_h=[]
+            interfacing_layer_node_v=[]
+            for node in sub_tree_root[0].child:
+                interfacing_layer_node_h.append(node)
+            for node in sub_tree_root[1].child:
+                interfacing_layer_node_v.append(node)
+            for i in range(len(interfacing_layer_node_h)):
+                hor_tree_node=interfacing_layer_node_h[i]
+                ver_tree_node=interfacing_layer_node_v[i]
+                if hor_tree_node.id==ver_tree_node.id:
+                    pair=[hor_tree_node,ver_tree_node]
+                    interfacing_layer_node_lists.append(pair)
 
-                    if node_id == sub_tree_root[0].id:
-                        sub_tree_root[0].removed_nodes+= edgelist
-                        #print("RE",sub_tree_root[0].removed_nodes)
-                        break
-                for node_id, edgelist in list(structure.layers[i].c_g.removable_nodes_v.items()):
-                    if node_id == sub_tree_root[1].id:
-                        sub_tree_root[1].removed_nodes+= edgelist
-                        #print("RE",sub_tree_root[1].removed_nodes)
-                        break 
-                for node_id, edgelist in list(structure.layers[i].c_g.reference_nodes_h.items()):
+            for sub_root in interfacing_layer_node_lists:
+                structure.sub_tree_root_handler(cg_interface=cg_interface,root=sub_root,dbunit=dbunit) #getting constraint graph created from bottom -to-top (upto via root node)
+                for i in range(len(structure.layers)):
+                    if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
 
-                    if node_id == sub_tree_root[0].id:
-                        sub_tree_root[0].reference_nodes.update(edgelist)
-                        #for edge_dict in edgelist:
-                            #if edge_dict not in sub_tree_root[0].reference_nodes:
+                        for node_id,ZDL_H in (structure.layers[i].forward_cg.x_coordinates.items()):
+                            if node_id==sub_root[0].id:
+                                sub_root[0].ZDL+=ZDL_H
+                                #sub_tree_root[0].ZDL+=ZDL_H
+                                
+                            elif node_id==structure.layers[i].new_engine.Htree.hNodeList[0].id:
+                                sub_root[0].ZDL+=ZDL_H
+                            
+                            
+                        
+                        for node_id,ZDL_V in (structure.layers[i].forward_cg.y_coordinates.items()):
+                            if node_id==sub_root[1].id:
+                                sub_root[1].ZDL+=ZDL_V
+                                #sub_tree_root[1].ZDL+=ZDL_V
+                            
+                            elif node_id==structure.layers[i].new_engine.Vtree.vNodeList[0].id:
+                                sub_root[1].ZDL+=ZDL_V
+                            
+                            
+                        
+                sub_root[0].ZDL=list(set(sub_root[0].ZDL))
+                sub_root[0].ZDL.sort()
+                sub_root[1].ZDL=list(set(sub_root[1].ZDL))
+                sub_root[1].ZDL.sort()
+                
+                structure.create_interfacing_layer_forward_cg(sub_root) 
+                
+            #print(len(sub_tree_root[0].vertices),len(sub_tree_root[0].ZDL),len(sub_tree_root[0].edges))
+            #for edge in sub_tree_root[0].edges:
+                #edge.printEdge()
+            #print(len(sub_tree_root[1].vertices),len(sub_tree_root[1].ZDL),len(sub_tree_root[1].edges))
+            #for edge in sub_tree_root[1].edges:
+                ##edge.printEdge()
 
-                        break
-                for node_id, edgelist in list(structure.layers[i].c_g.reference_nodes_v.items()):
-                    if node_id == sub_tree_root[1].id:
-                        sub_tree_root[1].reference_nodes.update(edgelist)
-                        #for edge_dict in edgelist:
-                            #if edge_dict not in sub_tree_root[1].reference_nodes:
-                                #sub_tree_root[1].reference_nodes.update(edge_dict)
-                        break               
-                for node_id, edgelist in list(structure.layers[i].c_g.top_down_eval_edges_h.items()):
-
-                    if node_id == sub_tree_root[0].id:
-                        sub_tree_root[0].top_down_eval_edges.update(edgelist)
-                        #for edge in edgelist:
-                            #if edge_dict not in sub_tree_root[0].top_down_eval_edges:
-                                #sub_tree_root[0].top_down_eval_edges.update(edge_dict)
-                        break
-                for node_id, edgelist in list(structure.layers[i].c_g.top_down_eval_edges_v.items()):
-                    if node_id == sub_tree_root[1].id:
-                        sub_tree_root[1].top_down_eval_edges.update(edgelist)
-                        #for edge in edgelist:
-                            #if edge_dict not in sub_tree_root[1].top_down_eval_edges:
-                                #sub_tree_root[1].top_down_eval_edges.update(edge_dict)
-                        break 
-            else:
-                continue
-        #sub_tree_root=[sub_tree_root[0],sub_tree_root[1]]
-        #print("H",sub_tree_root[0].ZDL)
-        #structure.sub_roots[via_name]=sub_tree_root
-
-    if  structure.via_connected_layer_info!=None:
-        for child in structure.root_node_h.child:
-            if isinstance(child,Node_3D):
-                child.removed_nodes=list(set(child.removed_nodes))
-                child.removed_nodes.sort()
-
-                child.calculate_min_location(structure=structure,h=True)
-                #print (child.node_locations)
-                structure.root_node_h.ZDL+=child.boundary_coordinates # each via connected group's boundary coordinates are root node's ZDL
-
-        for child in structure.root_node_v.child:
-            if isinstance(child,Node_3D):
-                child.removed_nodes=list(set(child.removed_nodes))
-                child.removed_nodes.sort()
-
-                child.calculate_min_location(structure=structure,h=False)
-                #print (child.node_locations)
-                structure.root_node_v.ZDL+=child.boundary_coordinates # each via connected group's boundary coordinates are root node's ZDL
-
-        structure.assign_root_node_edges()
+            # creating cg for sub_tree_root nodes
+            #print(sub_tree_root[0].id,sub_tree_root[0].parent.id)
+            
+            if len(sub_tree_root[0].vertices)>0 and len(sub_tree_root[0].edges)>0:
+                sub_tree_root[0].create_forward_cg(constraint_info='MinHorSpacing')
+            if len(sub_tree_root[1].vertices)>0 and len(sub_tree_root[1].edges)>0:
+                sub_tree_root[1].create_forward_cg(constraint_info='MinVerSpacing')
+            #print(sub_tree_root[0].name, len(sub_tree_root[0].tb_eval_graph.edges))
+            #for edge in sub_tree_root[0].tb_eval_graph.edges:
+                #edge.printEdge()
+            #print(sub_tree_root[0].name, len(sub_tree_root[1].tb_eval_graph.edges))
+            #for edge in sub_tree_root[1].tb_eval_graph.edges:
+                #edge.printEdge()
+        
         structure.root_node_h.calculate_min_location()
         structure.root_node_v.calculate_min_location()
     else: # no via connected layers (2D Case)
@@ -1152,25 +1131,11 @@ def get_min_size_sol_info(structure=None, dbunit=1000):
                         root[0].ZDL.sort()
                         break
             
-            '''
-            for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
-                if node_id==root[0].id:
-                    root[0].edges+=edgelist
-                    break
-            '''
             for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
                 if node_id==root[0].id:
                     root[0].edges+=edgelist
                     break
                 
-            
-            '''
-            for node_id,edgelist in list(structure.layers[0].c_g.edgesv_new.items()):
-                if node_id==root[1].id:
-
-                    root[1].edges+=edgelist
-                    break
-            '''
             for node_id,ZDL_V in list(structure.layers[0].forward_cg.y_coordinates.items()):
                 if node_id==root[1].id:
                     root[1].ZDL+=ZDL_V

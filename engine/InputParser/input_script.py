@@ -497,7 +497,16 @@ class ScriptInputMethod():
                                 break
                         if rotate==False:
                             layout_component_id = layout_info[j][k]+ '.' + layout_info[j][-2]
+                            if layout_info[j][k] in self.via_connected_layer_info:
+                                via_name=layout_info[j][k]
+                                if 'Through' in self.via_connected_layer_info[via_name]:
+                                    via_type='Through'
+                                else:
+                                    via_type='Buried'
+                            else:
+                                via_type=None
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
+                            element.vai_type=via_type
                             element.load_part()
                             #print"Foot",element.footprint
                             self.all_parts_info[layout_info[j][k+1]].append(element)
@@ -780,57 +789,99 @@ class ScriptInputMethod():
                 hier_level=dots
             hier_input_info.setdefault(hier_level,[])
             hier_input_info[hier_level].append(layout_info[j][start:])
-
+        
         # converting list from object properties
         all_components=[] # to store components in each layer
         rects_info=[]
         for k1,layout_data in list(hier_input_info.items()):
+            #print(len(layout_data))
             for j in range(len(layout_data)):
                 for v in list(self.all_parts_info.values()):
                     for element in v:
-                        if element.layout_component_id.split('.')[0] in layout_data[j]:
-                            all_components.append(element)
-                            index=layout_data[j].index(element.layout_component_id.split('.')[0])
-                            type_index=index+1
-                            type_name=layout_data[j][type_index]
-                            type = component_to_cs_type[type_name]
-                            x = float(layout_data[j][3])
-                            y = float(layout_data[j][4])
-                            
-                            width = (element.footprint[0])
-                            height = (element.footprint[1])
-                            #name = layout_data[j][1]
-                            name = element.layout_component_id
-                            Schar = layout_data[j][0]
-                            Echar = layout_data[j][-1]
-                            rotate_angle=element.rotate_angle
-                            rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
-                            rects_info.append(rect_info)
+                        if len(element.layout_component_id.split('.'))>1:
+                            if element.layout_component_id.split('.')[0] in layout_data[j] and element.layout_component_id.split('.')[1] == layout_data[j][-2]:
+                                all_components.append(element)
+                                index=layout_data[j].index(element.layout_component_id.split('.')[0])
+                                type_index=index+1
+                                type_name=layout_data[j][type_index]
+                                type = component_to_cs_type[type_name]
+                                x = float(layout_data[j][3])
+                                y = float(layout_data[j][4])
+                                
+                                width = (element.footprint[0])
+                                height = (element.footprint[1])
+                                #name = layout_data[j][1]
+                                name = element.layout_component_id
+                                Schar = layout_data[j][0]
+                                Echar = layout_data[j][-1]
+                                rotate_angle=element.rotate_angle
+                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rects_info.append(rect_info)
+                        else:
+                            if element.layout_component_id.split('.')[0] in layout_data[j] :
+                                all_components.append(element)
+                                index=layout_data[j].index(element.layout_component_id.split('.')[0])
+                                type_index=index+1
+                                type_name=layout_data[j][type_index]
+                                type = component_to_cs_type[type_name]
+                                x = float(layout_data[j][3])
+                                y = float(layout_data[j][4])
+                                
+                                width = (element.footprint[0])
+                                height = (element.footprint[1])
+                                #name = layout_data[j][1]
+                                name = element.layout_component_id
+                                Schar = layout_data[j][0]
+                                Echar = layout_data[j][-1]
+                                rotate_angle=element.rotate_angle
+                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rects_info.append(rect_info)
+
 
                 for k, v in list(self.all_route_info.items()):
                     for element in v:
-                        if element.layout_component_id.split('.')[0] in layout_data[j]:
-                            if element.type == 0 and element.name == 'trace':
-                                type_name = 'power_trace'
-                            elif element.type == 1 and element.name == 'trace':
-                                type_name = 'signal_trace'
-                            else:
-                                type_name=element.name
-                            all_components.append(element)
-                            type = component_to_cs_type[type_name]
-                            x = float(layout_data[j][3])
-                            y = float(layout_data[j][4])
-                            width = float(layout_data[j][5])
-                            height = float(layout_data[j][6])
-                            #name = layout_data[j][1]
-                            name=element.layout_component_id
-                            #print name
-                            Schar = layout_data[j][0]
-                            Echar = layout_data[j][-1]
-                            rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
-                            rects_info.append(rect_info)
+                        if len(element.layout_component_id.split('.'))>1:
+                            if element.layout_component_id.split('.')[0] in layout_data[j] and element.layout_component_id.split('.')[1]==layout_data[j][-2]:
+                                if element.type == 0 and element.name == 'trace':
+                                    type_name = 'power_trace'
+                                elif element.type == 1 and element.name == 'trace':
+                                    type_name = 'signal_trace'
+                                else:
+                                    type_name=element.name
+                                all_components.append(element)
+                                type = component_to_cs_type[type_name]
+                                x = float(layout_data[j][3])
+                                y = float(layout_data[j][4])
+                                width = float(layout_data[j][5])
+                                height = float(layout_data[j][6])
+                                #name = layout_data[j][1]
+                                name=element.layout_component_id
+                                #print name
+                                Schar = layout_data[j][0]
+                                Echar = layout_data[j][-1]
+                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rects_info.append(rect_info)
                         else:
-                            continue
+                            if element.layout_component_id.split('.')[0] in layout_data[j] :
+                                if element.type == 0 and element.name == 'trace':
+                                    type_name = 'power_trace'
+                                elif element.type == 1 and element.name == 'trace':
+                                    type_name = 'signal_trace'
+                                else:
+                                    type_name=element.name
+                                all_components.append(element)
+                                type = component_to_cs_type[type_name]
+                                x = float(layout_data[j][3])
+                                y = float(layout_data[j][4])
+                                width = float(layout_data[j][5])
+                                height = float(layout_data[j][6])
+                                #name = layout_data[j][1]
+                                name=element.layout_component_id
+                                #print name
+                                Schar = layout_data[j][0]
+                                Echar = layout_data[j][-1]
+                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rects_info.append(rect_info)
 
         
         cs_info=[0 for i in range(len(rects_info))]
@@ -847,9 +898,10 @@ class ScriptInputMethod():
             print("ERROR: all components in the layer are not found in the geometry description")
             exit()
         #---------------------------------for debugging---------------------------
-        #print "cs_info",len(self.cs_info)
-        #for rect in self.cs_info:
-            #print (rect)
+        """print ("cs_info",len(cs_info),len(rects_info))
+        for rect in rects_info:
+            print (rect)
+        input()"""
         #---------------------------------------------------------------------------
         return size,cs_info,component_to_cs_type,all_components
 
@@ -1043,7 +1095,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             for element in island.elements: # removing elements other than traces
                 if element[5][0]!='T':
                     island.elements.remove(element)
-           
+    
     return all_layers, ScriptMethod.via_connected_layer_info,ScriptMethod.cs_type_map
     
 

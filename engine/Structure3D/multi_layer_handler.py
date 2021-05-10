@@ -45,8 +45,8 @@ class Layer():
         self.new_engine=New_layout_engine()
         
         self.via_locations=[] # list of dictionary for each via with name as key and bottom left corner coordinate as value
-        #self.min_location_h={}
-        #self.min_location_v={}
+        self.min_location_h={}
+        self.min_location_v={}
         self.c_g=None
         self.forward_cg=None
         self.backward_cg=None
@@ -252,7 +252,7 @@ class Layer():
         netid=0
         for i in range(len(self.cs_info)):
             rect=self.cs_info[i]
-            #print"RECT",rect
+            #print("RECT",rect)
             if rect[5][0]=='T' or rect[-2]==0: #hier_level==0
                 rectangle = Rectangle(x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid)
                 all_rects.append(rectangle)
@@ -565,6 +565,7 @@ class Layer():
 
         n = len(types)
         all_colors=color_list_generator()
+        #print(self.name,all_colors)
         colors=[all_colors[i] for i in range(n)]
         #print(types)
         self.all_cs_types=types

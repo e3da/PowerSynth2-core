@@ -296,46 +296,26 @@ class CS_to_CG():
         forward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
         forward_cg.get_x_y_coordinates(direction='forward')
         forward_cg.create_vertices(propagated=False)
-        '''
-        for id,vertex in forward_cg.hcg_vertices.items():
-            print(id,len(vertex))
-            for v in vertex:
-                v.printVertex()'''
+        
         forward_cg.populate_via_bw_propagation_dict(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
         forward_cg.update_x_y_coordinates(direction='forward')
         forward_cg.create_vertices(propagated=True)
         forward_cg.update_indices()
-        '''print("A")
-        for id,vertex in forward_cg.hcg_vertices.items():
-            print(id,len(vertex))
-            #for v in vertex:
-                #v.printVertex()'''
+        
         
         forward_cg.add_edges(direction='forward',Types=self.all_cs_types,all_component_types=self.component_types,comp_type=self.comp_type)
         
         # perform edge removal and prepare to propagate edges to parent node
         
         forward_cg.create_forward_cg(level=0)
-        '''for tb in forward_cg.tb_eval_h:
-            print (tb.ID)
-            for edge in tb.graph.edges:
-                edge.printEdge()'''
 
-
-
-        #input()
-        #print("X_Y_Coordinates", forward_cg.x_coordinates, forward_cg.y_coordinates)
-        #forward_hcg,forward_vcg = forward_cg.graphFromLayer(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
-
+        #---TODO: Backward CG Implementation-------------
         backward_cg = ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible) # right-to-left/ top-to-bottom
         backward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
         backward_cg.get_x_y_coordinates(direction='backward')
         backward_cg.populate_via_bw_propagation_dict(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
         backward_cg.update_x_y_coordinates(direction='backward')
-        #print("Backward X_Y_Coordinates", backward_cg.x_coordinates, backward_cg.y_coordinates)
-        #input()
-        #backward_hcg,backward_vcg = backward_cg.graphFromLayer(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList ,cs_islands=cs_islands)
-
+        
         return forward_cg, backward_cg
     
     def evaluate_cg():
@@ -463,6 +443,7 @@ class CS_to_CG():
             
             hier_level = v[3]
             rotation_index = v[4]
+            
             #print ("UP",k,rect.cell.x,rect.cell.y,rect.EAST.cell.x,rect.NORTH.cell.y
             for nodeid in nodeids:
                 if left in minx[nodeid] and bottom in miny[nodeid] and top in miny[nodeid] and right in minx[nodeid]:
@@ -473,9 +454,10 @@ class CS_to_CG():
                     break
                 else:
                     continue
-
+                
             name = k
             # print x,y,w,h
+            
             new_rect = [float(x) / s, float(y) / s, float(w) / s, float(h) / s, type, hier_level + 1, rotation_index]
             # print "NN",new_rect,name
             layout_rects.append(new_rect)
