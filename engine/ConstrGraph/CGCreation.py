@@ -1106,9 +1106,9 @@ class ConstraintGraph:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
                             type='fixed'
-                        elif self.via_type in origin.associated_type:
-                            comp_type_='Fixed'
-                            type='fixed'
+                        #elif self.via_type in origin.associated_type:
+                            #comp_type_='Fixed'
+                            #type='fixed'
                         else:
                             comp_type_='Flexible'
                             type='non-fixed'
@@ -1137,9 +1137,9 @@ class ConstraintGraph:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
                             type='fixed'
-                        elif self.via_type in origin.associated_type:
-                            comp_type_='Fixed'
-                            type='fixed'
+                        #elif self.via_type in origin.associated_type:
+                            #comp_type_='Fixed'
+                            #type='fixed'
                         else:
                             comp_type_='Flexible'
                             type='non-fixed'
@@ -1417,9 +1417,9 @@ class ConstraintGraph:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
                             type='fixed'
-                        elif self.via_type in origin.associated_type:
-                            comp_type_='Fixed'
-                            type='fixed'
+                        #elif self.via_type in origin.associated_type:
+                            #comp_type_='Fixed'
+                            #type='fixed'
                         else:
                             comp_type_='Flexible'
                             type='non-fixed'
@@ -1448,9 +1448,9 @@ class ConstraintGraph:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
                             type='fixed'
-                        elif self.via_type in origin.associated_type:
-                            comp_type_='Fixed'
-                            type='fixed'
+                        #elif self.via_type in origin.associated_type:
+                            #comp_type_='Fixed'
+                            #type='fixed'
                         else:
                             comp_type_='Flexible'
                             type='non-fixed'
