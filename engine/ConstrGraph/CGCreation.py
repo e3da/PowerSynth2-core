@@ -3235,7 +3235,8 @@ class ConstraintGraph:
                     
                 
                 self.set_minY(node)
-            
+            #print(self.minY) 
+            #print(self.minX)
             return self.minX, self.minY
         else:
             XLOCATIONS = []
@@ -3380,7 +3381,7 @@ class ConstraintGraph:
                 if k not in final:
                     final[k]=max(v)
             self.minX[node.id] = final
-            
+        #print(self.minX)
             
 
             
@@ -3485,7 +3486,7 @@ class ConstraintGraph:
                 if k not in final:
                     final[k]=max(v)
             self.minY[node.id] = final
-            
+          
 
 
     def dimListFromLayer(self, cornerStitch_h, cornerStitch_v):
