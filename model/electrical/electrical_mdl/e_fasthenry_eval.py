@@ -29,8 +29,9 @@ import sys
 import numpy as np
 
 class FastHenryAPI(CornerStitch_Emodel_API):
-    
-    def __init__(self, comp_dict={}, wire_conn={},ws ='/nethome/ialrazi/PS_2_test_Cases/fasthenry'):
+    imam_fh = '/nethome/ialrazi/PS_2_test_Cases/fasthenry'
+    qmle_fh = '/nethome/qmle/temp_fh'
+    def __init__(self, comp_dict={}, wire_conn={},ws =qmle_fh):
         '''
         :param comp_dict: list of all components and routing objects
         :param wire_conn: a simple table for bondwires setup
@@ -78,7 +79,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.out_text += '.end'
         
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open('/nethome/ialrazi/PS_2_test_Cases/fasthenry/temp2.inp', 'w') as f:
+        with open(self.work_space+'/eval.inp', 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             print(self.out_text)
             sys.stdout = original_stdout # Reset the standard output to its original value

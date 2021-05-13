@@ -74,6 +74,7 @@ class CornerStitch_Emodel_API:
         self.vias = []
         # this is fixed to internal
         self.type = 'PowerSynthPEEC'
+        self.rs_model = None
     def process_trace_orientation(self,trace_ori_file=None):
         with open(trace_ori_file, 'r') as file_data:
             for line in file_data.readlines():
@@ -180,19 +181,21 @@ class CornerStitch_Emodel_API:
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
 
-                
-                z_id = int(name.split(".")[1])
-                z = int(self.get_z_loc(z_id)*1000)
-                dz = int(self.get_thick(z_id)*1000)
-                x,y,w,h = trace[1:5]
-                new_rect = Rect(top=(y + h) 
-                                , bottom=y, left=x, right=(x + w))
-                p = E_plate(rect=new_rect, z=z, dz=dz,z_id = z_id)
-                #print ("trace height", p.z)
-                #print ("trace thickness", p.dz)
-                p.group_id=isl.name
-                p.name=trace[5]
-                self.e_plates.append(p)
+                if name[0] != 'C':
+                    z_id = int(name.split(".")[1])
+                    z = int(self.get_z_loc(z_id)*1000)
+                    dz = int(self.get_thick(z_id)*1000)
+                    x,y,w,h = trace[1:5]
+                    new_rect = Rect(top=(y + h) 
+                                    , bottom=y, left=x, right=(x + w))
+                    p = E_plate(rect=new_rect, z=z, dz=dz,z_id = z_id)
+                    #print ("trace height", p.z)
+                    #print ("trace thickness", p.dz)
+                    p.group_id=isl.name
+                    p.name=trace[5]
+                    self.e_plates.append(p)
+                else:
+                    continue
             for comp in isl.child: # get all components in isl
                 x, y, w, h = comp[1:5]
                 name = comp[5] # get the comp name from layout script

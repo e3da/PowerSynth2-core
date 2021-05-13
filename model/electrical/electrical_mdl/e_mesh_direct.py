@@ -418,10 +418,14 @@ class EMesh():
                 # Handle small length pieces by linear approximation
                 all_r = [trace_resistance_full(self.f, w, l, t, h,p=p) for w, l in zip(self.all_W, self.all_L)]
                 #all_r = [1e-6 for i in range(len(self.all_W))]
-                if self.mdl_type ==0:
-                    all_l = trace_ind_krige(self.f, self.all_W, self.all_L, mdl=self.mdl['L'],mode=mode).tolist()
-                elif self.mdl_type == 1:
-                    all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
+                if self.mdl!= None:
+                    if self.mdl_type ==0:
+                        all_l = trace_ind_krige(self.f, self.all_W, self.all_L, mdl=self.mdl['L'],mode=mode).tolist()
+                    elif self.mdl_type == 1:
+                        all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
+                else:
+                    print("NO mdl provided, using microstrip equations")
+                    all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
                 #self.plot_trace_RL_val_RS(zdata=all_l,dtype='L')
 
                 # all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]

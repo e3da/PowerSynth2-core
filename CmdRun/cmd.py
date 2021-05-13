@@ -636,11 +636,11 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
         print("init api:", type)
         if type == 'PowerSynthPEEC':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
-            self.e_api.load_rs_model(self.rs_model_file)
+            #self.e_api.load_rs_model(self.rs_model_file)
 
         elif type == 'FastHenry':
             self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
@@ -1032,8 +1032,8 @@ class Cmd_Handler:
 
 if __name__ == "__main__":
     print("----------------------PowerSynth Version 1.4: Command line version------------------")
-    
-
+    quang_settings = '/nethome/qmle/testcases/settings.info'
+    imam_settings = '/nethome/ialrazi/PS_2_test_Cases/settings.info'
     cmd = Cmd_Handler(debug=False)
     print (str(sys.argv))
     debug = True
@@ -1048,8 +1048,6 @@ if __name__ == "__main__":
         elif sel ==3:
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/Case1_S-param/Layout1_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
             
-        elif sel==4:
-            args = ['python','cmd.py','-m','D:/Demo/3D_Layout_Engine_Testing/Cmd_flow_case/ECCE_Case/cmd_macro_hier_updated.txt','-settings',"D:/Demo/New_Flow_w_Hierarchy/Journal_Case/settings.info"]
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
             #D:\Demo\New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Testing_Journal_case_w_Py_3/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
@@ -1065,8 +1063,13 @@ if __name__ == "__main__":
         elif sel==7:
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         elif sel==8:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-        
+            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt','-settings',quang_settings]
+        elif sel==9:
+            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt','-settings',quang_settings]
+        elif sel==10:
+            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_16/macro_script.txt','-settings',quang_settings]
+        elif sel==11:
+            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt','-settings',quang_settings]
         #f = open('output.txt','w')
         #sys.stdout = f
         cmd.cmd_handler_flow(arguments=args)
