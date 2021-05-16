@@ -227,12 +227,19 @@ class CS_to_CG():
         
 
     def get_ledgeWidth(self,dest=None,cons_name=None):
-        source='EMPTY'
+        '''source='EMPTY'
         for constraint in self.constraints:
             if constraint.name == cons_name and dest!=None:
-                ledgewidth= constraint.value[source][dest]
+                ledgewidth= constraint.value[source][dest]'''
+        source_type = self.all_cs_types.index('EMPTY')
+        dest_type = self.all_cs_types.index('Type_1') # hardcoded assuming trace is always there
+        cons_name= 'MinVerEnclosure'
+        ledge_height = self.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name)
+        cons_name= 'MinHorEnclosure'
+        ledge_width = self.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name)
+        ledge_dims=[ledge_width,ledge_height]
+        return ledge_dims
         
-        return ledgewidth
     
     
     
