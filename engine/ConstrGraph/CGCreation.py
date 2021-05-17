@@ -2452,22 +2452,34 @@ class ConstraintGraph:
 
         
 
+
         
         graph=Graph(vertices=vertices_index,edges=edgeh)
         
         graph.create_nx_graph()
+        
         
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
         
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
-                redundant_edges.append(edge)
+                if edge.constraint>0 and edge.type=='fixed':
+                    if edge.comp_type=='Fixed':
+                        print("ERROR: Dimension cannot be fixed. Please update constraint table.")
+                        exit()
+                    else:
+                        edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
+                else:
+                    redundant_edges.append(edge)
+                
                 
         for edge in redundant_edges:
-            if edge.constraint>0:
+            if edge.constraint>0 :
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
+            
+
         
         
         
@@ -2541,7 +2553,12 @@ class ConstraintGraph:
                 vertex.min_loc=0
 
         
-        
+        '''
+        if ID==1:
+            print("A")
+            for edge in graph.nx_graph_edges:
+                edge.printEdge()
+        '''
         
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
         graph_for_top_down_evaluation.create_nx_graph()
@@ -2603,6 +2620,7 @@ class ConstraintGraph:
         
         self.propagated_parent_coord_hcg[ID]=parent_coord # updating dictionary to be used later in top down evaluation
         
+                                   
         # propagating necessary vertices to the parent node
         for coord in parent_coord:
             coord_found=False
@@ -2643,14 +2661,17 @@ class ConstraintGraph:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
                                 
+                                
+                                
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
+                                
 
                     if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
                         continue
@@ -2683,6 +2704,9 @@ class ConstraintGraph:
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
+                                    
+                                    
+                                    
                                    
             
             vertices_index=[i.index for i in self.hcg_vertices[parentID]]
@@ -2717,7 +2741,14 @@ class ConstraintGraph:
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
-                redundant_edges.append(edge)
+                if edge.constraint>0 and edge.type=='fixed':
+                    if edge.comp_type=='Fixed':
+                        print("ERROR: Dimension cannot be fixed. Please update constraint table.")
+                        exit()
+                    else:
+                        edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
+                else:
+                    redundant_edges.append(edge)
         for edge in redundant_edges:
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
@@ -2899,7 +2930,7 @@ class ConstraintGraph:
                     for edge in graph.nx_graph_edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesv_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
@@ -5749,6 +5780,7 @@ class ConstraintGraph:
                 
                     if element.ID in self.propagated_parent_coord_hcg:
                         ZDL_H=self.propagated_parent_coord_hcg[element.ID]
+                        
                 
                 else:
                     if element.parentID in self.propagated_parent_coord_hcg:
@@ -5796,7 +5828,9 @@ class ConstraintGraph:
                     
                     seed=seed+count*1000
                     loc= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=Random, seed=seed)
-                    #print("HERE",element.ID,loc)
+                    loc_items=loc.items()
+                    
+                    #print("HERE",element.ID,sorted(loc_items))
                     count+=1
                     locations_.append(loc)  
 
