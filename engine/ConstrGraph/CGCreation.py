@@ -2463,9 +2463,14 @@ class ConstraintGraph:
         
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
+            #if ID==1:
+                #edge.printEdge()
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
                 if edge.constraint>0 and edge.type=='fixed':
+                    
                     if edge.comp_type=='Fixed':
+                        edge.printEdge()
+                        print(find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])
                         print("ERROR: Dimension cannot be fixed. Please update constraint table.")
                         exit()
                     else:
@@ -2483,13 +2488,12 @@ class ConstraintGraph:
         
         
         
-       
 
         if len(graph.nx_graph_edges)>0:
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=ID)
         
-       
-        
+        #print(removable_vertex_dict)
+        #input()
         for vert in removable_vertex_dict:
             #removable_vertex_dict[vert]=list(set(removable_vertex_dict[vert]))
             edge_list=removable_vertex_dict[vert]
@@ -2509,7 +2513,7 @@ class ConstraintGraph:
                 removable_vertex[vert.coordinate]=[edge.source.coordinate,edge.constraint]
 
         self.removable_vertices_h[ID]=removable_vertex
-        
+        #print(ID,removable_vertex)
         
         removable_vertices=list(removable_vertex_dict.keys())
         for vert in removable_vertices:
@@ -2620,7 +2624,7 @@ class ConstraintGraph:
         
         self.propagated_parent_coord_hcg[ID]=parent_coord # updating dictionary to be used later in top down evaluation
         
-                                   
+        #print(self.propagated_parent_coord_hcg)                      
         # propagating necessary vertices to the parent node
         for coord in parent_coord:
             coord_found=False
@@ -2668,9 +2672,11 @@ class ConstraintGraph:
                                 
                                 
                                 
+                                
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
+                                
                                 
 
                     if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
@@ -2704,6 +2710,7 @@ class ConstraintGraph:
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
+                                    
                                     
                                     
                                     
@@ -2743,6 +2750,8 @@ class ConstraintGraph:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
                 if edge.constraint>0 and edge.type=='fixed':
                     if edge.comp_type=='Fixed':
+                        edge.printEdge()
+                        print(find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])
                         print("ERROR: Dimension cannot be fixed. Please update constraint table.")
                         exit()
                     else:
@@ -5816,7 +5825,7 @@ class ConstraintGraph:
                         else:
                             continue
                     
-                    if element.parentID<0:
+                    if element.parentID<0 and self.via_type==None:
                         ledge_dims=self.constraint_info.get_ledgeWidth()
                         left=self.x_coordinates[element.ID][1]
                         right=self.x_coordinates[element.ID][-2]                        
@@ -5827,6 +5836,10 @@ class ConstraintGraph:
                         loc_x[right]=loc_x[end]-ledge_dims[0]
                     
                     seed=seed+count*1000
+                    #for vert in element.graph.vertices:
+                        #print(vert.coordinate,vert.min_loc)
+                    
+                    
                     loc= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=Random, seed=seed)
                     loc_items=loc.items()
                     
@@ -6617,7 +6630,7 @@ class ConstraintGraph:
                 P = set(ZDL_V)
                 ZDL_V = list(P)
                 ZDL_V.sort() # sorted list of HCG vertices which are propagated from parent
-                #print("V",element.ID,ZDL_V)
+                #print("V",element.ID,element.parentID,ZDL_V)
 
                 parent_locations=self.LocationV[element.parentID]
                 locations_=[]
@@ -6632,7 +6645,7 @@ class ConstraintGraph:
                         else:
                             continue
                     
-                    if element.parentID<0:
+                    if element.parentID<0 and self.via_type==None:
                         ledge_dims=self.constraint_info.get_ledgeWidth()
                         left=self.y_coordinates[element.ID][1]
                         right=self.y_coordinates[element.ID][-2]                        
@@ -6642,9 +6655,12 @@ class ConstraintGraph:
                         loc_y[left]=loc_y[start]+ledge_dims[1]
                         loc_y[right]=loc_y[end]-ledge_dims[1]
                     
+
+                    
                     seed=seed+count*1000
+                    
                     locs= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=Random, seed=seed)
-                    #print("HEREV",locs)
+                    #print("HEREV",element.ID,locs)
                     count+=1
                     locations_.append(locs)  
                 #print(element.ID,locations_)

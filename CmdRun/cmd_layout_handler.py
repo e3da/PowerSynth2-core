@@ -840,6 +840,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         layer_solutions=[]
         width=0
         height=0
+        bw_type=None
         for i in range(len(structure.layers)):
             if structure.layers[i].bondwires!=None:
                 for wire in structure.layers[i].bondwires:
@@ -931,7 +932,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
                     size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
 
-                solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path,bw_type=bw_type)
+                    solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path,bw_type=bw_type)
 
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
@@ -1593,6 +1594,9 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
             for k, v in root_node_v_mode_2_location.items():
                 root_Y[list(root_node_v_mode_2_location.keys()).index(k)] = v
 
+            #print(root_X)
+            #print(root_Y)
+            
             node_mode_2_locations_h={}
             node_mode_2_locations_v={}
             for child in structure.root_node_h.child:
@@ -1601,7 +1605,9 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     if vertex_coord in root_node_h_mode_2_location:
                         node_mode_2_locations_h[vertex_coord]=root_X[list(root_node_h_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_h)
-            #print ("H",child.name,child.id,child.node_mode_2_locations)
+                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+
+            
 
             for child in structure.root_node_v.child:
 
@@ -1609,9 +1615,49 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     if vertex_coord in root_node_v_mode_2_location:
                         node_mode_2_locations_v[vertex_coord]=root_Y[list(root_node_v_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_v)
-            #print ("V",child.name,child.id,child.node_mode_2_locations)
+                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+            
     
     if structure.via_connected_layer_info!=None:
+        for child in structure.root_node_h.child:
+            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+        for child in structure.root_node_v.child:
+            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+        #print ("H",child.name,child.id,child.node_mode_2_locations)
+        #print ("V",child.name,child.id,child.node_mode_2_locations)
+        #input()
+        for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+                #print(via_name,sub_root_node_list )
+                for node in sub_root_node_list:
+                    node.set_min_loc()
+                    #print (node.node_min_locations)
+                    node.vertices.sort(key= lambda x:x.index, reverse=False)
+                    ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
+                    node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
+            
+                    #print(node.node_mode_2_locations)
+        #nput()
+        for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+            sub_root=sub_root_node_list # root of each via connected layes subtree
+            
+            for i in range(len(structure.layers)):
+                if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
+                    structure.layers[i].forward_cg.LocationH[sub_root_node_list[0].id]=sub_root_node_list[0].node_mode_2_locations[sub_root_node_list[0].id]
+                    structure.layers[i].forward_cg.LocationV[sub_root_node_list[1].id]=sub_root_node_list[1].node_mode_2_locations[sub_root_node_list[1].id]
+                    #structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                    #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+
+                    #print(structure.layers[i].forward_cg.LocationH)
+                    #print(structure.layers[i].forward_cg.LocationV)
+                    #input()
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    
+                    structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
+                    
+
+
+        """
         for via_name, sub_root_node_list in structure.sub_roots.items():
             sub_tree_root=sub_root_node_list # root of each via connected layes subtree
             #print (sub_tree_root[0].node_mode_2_locations,sub_tree_root[1].node_mode_2_locations)
@@ -1683,7 +1729,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
 
                         structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
                         #print (structure.layers[i].mode_2_location_h)
-                        #print(structure.layers[i].mode_2_location_v)
+                        #print(structure.layers[i].mode_2_location_v)"""
     else:# handles 2D/2.5D layouts
                
         sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree

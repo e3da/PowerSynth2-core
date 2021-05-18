@@ -19,6 +19,7 @@ from core.MDK.Design.Routing_paths import RoutingPath
 from core.engine.Structure3D.cell_3D import Cell3D
 from core.MDK.Constraint.constraint_up import constraint_name_list
 from core.engine.LayoutSolution.color_list import color_list_generator
+from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
 
 class Structure_3D():
     def __init__(self):
@@ -1050,7 +1051,7 @@ class Structure_3D():
                 input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary
                 cs_islands = self.layers[i].new_engine.init_data[2] #corner stitch islands
                 initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
-                #print(self.layers[i].name)
+                print(self.layers[i].name)
                 
                 self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
                 """
@@ -1367,6 +1368,7 @@ class Node_3D(Node):
                 self.vertices.append(vert)
         else:
             self.ZDL+=self.boundary_coordinates
+
             self.ZDL.sort()
             for i in range(len(self.ZDL)):
                 coord=self.ZDL[i]
@@ -1399,7 +1401,12 @@ class Node_3D(Node):
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
         
-        
+        """if self.id==-4:
+            for vert in self.vertices:
+                print(vert.coordinate)
+            for edge in graph.nx_graph_edges:
+                edge.printEdge()
+        input()"""
         if len(graph.nx_graph_edges)>0:
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=self.id)
         
@@ -1468,9 +1475,15 @@ class Node_3D(Node):
         
         
 
-
+        """if self.id==-4:
+            for vert in self.vertices:
+                print(vert.coordinate)
+            for edge in graph.nx_graph_edges:
+                edge.printEdge()
+        input()"""
             
         self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
+        
         
 
         if self.parent!=None: # root node is not considered
@@ -1932,7 +1945,74 @@ class Node_3D(Node):
         #print "minx",self.minX[node.id]
         #print("ID",self.id)
         #print(final)
-        
+
+    def get_fixed_sized_solutions(self,level,Random,seed,N,ledge_dim=None):
+        '''
+
+        evaluates fixed sized solutions based on parents coordinates
+
+        '''  
+        if level == 2:
+            #for element in reversed(self.tb_eval_h):
+            ZDL_P=[]#holds coordinates those propagated from parent node
+            if self.parent.id!=None and self.parent.tb_eval_graph!=None:
+                for vertex in self.parent.tb_eval_graph.vertices:
+                    ZDL_P.append(vertex.coordinate)
+            else:
+                ZDL_P=self.parent.ZDL
+            
+            #ZDL_H=parent_coordinates
+            
+            # deleting multiple entries
+            P = set(ZDL_P)
+            ZDL_P = list(P)
+            ZDL_P.sort() # sorted list of HCG vertices which are propagated from parent
+            #print(element.ID,ZDL_H)
+
+            parent_locations=self.parent.node_mode_2_locations[self.parent.id]
+            print(parent_locations)
+            #print("P",self.id,ZDL_P)
+            self.tb_eval_graph.create_nx_graph()
+            '''
+            for vert in self.tb_eval_graph.vertices:
+                print(vert.coordinate,vert.min_loc)
+            for edge in self.tb_eval_graph.nx_graph_edges:
+                edge.printEdge()
+            '''
+            locations_=[]
+            count=0
+            for location in parent_locations:
+                loc={}
+
+                
+                for vertex in self.tb_eval_graph.vertices:
+                    if vertex.coordinate in location and vertex.coordinate in ZDL_P:
+                        loc[vertex.coordinate]=location[vertex.coordinate]
+                    else:
+                        continue
+                if ledge_dim!=None :
+                    #ledge_dims=self.constraint_info.get_ledgeWidth()
+                    left=self.vertices[1].coordinate
+                    right=self.vertices[-2].coordinate                       
+                    start=self.vertices[0].coordinate
+                    end=self.vertices[-1].coordinate
+
+                    loc[left]=loc[start]+ledge_dim
+                    loc[right]=loc[end]-ledge_dim
+                
+                seed=seed+count*1000
+                #print("B",loc)
+
+                
+                loc= solution_eval(graph_in=copy.deepcopy(self.tb_eval_graph), locations=loc, ID=self.id, Random=Random, seed=seed)
+                loc_items=loc.items()
+                
+                #print("HERE",self.id,sorted(loc_items))
+                count+=1
+                locations_.append(loc)  
+
+            self.node_mode_2_locations[self.id]=locations_
+
     # No need now. It can be used for inter layer constraints application
     """
     
