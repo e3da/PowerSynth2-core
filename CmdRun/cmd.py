@@ -907,10 +907,10 @@ class Cmd_Handler:
 
                 csv_writer.writerow(['Layout_ID', perf_names[0], perf_names[1]])
 
-            for i in range(len(self.structure_3D.solutions)):
-                sol=self.structure_3D.solutions[i]
-                data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
-                csv_writer.writerow(data)
+                for i in range(len(self.structure_3D.solutions)):
+                    sol=self.structure_3D.solutions[i]
+                    data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
+                    csv_writer.writerow(data)
                 my_csv.close()
         # '''
             sol_data = {}

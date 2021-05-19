@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 from core.engine.ConstrGraph.CGStructures import Edge,find_longest_path, is_connected
 from scipy.stats import truncnorm
 import numpy.random as random
@@ -639,13 +641,16 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
     if Random==None:
         distributed_rooms=[i for i in min_constraints]
         #print(distributed_rooms)
-        average_room=int(randomization_range/(len(min_constraints)))
+        total=sum(distributed_rooms)
+        ratios=[i/total for i in distributed_rooms]
+        individual_room=[int(i*randomization_range) for i in ratios]
+        #average_room=int(randomization_range/(len(min_constraints)))
         lower_limit=0
         sum_=0
         #print(distributed_rooms)
         #print(upper_limit)
         generated_random_value=[]
-        upper_limits=[average_room*2]
+        upper_limits=[individual_room[0]*2]
         random.seed(seed)
         for i in range(len(min_constraints)-1):
             
@@ -656,11 +661,11 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
                 upper_limit=upper_limits[i]
             else:
                 lower_limit=generated_random_value[i-1]
-                upper_limit=upper_limits[i-1]+average_room
+                upper_limit=upper_limits[i-1]+individual_room[i]
                 #average_room=(randomization_range-room)/len(min_constraints)-i
                 upper_limits.append(upper_limit)
             
-            #print(lower_limit,upper_limit,average_room)
+            #print(lower_limit,upper_limit)
 
 
             room=random.random_integers(low=lower_limit,high=upper_limit)
@@ -670,6 +675,14 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
             sum_+=(room-lower_limit)
         
         distributed_rooms[-1]+=randomization_range-sum_
+        #if sum_<randomization_range:
+        '''rest=randomization_range-sum_
+        print(rest)
+        max_index=distributed_rooms.index(max(distributed_rooms))
+        distributed_rooms[max_index]+=rest'''
+        #print(randomization_range)
+        #print(distributed_rooms)
+        #print(min_constraints)
 
         return distributed_rooms
         
@@ -1316,6 +1329,14 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
         return solution_eval(graph_in=graph, locations=locations, ID=ID, Random=Random, seed=seed)
         #print("L",locations)
 """
+if __name__ == '__main__':
+    
+    randomization_range=2000
+    min_constraints=[1000,5000,1500]
+
+    room=randomization_room_distributor(randomization_range=randomization_range,min_constraints=min_constraints,Random=None,seed=None)
+    print(room)
+
 
 
 
