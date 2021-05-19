@@ -638,12 +638,15 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
     : Random: design string for genetic algorithm
     : seed: randomization seed
     '''
+    dbunit=1
     if Random==None:
         distributed_rooms=[i for i in min_constraints]
         #print(distributed_rooms)
         total=sum(distributed_rooms)
-        ratios=[i/total for i in distributed_rooms]
-        individual_room=[int(i*randomization_range) for i in ratios]
+        ratios=[i/float(total) for i in distributed_rooms]
+        individual_room=[(i*randomization_range) for i in ratios]
+        #print(individual_room,distributed_rooms)
+
         #average_room=int(randomization_range/(len(min_constraints)))
         lower_limit=0
         sum_=0
@@ -652,10 +655,12 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
         generated_random_value=[]
         upper_limits=[individual_room[0]*2]
         random.seed(seed)
+        '''
         for i in range(len(min_constraints)-1):
             
-            #room=get_truncated_normal( low=lower_limit, upp=upper_limit)
+            room=get_truncated_normal( low=lower_limit, upp=upper_limit)
             #room=room.rvs()*1000
+            
             if i==0:
                 lower_limit=lower_limit
                 upper_limit=upper_limits[i]
@@ -665,16 +670,19 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
                 #average_room=(randomization_range-room)/len(min_constraints)-i
                 upper_limits.append(upper_limit)
             
-            #print(lower_limit,upper_limit)
+            print(lower_limit,upper_limit)
 
 
             room=random.random_integers(low=lower_limit,high=upper_limit)
             #print(room)
             generated_random_value.append(room)
             distributed_rooms[i]+=room-lower_limit
+            
             sum_+=(room-lower_limit)
         
         distributed_rooms[-1]+=randomization_range-sum_
+        '''
+
         #if sum_<randomization_range:
         '''rest=randomization_range-sum_
         print(rest)
@@ -683,6 +691,32 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
         #print(randomization_range)
         #print(distributed_rooms)
         #print(min_constraints)
+        #dbunit=1
+        normalized_distributed_room=[i/float(sum(individual_room)) for i in individual_room]
+        #print(normalized_distributed_room)
+        normalized_randomization_range=randomization_range
+        #individual_room=[(i*normalized_randomization_range) for i in normalized_distributed_room]
+        individual_room=normalized_distributed_room
+        sum_=0
+        new_rooms=[]
+        for i in range(len(min_constraints)-1):
+            mean=individual_room[i]
+            sd=mean/3
+            room=get_truncated_normal( low=0, upp=2*mean, mean=mean, sd=sd)
+            room=(room.rvs())
+            #print(room)
+            #distributed_rooms[i]+=room
+            new_rooms.append(room)
+            sum_+=room
+        new_rooms.append(1-sum_)
+        #distributed_rooms[-1]+=randomization_range-sum_
+        #test=[int(i*randomization_range) for i in new_rooms]
+        #print(test)
+        for i in range(len(distributed_rooms)):
+            distributed_rooms[i]+=int(new_rooms[i]*randomization_range)
+        '''rest=randomization_range-sum_
+        max_index=distributed_rooms.index(max(distributed_rooms))
+        distributed_rooms[max_index]+=rest'''
 
         return distributed_rooms
         
@@ -1331,8 +1365,8 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
 """
 if __name__ == '__main__':
     
-    randomization_range=2000
-    min_constraints=[1000,5000,1500]
+    randomization_range=20
+    min_constraints=[1000,2000,4000,2000,1000]
 
     room=randomization_room_distributor(randomization_range=randomization_range,min_constraints=min_constraints,Random=None,seed=None)
     print(room)

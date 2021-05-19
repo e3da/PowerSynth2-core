@@ -1970,7 +1970,7 @@ class Node_3D(Node):
             #print(element.ID,ZDL_H)
 
             parent_locations=self.parent.node_mode_2_locations[self.parent.id]
-            print(parent_locations)
+            #print(parent_locations)
             #print("P",self.id,ZDL_P)
             self.tb_eval_graph.create_nx_graph()
             '''
