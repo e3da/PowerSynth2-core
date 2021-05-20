@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 from core.engine.ConstrGraph.CGStructures import Edge,find_longest_path, is_connected
-from scipy.stats import truncnorm
+from scipy.stats import distributions, truncnorm
 import numpy.random as random
 import copy
 
@@ -482,45 +482,47 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                     randomization_range=allocated_distance-longest_distance
                     #print(randomization_range)
                     graph.vertices.sort(key=lambda x: x.index, reverse=False)
-                    if randomization_range>=0:
+                    if randomization_range>0:
                         distributed_room=randomization_room_distributor(randomization_range,min_constraints,Random,seed)
-                        for i in range(len(longest_path)):
-                            index_=longest_path[i]
+                    else:
+                        distributed_room=[i for i in min_constraints]
+                    for i in range(len(longest_path)):
+                        index_=longest_path[i]
 
-                            if graph.vertices[index_].coordinate in locations:
-                                coord=graph.vertices[index_].coordinate
+                        if graph.vertices[index_].coordinate in locations:
+                            coord=graph.vertices[index_].coordinate
+                            for edge in graph.nx_graph_edges:
+                                if edge.source.coordinate==coord and edge.dest.removable==True:
+                                    coord2=edge.dest.coordinate
+                                    if coord2 not in locations:
+                                        locations[coord2]=locations[coord]+edge.constraint
+
+                            #print("B",len(graph.nx_graph_edges),len(graph.edges))
+                            #graph=update_graph(locations,graph)
+                            
+
+                            
+                        else:
+                            coord=graph.vertices[index_].coordinate
+                            index_p=longest_path[i-1]
+                            #graph.vertices.sort(key=lambda x: x.index, reverse=False)
+                            prior_coord=graph.vertices[index_p].coordinate
+                            
+                            if coord not in locations and prior_coord in locations:
+                                locations[coord]=locations[prior_coord]+distributed_room[i-1]
                                 for edge in graph.nx_graph_edges:
-                                    if edge.source.coordinate==coord and edge.dest.removable==True:
+                                    if edge.source.coordinate ==coord and edge.dest.removable==True:
                                         coord2=edge.dest.coordinate
                                         if coord2 not in locations:
                                             locations[coord2]=locations[coord]+edge.constraint
-
-                                #print("B",len(graph.nx_graph_edges),len(graph.edges))
+                                #print("BS",len(graph.nx_graph_edges),len(graph.edges))
                                 #graph=update_graph(locations,graph)
-                               
-
-                                
+                                #print("AS",len(graph.nx_graph_edges))
                             else:
-                                coord=graph.vertices[index_].coordinate
-                                index_p=longest_path[i-1]
-                                #graph.vertices.sort(key=lambda x: x.index, reverse=False)
-                                prior_coord=graph.vertices[index_p].coordinate
-                                
-                                if coord not in locations and prior_coord in locations:
-                                    locations[coord]=locations[prior_coord]+distributed_room[i-1]
-                                    for edge in graph.nx_graph_edges:
-                                        if edge.source.coordinate ==coord and edge.dest.removable==True:
-                                            coord2=edge.dest.coordinate
-                                            if coord2 not in locations:
-                                                locations[coord2]=locations[coord]+edge.constraint
-                                    #print("BS",len(graph.nx_graph_edges),len(graph.edges))
-                                    #graph=update_graph(locations,graph)
-                                    #print("AS",len(graph.nx_graph_edges))
-                                else:
-                                    #print(coord,prior_coord)
-                                    #print(locations)
-                                    #input()
-                                    continue
+                                #print(coord,prior_coord)
+                                #print(locations)
+                                #input()
+                                continue
                                 #print(locations)
                                 #input()
                                 """for edge in graph.nx_graph_edges:
@@ -532,9 +534,9 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                                             graph=update_graph(locations,graph)
                                             #print("A",len(graph.nx_graph_edges))
                                             #input()"""
-                    else:
-                        print("ERROR: NO LONGEST PATH FROM", source.coordinate, "TO", sink.coordinate, "in ID:", ID)
-                        exit()
+                    #else:
+                        #print("ERROR: NO LONGEST PATH FROM", source.coordinate, "TO", sink.coordinate, "in ID:", ID)
+                        #exit()
                 #graph=update_graph(locations,graph)
             #print(locations)
         
@@ -701,8 +703,8 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
         new_rooms=[]
         for i in range(len(min_constraints)-1):
             mean=individual_room[i]
-            sd=mean/3
-            room=get_truncated_normal( low=0, upp=2*mean, mean=mean, sd=sd)
+            sd=mean/2
+            room=get_truncated_normal( mean-sd, upp=mean+sd, mean=mean, sd=sd)
             room=(room.rvs())
             #print(room)
             #distributed_rooms[i]+=room
@@ -712,8 +714,10 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
         #distributed_rooms[-1]+=randomization_range-sum_
         #test=[int(i*randomization_range) for i in new_rooms]
         #print(test)
-        for i in range(len(distributed_rooms)):
+        for i in range(len(distributed_rooms)-1):
             distributed_rooms[i]+=int(new_rooms[i]*randomization_range)
+        rest_room=sum(min_constraints)+randomization_range-sum(distributed_rooms)
+        distributed_rooms[-1]+=rest_room
         '''rest=randomization_range-sum_
         max_index=distributed_rooms.index(max(distributed_rooms))
         distributed_rooms[max_index]+=rest'''
