@@ -819,6 +819,14 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             #print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
                             if edge.comp_type=='Fixed':
                                 exit()
+                        else:
+                            removable_edges.append(edge)
+                            #w1=find_longest_path(in_src.index,ref_vert.index,adj_matrix_)[2] #longest distance(in_src, ref_vert)
+                            w2=edge.constraint-fixed_dim
+                            if w2>0:
+                                #removable_edges.append(edge)
+                                new_edge=Edge(source=in_src, dest=ref_vert, constraint=w2, index=edge.index, type='non-fixed', weight=2*w2,comp_type='Flexible')
+                                new_edges.append(new_edge)
                         
                             
                     

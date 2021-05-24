@@ -1560,7 +1560,7 @@ class Node_3D(Node):
                     #for edge in self.tb_eval_graph.edges:
                     for edge in self.tb_eval_graph.edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed') :
                             
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
                                 if e not in self.parent.edges:

@@ -1061,10 +1061,10 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
             
         elif sel==6:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_5/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/ICCAD_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/ICCAD_Case_2/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         #f = open('output.txt','w')
         #sys.stdout = f

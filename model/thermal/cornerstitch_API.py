@@ -189,7 +189,7 @@ class CornerStitch_Tmodel_API:
             
             
             if self.matlab_engine == None:
-                print("starting MATLAB engine from cornerstitch_API")
+                #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()
             
             ambient_temp=self.t_amb

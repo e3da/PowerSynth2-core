@@ -836,7 +836,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
         
         end=time.time()
-        print("Eval",end-start)
+        gen_time=end-start
+        
         layer_solutions=[]
         width=0
         height=0
@@ -948,6 +949,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         if optimization==True:
                 opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
                 Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                print("Gen",gen_time)
         else:
             for solution in PS_solutions:
                 solution.params={'Perf_1':None,'Perf_2':None}

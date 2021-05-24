@@ -632,7 +632,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
 
 #"""    
 
-def randomization_room_distributor(randomization_range=0,min_constraints=[],Random=None,seed=None):
+def randomization_room_distributor(randomization_range=0,min_constraints=[],Random=None,seed=None,algorithm=None):
     '''
     function that uniformly distributes randomization room among the min_comnstraints
     : param randomizatio_range: extra room on the path that needs to be randomized among the edge weights (min_constraints)
@@ -640,94 +640,124 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
     : Random: design string for genetic algorithm
     : seed: randomization seed
     '''
-    dbunit=1
-    if Random==None:
+    uniform=True
+    if algorithm=='NG-Random':
+        if uniform==False:
+            #print(min_constraints,randomization_range)
+            distributed_rooms=[i for i in min_constraints]   
+            #print(distributed_rooms)
+            total=sum(distributed_rooms)
+            ratios=[i/float(total) for i in distributed_rooms]
+            individual_room=[(i*randomization_range) for i in ratios]
+            #print(individual_room,distributed_rooms)
+
+            #average_room=int(randomization_range/(len(min_constraints)))
+            lower_limit=0
+            sum_=0
+            #print(distributed_rooms)
+            #print(upper_limit)
+            generated_random_value=[]
+            upper_limits=[individual_room[0]*2]
+            random.seed(seed)
+            
+            normalized_distributed_room=[i/float(sum(individual_room)) for i in individual_room]
+            #print(normalized_distributed_room)
+            normalized_randomization_range=randomization_range
+            #individual_room=[(i*normalized_randomization_range) for i in normalized_distributed_room]
+            individual_room=normalized_distributed_room
+            sum_=0
+            new_rooms=[]
+            for i in range(len(min_constraints)-1):
+                mean=individual_room[i]
+                sd=mean/3
+                room=get_truncated_normal( low=0, upp=2*mean, mean=mean, sd=sd)
+                room=(room.rvs())
+                #print(room)
+                #distributed_rooms[i]+=room
+                new_rooms.append(room)
+                sum_+=room
+            
+            new_rooms=[int(i*randomization_range) for i in new_rooms]
+            for i in range(len(distributed_rooms)-1):
+                distributed_rooms[i]+=new_rooms[i]
+            distributed_rooms[-1]+=randomization_range-sum(new_rooms)
+            #distributed_rooms[-1]+=randomization_range-sum_
+            #test=[int(i*randomization_range) for i in new_rooms]
+            #print(test)
+            
+                
+            
+        else:
+            distributed_rooms=[i for i in min_constraints]
+            #print(distributed_rooms)
+            average_room=int(randomization_range/(len(min_constraints)))
+            lower_limit=0
+            sum_=0
+            #print(distributed_rooms)
+            #print(upper_limit)
+            generated_random_value=[]
+            upper_limits=[average_room*2]
+            random.seed(seed)
+            for i in range(len(min_constraints)-1):
+                
+                #room=get_truncated_normal( low=lower_limit, upp=upper_limit)
+                #room=room.rvs()*1000
+                if i==0:
+                    lower_limit=lower_limit
+                    upper_limit=upper_limits[i]
+                else:
+                    lower_limit=generated_random_value[i-1]
+                    upper_limit=upper_limits[i-1]+average_room
+                    #average_room=(randomization_range-room)/len(min_constraints)-i
+                    upper_limits.append(upper_limit)
+                
+                #print(lower_limit,upper_limit,average_room)
+
+
+                room=random.random_integers(low=lower_limit,high=upper_limit)
+                #print(room)
+                generated_random_value.append(room)
+                distributed_rooms[i]+=room-lower_limit
+                sum_+=(room-lower_limit)
+            
+            distributed_rooms[-1]+=randomization_range-sum_
+        return distributed_rooms
+    else:
+        
         distributed_rooms=[i for i in min_constraints]
         #print(distributed_rooms)
-        total=sum(distributed_rooms)
-        ratios=[i/float(total) for i in distributed_rooms]
-        individual_room=[(i*randomization_range) for i in ratios]
-        #print(individual_room,distributed_rooms)
-
-        #average_room=int(randomization_range/(len(min_constraints)))
+        average_room=int(randomization_range/(len(min_constraints)))
         lower_limit=0
         sum_=0
         #print(distributed_rooms)
         #print(upper_limit)
         generated_random_value=[]
-        upper_limits=[individual_room[0]*2]
+        upper_limits=[average_room*2]
         random.seed(seed)
-        '''
         for i in range(len(min_constraints)-1):
             
-            room=get_truncated_normal( low=lower_limit, upp=upper_limit)
+            #room=get_truncated_normal( low=lower_limit, upp=upper_limit)
             #room=room.rvs()*1000
-            
             if i==0:
                 lower_limit=lower_limit
                 upper_limit=upper_limits[i]
             else:
                 lower_limit=generated_random_value[i-1]
-                upper_limit=upper_limits[i-1]+individual_room[i]
+                upper_limit=upper_limits[i-1]+average_room
                 #average_room=(randomization_range-room)/len(min_constraints)-i
                 upper_limits.append(upper_limit)
             
-            print(lower_limit,upper_limit)
+            #print(lower_limit,upper_limit,average_room)
 
 
             room=random.random_integers(low=lower_limit,high=upper_limit)
             #print(room)
             generated_random_value.append(room)
             distributed_rooms[i]+=room-lower_limit
-            
             sum_+=(room-lower_limit)
         
         distributed_rooms[-1]+=randomization_range-sum_
-        '''
-
-        #if sum_<randomization_range:
-        '''rest=randomization_range-sum_
-        print(rest)
-        max_index=distributed_rooms.index(max(distributed_rooms))
-        distributed_rooms[max_index]+=rest'''
-        #print(randomization_range)
-        #print(distributed_rooms)
-        #print(min_constraints)
-        #dbunit=1
-        normalized_distributed_room=[i/float(sum(individual_room)) for i in individual_room]
-        #print(normalized_distributed_room)
-        normalized_randomization_range=randomization_range
-        #individual_room=[(i*normalized_randomization_range) for i in normalized_distributed_room]
-        individual_room=normalized_distributed_room
-        sum_=0
-        new_rooms=[]
-        for i in range(len(min_constraints)-1):
-            mean=individual_room[i]
-            sd=mean/2
-            room=get_truncated_normal( mean-sd, upp=mean+sd, mean=mean, sd=sd)
-            room=(room.rvs())
-            #print(room)
-            #distributed_rooms[i]+=room
-            new_rooms.append(room)
-            sum_+=room
-        new_rooms.append(1-sum_)
-        #distributed_rooms[-1]+=randomization_range-sum_
-        #test=[int(i*randomization_range) for i in new_rooms]
-        #print(test)
-        for i in range(len(distributed_rooms)-1):
-            distributed_rooms[i]+=int(new_rooms[i]*randomization_range)
-        rest_room=sum(min_constraints)+randomization_range-sum(distributed_rooms)
-        distributed_rooms[-1]+=rest_room
-        '''rest=randomization_range-sum_
-        max_index=distributed_rooms.index(max(distributed_rooms))
-        distributed_rooms[max_index]+=rest'''
-
         return distributed_rooms
-        
-
-
-
-
 
 def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path):
     '''
