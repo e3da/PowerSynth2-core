@@ -63,7 +63,7 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                type = measure.measure
+                '''type = measure.measure
                 self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
                 print ('API type', self.e_api.type)
@@ -75,7 +75,9 @@ class new_engine_opt:
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
-                    
+                '''
+                R=100
+                L=100    
                 print ("RL",R,L)
                     
                 #except:
