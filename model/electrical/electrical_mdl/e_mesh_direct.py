@@ -85,7 +85,20 @@ class TraceCell(Rect):
             ys.append(pt[1])
         plt.scatter(xs, ys)
         plt.show()
-
+    def length(self):
+        if self.type == 0:
+            lent = abs(self.left - self.right)
+        elif self.type ==1:
+            lent = abs (self.top - self.bottom)
+        else: # doesnt know orientation
+            len1 = abs(self.left - self.right)
+            len2 = abs(self.top - self.bottom)
+            print (self.type,len1,len2)
+            return -1
+        print(self.type,lent)
+        if lent ==0:
+            print ("FOUND A ZERO DIMENSION TRACE")
+        return lent
 
 class MeshNode:
     def __init__(self, pos=[], type='', node_id=0, group_id=None, mode=1):
