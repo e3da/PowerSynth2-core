@@ -1032,52 +1032,46 @@ class Cmd_Handler:
 
 
 if __name__ == "__main__":
-    print("----------------------PowerSynth Version 1.4: Command line version------------------")
-    quang_settings = '/nethome/qmle/testcases/settings.info'
-    imam_settings = '/nethome/ialrazi/PS_2_test_Cases/settings.info'
+    print("----------------------PowerSynth Version 2.0: Command line version------------------")
+    
     cmd = Cmd_Handler(debug=False)
     print (str(sys.argv))
     debug = True
+    qmle_nethome = "/nethome/qmle/testcases"
+    imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
+    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test"
+    qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
-        sel= int(input("select a test case to run: 1-quang_simple_test_quang_pc 2-Imam_journal_quang_pc 3-quang_journal_quang_pc 4-Imam_journal_Imam_pc"))
-        if sel == 1: 
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/Mutual_IND_Case/two_dev_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-        elif sel ==2:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/PSV2_Testing/Cmd_flow_case/Half_bridge_Imam/half_bridge_pm_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-        elif sel ==3:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/Case1_S-param/Layout1_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
-            #D:\Demo\New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Testing_Journal_case_w_Py_3/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
-           
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro_data_collection_final.txt
-            
-        elif sel==5:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-            
-        elif sel==6:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_5/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-        
-        elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_21/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-        elif sel==8:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt','-settings',quang_settings]
-        elif sel==9:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt','-settings',quang_settings]
-        elif sel==10:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_16/macro_script.txt','-settings',quang_settings]
-        elif sel==11:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt','-settings',quang_settings]
-        elif sel == 12:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt','-settings',quang_settings]
+        tc_list = [{qmle_nethome:"Mutual_IND_Case/two_dev_macro.txt"},\
+                   {qmle_nethome:'PSV2_Testing/Cmd_flow_case/Half_bridge_Imam/half_bridge_pm_macro.txt'},\
+                   {qmle_nethome:'Case1_S-param/Layout1_macro.txt'},\
+                   {imam_nethome2:'macro_script.txt'},\
+                   {imam_nethome1:'Case_5/macro_script.txt'},\
+                   {imam_nethome1:'Case_21/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_6/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'}]
+        for tc in tc_list:
+            print("Case id:", tc_list.index(tc))
+            k = list(tc.keys())[0]
+            v = list(tc.values())[0]
+            print("----Test case folder:",k)
+            print("----Test case name:",v)
 
-        #f = open('output.txt','w')
-        #sys.stdout = f
-        cmd.cmd_handler_flow(arguments=args)
-           
-
+        sel= int(input("select a test case to run:"))
+        tc = tc_list[sel]
+        k = list(tc.keys())[0]
+        v = list(tc.values())[0]
+        macro_dir = os.path.join(k,v)
+        setting_dir = os.path.join(k,"settings.info")
+        print("MACRO DIR:", macro_dir)
+        print("SETTING DIR", setting_dir)
+        # From now all of these testcases serve for recursive test for the inductance model
+        args = ['python','cmd.py','-m',macro_dir,'-settings',setting_dir]
+        cmd.cmd_handler_flow(arguments= args)
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
+
+    
