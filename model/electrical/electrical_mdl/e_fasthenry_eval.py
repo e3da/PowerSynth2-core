@@ -54,6 +54,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.out_text = Begin.format(str(ts))
         self.locs_name_dict={}
         self.fh_point_dict={} # can be used to manage equivalent net and 
+        self.fh_bw_dict= {} # quick access to bws connections
         self.wire_id= 0
         self.tc_id = 0
         for g in self.emesh.hier_E.isl_group:
@@ -62,12 +63,15 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             #print ('z_level',z,'z_id',g.z_id)
             isl = isl_dict[g.name]
             planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
+            for t in trace_cells: 
+                if t.length() == 0:
+                    trace_cells.remove(t)
             trace_cells = self.handle_pins_connect_trace_cells_fh(trace_cells=trace_cells, island_name=g.name, isl_z =z + dz)
             self.out_text+=self.convert_trace_cells_to_fh_script(trace_cells=trace_cells,z_pos=z,dz=dz)
         self.out_text += self.gen_fh_points()
         self.connect_fh_pts_to_isl_trace()
-        self.out_text += self.gen_equiv_list()
         self.out_text += self.gen_wires_text()
+        self.out_text += self.gen_equiv_list()
         self.out_text += self.gen_virtual_connection()
         
     
@@ -100,6 +104,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 y_loc = bot + width/2
                 for loc in tc.comp_locs:
                     xs.append(loc[0])   
+                xs = list(set(xs))
+
                 xs.sort()
                 # add to trace script
                 for i in range(len(xs)-1):
@@ -107,21 +113,24 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     x_stop = xs[i+1]
                     start = (x_start,y_loc,z_pos+dz*1000)
                     stop = (x_stop,y_loc,z_pos+dz*1000)
-                    output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz)
+                    output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz,type=tc_type)
             elif tc_type == 1: # vertical case
                 width = right - left
                 ys = [bot,top]
                 x_loc = left + width/2
                 for loc in tc.comp_locs:
                     ys.append(loc[1])
+                ys = list(set(ys))
                 ys.sort()
                 # add to trace script
                 for i in range(len(ys)-1):
                     y_start = ys[i]
                     y_stop = ys[i+1]
+                    if y_start==y_stop:
+                        input()
                     start = (x_loc,y_start,z_pos+dz*1000)
                     stop = (x_loc,y_stop,z_pos+dz*1000)
-                    output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz)   
+                    output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz,type=tc_type)   
             elif tc_type == 2:
                 
                 c = ((left+right)/2,(bot+top)/2,z_pos+dz*1000)
@@ -131,18 +140,19 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 t_loc = (c[0],top,z_pos+dz*1000)
                 w_h = top-bot
                 w_v = right-left
+
                 if tc.has_left and tc.has_top:
-                    output_text+=self.gen_trace_script(start_loc=l_loc,end_loc=c,width=w_h,thick=dz)   
-                    output_text+=self.gen_trace_script(start_loc=c,end_loc=t_loc,width=w_v,thick=dz)
+                    output_text+=self.gen_trace_script(start_loc=l_loc,end_loc=c,width=w_h,thick=dz,type=tc_type)   
+                    output_text+=self.gen_trace_script(start_loc=c,end_loc=t_loc,width=w_v,thick=dz,type=tc_type)
                 elif tc.has_left and tc.has_bot:
-                    output_text+=self.gen_trace_script(start_loc=l_loc,end_loc=c,width=w_h,thick=dz)   
-                    output_text+=self.gen_trace_script(start_loc=c,end_loc=b_loc,width=w_v,thick=dz)
+                    output_text+=self.gen_trace_script(start_loc=l_loc,end_loc=c,width=w_h,thick=dz,type=tc_type)   
+                    output_text+=self.gen_trace_script(start_loc=c,end_loc=b_loc,width=w_v,thick=dz,type=tc_type)
                 elif tc.has_right and tc.has_top:
-                    output_text+=self.gen_trace_script(start_loc=r_loc,end_loc=c,width=w_h,thick=dz)   
-                    output_text+=self.gen_trace_script(start_loc=c,end_loc=t_loc,width=w_v,thick=dz)
+                    output_text+=self.gen_trace_script(start_loc=r_loc,end_loc=c,width=w_h,thick=dz,type=tc_type)   
+                    output_text+=self.gen_trace_script(start_loc=c,end_loc=t_loc,width=w_v,thick=dz,type=tc_type)
                 elif tc.has_right and tc.has_bot:
-                    output_text+=self.gen_trace_script(start_loc=r_loc,end_loc=c,width=w_h,thick=dz)   
-                    output_text+=self.gen_trace_script(start_loc=c,end_loc=b_loc,width=w_v,thick=dz)
+                    output_text+=self.gen_trace_script(start_loc=r_loc,end_loc=c,width=w_h,thick=dz,type=tc_type)   
+                    output_text+=self.gen_trace_script(start_loc=c,end_loc=b_loc,width=w_v,thick=dz,type=tc_type)
             elif tc_type ==3: # planar type
                 mesh  =  [10,10]# default
                 nw_loc = (left,top,z_pos+dz*1000)
@@ -182,8 +192,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         return text_out
 
-    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =5 ,nhinc =5):
-        name='trace'
+    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =5 ,nhinc =5,type = 0):
+        name='trace_' + str(type)+'_'
         start_name ='N'+ name+str(self.tc_id)+'s'
         end_name ='N'+ name+str(self.tc_id)+'e'
         # adding these locs names into dictionary so that we can perform equivalent process in one time
@@ -200,9 +210,11 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.tc_id+=1
         return textout
     
-    def add_fh_points(self,name=None,loc=[]):
-        if not name in self.fh_point_dict:
+    def add_fh_points(self,name=None,loc=[],mode = 0):
+        if not name in self.fh_point_dict and mode ==0:
             self.fh_point_dict[name]= [loc[0],loc[1],loc[2]]
+        if mode==1 and not name in self.fh_bw_dict: # means this is a generated loc for wire
+            self.fh_bw_dict[name] = [loc[0],loc[1],loc[2]]
     
     def gen_wires_text(self):
         bw_text = ''
@@ -236,7 +248,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 end_wire_loc = [stop_pt[0]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop_pt[1],stop.z]    
             if ori == 0: # if this wire group is horizontal
                 start_wire_loc = [start_pt[0],start_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,start.z]
-                end_wire_loc = [stop_pt[1],stop_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop.z]    
+                end_wire_loc = [stop_pt[0],stop_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop.z]    
             start_wire_loc = [start_wire_loc[i]/1000 for i in range(3)]
             end_wire_loc = [end_wire_loc[i]/1000 for i in range(3)]
             print("wire group length",math.sqrt((start_wire_loc[0]-end_wire_loc[0])**2+(start_wire_loc[1]-end_wire_loc[1])**2))
@@ -286,7 +298,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         conn_type = "hier"
                         # Get x,y,z positions
                         x, y = sheet_data.rect.center()
-                        z = isl_z *1000
+                        z = sheet_data.z# *1000
                         cp = [x , y , z ]
                         name = 'N'+sheet_data.net
                         for tc in trace_cells:  # find which trace cell includes this component
@@ -301,7 +313,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                             name = 'N'+sheet_data.net
                             
                             x, y = sheet_data.rect.center()
-                            z = isl_z *1000
+                            z = sheet_data.z #*1000
                             cp = [x , y , z ]
                             # print "CP",cp
                             if not (sheet_data.net in self.emesh.comp_net_id):

@@ -1,10 +1,11 @@
 # This is the layout generation and optimization flow using command line only
 import sys, os
-sys.path.append('..')
-'''# Set relative location
+#sys.path.append('..')
+# Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
-cur_path = cur_path[0:-16] #exclude "power/cmd_run"
-sys.path.append(cur_path)'''
+cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
+print(cur_path)
+sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
 from core.model.thermal.cornerstitch_API import ThermalMeasure
@@ -1070,6 +1071,9 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_16/macro_script.txt','-settings',quang_settings]
         elif sel==11:
             args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt','-settings',quang_settings]
+        elif sel == 12:
+            args = ['python','cmd.py','-m','/nethome/qmle/testcases/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt','-settings',quang_settings]
+
         #f = open('output.txt','w')
         #sys.stdout = f
         cmd.cmd_handler_flow(arguments=args)
