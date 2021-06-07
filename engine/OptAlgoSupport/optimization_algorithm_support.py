@@ -67,17 +67,17 @@ class new_engine_opt:
                 self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
                 #self.e_api.type = 'Loop' # hardcodedß
-                print ('API type', self.e_api.type)
-                if self.e_api.type == 'PowerSynthPEEC':
+                print ('API type', self.e_api.e_mdl)
+                if self.e_api.e_mdl == 'PowerSynthPEEC':
                     start = time.time()
                     self.e_api.mesh_and_eval_elements()
                     R, L = self.e_api.extract_RL(src=measure.source, sink=measure.sink)
                     print ('eval time', time.time()-start)
-                elif self.e_api.type == 'FastHenry':
+                elif self.e_api.e_mdl == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
-                elif self.e_api.type == 'Loop':
+                elif 'Loop' in self.e_api.e_mdl:
                     self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
                     
                 print ("RL",R,L)

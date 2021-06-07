@@ -651,7 +651,7 @@ class Cmd_Handler:
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
         if type == 'PowerSynthPEEC':
-            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC')
             if self.rs_model_file != 'default':
                 self.e_api.load_rs_model(self.rs_model_file)
             else:

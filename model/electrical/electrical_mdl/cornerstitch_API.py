@@ -50,7 +50,7 @@ class ElectricalMeasure(object):
 
 class CornerStitch_Emodel_API:
     # This is an API with NewLayout Engine
-    def __init__(self, comp_dict={}, wire_conn={},e_mdl = 'PEEC'):
+    def __init__(self, comp_dict={}, wire_conn={},e_mdl = 'PowerSynthPEEC'):
         '''
 
         :param comp_dict: list of all components and routing objects
@@ -77,7 +77,7 @@ class CornerStitch_Emodel_API:
         self.wires = []
         self.vias = []
         # this is fixed to internal
-        self.type = 'PowerSynthPEEC'
+        
         self.rs_model = None
     def process_trace_orientation(self,trace_ori_file=None):
         with open(trace_ori_file, 'r') as file_data:
@@ -347,7 +347,7 @@ class CornerStitch_Emodel_API:
         islands = []
         for isl_group in list(module_data.islands.values()):
             islands.extend(isl_group)
-        if self.e_mdl == "PEEC":
+        if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
             self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack)
 
         #self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type)

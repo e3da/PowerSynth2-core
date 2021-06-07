@@ -5,6 +5,8 @@ import scipy
 import warnings
 import sys
 warnings.filterwarnings("ignore")
+
+# IN THIS VERSION OF MNA EVAL, R AND L ARE COMBINED INTO ONE SINGLE IMPEDANCE TO REDUCE THE NUMBER OF VOLTAGE UNKNOWNS
 class diag_prec:
     def __init__(self, A):
         self.shape = A.shape
@@ -37,6 +39,7 @@ class RL_circuit():
         # light version
         # Element names are used as keys
         self.element =[]
+        self.el_type = {}        
         self.pnode={}
         self.nnode={}
         self.cp_node={}
@@ -121,6 +124,8 @@ class RL_circuit():
         self.pnode[name] = pnode
         self.nnode[name] = nnode
         self.value[name] = val
+        
+        
         # name,pnode,nnode,val
 
     def _graph_add_M(self,name,L1_name,L2_name,val):
@@ -134,7 +139,7 @@ class RL_circuit():
         self.src_pnode[name] = pnode
         self.src_nnode[name] = nnode
         self.src_value[name] = float(val)
-
+        
     def indep_voltage_source(self, pnode=0, nnode=0, val=1000, name='Vs'):
         self.V_node=pnode
         self.element.append(name)
@@ -172,6 +177,102 @@ class RL_circuit():
         self.R_count = 0
         self.C_count = 0
         self.M_count = 0
+
+    def _graph_read_PEEC_Loop(self,msh_obj):
+        # This is used to compared between loop and PEEC method
+        for edge in msh_obj.PEEC_graph.edges(data=True):
+            n1 = edge[0]
+            n2 = edge[1]
+            edata = edge[2]
+            if edata['data'] !=None:
+                Zdict = edata['Zdict']
+            else:
+                self.L_count += 1
+                self.R_count += 1
+                self._graph_add_comp("B_{0}{1}".format(n1,n2), n1, n2, 1e-6+1e-12j)
+                continue
+            for zkey in Zdict:
+                self.L_count += 1
+                self.R_count += 1
+                branch_val = Zdict[zkey]
+                self._graph_add_comp(zkey, n1, n2, branch_val)
+            if n1 not in list(self.node_dict.keys()):
+                self.node_dict[n1] = n1
+            if n2 not in list(self.node_dict.keys()):
+                self.node_dict[n2] = n2
+        for k in msh_obj.M_PEEC:
+            id1 = k[0]
+            id2 = k[1]
+            M_val = msh_obj.M_PEEC[k]
+            L1_name = "B{0}".format(id1)
+            L2_name = "B{0}".format(id2)
+            M_name = 'M' + '_' + L1_name + '_' + L2_name
+            self._graph_add_M(M_name, L1_name, L2_name, M_val)
+            self.M_count += 1
+
+    def _graph_read_loop(self,msh_obj):
+        for edge in msh_obj.net_graph.edges(data= True):
+            print (edge)
+            n1 = edge[0]
+            n2 = edge[1]
+            edata = edge[2]
+            e_name = str(n1)+str(n2)
+            R_val = edata['res']
+            L_val = edata['ind']
+            edata_data = edata['data']
+            self.L_count+=1
+            self.R_count+=1
+            branch_val = 1j*L_val+R_val
+            self._graph_add_comp("B{0}".format(e_name), n1, n2, branch_val)
+            p1 = msh_obj.net_2d_pos[n1]
+            p2 = msh_obj.net_2d_pos[n2] 
+            ori = edata_data['ori']
+            self.node_dict[n1] = p1
+            self.node_dict[n2] = p2
+            
+            #TODO: FOR NOW THE NODE AND EDGE OBJECTS ARE NOT REUSE, FOR QUICK IMPLEMENTATION ONLY HAVE TO UPDATE THESE LATER
+            ''' THIS CODE IS FOR CURRENT DENSITY PLOTTING 
+            if ori != None:
+                if ori == 'h':
+                    # make sure the node with smaller x will be positive
+                    if p1[0]>p2[0]:
+                        n_node = n1
+                        p_node = n2
+                elif ori == 'v':
+                    # make sure the node with smaller y will be positive
+                    if p1[1] > p2[1]:
+                        n_node = n1
+                        p_node = n2
+            else:
+                if abs(p1[0] - p2[0]) > abs(p1[1] - p2[1]):
+                    if p1[0] > p2[0]:
+                        n_node = n1
+                        p_node = n2
+                elif abs(p1[1] - p2[1]) > abs(p1[0] - p2[0]):
+                    if p1[1] > p2[1]:
+                        n_node = n1
+                        p_node = n2
+            
+            
+            if p_node not in list(self.node_dict.keys()):
+                self.node_dict[p_node] = p_node
+            if n_node not in list(self.node_dict.keys()):
+                self.node_dict[n_node] = n_node
+            '''       
+        # handle evaluated mutual pair
+        for k in msh_obj.mutual_pair:
+            e1 = k[0]
+            e2 = k[1]
+            M_val = msh_obj.mutual_pair[k][1]
+            e1_name = str(e1[0]) + str(e1[1])
+            L1_name = "B{0}".format(e1_name)
+            e2_name = str(e2[0]) + str(e2[1])
+            L2_name = "B{0}".format(e2_name)
+            M_name='M'+'_'+L1_name+'_'+L2_name
+            self._graph_add_M(M_name,L1_name,L2_name,M_val)
+            
+            self.M_count+=1
+
     def _graph_read(self,graph):
         '''
         this will be used to read mesh graph and forming matrices
@@ -336,8 +437,8 @@ class RL_circuit():
             x = el[0]
             # node info for elements
             if x!='M':
-                n1 = self.pnode[el]
-                n2 = self.nnode[el]
+                n1 = self.net_map[self.pnode[el]]
+                n2 = self.net_map[self.nnode[el]]
 
             if (x == 'C'):
                 g = s * self.value[el]
@@ -382,6 +483,8 @@ class RL_circuit():
                 if i_unk > 1:  # is B greater than 1 by n?, L
                     imp = -s * np.imag(self.value[el]) - np.real(self.value[el])
                     self.D[sn, sn] += imp
+                    
+
                     if n1 != 0:
                         self.M[n1 - 1, sn] = 1
                         self.M_t[sn, n1 - 1] = 1
@@ -408,11 +511,10 @@ class RL_circuit():
                 Mname = 'M' + el[1:]
                 ind1_index = self.L_id[self.Lname1[el]]
                 ind2_index = self.L_id[self.Lname2[el]]
-                L1_val = self.value[self.Lname1[el]]
-                L2_val = self.value[self.Lname2[el]]
+
 
                 Mval = self.value[el]
-                k = Mval / np.sqrt(L1_val * L2_val)
+
 
                 self.Mutual[Mname] = Mval
                 #print Mval,'nH'
@@ -444,6 +546,7 @@ class RL_circuit():
                 n1 = self.src_pnode[el]
                 n2 = self.src_nnode[el]
                 g = float(self.src_value[el])
+                self.current_val = g
                 # sum the current into each node
                 if n1 != 0:
                     self.Ii[n1 - 1] += -g
@@ -478,37 +581,53 @@ class RL_circuit():
         first_row = np.concatenate((self.G,self.M),axis= 1) # form [G , M]
         second_row = np.concatenate((self.M_t, self.D), axis=1)  # form [M_t , D]
         self.A = np.concatenate((first_row,second_row),axis=0)
-
-    #precision = 10
-    #fp = open('memory_profiler_basic_mean.log', 'w+')
-    #@profile(precision=precision, stream=fp)
-    def solve_iv(self,mode = 2):
-        debug=False
+    
+    def graph_to_circuit_minimization(self):
+        # This function will search for all equiv nets in the Graph to minimize the maxtrix size
+        # Check whether the circuit formulation is correct and map the nets into integers
+        all_net = list(set(list(self.nnode.values()) + list(self.pnode.values()))) # set of all nets
+        if not 0 in all_net:
+            print("NO GROUND, ADD A GROUND INTO CIRCUIT, ADDING A GROUND NODE")
+        else:
+            all_net.remove(0)
+        self.num_nodes = len(all_net)# exclude ground
+        
+        self.net_map = {}
+        self.net_map[0] = 0 # save a value for ground
+        for net_id in range(1,self.num_nodes+1):
+            self.net_map[all_net[net_id-1]] = net_id # map a net in the netlist with an integer in the matrix
+    
+    def matrix_init(self):
         # initialize some symbolic matrix with zeros
         # A is formed by [[G, M] [M_t, D]]
         # Z = [I,E]
-        # X = [V, J]
-        num_nodes = max([max(self.nnode.values()),max(self.pnode.values())])
+        # X = [V, J] 
         # Forming matrices
-        self.V = np.chararray((num_nodes,1), itemsize=4)
-        self.Ii = np.zeros((num_nodes, 1), dtype=np.complex_)
-        self.G = np.zeros((num_nodes, num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
+        
+        self.V = np.chararray((self.num_nodes,1), itemsize=4)
+        self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex_)
+        self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
         i_unk = len(self.cur_element)
-        self.M = np.zeros((num_nodes, i_unk), dtype=np.complex_)
-        self.M_t = np.zeros((i_unk, num_nodes), dtype=np.complex_)
+        self.M = np.zeros((self.num_nodes, i_unk), dtype=np.complex_)
+        self.M_t = np.zeros((i_unk, self.num_nodes), dtype=np.complex_)
         self.D = np.zeros((i_unk, i_unk), dtype=np.complex_)
         self.Vi = np.zeros((i_unk, 1), dtype=np.complex_)
         self.J = np.chararray((i_unk,1),itemsize =10)
         self.matrix_formation(i_unk)
         # Output preparation
         self.J_mat()
-        self.V_mat(num_nodes)
+        self.V_mat(self.num_nodes)
         self.Ii_mat()
         self.Vi_mat()
-        self.Z_mat()
+        self.Z_mat() # this is the sources info
         self.X_mat()
-
-        self.A_mat(num_nodes, i_unk)
+        self.A_mat(self.num_nodes, i_unk)
+    #precision = 10
+    #fp = open('memory_profiler_basic_mean.log', 'w+')
+    #@profile(precision=precision, stream=fp)
+    def solve_iv(self,mode = 2,method =1):
+        debug=False
+        self.matrix_init()
         if mode ==0:
             case = "no_current"
         elif mode == 1:
@@ -527,9 +646,8 @@ class RL_circuit():
             A = self.D
 
         t = time.time()
-        #self.debug_singular_mat_issue(A)
+        self.debug_singular_mat_issue(A)
 
-        method=2
 
         if method ==1:
             self.results= scipy.sparse.linalg.spsolve(A,Z)
@@ -543,7 +661,7 @@ class RL_circuit():
             self.results = np.linalg.inv(A)*Z
             self.results=np.squeeze(np.asarray(self.results))
         #print(("solve", time.time() - t, "s"))
-
+        print(len(self.element))
         #print np.shape(self.A)
         #print "RESULTS",self.results
         if debug: # for debug and time analysis
@@ -590,6 +708,8 @@ class RL_circuit():
                     if int(mat_A[r,c]) != 0:
                         V[r,c] =1
             #print(V)
+            plt.imshow(V)
+            plt.plot()
             #print((np.where(~V.any(axis=1))[0]))
 
 
@@ -636,7 +756,56 @@ def test_RL_circuit2():
     imp = (circuit.results['v1']) / 1
     print((np.real(imp), np.imag(imp) / circuit.s))
 
+def test_RL_circuit3():
+    circuit = RL_circuit()
+    circuit._graph_add_comp('B1', 1, 2, 1 + 6.92e-9j)
+    circuit._graph_add_comp('B8', 2, 3, 1 + 1.48e-9j)
+    circuit._graph_add_comp('B2', 3, 5, 1 + 4.8e-9j)
+    circuit._graph_add_comp('B9', 3, 4, 1 + 1.39e-9j)
+    circuit._graph_add_comp('B3', 4, 5, 1 + 5.0e-9j)
+    circuit._graph_add_comp('B4', 5, 6, 1 + 0.595e-9j)
+    circuit._graph_add_comp('B5', 6, 7, 1 + 1.7e-9j)
+    circuit._graph_add_comp('B6', 6, 0, 1 + 3.54e-9j)
+    circuit._graph_add_comp('B7', 7, 0, 1 + 3.54e-9j)
+
+
+    circuit._graph_add_M('M23', 'B2', 'B3', 2.22e-9)
+    circuit._graph_add_M('M67', 'B6', 'B7', 0.79e-9)
+
+    # circuit._graph_add_comp('C1', 1, 0, 1e-12)
+    # circuit._graph_add_comp('C2', 2, 0, 2e-12)
+    circuit.indep_voltage_source(0, 1, 1)
+    circuit.assign_freq(1e9)
+    circuit.build_current_info()
+    circuit.solve_iv()
+    print((circuit.results))
+
+    imp = (circuit.results['v1']) / circuit.results['I_Vs']
+    print((np.real(imp), np.imag(imp) / circuit.s))
+
+def test_RL_circuit4():
+    circuit = RL_circuit()
+
+    circuit._graph_add_comp('B1', 'a', 'b', 1 )
+    circuit._graph_add_comp('B2', 'a', 'b', 1 )
+    circuit._graph_add_comp('B3', 'b', 0, 1 )
+    circuit._graph_add_comp('B4', 'b', 0, 1 )
+    circuit.indep_voltage_source('a', 0, 1)
+    circuit.assign_freq(1e9)
+    circuit.read_circuit()
+    circuit.build_current_info()
+    circuit.matrix_init()
+    print (circuit.net_map)
+    print (circuit.Z)
+    print (circuit.X)
+    print (circuit.A)
+    circuit.solve_iv()
+    print (circuit.results)
+
+    input()
 if __name__ == "__main__":
     #validate_solver_simple()
     #validate_solver_2()
-    test_RL_circuit1()
+    stime= time.time()
+    test_RL_circuit4()
+    print("solving time",time.time()-stime,'s')

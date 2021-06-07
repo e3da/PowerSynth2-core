@@ -36,13 +36,13 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         :param comp_dict: list of all components and routing objects
         :param wire_conn: a simple table for bondwires setup
         '''
-        CornerStitch_Emodel_API.__init__(self, comp_dict=comp_dict, wire_conn=wire_conn)
+        CornerStitch_Emodel_API.__init__(self, comp_dict=comp_dict, wire_conn=wire_conn,e_mdl='FastHenry')
         self.cond = 5.8e4 # default to copper -- this is referenced to mm not m
         self.tc_id = 0 # a counter for each trace cell
         self.fh_env = ''
         self.readoutput_env = ''
         self.work_space = ws # a directory for script run/result read
-        self.type = 'FastHenry'
+        self.e_mdl = 'FastHenry'
     
     def set_fasthenry_env(self,dir=''):
         self.fh_env = dir   
@@ -64,7 +64,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             isl = isl_dict[g.name]
             planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
             for t in trace_cells: 
-                if t.length() == 0:
+                if t.eval_length() == 0:
                     trace_cells.remove(t)
             trace_cells = self.handle_pins_connect_trace_cells_fh(trace_cells=trace_cells, island_name=g.name, isl_z =z + dz)
             self.out_text+=self.convert_trace_cells_to_fh_script(trace_cells=trace_cells,z_pos=z,dz=dz)
