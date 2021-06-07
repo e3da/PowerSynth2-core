@@ -18,8 +18,8 @@ from core.model.electrical.electrical_mdl.e_module import EModule
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D,plot_combined_I_map_layer,plot_v_map_3D,plot_J_map_3D
 from core.general.data_struct.util import Rect
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
-    trace_inductance,trace_resistance_full,trace_ind_lm
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
+    trace_inductance,trace_resistance_full,trace_ind_lm,trace_res_dc
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval,self_ind
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
 from core.model.electrical.electrical_mdl.e_module import EComp
 class TraceCell(Rect):
@@ -429,7 +429,8 @@ class EMesh():
                 mode = 'Krigg'
                 #all_r = trace_res_krige(self.f, self.all_W, self.all_L, t=0, p=p, mdl=self.mdl['R'],mode=mode).tolist()
                 # Handle small length pieces by linear approximation
-                all_r = [trace_resistance_full(self.f, w, l, t, h,p=p) for w, l in zip(self.all_W, self.all_L)]
+                all_r = [trace_res_dc(w, l, t,p=p) for w, l in zip(self.all_W, self.all_L)]
+                #all_r = [trace_resistance_full(self.f, w, l, t, h,p=p) for w, l in zip(self.all_W, self.all_L)]
                 #all_r = [1e-6 for i in range(len(self.all_W))]
                 if self.mdl!= None:
                     if self.mdl_type ==0:
@@ -437,8 +438,9 @@ class EMesh():
                     elif self.mdl_type == 1:
                         all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
                 else:
-                    print("NO mdl provided, using microstrip equations")
-                    all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
+                    print("NO mdl provided, using trace block equations")
+                    all_l = [self_ind(w,l,t) for w, l in zip(self.all_W, self.all_L)]
+                    #all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
                 #self.plot_trace_RL_val_RS(zdata=all_l,dtype='L')
 
                 # all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]

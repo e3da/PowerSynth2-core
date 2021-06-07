@@ -637,7 +637,7 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
         print("init api:", type)
         if type == 'PowerSynthPEEC':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
@@ -1050,9 +1050,10 @@ if __name__ == "__main__":
                    {imam_nethome1:'Case_21/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt'},\
-                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_6/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_16/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
-                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'}]
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
+                   {qmle_nethome:'loop_half_bridge_2dv_1/cmd'}]
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]

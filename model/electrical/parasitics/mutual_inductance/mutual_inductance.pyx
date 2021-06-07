@@ -1,4 +1,4 @@
-from libc.math cimport sqrt,atan,log,pow,fabs,M_PI
+from libc.math cimport sqrt,atan,log,pow,fabs,M_PI,asinh
 import numpy as np
 from cython.parallel cimport parallel
 from libc.stdio cimport printf
@@ -37,12 +37,45 @@ cpdef double[:] mutual_mat_eval(double[:,:] m_mat,int nt,int mode):
                 result[i] = mutual_between_plane(m_mat1[i,:])
     return result
 
+cpdef double self_ind(double trace_width, double trace_length, double trace_thickness):
+    return self_term(trace_width,trace_length,trace_thickness)
+
+cdef double self_term(double trace_width, double trace_length, double trace_thickness) nogil:
+    '''This function is from FastHenry Joelself.c might consider to rewrite this in C++ for speed up
+    https://github.com/ediloren/FastHenry2/blob/master/src/fasthenry/joelself.c
+    '''
+    cdef double w, t, aw, at, ar, r, z;
+
+    w = trace_width / trace_length;
+    t = trace_thickness / trace_length
+    r = sqrt(w * w + t * t)
+    aw = sqrt(w * w + 1.0)
+    at = sqrt(t * t + 1.0)
+    ar = sqrt(w * w + t * t + 1.0)
+
+    z = 0.25 * ((1 / w) * asinh(w / at) + (1 / t) * asinh(t / aw) + asinh(1 / r))
+    z += (1 / 24.0) * ((t * t / w) * asinh(w / (t * at * (r + ar))) + (w * w / t) * asinh(t / (w * aw * (r + ar))) +\
+                       ((t * t) / (w * w)) * asinh(w * w / (t * r * (at + ar))) + ((w * w) / (t * t)) * \
+                       asinh(t * t / (w * r * (aw + ar))) +(1.0 / (w * t * t)) * asinh(w * t * t / (at * (aw + ar)))\
+                       + (1.0 / (t * w * w)) * asinh(t * w * w / (aw * (at + ar))))
+    z -= (1.0 / 6.0) * ((1.0 / (w * t)) * atan(w * t / ar) + (t / w) * atan(w / (t * ar)) + (w / t) * atan(t / (w * ar)))
+    z -= (1.0 / 60.0) * (((ar + r + t + at) * t * t) / ((ar + r) * (r + t) * (t + at) * (at + ar))
+                         + ((ar + r + w + aw) * (w * w)) / ((ar + r) * (r + w) * (w + aw) * (aw + ar))
+                         + (ar + aw + 1 + at) / ((ar + aw) * (aw + 1) * (1 + at) * (at + ar)))
+    z -= (1.0 / 20.0) * ((1.0 / (r + ar)) + (1.0 / (aw + ar)) + (1.0 / (at + ar)))
+
+    z *= (2.0 / M_PI)
+    z *= trace_length
+
+    return z
+
 
 cdef double inter_func1(double x,double y,double z) nogil:
     '''
     Inner calculation of mutual inductance fucntion
     '''
-    cdef double x2,x3,x4,y2,y3,y4,z2,z3,z4,sum1,sum2,sum3,sum4,sum5,sum6,sum7
+    cdef double x2,x3,x4,y2,y3,y4,z2,z3,z4,sum1,sum2,sum3,sum4,sum5,sum6,sum7,sumxyz2
+
     #printf("x %f\n", x)
     #printf("y %f\n", y)
     #printf("z %f\n", z)
@@ -58,15 +91,24 @@ cdef double inter_func1(double x,double y,double z) nogil:
     z4 = pow(z, 4)
     sum4 = 1 / 60.0 * (x4 + y4 + z4 - 3 * x2 * y2 - 3 * y2 * z2 - 3 * x2 * z2) * sqrt(x2 + y2 + z2)
     if (y != 0 and z != 0) or (x != 0 and y != 0) or (x != 0 and z != 0):
+
+
         sum1 = (y2 * z2 / 4.0 - y4 / 24.0 - z4 / 24.0) * x * log(
             (x + sqrt(x2 + y2 + z2)) / sqrt(y2 + z2))  # if ((z2+y2)!=0) else 0
         sum2 = (x2 * z2 / 4.0 - x4 / 24.0 - z4 / 24.0) * y * log(
             (y + sqrt(x2 + y2 + z2)) / sqrt(x2 + z2))  # if ((z2 + x2) != 0) else 0
+
         sum3 = (x2 * y2 / 4.0 - x4 / 24.0 - y4 / 24.0) * z * log(
             (z + sqrt(x2 + y2 + z2)) / sqrt(x2 + y2))  # if ((x2+y2) != 0) else 0
-        sum5 = -x * y * z3 / 6.0 * atan(x * y / (z * sqrt(x2 + y2 + z2))) if z != 0 else 0
-        sum6 = -x * y3 * z / 6.0 * atan(x * z / (y * sqrt(x2 + y2 + z2))) if y != 0 else 0
-        sum7 = -x3 * y * z / 6.0 * atan(y * z / (x * sqrt(x2 + y2 + z2))) if x != 0 else 0
+        sumxyz2 = x2 + y2 + z2
+        if sumxyz2 !=0:
+            sum5 = -x * y * z3 / 6.0 * atan(x * y / (z * sqrt(sumxyz2))) if z != 0 else 0
+            sum6 = -x * y3 * z / 6.0 * atan(x * z / (y * sqrt(sumxyz2))) if y != 0 else 0
+            sum7 = -x3 * y * z / 6.0 * atan(y * z / (x * sqrt(sumxyz2))) if x != 0 else 0
+        else:
+            sum5=0
+            sum6=0
+            sum7=0
         return sum1 + sum2 + sum3 + sum4 + sum5 + sum6 + sum7
     else:
         return sum4
@@ -132,7 +174,7 @@ cdef double mutual_between_bars (double[:] param) nogil:
     :param E: distance between 2 bars'
     :return: Mutual inductance of 2 bars in nH
     '''
-    cdef double w1,l1,t1,w2,l2,t2,l3,p,E
+    cdef double w1,l1,t1,w2,l2,t2,l3,p,E,Mult,Const
     w1 = fabs(param[0]*0.1)
     l1 = fabs(param[1]*0.1)
     t1 = fabs(param[2]*0.1)
@@ -142,7 +184,10 @@ cdef double mutual_between_bars (double[:] param) nogil:
     l3 = fabs(param[6]*0.1)
     p = fabs(param[7]*0.1)
     E = fabs(param[8]*0.1)
-    Const=0.001/(w1*t1*w2*t2)
+    Mult = w1 * t1 * w2 * t2
+    if Mult == 0: # This is special case where to trace overlapped
+        return  0
+    Const=0.001/Mult
     Mb = Const * outer_addition(q1=E - w1, q2=E + w2 - w1, q3=E + w2, q4=E, r1=p - t1, r2=p + t2 - t1, r3=p + t2, r4=p,
                                 s1=l3 - l1, s2=l3 + l2 - l1, s3=l2 + l3, s4=l3)
 
