@@ -213,8 +213,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
     def add_fh_points(self,name=None,loc=[],mode = 0):
         if not name in self.fh_point_dict and mode ==0:
             self.fh_point_dict[name]= [loc[0],loc[1],loc[2]]
-        #if mode==1 and not name in self.fh_bw_dict: # means this is a generated loc for wire
-        #    self.fh_bw_dict[name] = [loc[0],loc[1],loc[2]]
+        if mode==1 and not name in self.fh_bw_dict: # means this is a generated loc for wire
+            self.fh_bw_dict[name] = [loc[0],loc[1],loc[2]]
     
     def gen_wires_text(self):
         bw_text = ''

@@ -44,7 +44,7 @@ class new_engine_opt:
         # List of measure object
         self.measures = measures
     
-    def eval_3D_layout(self,module_data=None,solution=None):
+    def eval_3D_layout(self,module_data=None,solution=None,init = False):
         '''
         module data: for electrical layout evaluation 
         solution: single PS_Solution object for thermal evaluation (ParaPower API)
@@ -66,15 +66,19 @@ class new_engine_opt:
                 type = measure.measure
                 self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
+                #self.e_api.type = 'Loop' # hardcodedß
                 print ('API type', self.e_api.type)
                 if self.e_api.type == 'PowerSynthPEEC':
+                    start = time.time()
                     self.e_api.mesh_and_eval_elements()
                     R, L = self.e_api.extract_RL(src=measure.source, sink=measure.sink)
-                    
+                    print ('eval time', time.time()-start)
                 elif self.e_api.type == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
+                elif self.e_api.type == 'Loop':
+                    self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
                     
                 print ("RL",R,L)
                     

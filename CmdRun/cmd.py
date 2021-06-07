@@ -69,8 +69,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        #print ("settings.GMSH",settings.GMSH_BIN_PATH)
-		
+        print ("settings.GMSH",settings.GMSH_BIN_PATH)
 class Cmd_Handler: 
     def __init__(self,debug=False):
         # Input files
@@ -139,6 +138,7 @@ class Cmd_Handler:
         e_name = None
         num_gen=None
         dev_conn ={}
+        e_mdl_type = "PowerSynthPEEC" # default
         with open(file, 'r') as inputfile:
 
             dev_conn_mode=False
@@ -158,7 +158,10 @@ class Cmd_Handler:
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
-                    self.rs_model_file = os.path.abspath(info[1])
+                    if info[1]!= 'default': # use the equations
+                        self.rs_model_file = os.path.abspath(info[1])
+                    else:
+                        self.rs_model_file = 'default'
                 if info[0] == "Fig_dir:":
                     self.fig_dir = os.path.abspath(info[1])
                 if info[0] == "Solution_dir:":
@@ -237,6 +240,8 @@ class Cmd_Handler:
                 if self.electrical_mode != None:
                     if info[0] == 'Measure_Name:' and e_name==None:
                         e_name = info[1]
+                    if info[0] == 'Model_Type:':
+                        e_mdl_type = info[1]
                     if info[0] == 'Measure_Type:':
                         type = int(info[1])
                     if info[0] == 'End_Device_Connection.':
@@ -259,14 +264,15 @@ class Cmd_Handler:
         check_file = os.path.isfile
         check_dir = os.path.isdir
         # Check if these files exist
+        rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
         cont = check_file(self.layout_script) \
                and check_file(self.bondwire_setup) \
                and check_file(self.layer_stack_file) \
-               and check_file(self.rs_model_file) \
+               and rs_model_check\
                and check_file(self.constraint_file)
         # make dir if they are not existed
-        #print(("self.new_mode",self.new_mode))
-        #print(("self.flex",self.flexible))
+        print(("self.new_mode",self.new_mode))
+        print(("self.flex",self.flexible))
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -286,14 +292,17 @@ class Cmd_Handler:
             else:
                 print ("Normal meshing algorithm is used")
 
-            print ("run layout generation and (or) evaluation")
+            print ("run the optimization")
             self.init_cs_objects(run_option=run_option)
-            self.set_up_db() # temp commented out
+
+            self.set_up_db() # temp commented1 out
             
             if run_option == 0:
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan,dbunit=self.dbunit)
+                                         floor_plan=floor_plan)
+
+
 
                 
 
@@ -302,7 +311,7 @@ class Cmd_Handler:
                 if self.electrical_mode != None:
                     e_measure_data = {'name': e_name, 'type': type, 'source': source, 'sink': sink}
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency,
-                                          meas_data=e_measure_data)
+                                          meas_data=e_measure_data, type = e_mdl_type)
 
                 if self.thermal_mode!=None:
 
@@ -346,7 +355,7 @@ class Cmd_Handler:
 
                 if self.electrical_mode!=None:
                     e_measure_data = {'name':e_name,'type':type,'source':source,'sink':sink}
-                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data)
+                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
 
 
                 
@@ -639,10 +648,14 @@ class Cmd_Handler:
 
     def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
         print("init api:", type)
+        if type == 'Loop':
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
         if type == 'PowerSynthPEEC':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
-            #self.e_api.load_rs_model(self.rs_model_file)
-
+            if self.rs_model_file != 'default':
+                self.e_api.load_rs_model(self.rs_model_file)
+            else:
+                self.e_api.rs_model = None
         elif type == 'FastHenry':
             self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
             self.e_api.rs_model = None
@@ -661,7 +674,7 @@ class Cmd_Handler:
             self.e_api.get_layer_stack(self.layer_stack)
             self.measures += self.e_api.measurement_setup(meas_data)
         if self.layout_ori_file != None:
-            print("this is a test now")
+            #print("this is a test now")
             self.e_api.process_trace_orientation(self.layout_ori_file)
         #if self.output_option:
         #    self.e_api.export_netlist(dir = self.netlist_dir, mode = self.netlist_mode)
@@ -688,6 +701,7 @@ class Cmd_Handler:
         elif mode == 'macro':
             self.measures += self.t_api.measurement_setup(data=meas_data)
             self.t_api.set_up_device_power(data=setup_data)
+            #print("here",setup_data)
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
@@ -1050,7 +1064,7 @@ if __name__ == "__main__":
                    {imam_nethome1:'Case_21/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt'},\
-                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_16/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_6/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'loop_half_bridge_2dv_1/cmd'}]
