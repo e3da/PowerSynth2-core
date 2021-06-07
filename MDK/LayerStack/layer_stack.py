@@ -1,12 +1,16 @@
+import os,sys
+sys.path.append('..')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import OrderedDict
-from powercad.design.library_structures import *
-from mpl_toolkits.mplot3d import Axes3D
-from powercad.general.material.material import *
-import powercad.general.settings.settings
 import csv
 import getpass
+
+
+from mpl_toolkits.mplot3d import Axes3D
+from core.general.material.material import *
+from core.general.settings import settings
+
 
 
 class Layer:
@@ -14,7 +18,7 @@ class Layer:
     Layer object
     '''
 
-    def __init__(self, width=0, length=0, thick=0, id=0, type='p', material=None, layer_z=0, name="", e_type =""):
+    def __init__(self, width=0, length=0, thick=0, id=0, type='p', material=None,x=0.0,y=0.0, layer_z=0, name="", e_type =""):
         """
 
         Args:
@@ -33,6 +37,8 @@ class Layer:
         self.width = width
         self.length = length
         self.thick = thick
+        self.x=x
+        self.y=y
         self.z_level = layer_z
         self.id = id
         self.type = type
@@ -69,19 +75,13 @@ class LayerStack:
         self.current_id = 0  # to check the current layer id
         self.max_z = 0  # the z level of the highest layer
         self.material_lib = Material_lib()
+        
+        if self.debug==True:
+            material_path = os.path.abspath(settings.MATERIAL_LIB_PATH)
+        else:
+            material_path = input("Put your hardcoded path to Material.csv file here:")
+            material_path = os.path.abspath(material_path)
 
-        if getpass.getuser() in ["ialrazi","erago","qmle"] : # For developer use only. Add your name if you run into this
-            if self.debug==True:
-                if getpass.getuser() == "qmle":
-                    material_path = "C:\PowerSynth_git\Electrical_Dev\PowerCAD-full\\tech_lib\Material\Materials.csv" # hard coded need to have a new way for this
-                else:    
-                    material_path = MATERIAL_LIB_PATH
-            else:
-                material_path = input("Put your hardcoded path here:")
-                material_path = os.path.abspath(material_path)
-
-        else: # Normal assumption for Mat Lib
-            material_path = MATERIAL_LIB_PATH
 
         #material_path = MATERIAL_LIB_PATH
         self.material_lib.load_csv(material_path) # load the mat_lib from the default directory
@@ -119,7 +119,7 @@ class LayerStack:
         with open(filename) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                print(row)
+                #print(row['Origin'].split(','))
                 layer_id = int(row['ID'])
                 layer_name = row['Name']
                 layer_width = float(row['Width'])
@@ -128,6 +128,14 @@ class LayerStack:
                 layer_material_key = row['Material']
                 layer_electrical_type = row['Electrical']
                 layer_type = row['Type']
+                try:
+                    origin=row['Origin'].split(',')
+                    layer_x= float(origin[0])
+                    layer_y= float(origin[1])
+                except:
+                    layer_x=None
+                    layer_y=None
+                
                 max_width = layer_width if layer_width>=max_width else max_width
                 max_length = layer_length if layer_length >= max_length else max_length
 
@@ -140,13 +148,15 @@ class LayerStack:
                 else:
                     layer_material = None # no material for this layer
                 layer=Layer(width=layer_width,length=layer_length,thick=layer_thickness,id=layer_id,type=layer_type
-                            ,material=layer_material,name=layer_name,layer_z=self.max_z, e_type=layer_electrical_type)
+                            ,material=layer_material,name=layer_name,layer_z=self.max_z, e_type=layer_electrical_type, x=layer_x, y=layer_y)
                 self.all_layers_info[layer_id] = layer
                 self.current_id=layer_id
                 self.max_z += layer_thickness
+                self.max_z = round(self.max_z,3) #  Using 3 significant figures
         self.foot_print=[max_width,max_length]
         if debug:
             self.plot_layer_2d(view=0)
+        
 
     def set_material(self, id, material):
         '''
@@ -276,10 +286,11 @@ def test_load_layer_stack_from_csv():
     5,I1,40,50,0.2,copper,p
     6,C1,40,50,0.2,None,a
     """
-    new_layer_stack_file = "C:\\Users\qmle\Desktop\\New_Layout_Engine\Quang_Journal\layer_stack_new.csv"
-    layer_stack = LayerStack()
+    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/layer_stack.csv"
+    layer_stack = LayerStack(debug=False)
     layer_stack.import_layer_stack_from_csv(filename=new_layer_stack_file)
+    #print(layer_stack.all_layers_info)
 
 if __name__ == "__main__":
-    test_simple_layer_stack()
+    test_load_layer_stack_from_csv()
     #test_load_layer_stack_from_csv()
