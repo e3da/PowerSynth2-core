@@ -260,7 +260,7 @@ class CornerStitch_Tmodel_API:
                 dev_mat = self.layer_stack.material_lib.get_mat(device_part_obj.material_id)
                 dev_cond = dev_mat.thermal_cond
                 dev_dim = device_part_obj.footprint
-                # Build Thermal Features object
+                # Build thermal Features object
                 tf = DieThermalFeatures()
                 tf.iso_top_fluxes = flux_contours
                 tf.iso_top_avg_temp = avg_temp

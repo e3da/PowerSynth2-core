@@ -11,7 +11,7 @@ class Layer_Stack:
     def __init__(self):
         # e-Layers can be interfaced with FastHenry or Q3D
         self.eLayers=[]   # Set of electrical Layers that will be translated to Q3d or other computational method
-        self.Tlayers=[]   # Set of Thermal Layers 
+        self.Tlayers=[]   # Set of thermal Layers
         # Q3d Realated
         self.Q3d_script=Q3D_ipy_script() 
         # Layer Counter

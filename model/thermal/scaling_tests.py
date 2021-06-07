@@ -234,7 +234,7 @@ def build_contour_rects(values, widths, heights):
     return rects
 
 #-------------------------------------------------------
-#------------- Testing Thermal Parameters --------------
+#------------- Testing thermal Parameters --------------
 #-------------------------------------------------------
 
 def die_thermal_test():
