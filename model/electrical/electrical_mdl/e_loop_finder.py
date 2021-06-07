@@ -155,7 +155,9 @@ class LayoutLoopInterface():
 
                     rib_tc.bwn1=n1
                     rib_tc.bwn2=n2
-                    #print ('bwribbon',rib_tc.eval_length())
+                    
+                    # BOND_WIRE
+                    print ('bwribbon',rib_tc.eval_length())
 
                     
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
@@ -307,7 +309,7 @@ class LayoutLoopInterface():
                 dx = abs(x_locs[i]-x_locs[i+1])
                 #self.x_bundles[(x_locs[i],x_locs[i+1])]=[]
                 
-                if dx > 100 : # 0.5 mm
+                if dx > 10 : # 0.5 mm
                     self.x_bundles[(x_locs[i],x_locs[i+1])]=[]
                     rm_bundles[(x_locs[i],x_locs[i+1])] = 0
                 else:
@@ -364,7 +366,7 @@ class LayoutLoopInterface():
             for i in range(len(y_locs)-1): # Only form a bundle if the length is greater than 0.1 mm
                 dy = abs(y_locs[i]-y_locs[i+1])
                 #self.y_bundles[(y_locs[i],y_locs[i+1])]=[] 
-                if dy > 100:
+                if dy > 10:
                     self.y_bundles[(y_locs[i],y_locs[i+1])]=[] 
                     rm_bundles[(y_locs[i],y_locs[i+1])] = 0
                 else:
@@ -1047,9 +1049,11 @@ class LayoutLoopInterface():
                         ptrace = list(ptrace)[0]
                     else:
                         ptrace = None
-                    #print("parent_trace",ptrace)
+                    
+                    print(n1,r)
+                    print("parent_trace",ptrace.name)
+                    #print(ptrace.eval_length())
                     self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace)
-                    #print(n1,r)
                 
     def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=False):
         if mode == 1: # save figure as file   

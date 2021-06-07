@@ -212,10 +212,13 @@ class RL_circuit():
 
     def _graph_read_loop(self,msh_obj):
         for edge in msh_obj.net_graph.edges(data= True):
-            print (edge)
+            
             n1 = edge[0]
             n2 = edge[1]
             edata = edge[2]
+            
+            if edata['data']['type'] == 'fw_bw': # bondwire contribution 
+                print (edge)
             e_name = str(n1)+str(n2)
             R_val = edata['res']
             L_val = edata['ind']

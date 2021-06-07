@@ -242,7 +242,7 @@ class EWires(EComp):
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
         length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
-        #print ("wire group length",length)
+        print ("wire group length",length)
         # length of the bondwires in reality are usually longer due to different bonding techinque, for JEDEC
         # https://awrcorp.com/download/faq/english/docs/Elements/BWIRES.htm
         # first divide the wire in 3 section and assume alpha,beta to be 30 degree
@@ -255,7 +255,7 @@ class EWires(EComp):
             R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
             L_val = wire_inductance(r=self.r, l=length) * 1e-9
             branch_val = 1j * L_val + R_val
-            print("wire",L_val)
+            #print("wire",L_val)
             if self.num_wires>1: # CASE 1 we need to care about mutual between wires
                 for i in range(self.num_wires):
                     RLname = 'B{0}'.format(i)
