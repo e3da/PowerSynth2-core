@@ -370,7 +370,7 @@ class CornerStitch_Emodel_API:
             print("solve loops model separatedly")
             s = time.time()
             print("bundles eval time", time.time() - s, 's')
-            self.e_mdl = 'Loop-PEEC-compare'
+            #self.e_mdl = 'Loop-PEEC-compare'
             if self.e_mdl == "Loop":
                 self.emesh.solve_all_bundles()
             else:
@@ -393,9 +393,11 @@ class CornerStitch_Emodel_API:
         self.circuit = RL_circuit()
         pt1 = self.emesh.comp_net_id[src]
         pt2 = self.emesh.comp_net_id[sink]
+        #pt1= 14
+        #pt2 = 31
         self.circuit._graph_read_loop(self.emesh)
         print(pt1, pt2)
-        if not (networkx.has_path(self.emesh.graph, pt1, pt2)):
+        if not (networkx.has_path(self.emesh.net_graph, pt1, pt2)):
             print(pt1, pt2)
             eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
         else:
@@ -404,10 +406,11 @@ class CornerStitch_Emodel_API:
         #self.circuit.m_graph_read(self.emesh.m_graph)
         self.circuit.assign_freq(self.freq*1000)
 
-        self.circuit.graph_to_circuit_minimization()
-        self.circuit.indep_current_source(self.circuit.net_map[pt1], 0, 1)
+        self.circuit.indep_current_source(pt1, 0, 1)
         # print "src",pt1,"sink",pt2
-        self.circuit._add_termial(self.circuit.net_map[pt2])
+        self.circuit._add_termial(pt2)
+        self.circuit.graph_to_circuit_minimization()
+
         self.circuit.build_current_info()
         stime=time.time()
         self.circuit.solve_iv()

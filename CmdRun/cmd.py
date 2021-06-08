@@ -2,10 +2,10 @@
 import sys, os
 #sys.path.append('..')
 # Set relative location
-cur_path =sys.path[0] # get current path (meaning this file location)
-cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-print(cur_path)
-sys.path.append(cur_path)
+#cur_path =sys.path[0] # get current path (meaning this file location)
+#cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
+#print(cur_path)
+#sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
 from core.model.thermal.cornerstitch_API import ThermalMeasure
@@ -1069,7 +1069,7 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'loop_half_bridge_2dv_1/cmd'},\
                    {qmle_csrc:'loop_half_bridge_2dv_1/cmd'},\
-                   {qmle_nethome:'Unit_tests/U_0/cmd'}]
+                   {qmle_csrc:'Unit_tests/U_0/cmd'}]
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]

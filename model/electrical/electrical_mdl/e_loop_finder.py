@@ -156,7 +156,7 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    print ('bwribbon',rib_tc.eval_length())
+                    #print ('bwribbon',rib_tc.eval_length())
 
                     
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
@@ -255,8 +255,8 @@ class LayoutLoopInterface():
                 rib_tc.dir = dir
                 ori_str = ('h' if ori == 1 else 'v')  
                 data = {'type': edata,'ori':ori_str,'obj':rib_tc}
-                self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
-                print ('bw_edge',n1,n2)
+                #self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
+                #print ('bw_edge',n1,n2)
                 self.tc_to_edges_init[rib_tc] = e # map the tracecell to edge for R, L update later  
 
                 #print("get ribbon data")
@@ -510,7 +510,10 @@ class LayoutLoopInterface():
                 wire_type[tr] = 'S'
         else:
             # by default we set the wires in negative direction to be ground
+            # if it is bondwire, we should set them to be signal type
+
             for tx in traces:
+
                 if tx.dir <0 :
                     wire_type[tx] = 'G'
                     gr_w.append(tx)
@@ -537,6 +540,7 @@ class LayoutLoopInterface():
     def rebuild_graph_add_edge(self,tc,n1,n2,R,L,etype='fw'):
         #print(n1,n2,"R",R,"L",L)
         z = tc.z
+
         if tc.struct=='trace': # for normal bundles
             if abs(tc.dir) == 1:
                 pos1 = (tc.left,tc.center()[1],z)
@@ -603,7 +607,9 @@ class LayoutLoopInterface():
             ori = ('h' if tc.dir==1 else 'v')
             data= {'type':etype+'_bw','ori':ori,'obj':tc}
             self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
-        
+            if n1 == 16 and n2 == 24:
+                print("para R,L", R, L)
+                input()
         return n1,n2
     def rebuild_graph(self,loop_obj):
         m_dict = {}
@@ -810,12 +816,7 @@ class LayoutLoopInterface():
                 selected_node.append(e[0])
                 selected_node.append(e[1])
 
-        plt.figure("net_graph")
-        selected_node = list(set(selected_node))
-        nx.draw_networkx(self.net_graph,pos=self.net_2d_pos ,nodelist=selected_node,edgelist=edge_list,with_labels=True,node_size=50,font_size =9)
-        plt.title('NET GRAPH')
-        #plt.savefig('pickles/netgraph')
-        plt.show()
+        self.plot(mode=4,save=False)
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
@@ -1135,8 +1136,13 @@ class LayoutLoopInterface():
             else:
                 plt.show()
         elif mode ==4:
+            plt.figure("net_graph")
+            nx.draw_networkx(self.net_graph, pos=self.net_2d_pos,
+                             with_labels=True, node_size=50, font_size=9)
+            plt.title('NET GRAPH')
+            # plt.savefig('pickles/netgraph')
+            plt.show()
             plt.figure("net_map")
-            nx.draw(self.net_graph, self.net_2d_pos, with_labels=True)
             if save == True:
                 plt.savefig('net_graph.png')
             else:
@@ -1183,7 +1189,7 @@ class LayoutLoopInterface():
 
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        #self.plot(mode=3)
+        self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 

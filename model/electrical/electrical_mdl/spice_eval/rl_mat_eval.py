@@ -216,9 +216,13 @@ class RL_circuit():
             n1 = edge[0]
             n2 = edge[1]
             edata = edge[2]
-
-            if 'fw' in edata['data']['type']: # bondwire contribution
-                print(edata['ind'])
+            check_lists = [14,16,30,24,18,31,25,17]
+            #if 'fw' in edata['data']['type']: # bondwire contribution
+            #    print ('edge',n1,n2)
+            #    print(edata['res'],edata['ind'])
+            if n1 in check_lists or n2 in check_lists:
+                print('edge', n1, n2)
+                print(edata['res'], edata['ind'])
 
             e_name = str(n1)+str(n2)
             R_val = edata['res']
@@ -549,8 +553,8 @@ class RL_circuit():
         if self.cur_src!=[]:
             for i in range(len(self.cur_src)):
                 el = self.cur_src[i]
-                n1 = self.src_pnode[el]
-                n2 = self.src_nnode[el]
+                n1 = self.net_map[self.src_pnode[el]]
+                n2 = self.net_map[self.src_nnode[el]]
                 g = float(self.src_value[el])
                 self.current_val = g
                 # sum the current into each node
