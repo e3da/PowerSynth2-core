@@ -218,7 +218,7 @@ class RL_circuit():
             edata = edge[2]
 
             if 'fw' in edata['data']['type']: # bondwire contribution
-                print(edge)
+                print(edata['ind'])
 
             e_name = str(n1)+str(n2)
             R_val = edata['res']

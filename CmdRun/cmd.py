@@ -1068,7 +1068,8 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'loop_half_bridge_2dv_1/cmd'},\
-                   {qmle_csrc:'loop_half_bridge_2dv_1/cmd'}]
+                   {qmle_csrc:'loop_half_bridge_2dv_1/cmd'},\
+                   {qmle_nethome:'Unit_tests/U_0/cmd'}]
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]
@@ -1081,6 +1082,7 @@ if __name__ == "__main__":
         k = list(tc.keys())[0]
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
+        
         setting_dir = os.path.join(k,"settings.info")
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)

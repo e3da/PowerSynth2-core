@@ -453,7 +453,7 @@ class LayoutLoopInterface():
                     plt.savefig("fig/horizontal bundles")
             else:
                 m_name = './pickles/x_bundle'  + '.p'
-                self.save_plot_pickle(ax1,m_name)    
+                #self.save_plot_pickle(ax1,m_name)    
         elif dir == "Y":
             fig1 = plt.figure("3d ybundles")
             ax1 = plt.axes(projection='3d')
@@ -474,7 +474,7 @@ class LayoutLoopInterface():
                 plt.savefig("fig/vertical bundles")
             else:
                 m_name = './pickles/y_bundle'  + '.p'
-                self.save_plot_pickle(ax1,m_name)
+                #self.save_plot_pickle(ax1,m_name)
         elif dir == "3D":
             fig3 = plt.figure("3d bundles")
             ax3d = plt.axes(projection='3d')
