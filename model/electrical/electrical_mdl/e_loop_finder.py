@@ -27,12 +27,11 @@ class EdgeData():
 
 class LayoutLoopInterface():
     # all unit in um
-    def __init__(self,islands = None, hier_E = None, freq =1e9, layer_stack =None):
+    def __init__(self,islands = None, hier_E = None, freq =1e6, layer_stack =None):
         self.freq = freq
         self.layout_info = islands
         self.layer_stack = layer_stack
         self.hier = hier_E
-        self.freq = freq
         self.graph = nx.Graph()
         self.ori_map = {}
         self.comp_dict = {}  # Use to remember the component that has its graph built (so we dont do it again)
@@ -91,7 +90,7 @@ class LayoutLoopInterface():
                     pos[n] = self.graph.nodes[n]['locs'][0:2]
                 else:
                     new_graph.remove_node(n)
-            self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph)
+            #self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph)
         self.ele_lst = list(set(self.ele_lst))
         for n in self.graph.nodes:
             self.pos[n] = self.graph.nodes[n]['locs'][0:2] # for 2D plotting purpose
@@ -257,7 +256,7 @@ class LayoutLoopInterface():
                 ori_str = ('h' if ori == 1 else 'v')  
                 data = {'type': edata,'ori':ori_str,'obj':rib_tc}
                 self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
-                #print ('bw_edge',n1,n2)
+                print ('bw_edge',n1,n2)
                 self.tc_to_edges_init[rib_tc] = e # map the tracecell to edge for R, L update later  
 
                 #print("get ribbon data")
@@ -309,7 +308,7 @@ class LayoutLoopInterface():
                 dx = abs(x_locs[i]-x_locs[i+1])
                 #self.x_bundles[(x_locs[i],x_locs[i+1])]=[]
                 
-                if dx > 10 : # 0.5 mm
+                if dx > 100 : # 0.5 mm
                     self.x_bundles[(x_locs[i],x_locs[i+1])]=[]
                     rm_bundles[(x_locs[i],x_locs[i+1])] = 0
                 else:
@@ -366,7 +365,7 @@ class LayoutLoopInterface():
             for i in range(len(y_locs)-1): # Only form a bundle if the length is greater than 0.1 mm
                 dy = abs(y_locs[i]-y_locs[i+1])
                 #self.y_bundles[(y_locs[i],y_locs[i+1])]=[] 
-                if dy > 10:
+                if dy > 100:
                     self.y_bundles[(y_locs[i],y_locs[i+1])]=[] 
                     rm_bundles[(y_locs[i],y_locs[i+1])] = 0
                 else:
@@ -377,6 +376,7 @@ class LayoutLoopInterface():
             for x_loc in x_locs:
                 for i in range(Ny):
                     ty = ycells[i]
+
                     c = ty.center()
                     x = c[0]
                     ymin = ty.bottom
@@ -393,11 +393,30 @@ class LayoutLoopInterface():
 
                                 continue
                             if y_locs[j]>= ymin and y_locs[j]< ymax: # Overlapped regions
+
                                 new_ty = deepcopy(ty)
                                 new_ty.bottom = y_locs[j]
                                 new_ty.top = y_locs[j+1]
                                 new_ty.width_eval()
                                 new_ty.height_eval()
+                                if ty.struct == 'bw': # in case a bondwire is splitted
+                                    # get x,y of old node:
+                                    x1, y1 = self.pos[ty.bwn1]
+                                    x2, y2 = self.pos[ty.bwn2]
+                                    if y1 > y2:
+                                        c_top = y1
+                                        c_bot = y2
+                                        if c_top != new_ty.top:
+                                            new_ty.bwn1 = None # reset for later
+                                        elif c_bot != new_ty.bottom:
+                                            new_ty.bwn2 = None
+                                    else:
+                                        c_top = y2
+                                        c_bot = y1
+                                        if c_top != new_ty.top:
+                                            new_ty.bwn2 = None  # reset for later
+                                        elif c_bot != new_ty.bottom:
+                                            new_ty.bwn1 = None
                                 self.y_bundles[(new_ty.bottom,new_ty.top)].append(new_ty)
                                 #self.tc_to_edges_splitted[new_ty] = y_locs_edge[(y_locs[j],y_locs[j+1],x)]
                                 self.y_cells.append(new_ty)
@@ -470,41 +489,51 @@ class LayoutLoopInterface():
                 tx.height_eval()
                 c = tx.center()  
                 ax3d.plot3D(c[0])
-        
-        
-        
 
     def find_ground_wire(self, ori = 0, traces=[]):
         # find the ground wire of the group of each bundle
         # ori = 0 or 1 for horizontal vs vertical cases
         # traces in a bundle
+        dir_to_trace = {}
         wire_type = {}
         sig_w = []
         gr_w = []
-        # by default we set the wires in negative direction to be ground
-        if ori == 0:
+        # first search through all traces and store them in bucket, where each bucket is a direction
+        for tr in traces:
+            if not tr.dir in dir_to_trace:
+                dir_to_trace[tr.dir]=[]
+            else:
+                dir_to_trace[tr.dir].append(tr)
+        dir_list = list(dir_to_trace.keys())
+        if len(dir_list)==1: # means that they only have one dir
+            for tr in traces:
+                wire_type[tr] = 'S'
+        else:
+            # by default we set the wires in negative direction to be ground
             for tx in traces:
-                if tx.dir == -1:
+                if tx.dir <0 :
                     wire_type[tx] = 'G'
                     gr_w.append(tx)
                 else:
                     wire_type[tx] = 'S'
                     sig_w.append(tx)
-        if ori == 1:
-            for ty in traces:
-                if ty.dir == -2:
-                    wire_type[ty] = 'G'
-                    gr_w.append(ty)
-                else:
-                    wire_type[ty] = 'S'
-                    sig_w.append(ty)
-        if len(sig_w) == 0:
-            sig_w = gr_w
-            gr_w = [] # Test no ground wire
-            for w in wire_type:
-                wire_type[w] = 'S' # switch from G to S
+
+            if len(sig_w) == 0:
+                sig_w = gr_w
+                gr_w = [] # Test no ground wire
+                for w in wire_type:
+                    wire_type[w] = 'S' # switch from G to S
         return wire_type
-    
+    def add_node_to_3d(self,pos):
+        if pos in self.nodes_dict_3d:
+            node = self.nodes_dict_3d[pos]
+        else:
+            node = self.new_nodes_id
+            self.nodes_dict_3d[pos] = node
+            self.pos3d[node] = pos
+            self.new_nodes_id += 1
+            self.net_graph.add_node(node, locs=pos)
+        return node
     def rebuild_graph_add_edge(self,tc,n1,n2,R,L,etype='fw'):
         #print(n1,n2,"R",R,"L",L)
         z = tc.z
@@ -512,51 +541,65 @@ class LayoutLoopInterface():
             if abs(tc.dir) == 1:
                 pos1 = (tc.left,tc.center()[1],z)
                 pos2 = (tc.right,tc.center()[1],z)
-                
-                if pos1 in self.nodes_dict_3d:
-                    n1 = self.nodes_dict_3d[pos1]
-                else:
-                    n1 = self.new_nodes_id
-                    self.nodes_dict_3d[pos1]=n1
-                    self.pos3d[n1] = pos1
-                    self.new_nodes_id+=1
-                    self.net_graph.add_node(n1,locs = pos1)
-                if pos2 in self.nodes_dict_3d:
-                    n2 = self.nodes_dict_3d[pos2]
-                else:
-                    n2 = self.new_nodes_id
-                    self.nodes_dict_3d[pos2]=n2
-                    self.pos3d[n2]= pos2
-                    self.new_nodes_id+=1
-                    self.net_graph.add_node(n2,locs = pos2)
-                
+                n1 = self.add_node_to_3d(pos1)
+                n2 = self.add_node_to_3d(pos2)
                 data= {'type':etype,'ori':'h','obj':tc}
                 self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
             if abs(tc.dir) == 2:
                 pos1 = (tc.center()[0], tc.bottom,z)
                 pos2 = (tc.center()[0],tc.top,z)
-                if pos1 in self.nodes_dict_3d:
-                    n1 = self.nodes_dict_3d[pos1]
-                else:
-                    n1 = self.new_nodes_id
-                    self.new_nodes_id+=1
-                    self.pos3d[n1]= pos1
-                    self.nodes_dict_3d[pos1]=n1
-                    self.net_graph.add_node(n1,locs = pos1)
-                    
-                if pos2 in self.nodes_dict_3d:
-                    n2 = self.nodes_dict_3d[pos2]
-                else:
-                    n2 = self.new_nodes_id
-                    self.new_nodes_id+=1
-                    self.pos3d[n2]= pos2
-                    self.nodes_dict_3d[pos2]=n2
-                    self.net_graph.add_node(n2,locs = pos2)
+                n1 = self.add_node_to_3d(pos1)
+                n2 = self.add_node_to_3d(pos2)
                 data= {'type':etype,'ori':'v','obj':tc}
+
                 self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
         elif tc.struct == 'bw':
-            n1 = tc.bwn1
-            n2 = tc.bwn2
+            if tc.bwn1!= None and tc.bwn2 != None:
+                n1 = tc.bwn1
+                n2 = tc.bwn2
+            elif tc.bwn1 == None and tc.bwn2!= None: # n2 is on the graph n1 is not
+                n2 = tc.bwn2
+                pos2 = self.pos3d[n2] # n2 is on the old graph
+                if abs(tc.dir) == 1: # horizontal case
+                    find_right = False
+                    if pos2[0] == tc.left:
+                        find_right = True
+                    if find_right:
+                        pos1 = (tc.right, tc.center()[1], z)
+                    else: # find left
+                        pos1 = (tc.left, tc.center()[1], z)
+                    n1 = self.add_node_to_3d(pos1)
+                if abs(tc.dir) == 2:
+                    find_top = False
+                    if pos2[1] == tc.bottom:
+                        find_top = True
+                    if find_top:
+                        pos1 = (tc.center()[0], tc.top, z)
+                    else: # find bottom
+                        pos1 = (tc.center()[0], tc.bottom, z)
+                n1 = self.add_node_to_3d(pos1)
+            elif tc.bwn1 != None and tc.bwn2 == None:  # n1 is on the graph n2 is not
+                n1 = tc.bwn1
+                pos1 = self.pos3d[n1]  # n2 is on the old graph
+                if abs(tc.dir) == 1:  # horizontal case
+                    find_right = False
+                    if pos1[0] == tc.left:
+                        find_right = True
+                    if find_right:
+                        pos2 = (tc.right, tc.center()[1], z)
+                    else:  # find left
+                        pos2 = (tc.left, tc.center()[1], z)
+                    n2 = self.add_node_to_3d(pos2)
+                if abs(tc.dir) == 2:
+                    find_top = False
+                    if pos1[1] == tc.bottom:
+                        find_top = True
+                    if find_top:
+                        pos2 = (tc.center()[0], tc.top, z)
+                    else:  # find bottom
+                        pos2 = (tc.center()[0], tc.bottom, z)
+                n2 = self.add_node_to_3d(pos2)
+
             ori = ('h' if tc.dir==1 else 'v')
             data= {'type':etype+'_bw','ori':ori,'obj':tc}
             self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
@@ -567,7 +610,6 @@ class LayoutLoopInterface():
         rem_dict = {} # to make sure there is no overlapping in mutual pair
         for tc in loop_obj.tc_to_id:
             id1 = loop_obj.tc_to_id[tc]
-            
             if id1!= -1:
                 # find n1 n2 based on old locs
                 R1 = loop_obj.R_loop[id1,id1]
@@ -599,8 +641,6 @@ class LayoutLoopInterface():
                         n2 = self.new_nodes_id+1
                     else:
                         n2 = self.new_nodes_id
-
-                    
                 n1,n2 = self.rebuild_graph_add_edge(tc,n1,n2,1e-12,1e-12,etype='return')
 
         if loop_obj.num_loops > 1: # ADD mutual value
@@ -773,8 +813,9 @@ class LayoutLoopInterface():
         plt.figure("net_graph")
         selected_node = list(set(selected_node))
         nx.draw_networkx(self.net_graph,pos=self.net_2d_pos ,nodelist=selected_node,edgelist=edge_list,with_labels=True,node_size=50,font_size =9)
-        plt.savefig('pickles/netgraph')
-        
+        plt.title('NET GRAPH')
+        #plt.savefig('pickles/netgraph')
+        plt.show()
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
@@ -1093,6 +1134,13 @@ class LayoutLoopInterface():
                 self.save_plot_pickle(ax1, m_name)
             else:
                 plt.show()
+        elif mode ==4:
+            plt.figure("net_map")
+            nx.draw(self.net_graph, self.net_2d_pos, with_labels=True)
+            if save == True:
+                plt.savefig('net_graph.png')
+            else:
+                plt.show()
     # Support function to reduce complexity
     def add_node_tracecell(self,tc,x,y,z,isl_name,isl_nodes):
         if self.ori_map[tc.name] == 'H':
@@ -1135,7 +1183,7 @@ class LayoutLoopInterface():
 
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        self.plot(mode=3)
+        #self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 

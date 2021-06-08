@@ -374,7 +374,7 @@ class LoopEval():
         self.P = None # partial impedance matrix
         self.G = None # ground matrix
         self.all_eles = []
-        self.freq = 1e9# default as 1MHz
+        self.freq = 1e6# default as 1MHz
         self.freq_min = 1e6
         self.freq_max = 1e9
         self.mutual_params = []

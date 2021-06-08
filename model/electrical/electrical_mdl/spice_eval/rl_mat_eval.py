@@ -216,9 +216,10 @@ class RL_circuit():
             n1 = edge[0]
             n2 = edge[1]
             edata = edge[2]
-            
-            if edata['data']['type'] == 'fw_bw': # bondwire contribution 
-                print (edge)
+
+            if 'fw' in edata['data']['type']: # bondwire contribution
+                print(edge)
+
             e_name = str(n1)+str(n2)
             R_val = edata['res']
             L_val = edata['ind']
@@ -512,9 +513,11 @@ class RL_circuit():
 
             if x == 'M':  # M in H
                 Mname = 'M' + el[1:]
-                ind1_index = self.L_id[self.Lname1[el]]
-                ind2_index = self.L_id[self.Lname2[el]]
-
+                try:
+                    ind1_index = self.L_id[self.Lname1[el]]
+                    ind2_index = self.L_id[self.Lname2[el]]
+                except:
+                    print("cant find element")
 
                 Mval = self.value[el]
 
@@ -649,7 +652,7 @@ class RL_circuit():
             A = self.D
 
         t = time.time()
-        self.debug_singular_mat_issue(A)
+        #self.debug_singular_mat_issue(A)
 
 
         if method ==1:
