@@ -216,13 +216,15 @@ class RL_circuit():
             n1 = edge[0]
             n2 = edge[1]
             edata = edge[2]
-            check_lists = [14,16,30,24,18,31,25,17]
+            
+            # This is used to check the connnectivity to certain nodes. Uncomment to use
+            #check_lists = [14,16,30,24,18,31,25,17]
             #if 'fw' in edata['data']['type']: # bondwire contribution
             #    print ('edge',n1,n2)
             #    print(edata['res'],edata['ind'])
-            if n1 in check_lists or n2 in check_lists:
-                print('edge', n1, n2)
-                print(edata['res'], edata['ind'])
+            #if n1 in check_lists or n2 in check_lists:
+            #    print('edge', n1, n2)
+            #    print(edata['res'], edata['ind'])
 
             e_name = str(n1)+str(n2)
             R_val = edata['res']

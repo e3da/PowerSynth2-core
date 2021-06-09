@@ -192,7 +192,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         return text_out
 
-    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =5 ,nhinc =5,type = 0):
+    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =10 ,nhinc =10,type = 0):
         name='trace_' + str(type)+'_'
         start_name ='N'+ name+str(self.tc_id)+'s'
         end_name ='N'+ name+str(self.tc_id)+'e'
