@@ -401,6 +401,7 @@ class Structure_3D():
         
 
         self.constraint_df = cons_df
+        
         self.voltage_info= voltage_info
         self.current_info= current_info
 
@@ -1046,6 +1047,7 @@ class Structure_3D():
         for i in range(len(self.layers)):
             
             if self.layers[i].new_engine.Htree.hNodeList[0].parent==root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==root[1]:
+                
                 self.layers[i].new_engine.constraint_info = cg_interface.getConstraints(self.constraint_df)
                 self.layers[i].new_engine.get_min_dimensions(all_components=self.all_components)
                 input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary

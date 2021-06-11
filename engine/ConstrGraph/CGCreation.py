@@ -1027,6 +1027,7 @@ class ConstraintGraph:
                 if ((rect.NORTH.nodeId != ID  and rect.SOUTH.nodeId != ID) or (rect.cell.type=="EMPTY" and rect.nodeId==ID)) and rect.NORTH in cornerStitch_v.stitchList and rect.SOUTH in cornerStitch_v.stitchList:
                     dest_type = Types.index(rect.NORTH.cell.type) # bottom-to-top spacing
                     source_type = Types.index(rect.SOUTH.cell.type) #bottom-to-top spacing
+                    
                     cons_name= 'MinVerSpacing'
                     for constraint in self.constraint_info.constraints:
                         if constraint.name==cons_name:
@@ -1034,6 +1035,7 @@ class ConstraintGraph:
 
                     type_=rect.cell.type
                     value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    
                     """
                     if rect.cell.type in self.constraint_info.comp_type['Fixed']:
                         comp_type_='Fixed'
@@ -1090,7 +1092,8 @@ class ConstraintGraph:
 
                     weight= 2*value
                     e = Edge(source=origin, dest=dest, constraint=value, index=index, type=type, weight=weight,comp_type=comp_type_)
-
+                    
+                    
                     self.edgesv_forward[ID].append(e) 
 
                 # checking for minimum enclosure constraint: if current tile is bottom tile its north tile should be foreground tile and south tile should be boundary tile and not in stitchlist
@@ -2466,7 +2469,7 @@ class ConstraintGraph:
             #if ID==1:
                 #edge.printEdge()
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
-                if edge.constraint>0 and edge.type=='fixed':
+                '''if edge.constraint>0 and edge.type=='fixed':
                     
                     if edge.comp_type=='Fixed':
                         edge.printEdge()
@@ -2475,8 +2478,8 @@ class ConstraintGraph:
                         exit()
                     else:
                         edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
-                else:
-                    redundant_edges.append(edge)
+                else:'''
+                redundant_edges.append(edge)
                 
                 
         for edge in redundant_edges:
@@ -2748,7 +2751,7 @@ class ConstraintGraph:
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
-                if edge.constraint>0 and edge.type=='fixed':
+                '''if edge.constraint>0 and edge.type=='fixed':
                     if edge.comp_type=='Fixed':
                         edge.printEdge()
                         print(find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])
@@ -2756,8 +2759,8 @@ class ConstraintGraph:
                         exit()
                     else:
                         edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
-                else:
-                    redundant_edges.append(edge)
+                else:'''
+                redundant_edges.append(edge)
         for edge in redundant_edges:
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
