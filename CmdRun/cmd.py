@@ -907,10 +907,10 @@ class Cmd_Handler:
 
                 csv_writer.writerow(['Layout_ID', perf_names[0], perf_names[1]])
 
-            for i in range(len(self.structure_3D.solutions)):
-                sol=self.structure_3D.solutions[i]
-                data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
-                csv_writer.writerow(data)
+                for i in range(len(self.structure_3D.solutions)):
+                    sol=self.structure_3D.solutions[i]
+                    data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
+                    csv_writer.writerow(data)
                 my_csv.close()
         # '''
             sol_data = {}
@@ -1061,10 +1061,10 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
             
         elif sel==6:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_5/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/DMC_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_4/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_24_Flip_Chip/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         #f = open('output.txt','w')
         #sys.stdout = f

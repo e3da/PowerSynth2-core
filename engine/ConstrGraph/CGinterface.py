@@ -121,24 +121,25 @@ class CS_to_CG():
             ver_enclosure=[]
             for j in range(len(data)):
                 if j > 4 and j < (4 + all_types_len):
-                    hor_enclosure_row = [int(math.floor(float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    hor_enclosure_row = [((float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
                     hor_enclosure.append(hor_enclosure_row)
 
-                elif j > (4 + all_types_len) and j < (4+ 2 * all_types_len):
-                    ver_enclosure_row = [int(math.floor(float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                if j > (4 + all_types_len) and j < (4+ 2 * all_types_len):
+                    ver_enclosure_row = [((float(enc) * dbunit)) for enc in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
                     ver_enclosure.append(ver_enclosure_row)
                 
-                elif j > (4 + 2 * all_types_len) and j < (4 + 3 * all_types_len):
-                    hor_spacing_row = [int(math.floor(float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                if j > (4 + 2 * all_types_len) and j < (4 + 3 * all_types_len):
+                    hor_spacing_row = [((float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
                     hor_spacing.append(hor_spacing_row)
 
-                elif j > (4 + 3 * all_types_len) and j < (4 + 4 * all_types_len):
-                    ver_spacing_row = [int(math.floor(float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                if j > (4 + 3 * all_types_len) and j < (4 + 4 * all_types_len):
+                    ver_spacing_row = [((float(spa) * dbunit)) for spa in (data.iloc[j, 1:(all_types_len)]).values.tolist()]
+                    #print(ver_spacing_row)
                     ver_spacing.append(ver_spacing_row)
                 
                 else:
                     continue
-
+            
             MinWidth = list(map(int, width))
             MinLength = list(map(int, length))
             MinHorExtension = list(map(int, horextension))
@@ -146,7 +147,7 @@ class CS_to_CG():
             MinHorEnclosure = [list(map(int, i)) for i in hor_enclosure]
             MinVerEnclosure = [list(map(int, i)) for i in ver_enclosure]
             MinHorSpacing = [list(map(int, i)) for i in hor_spacing]
-            MinVerSpacing = [list(map(int, i)) for i in ver_enclosure]
+            MinVerSpacing = [list(map(int, i)) for i in ver_spacing]
             
             for constraint in self.constraints:
                 if constraint.name=='MinWidth':

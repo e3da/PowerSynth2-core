@@ -27,7 +27,7 @@ import math
 from datetime import datetime
 import sys
 import numpy as np
-
+from subprocess import Popen,PIPE, DEVNULL
 class FastHenryAPI(CornerStitch_Emodel_API):
     
     def __init__(self, comp_dict={}, wire_conn={},ws ='/nethome/ialrazi/PS_2_test_Cases/fasthenry'):
@@ -365,10 +365,12 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         script_out = os.path.join(self.work_space,'result') 
         write_to_file(script=self.out_text,file_des=script_file)    
         fasthenry_option= '-siterative -mmulti -pcube'
-        cmd = self.fh_env + " " + fasthenry_option +" "+script_file #+ "> " + script_out #+" &" # uncomment for possible parrallel computing
+        cmd = self.fh_env + " " + fasthenry_option +" "+script_file + "> /dev/null" #+ script_out #+" &" # uncomment for possible parrallel computing
         #print(cmd)
-        print(script_file)
+        #print(script_file)
         #input()
+        #process= Popen(cmd, stdout =PIPE, stderr = DEVNULL, shell=False)
+        #stdout,stderr =process.communicate()
         os.system(cmd)
         # READ output file
         curdir = os.getcwd()
@@ -389,8 +391,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
         # removee the Zc.mat file incase their is error
         #cmd = 'rm '+outputfile
-        print (cmd)
-        os.system(cmd)
+        #print (cmd)
+        #os.system(cmd)
         try:
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
