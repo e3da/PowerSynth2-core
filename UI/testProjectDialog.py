@@ -7,9 +7,11 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import os
 
 class Ui_newProjectDialog(object):
     def setupUi(self, newProjectDialog):
+        self.window = newProjectDialog
         newProjectDialog.setObjectName("newProjectDialog")
         newProjectDialog.resize(518, 318)
         self.gridLayout = QtWidgets.QGridLayout(newProjectDialog)
@@ -127,10 +129,21 @@ class Ui_newProjectDialog(object):
         self.groupBox.setTitle(_translate("newProjectDialog", "Run PowerSynth On Existing Project:"))
         self.groupBox_advnetlist_2.setTitle(_translate("newProjectDialog", "Location of settings.info file:"))
         self.btn_net_import_3.setText(_translate("newProjectDialog", "Open File"))
+        self.btn_net_import_3.pressed.connect(self.getSettingsPath)
         self.groupBox_advnetlist.setTitle(_translate("newProjectDialog", "Location of project\'s macro file to run:"))
         self.btn_net_import.setText(_translate("newProjectDialog", "Open File"))
+        self.btn_net_import.pressed.connect(self.getMacroPath)
         self.btn_cancel.setText(_translate("newProjectDialog", "Cancel"))
+        self.btn_cancel.pressed.connect(sys.exit)
         self.btn_create.setText(_translate("newProjectDialog", "Run PowerSynth"))
+
+    def getSettingsPath(self):
+        settingsInfo = QtWidgets.QFileDialog.getOpenFileName(self.window, 'Open File', os.getenv('HOME'))
+        self.txt_symbnet_address_4.setText(settingsInfo[0])
+
+    def getMacroPath(self):
+        macroInfo = QtWidgets.QFileDialog.getOpenFileName(self.window, 'Open File', os.getenv('HOME'))
+        self.txt_symbnet_address_2.setText(macroInfo[0])
 
 
 if __name__ == "__main__":
