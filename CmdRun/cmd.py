@@ -21,10 +21,14 @@ from pympler import muppy,summary
 from core.MDK.LayerStack.layer_stack import LayerStack
 import matplotlib.pyplot as plt
 import os
+import sys
 import glob
 import copy
 import csv
 from core.general.settings import settings
+
+from core.UI.testProjectDialog import Ui_newProjectDialog
+from PyQt5 import QtWidgets
 
 
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
@@ -1032,6 +1036,29 @@ class Cmd_Handler:
 
 
 if __name__ == "__main__":
+
+    app = QtWidgets.QApplication(sys.argv)
+    newProjectDialog = QtWidgets.QDialog()
+    ui = Ui_newProjectDialog()
+    ui.setupUi(newProjectDialog)
+    newProjectDialog.show()
+    app.exec_()
+
+    if not ui.run:
+        sys.exit()
+    
+    settingsPath = ui.txt_symbnet_address_4.text()
+    macroPath = ui.txt_symbnet_address_2.text()
+
+    cmd = Cmd_Handler(debug=False)
+
+    args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+
+    cmd.cmd_handler_flow(arguments=args)
+    sys.exit()
+    
+
+    
     print("----------------------PowerSynth Version 1.4: Command line version------------------")
     
 

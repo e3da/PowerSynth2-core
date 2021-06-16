@@ -8,10 +8,12 @@
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 import os
+import sys
 
 class Ui_newProjectDialog(object):
     def setupUi(self, newProjectDialog):
         self.window = newProjectDialog
+        self.run = False
         newProjectDialog.setObjectName("newProjectDialog")
         newProjectDialog.resize(518, 318)
         self.gridLayout = QtWidgets.QGridLayout(newProjectDialog)
@@ -136,6 +138,7 @@ class Ui_newProjectDialog(object):
         self.btn_cancel.setText(_translate("newProjectDialog", "Cancel"))
         self.btn_cancel.pressed.connect(sys.exit)
         self.btn_create.setText(_translate("newProjectDialog", "Run PowerSynth"))
+        self.btn_create.pressed.connect(self.runPowerSynth)
 
     def getSettingsPath(self):
         settingsInfo = QtWidgets.QFileDialog.getOpenFileName(self.window, 'Open File', os.getenv('HOME'))
@@ -144,14 +147,17 @@ class Ui_newProjectDialog(object):
     def getMacroPath(self):
         macroInfo = QtWidgets.QFileDialog.getOpenFileName(self.window, 'Open File', os.getenv('HOME'))
         self.txt_symbnet_address_2.setText(macroInfo[0])
+    
+    def runPowerSynth(self):
+        self.run = True
+        self.window.close()
 
-
+'''
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     newProjectDialog = QtWidgets.QDialog()
     ui = Ui_newProjectDialog()
     ui.setupUi(newProjectDialog)
     newProjectDialog.show()
     sys.exit(app.exec_())
-
+'''
