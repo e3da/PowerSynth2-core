@@ -78,7 +78,7 @@ class new_engine_opt:
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
                 elif 'Loop' in self.e_api.e_mdl:
-                    self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                    R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
                     
                 print ("RL",R,L)
                     

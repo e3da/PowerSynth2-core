@@ -360,27 +360,30 @@ class CornerStitch_Emodel_API:
             # Call loop finder here
             self.emesh = LayoutLoopInterface(islands=islands,hier_E = self.hier, freq =self.freq, layer_stack =self.layer_stack)
             self.emesh.ori_map =self.trace_ori # Update the trace orientation if given
-            print("define current directions")
+            #print("define current directions")
             self.emesh.form_graph()
-            print("find path")
+            #print("find path")
             self.emesh.find_all_paths(src='L1',sink = 'L2')
             self.emesh.form_bundles()
-            self.emesh.plot()
-            print("define bundle")
-            print("solve loops model separatedly")
-            s = time.time()
-            print("bundles eval time", time.time() - s, 's')
+            #self.emesh.plot()
+            #print("define bundle")
+            #print("solve loops model separatedly")
+            # = time.time()
+            #print("bundles eval time", time.time() - s, 's')
             #self.e_mdl = 'Loop-PEEC-compare'
+            debug = True
             if self.e_mdl == "Loop":
+                s = time.time()
+
                 self.emesh.solve_all_bundles()
-            else:
-                s = time.time()
-                self.emesh.solve_all_bundles() # solve and save original trace data to net_graph
                 print("bundles eval time", time.time() - s, 's')
-                s = time.time()
-                self.emesh.build_PEEC_graph() # build PEEC from net_graph
-                print("Dense Matrix eval time", time.time() - s, 's')
-                #self.emesh.solve_bundle_PEEC()
+                if debug:
+                    #self.emesh.solve_all_bundles() # solve and save original trace data to net_graph
+
+                    s = time.time()
+                    self.emesh.build_PEEC_graph() # build PEEC from net_graph
+                    print("Dense Matrix eval time", time.time() - s, 's')
+                    #self.emesh.solve_bundle_PEEC()
 
 
 
@@ -421,19 +424,20 @@ class CornerStitch_Emodel_API:
         print(vname1,vname2)
         imp = self.circuit.results[vname1]
 
-        print (imp)
+        #print (imp)
         R = abs(np.real(imp) * 1e3)
         L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
         print('loop RL',R,L)
-        if self.e_mdl == "Loop-PEEC-compare":
+        debug=True
+        if debug:
             self.tmp_circuit = RL_circuit()
             self.tmp_circuit._graph_read_PEEC_Loop(self.emesh)
             self.tmp_circuit.assign_freq(self.freq * 1000)
 
             self.tmp_circuit.graph_to_circuit_minimization()
-            self.tmp_circuit.indep_current_source(self.tmp_circuit.net_map[pt1], 0, 1)
+            self.tmp_circuit.indep_current_source(pt1, 0, 1)
             # print "src",pt1,"sink",pt2
-            self.tmp_circuit._add_termial(self.tmp_circuit.net_map[pt2])
+            self.tmp_circuit._add_termial(pt2)
             self.tmp_circuit.build_current_info()
             if not (networkx.has_path(self.emesh.PEEC_graph, pt1, pt2)):
                 print(pt1, pt2)
@@ -449,9 +453,11 @@ class CornerStitch_Emodel_API:
             print(vname1, vname2)
             imp = self.tmp_circuit.results[vname1]
             print(imp)
-            R = abs(np.real(imp) * 1e3)
-            L = abs(np.imag(imp)) * 1e9 / (2 * np.pi * self.circuit.freq)
-            print('PEEC-loop RL', R, L)
+            Rp= abs(np.real(imp) * 1e3)
+            Lp = abs(np.imag(imp)) * 1e9 / (2 * np.pi * self.circuit.freq)
+            print('PEEC-loop RL', Rp, Lp)
+            print("DIFF", abs(Rp-R)/R * 100,abs(Lp-L)/L*100)
+        return R,L
     def mesh_and_eval_elements(self):
         start = time.time()
         if self.trace_ori == {}:

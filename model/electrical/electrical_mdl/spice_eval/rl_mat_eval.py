@@ -220,9 +220,9 @@ class RL_circuit():
             #if 'fw' in edata['data']['type']: # bondwire contribution
             #    print ('edge',n1,n2)
             #    print(edata['res'],edata['ind'])
-            if n1 in check_lists or n2 in check_lists:
-                print('edge', n1, n2)
-                print(edata['res'], edata['ind'])
+            #if n1 in check_lists or n2 in check_lists:
+            #    print('edge', n1, n2)
+            #    print(edata['res'], edata['ind'])
 
             e_name = str(n1)+str(n2)
             R_val = edata['res']

@@ -422,8 +422,8 @@ class LayoutLoopInterface():
                                 self.y_cells.append(new_ty)
 
                 # Get the center point go get y locs
-            self.plot_xy_trace(mode=1,dir = 'X')
-            self.plot_xy_trace(mode=1,dir = 'Y')
+            #self.plot_xy_trace(mode=1,dir = 'X')
+            #self.plot_xy_trace(mode=1,dir = 'Y')
 
 
     def plot_xy_trace(self, mode = 0, dir = 'X'):
@@ -816,7 +816,7 @@ class LayoutLoopInterface():
                 selected_node.append(e[0])
                 selected_node.append(e[1])
 
-        self.plot(mode=4,save=False)
+        #self.plot(mode=4,save=False)
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
@@ -1092,8 +1092,8 @@ class LayoutLoopInterface():
                     else:
                         ptrace = None
                     
-                    print(n1,r)
-                    print("parent_trace",ptrace.name)
+                    #print(n1,r)
+                    #print("parent_trace",ptrace.name)
                     #print(ptrace.eval_length())
                     self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace)
                 
@@ -1189,7 +1189,7 @@ class LayoutLoopInterface():
 
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        self.plot(mode=3)
+        #self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 
