@@ -6,7 +6,7 @@ cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-16] #exclude "power/cmd_run"
 sys.path.append(cur_path)'''
 
-from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
+from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
@@ -27,8 +27,7 @@ import copy
 import csv
 from core.general.settings import settings
 
-from core.UI.testProjectDialog import Ui_newProjectDialog
-from PyQt5 import QtWidgets
+import core.UI.UI_main
 
 
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
@@ -1035,29 +1034,9 @@ class Cmd_Handler:
 
 
 
-if __name__ == "__main__":
-
-    app = QtWidgets.QApplication(sys.argv)
-    newProjectDialog = QtWidgets.QDialog()
-    ui = Ui_newProjectDialog()
-    ui.setupUi(newProjectDialog)
-    newProjectDialog.show()
-    app.exec_()
-
-    if not ui.run:
-        sys.exit()
+if __name__ == "__main__":  
     
-    settingsPath = ui.txt_symbnet_address_4.text()
-    macroPath = ui.txt_symbnet_address_2.text()
-
-    cmd = Cmd_Handler(debug=False)
-
-    args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
-
-    cmd.cmd_handler_flow(arguments=args)
-    sys.exit()
-    
-
+    core.UI.UI_main.main()
     
     print("----------------------PowerSynth Version 1.4: Command line version------------------")
     

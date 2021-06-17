@@ -10,7 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import os
 import sys
 
-class Ui_newProjectDialog(object):
+class Ui_runProjectDialog(object):
     def setupUi(self, newProjectDialog):
         self.window = newProjectDialog
         self.run = False
@@ -121,13 +121,15 @@ class Ui_newProjectDialog(object):
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem, 3, 1, 1, 1)
         self.gridLayout.addWidget(self.groupBox, 0, 0, 1, 1)
+        self.window.setFixedWidth(self.window.width())
+        self.window.setFixedHeight(self.window.height())
 
         self.retranslateUi(newProjectDialog)
         QtCore.QMetaObject.connectSlotsByName(newProjectDialog)
 
     def retranslateUi(self, newProjectDialog):
         _translate = QtCore.QCoreApplication.translate
-        newProjectDialog.setWindowTitle(_translate("newProjectDialog", "New Project"))
+        newProjectDialog.setWindowTitle(_translate("newProjectDialog", "Run Project"))
         self.groupBox.setTitle(_translate("newProjectDialog", "Run PowerSynth On Existing Project:"))
         self.groupBox_advnetlist_2.setTitle(_translate("newProjectDialog", "Location of settings.info file:"))
         self.btn_net_import_3.setText(_translate("newProjectDialog", "Open File"))
@@ -149,15 +151,19 @@ class Ui_newProjectDialog(object):
         self.txt_symbnet_address_2.setText(macroInfo[0])
     
     def runPowerSynth(self):
-        self.run = True
+        if not os.path.exists(self.txt_symbnet_address_4.text()) or "settings.info" not in self.txt_symbnet_address_4.text():
+            popup = QtWidgets.QMessageBox()
+            popup.setWindowTitle("Error:")
+            popup.setText("Please enter a valid path to the settings.info file.")
+            popup.exec_()
+            return
+
+        if not os.path.exists(self.txt_symbnet_address_2.text()) or ".txt" not in self.txt_symbnet_address_2.text():
+            popup = QtWidgets.QMessageBox()
+            popup.setWindowTitle("Error:")
+            popup.setText("Please enter a valid path to the macro.txt file.")
+            popup.exec_()
+            return
+
         self.window.close()
 
-'''
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    newProjectDialog = QtWidgets.QDialog()
-    ui = Ui_newProjectDialog()
-    ui.setupUi(newProjectDialog)
-    newProjectDialog.show()
-    sys.exit(app.exec_())
-'''
