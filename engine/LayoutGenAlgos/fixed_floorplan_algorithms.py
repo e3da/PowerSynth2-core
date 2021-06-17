@@ -21,8 +21,40 @@ class fixed_floorplan_algorithms():
         self.seed_h=[]
         self.seed_v=[]
 
+    def populate_attributes(self,node_h=None,node_v=None):
+        removed_nodes_h=[]
+        removed_nodes_v=[]
+        for vert in node_h.vertices:
+            if vert.removable==True:
+                removed_nodes_h.append(vert.coordinate)
+        for vert in node_v.vertices:
+            if vert.removable==True:
+                removed_nodes_v.append(vert.coordinate)
+        reference_nodes_h={}
+        reference_nodes_v={}
+        for edge in node_h.edges:
+            if edge.dest.removable==True:
+                reference_nodes_h[edge.dest.coordinate]=[edge.source.coordinate,edge.constraint]
+        for edge in node_v.edges:
+            if edge.dest.removable==True:
+                reference_nodes_v[edge.dest.coordinate]=[edge.source.coordinate,edge.constraint]
+        top_down_eval_edges_h={}
+        top_down_eval_edges_v={}
+        for edge in node_h.edges:
+            if edge.constraint<0:
+                top_down_eval_edges_h[(edge.source.coordinate,edge.dest.coordinate)]=edge.constraint
+        for edge in node_v.edges:
+            if edge.constraint<0:
+                top_down_eval_edges_v[(edge.source.coordinate,edge.dest.coordinate)]=edge.constraint
 
-    def get_locations(self,ID,edgesh,ZDL_H,edgesv,ZDL_V,level,XLoc,YLoc,seed=None,num_solutions=None,Random=None):
+        self.removable_nodes_h=removed_nodes_h # list of vertex ids
+        self.removable_nodes_v=removed_nodes_v
+        self.reference_nodes_h=reference_nodes_h # dictionary, where key is the dependent vertex id and value is a list [reference vertex id, fixed constraint value]
+        self.reference_nodes_v=reference_nodes_v
+        self.top_down_eval_edges_h=top_down_eval_edges_h # dictionary, where key is the dependent vertex id and value is a list [reference vertex id, backward edge constraint value]
+        self.top_down_eval_edges_v = top_down_eval_edges_v
+
+    def get_root_locations(self,ID,edgesh,ZDL_H,edgesv,ZDL_V,level,XLoc,YLoc,seed=None,num_solutions=None,Random=None):
       
         x_locations={}
         y_locations={}
@@ -40,7 +72,7 @@ class fixed_floorplan_algorithms():
                 k, v = list(i.items())[0]  
                 d[k].append(v)
             edge_labels1 = d
-            # print "d",ID, edge_labels1
+            
             if level==1:
                 for key,value in edge_labels1.items():
                     if len(value)>1:
@@ -62,7 +94,7 @@ class fixed_floorplan_algorithms():
                 seed= seed + m * 1000
                 random.seed(seed)
                 for key,value in edge_labels1.items():
-                    print(key, value)
+                    #print(key, value)
                     
                     if len(value)==1:
                         if num_solutions>2:
