@@ -203,7 +203,7 @@ class Rect:
         else:
             return False
 
-    def encloses1(self, x, y):
+    def encloses_hard(self, x, y):
         if x > self.left and x < self.right and y > self.bottom and y < self.top:
             return True
         else:

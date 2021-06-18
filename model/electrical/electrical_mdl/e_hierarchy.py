@@ -67,7 +67,7 @@ class EHier():
                             sheet_node.data =sh
                             sh.node = sheet_node
                             self.sheets.append(sheet_node)
-        self.tree.print_tree()
+        #self.tree.print_tree()
 
     def form_hierachy(self):
         '''
@@ -104,4 +104,4 @@ class EHier():
                         self.sheets.append(sh_node)
 
                         # Test plot of the hierarchy
-        self.tree.print_tree()
+        #self.tree.print_tree()

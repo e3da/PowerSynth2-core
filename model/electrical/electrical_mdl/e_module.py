@@ -206,7 +206,7 @@ class EWires(EComp):
         c_e = stop#self.sheet[1].get_center()
         
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))  # using integer input, this is the overall length of the group
-        #print('bw_true',length)
+        print('bw_true',length)
         average_width = self.num_wires*self.r*2 *1000
         average_thickness = self.r*2 *1000
         z1 = self.sheet[0].z
@@ -242,7 +242,7 @@ class EWires(EComp):
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
         length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
-        print ("wire group length",length)
+        #print ("wire group length",length)
         # length of the bondwires in reality are usually longer due to different bonding techinque, for JEDEC
         # https://awrcorp.com/download/faq/english/docs/Elements/BWIRES.htm
         # first divide the wire in 3 section and assume alpha,beta to be 30 degree

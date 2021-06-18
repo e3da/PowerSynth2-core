@@ -363,8 +363,7 @@ class Cmd_Handler:
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
 
-                
-                self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode)
+                self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode,plot = self.plot)
         else:
             # First check all file path
             if not (check_file(self.layout_script)):
@@ -921,11 +920,11 @@ class Cmd_Handler:
 
                 csv_writer.writerow(['Layout_ID', perf_names[0], perf_names[1]])
 
-            for i in range(len(self.structure_3D.solutions)):
-                sol=self.structure_3D.solutions[i]
-                data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
-                csv_writer.writerow(data)
-                my_csv.close()
+                for i in range(len(self.structure_3D.solutions)):
+                    sol=self.structure_3D.solutions[i]
+                    data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
+                    csv_writer.writerow(data)
+            my_csv.close()
         # '''
             sol_data = {}
             file = file_name
@@ -982,7 +981,7 @@ class Cmd_Handler:
                 # plt.show()
                 plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
 
-    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
+    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None,plot=True):
 
 
         data_x=[]
@@ -998,7 +997,7 @@ class Cmd_Handler:
             if (len(sol.parameters)>=2):
                 data_y.append(sol.parameters[perf_metrices[1]])
             else:
-                data_y.append(sol.index)
+                data_y.append(sol.solution_id)
 
         plt.cla()
         
@@ -1014,33 +1013,23 @@ class Cmd_Handler:
         else:
             x_label=labels[0]
             y_label=labels[1]
-        '''
-        if labels[0]=='Inductance':
-            x_label = labels[0]
-        else:
-            x_label='index'
-        if labels[1]=='Max_Temperature':
-            y_label = labels[1]
-        else:
-            y_label='index'
-        '''
+        
+        if plot:
+            plt.xlim(min(data_x)-2, max(data_x)+2)
+            plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
+            # naming the x axis
+            plt.xlabel(x_label)
+            # naming the y axis
+            plt.ylabel(y_label)
 
+            # giving a title to my graph
+            plt.title('Solution Space')
 
-        plt.xlim(min(data_x)-2, max(data_x)+2)
-        plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
-        # naming the x axis
-        plt.xlabel(x_label)
-        # naming the y axis
-        plt.ylabel(y_label)
-
-        # giving a title to my graph
-        plt.title('Solution Space')
-
-        # function to show the plot
-        #plt.show()
-        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
-        if len(self.measures)==2:
-            self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
+            # function to show the plot
+            #plt.show()
+            plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+            if len(self.measures)==2:
+                self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
 
 
 
@@ -1067,7 +1056,7 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_6/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
-                   {qmle_nethome:'loop_half_bridge_2dv_1/cmd'},\
+                   {qmle_nethome:'ECCE_2021_cases/2D_case_0/cmd'},\
                    {qmle_csrc:'loop_half_bridge_2dv_1/cmd'},\
                    {qmle_csrc:'Unit_tests/U_0/cmd'}]
         for tc in tc_list:

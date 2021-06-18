@@ -156,7 +156,7 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    #print ('bwribbon',rib_tc.eval_length())
+                    print ('bwribbon',rib_tc.eval_length()/1000)
 
                     
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
@@ -422,8 +422,8 @@ class LayoutLoopInterface():
                                 self.y_cells.append(new_ty)
 
                 # Get the center point go get y locs
-            self.plot_xy_trace(mode=1,dir = 'X')
-            self.plot_xy_trace(mode=1,dir = 'Y')
+            #self.plot_xy_trace(mode=1,dir = 'X')
+            #self.plot_xy_trace(mode=1,dir = 'Y')
 
 
     def plot_xy_trace(self, mode = 0, dir = 'X'):
@@ -606,10 +606,10 @@ class LayoutLoopInterface():
 
             ori = ('h' if tc.dir==1 else 'v')
             data= {'type':etype+'_bw','ori':ori,'obj':tc}
+            # THIS IS TO EXCLUDE BW LOOP (TESTING) 
+            #R = 1e-12
+            #L = 1e-12
             self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
-            if n1 == 16 and n2 == 24:
-                print("para R,L", R, L)
-                input()
         return n1,n2
     def rebuild_graph(self,loop_obj):
         m_dict = {}
@@ -711,11 +711,19 @@ class LayoutLoopInterface():
         edge_to_trace_dict = {}
         loc_to_node = {}
         edge_to_m_id = {}
+        short_bw = False
         for e in self.net_graph.edges(data = True):
+
             edata = e[2]['data']
+            type=e[2]['data']['type']
             trace_obj = edata['obj']
+            
             if trace_obj!= None:
                 trace_mesh = loop_eval_model.add_trace_cell(trace_obj)
+                if short_bw:
+                    if type =='fw_bw':
+                        self.PEEC_graph.add_edge(e[0],e[1],data=None)
+                        continue
                 # Include the trace mesh object here to link the edges with the filaments
                 self.PEEC_graph.add_edge(e[0],e[1],data = trace_mesh, Zdict={})
             else:
@@ -816,7 +824,7 @@ class LayoutLoopInterface():
                 selected_node.append(e[0])
                 selected_node.append(e[1])
 
-        self.plot(mode=4,save=False)
+        #self.plot(mode=4,save=False)
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
@@ -1092,8 +1100,8 @@ class LayoutLoopInterface():
                     else:
                         ptrace = None
                     
-                    print(n1,r)
-                    print("parent_trace",ptrace.name)
+                    #print(n1,r)
+                    #print("parent_trace",ptrace.name)
                     #print(ptrace.eval_length())
                     self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace)
                 
@@ -1189,7 +1197,7 @@ class LayoutLoopInterface():
 
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        self.plot(mode=3)
+        #self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 

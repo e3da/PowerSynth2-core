@@ -59,6 +59,7 @@ class new_engine_opt:
             if isinstance(measure,ThermalMeasure):
                 measures[1]=measure
         self.measures=measures
+        
         for i in range(len(self.measures)):
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
@@ -76,9 +77,24 @@ class new_engine_opt:
                 elif self.e_api.e_mdl == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
-                    R,L = self.e_api.run_fast_henry_script()
+                    id_select = None # specify a value for debug , None otherwise
+                    if id_select == None:
+                        R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                    elif solution.solution_id == id_select:
+                        R,L = self.e_api.run_fast_henry_script(parent_id = id_select)
+                        print ("RL",R,L)
+
+                        input()
+
                 elif 'Loop' in self.e_api.e_mdl:
-                    self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                    id_select = None # specify a value for debug , None otherwise
+                    if id_select == None:
+                        R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                    elif solution.solution_id == id_select:
+                        R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                        print ("RL",R,L)
+                        input()
+
                     
                 print ("RL",R,L)
                     
@@ -94,9 +110,11 @@ class new_engine_opt:
 
             if isinstance(measure, ThermalMeasure):
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                
+                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution) # TEMP NEED TO FIX
+                max_t = 300
                 result.append(max_t)
-
+                
         return result
     
     def populate_thermal_info_to_sol_feat(self,solution=None):
