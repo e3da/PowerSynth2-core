@@ -72,10 +72,10 @@ class CornerStitch_Tmodel_API:
         :return eng: An instance of the MATLAB engine.
         """
         
-        import matlab.engine
-        self.matlab_engine = matlab.engine.start_matlab()
+        #import matlab.engine
+        #self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
+        #self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
 
     def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
         layer_average_list = []

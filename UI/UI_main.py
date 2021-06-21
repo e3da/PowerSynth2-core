@@ -1,4 +1,5 @@
 import sys
+import os
 from core.CmdRun.cmd import Cmd_Handler
 from core.UI.openingWindow import Ui_Dialog
 from core.UI.runProject import Ui_runProjectDialog
@@ -19,7 +20,7 @@ def main():
         ui = Ui_Dialog()
         run(ui)
 
-        if ui.create:
+        if ui.create: # Selected Create New Project
             ui = Ui_createName()
             run(ui)
 
@@ -33,10 +34,12 @@ def main():
             if not folderPath:
                 continue # return to opening window
 
-            print(projectName)
-            print(folderPath)
+            newpath = folderPath + "/" + projectName + "/"
+             
+            if not os.path.exists(newpath):
+                os.makedirs(newpath)
 
-        elif ui.run:
+        elif ui.run: # Selected Run Project
             ui = Ui_runProjectDialog()
             run(ui)
 

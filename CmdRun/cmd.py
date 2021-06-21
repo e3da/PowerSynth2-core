@@ -27,7 +27,7 @@ import copy
 import csv
 from core.general.settings import settings
 
-import core.UI.UI_main
+import core.UI.UI_main as main
 
 
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
@@ -987,7 +987,7 @@ class Cmd_Handler:
             if (len(sol.parameters)>=2):
                 data_y.append(sol.parameters[perf_metrices[1]])
             else:
-                data_y.append(sol.index)
+                data_y.append(sol.solution_id)
 
         plt.cla()
         
@@ -997,6 +997,7 @@ class Cmd_Handler:
             labels=list(solution.parameters.keys())
             break
         #if len(labels)==2:
+        print(labels)
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
@@ -1030,15 +1031,16 @@ class Cmd_Handler:
         plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
         if len(self.measures)==2:
             self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
+        print("Nice.")
 
 
 
 
 if __name__ == "__main__":  
     
-    core.UI.UI_main.main()
+    main.main()
     
-    print("----------------------PowerSynth Version 1.4: Command line version------------------")
+    print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
 
     cmd = Cmd_Handler(debug=False)
