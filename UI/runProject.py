@@ -151,6 +151,11 @@ class Ui_runProjectDialog(object):
         self.txt_symbnet_address_2.setText(macroInfo[0])
     
     def runPowerSynth(self):
+
+
+        self.txt_symbnet_address_4.setText("/nethome/jgm019/testcases/settings.info")
+        self.txt_symbnet_address_2.setText("/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt")
+
         if not os.path.exists(self.txt_symbnet_address_4.text()) or "settings.info" not in self.txt_symbnet_address_4.text():
             popup = QtWidgets.QMessageBox()
             popup.setWindowTitle("Error:")
