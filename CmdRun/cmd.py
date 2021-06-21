@@ -1072,7 +1072,7 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/DMC_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_24_Flip_Chip/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_25_wire_bondless/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==8:
             args = ['python','cmd.py','-m','/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
