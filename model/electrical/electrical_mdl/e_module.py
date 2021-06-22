@@ -206,7 +206,7 @@ class EWires(EComp):
         c_e = stop#self.sheet[1].get_center()
         
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))  # using integer input, this is the overall length of the group
-        print('bw_true',length)
+        print('BW-loop: ','start',start,'stop',stop,'length',length/1000)
         average_width = self.num_wires*self.r*2 *1000
         average_thickness = self.r*2 *1000
         z1 = self.sheet[0].z

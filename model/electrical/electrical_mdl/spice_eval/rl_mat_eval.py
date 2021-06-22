@@ -219,16 +219,17 @@ class RL_circuit():
             
             # This is used to check the connnectivity to certain nodes. Uncomment to use
             #check_lists = [14,16,30,24,18,31,25,17]
-            #if 'fw' in edata['data']['type']: # bondwire contribution
+            #if 'return' in edata['data']['type']: # bondwire contribution
             #    print ('edge',n1,n2)
+            #    print(edata)
             #    print(edata['res'],edata['ind'])
             #if n1 in check_lists or n2 in check_lists:
             #    print('edge', n1, n2)
             #    print(edata['res'], edata['ind'])
 
             e_name = str(n1)+str(n2)
-            R_val = edata['res']
-            L_val = edata['ind']
+            R_val = abs(edata['res'])
+            L_val = abs(edata['ind'])
             edata_data = edata['data']
             self.L_count+=1
             self.R_count+=1
@@ -273,10 +274,17 @@ class RL_circuit():
         for k in msh_obj.mutual_pair:
             e1 = k[0]
             e2 = k[1]
-            M_val = msh_obj.mutual_pair[k][1]
+            M_val = msh_obj.mutual_pair[k][1] # Mval is same
+
             e1_name = str(e1[0]) + str(e1[1])
             L1_name = "B{0}".format(e1_name)
-            e2_name = str(e2[0]) + str(e2[1])
+            # at this point e1_name should be in the element list, if not the name is inverted
+            if not L1_name in self.element:
+                e1_name = str(e1[1]) + str(e1[0])
+                e2_name = str(e2[1]) + str(e2[0])
+            else:
+                e2_name = str(e2[0]) + str(e2[1])
+            L1_name = "B{0}".format(e1_name)
             L2_name = "B{0}".format(e2_name)
             M_name='M'+'_'+L1_name+'_'+L2_name
             self._graph_add_M(M_name,L1_name,L2_name,M_val)
@@ -523,7 +531,10 @@ class RL_circuit():
                     ind1_index = self.L_id[self.Lname1[el]]
                     ind2_index = self.L_id[self.Lname2[el]]
                 except:
+                    print (Mname)
+                    print (self.L_id)
                     print("cant find element")
+                    #input()
 
                 Mval = self.value[el]
 
@@ -804,20 +815,40 @@ def test_RL_circuit4():
     circuit._graph_add_comp('B4', 'b', 0, 1 )
     circuit.indep_voltage_source('a', 0, 1)
     circuit.assign_freq(1e9)
-    circuit.read_circuit()
+    #circuit.read_circuit()
+    circuit.graph_to_circuit_minimization()
+
     circuit.build_current_info()
     circuit.matrix_init()
     print (circuit.net_map)
     print (circuit.Z)
     print (circuit.X)
     print (circuit.A)
-    circuit.solve_iv()
+    circuit.solve_iv(method=2)
     print (circuit.results)
 
     input()
+
+
+def test_RL_circuit5(): # mutual wire group
+    circuit = RL_circuit()
+
+    circuit._graph_add_comp('B1', 1, 0, 1 + 17.3e-9j)
+    circuit._graph_add_comp('B2', 1, 0, 1 + 16.9e-9j)
+    circuit._graph_add_M('M23', 'B1', 'B2', 4.54e-9)
+    circuit.indep_voltage_source(0, 1, 1)
+    circuit.assign_freq(1e9)
+    circuit.graph_to_circuit_minimization()
+
+    circuit.build_current_info()
+    circuit.solve_iv(method = 2)
+    print((circuit.results))
+
+    imp = (circuit.results['v1']) / circuit.results['I_Vs']
+    print((np.real(imp), np.imag(imp) / circuit.s))
 if __name__ == "__main__":
     #validate_solver_simple()
     #validate_solver_2()
     stime= time.time()
-    test_RL_circuit4()
+    test_RL_circuit5()
     print("solving time",time.time()-stime,'s')

@@ -659,7 +659,9 @@ class Cmd_Handler:
             self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
             self.e_api.rs_model = None
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
-
+        elif type == 'LoopFHcompare':
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
+            
         #print mode
         if mode == 'command':
             self.e_api.form_connection_table(mode='command')
@@ -671,6 +673,10 @@ class Cmd_Handler:
             self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
             self.e_api.get_frequency(frequency)
             self.e_api.get_layer_stack(self.layer_stack)
+            if type =='LoopFHcompare':
+                self.e_api.e_mdl = "LoopFHcompare"
+                
+
             self.measures += self.e_api.measurement_setup(meas_data)
         if self.layout_ori_file != None:
             #print("this is a test now")
@@ -875,7 +881,7 @@ class Cmd_Handler:
                     self.soluions = generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,
                                                              optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,
                                                              apis={'E': self.e_api, 'T': self.t_api},
-                                                             measures=self.measures)
+                                                             measures=self.measures,seed=seed)
 
 
                     self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
@@ -1058,7 +1064,9 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'ECCE_2021_cases/2D_case_0/cmd'},\
                    {qmle_csrc:'loop_half_bridge_2dv_1/cmd'},\
-                   {qmle_csrc:'Unit_tests/U_0/cmd'}]
+                   {qmle_csrc:'Unit_tests/U_0/cmd'},\
+                   {qmle_nethome:'Unit_Test_Cases/Case_0_1/macro_script.txt'}]
+
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]

@@ -371,7 +371,7 @@ class CornerStitch_Emodel_API:
             # = time.time()
             #print("bundles eval time", time.time() - s, 's')
             #self.e_mdl = 'Loop-PEEC-compare'
-            debug = True
+            debug = False
             if self.e_mdl == "Loop":
                 s = time.time()
 
@@ -396,7 +396,8 @@ class CornerStitch_Emodel_API:
         self.circuit = RL_circuit()
         pt1 = self.emesh.comp_net_id[src]
         pt2 = self.emesh.comp_net_id[sink]
-        #pt1= 14
+        #pt1= 28
+        #pt2 = 23
         #pt2 = 31
         self.circuit._graph_read_loop(self.emesh)
         print(pt1, pt2)

@@ -1,11 +1,13 @@
 # Get parasitic package here
 import sys
 
-#cur_path =sys.path[0] # get current path (meaning this file location)
-#cur_path = cur_path[0:-23] #exclude "powercad/electrical_mdl"
-#print ("cur path",cur_path)
-#sys.path.append(cur_path)
-#print (sys.path[0])
+cur_path =sys.path[0] # get current path (meaning this file location)
+
+cur_path = cur_path[0:-36] #exclude "powercad/electrical_mdl"
+print ("cur path",cur_path)
+
+sys.path.append(cur_path)
+print (sys.path[0])
 
 # get the 3 fold integral mutual equation.
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind
@@ -26,7 +28,7 @@ import matplotlib as mpl
 
 # Math function to be used
 u0 = 4* np.pi * 1e-7
-copper_res = 1.68*1e-8
+copper_res = 1.72*1e-8
 asinh = math.asinh
 atan = math.atan
 sqrt = math.sqrt
@@ -380,7 +382,7 @@ class LoopEval():
         self.mutual_params = []
         self.mutual_map = {}
         self.mesh_id = 0
-        self.mesh_method = 'uniform'
+        self.mesh_method = 'nonuniform'
         self.view = 'False'
         self.mesh_id_dict={}
         self.open_loop = True
@@ -587,6 +589,7 @@ class LoopEval():
             #print("current matrix", j )
         #print(self.I.shape)
         #print  (sum(self.I))
+        #print ('freq',self.freq)
         Z = np.zeros((self.num_loops,self.num_loops),dtype = np.complex64)
         temp = np.matmul(np.transpose(self.M),self.I)   
         Z = np.linalg.inv(temp)
@@ -709,7 +712,7 @@ class LoopEval():
         norm = mpl.colors.Normalize(vmin=min(el_js), vmax=max(el_js))
         return norm,el_js        
 
-    def add_trace_cell(self,tc,nw = 5, nh = 3 ,el_type = 'S',):
+    def add_trace_cell(self,tc,nw = 5, nh = 5 ,el_type = 'S',):
         '''
         Add a trace cell element from layout engine to loop evaluation
         '''
@@ -875,9 +878,9 @@ def read_input(file):
                     if trace_mesh.start_pt[0] == trace_mesh.end_pt[0]:
                         trace_mesh.ori = 1
                         if trace_mesh.start_pt[1] < trace_mesh.end_pt[1]: # select upward direction as positive
-                            trace_mesh.dir = 1 
+                            trace_mesh.dir = 2 
                         else:
-                            trace_mesh.dir = -1 
+                            trace_mesh.dir = -2 
                     elif trace_mesh.start_pt[1] == trace_mesh.end_pt[1]:
                         trace_mesh.ori = 0
 
@@ -922,10 +925,12 @@ def read_input(file):
     loop_evaluation.num_loops = numloops
     loop_evaluation.form_partial_impedance_matrix()
     loop_evaluation.form_mesh_matrix()
-    #loop_evaluation.update_P(1e9)
-    #loop_evaluation.solve_linear_systems()
-    loop_evaluation.freq_sweep()
-    
+    loop_evaluation.update_mutual_mat()
+    loop_evaluation.update_P(1e9)
+    loop_evaluation.solve_linear_systems()
+    #loop_evaluation.freq_sweep()
+    print (loop_evaluation.L_loop)
+    #print (loop_evaluation.L_Mat)
     #if view == 'True':
     #    loop_evaluation.view()
     
@@ -1072,9 +1077,9 @@ if __name__ == "__main__":
     #test_mutual_accuracy_1()
     #test_ratio()
     #read_input('/nethome/qmle/loop_model/simple_test_case/simple.txt')
-    read_input('/nethome/qmle/loop_model/simple_test_case/layout1.txt')
+    #read_input('/nethome/qmle/loop_model/simple_test_case/layout1.txt')
     
-    #read_input('/nethome/qmle/loop_model/simple_test_case/2wires.txt')
+    read_input('/nethome/qmle/loop_model/simple_test_case/2wires.txt')
     #test_length_vs_mutual()
     #input_interface()
     

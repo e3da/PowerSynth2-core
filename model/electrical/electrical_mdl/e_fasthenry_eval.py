@@ -243,7 +243,10 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         return text_out
 
     def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =10 ,nhinc =10,type = 0,eq_to_start=None,eq_to_end=None):
-        name='trace_' + str(type)+'_'
+        print ("TRACE-FH:", 'Start:', start_loc, 'Stop', end_loc, 'Width:' , width)
+        
+        
+        name='trace_' + str(type)
         start_name ='N'+ name+str(self.tc_id)+'s'
         end_name ='N'+ name+str(self.tc_id)+'e'
         # adding these locs names into dictionary so that we can perform equivalent process in one time
@@ -259,10 +262,10 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         textout = Trace.format(name, start_loc[0]/1000,start_loc[1]/1000,start_loc[2]/1000, end_loc[0]/1000,end_loc[1]/1000,end_loc[2]/1000, width/1000,thick,self.cond,nwinc,nhinc,self.tc_id)
         self.tc_id+=1 
         if eq_to_start!=None: # equiv a net to start
-            print ("EQUIV_START",eq_to_start,start_name)
+            #print ("EQUIV_START",eq_to_start,start_name)
             textout += equiv.format(start_name,eq_to_start)
         if eq_to_end!=None: # equiv a net to start
-            print ("EQUIV_END",eq_to_end,end_name)
+            #print ("EQUIV_END",eq_to_end,end_name)
             textout += equiv.format(end_name,eq_to_end)
         return textout
     
@@ -284,9 +287,14 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             start = w.sheet[0]
             stop = w.sheet[1]
             # create new net in FastHerny for the whole bondwire group
+            
             start_name = 'N'+start.net
             stop_name = 'N'+stop.net
             # Note these are 2D pts only
+            if 'D' in start_name: # Move the wire loc to device center 
+                dv_name = start.net.split("_")
+                dv_name = dv_name[0] # get Dx
+            
             start_pt = start.get_center()
             stop_pt = stop.get_center()
             self.add_fh_points(start_name,[start_pt[0],start_pt[1],start.z])
@@ -305,14 +313,14 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             else:
                 ori = 0 
             if ori == 1: # if this wire group is vertical
-                start_wire_loc = [start_pt[0]-w.d*1000*(numwires-1)/2-w.r*2*1000,start_pt[1],start.z]
-                end_wire_loc = [stop_pt[0]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop_pt[1],stop.z]    
+                start_wire_loc_raw = [start_pt[0]-w.d*1000*(numwires-1)/2-w.r*2*1000,start_pt[1],start.z]
+                end_wire_loc_raw = [stop_pt[0]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop_pt[1],stop.z]    
             if ori == 0: # if this wire group is horizontal
-                start_wire_loc = [start_pt[0],start_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,start.z]
-                end_wire_loc = [stop_pt[0],stop_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop.z]    
-            start_wire_loc = [start_wire_loc[i]/1000 for i in range(3)]
-            end_wire_loc = [end_wire_loc[i]/1000 for i in range(3)]
-            print("wire group length",math.sqrt((start_wire_loc[0]-end_wire_loc[0])**2+(start_wire_loc[1]-end_wire_loc[1])**2))
+                start_wire_loc_raw = [start_pt[0],start_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,start.z]
+                end_wire_loc_raw = [stop_pt[0],stop_pt[1]-w.d*1000*(numwires-1)/2-w.r*2*1000,stop.z]    
+            start_wire_loc = [start_wire_loc_raw[i]/1000 for i in range(3)]
+            end_wire_loc = [end_wire_loc_raw[i]/1000 for i in range(3)]
+            print("FH:", 'Start:',start_wire_loc,'Stop:',end_wire_loc, "length:",math.sqrt((start_wire_loc[0]-end_wire_loc[0])**2+(start_wire_loc[1]-end_wire_loc[1])**2))
             ribbon = True
             if not(short):
                 if not ribbon:
@@ -332,10 +340,14 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         self.wire_id +=1
                 else: # generate equivatlent ribbon representation
                 
-                    print("RIBBON representation")
-                    average_width = numwires*w.r*2 
-                    average_thickness = w.r*2 
-                    bw_text+=self.gen_trace_script(start_loc=tuple(start_wire_loc),end_loc=tuple(end_wire_loc),width=average_width,thick=average_thickness,type=ori,eq_to_start=start_name,eq_to_end=stop_name)
+                    #print("RIBBON representation")
+                    average_width = numwires*w.r*2 *1000
+                    #print (average_width)
+                    bw_text+= "\n* START RIBBON TRACE\n"
+                    average_thickness = w.r*2
+                    bw_text+=self.gen_trace_script(start_loc=tuple(start_wire_loc_raw),end_loc=tuple(end_wire_loc_raw),width=average_width,thick=average_thickness,type=ori,eq_to_start=start_name,eq_to_end=stop_name)
+                    bw_text+= "\n* END RIBBON TRACE\n"
+
                     
                     
 

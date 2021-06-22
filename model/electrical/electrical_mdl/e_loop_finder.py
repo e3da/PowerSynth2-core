@@ -129,6 +129,11 @@ class LayoutLoopInterface():
                     c = rib_tc.center()
                     z1=z
                     z2=z
+                    #print ("Ribbon width height")
+                    #print (ori)
+                    #print (rib_tc.width_eval())
+                    #print (rib_tc.height_eval())
+                    #input()
                     #find connected trace to bondwire
                     if 'B' in e[0]: # find the net that connected to trace:
                         for ew in self.graph.edges(n1):
@@ -156,7 +161,7 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    print ('bwribbon',rib_tc.eval_length()/1000)
+                    #print ('bwribbon',rib_tc.eval_length()/1000)
 
                     
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
@@ -515,7 +520,7 @@ class LayoutLoopInterface():
             for tx in traces:
 
                 if tx.dir <0 :
-                    wire_type[tx] = 'G'
+                    wire_type[tx] = 'G' # 'G" set all to signal
                     gr_w.append(tx)
                 else:
                     wire_type[tx] = 'S'
@@ -542,6 +547,7 @@ class LayoutLoopInterface():
         z = tc.z
 
         if tc.struct=='trace': # for normal bundles
+            print("TRACE:", tc)
             if abs(tc.dir) == 1:
                 pos1 = (tc.left,tc.center()[1],z)
                 pos2 = (tc.right,tc.center()[1],z)
@@ -611,43 +617,54 @@ class LayoutLoopInterface():
             #L = 1e-12
             self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
         return n1,n2
-    def rebuild_graph(self,loop_obj):
+    def rebuild_graph(self,loop_obj,mode = "normal"):
         m_dict = {}
         rem_dict = {} # to make sure there is no overlapping in mutual pair
-        for tc in loop_obj.tc_to_id:
-            id1 = loop_obj.tc_to_id[tc]
-            if id1!= -1:
-                # find n1 n2 based on old locs
+        if mode == "all-signal":
+            for tc in loop_obj.tc_to_id:
+                id1 = loop_obj.tc_to_id[tc]
                 R1 = loop_obj.R_loop[id1,id1]
                 L1 = loop_obj.L_loop[id1,id1]
                 # ADD self RL values
                 
                 n1,n2 = self.rebuild_graph_add_edge(tc,0,0,R1,L1,etype = 'fw')
                 m_dict[tc] = (n1,n2)
-            else:
-                new_n2 = False
+        else:
 
-                if abs(tc.dir) == 1:
-                    pos1 = (tc.left,tc.center()[1],tc.z)
-                    pos2 = (tc.right,tc.center()[1],tc.z)
+            for tc in loop_obj.tc_to_id:
+                id1 = loop_obj.tc_to_id[tc]
+                if id1!= -1:
+                    # find n1 n2 based on old locs
+                    R1 = loop_obj.R_loop[id1,id1]
+                    L1 = loop_obj.L_loop[id1,id1]
+                    # ADD self RL values
                     
-                elif abs(tc.dir) ==2 :
-                    pos1 = (tc.center()[0], tc.bottom,tc.z)
-                    pos2 = (tc.center()[0],tc.top,tc.z)
-                
-                if pos1 in self.nodes_dict_3d:
-                    n1 = self.nodes_dict_3d[pos1]
+                    n1,n2 = self.rebuild_graph_add_edge(tc,0,0,R1,L1,etype = 'fw')
+                    m_dict[tc] = (n1,n2)
                 else:
-                    n1 = self.new_nodes_id
-                    new_n2 = True
-                if pos2 in self.nodes_dict_3d:
-                    n2 = self.nodes_dict_3d[pos2]
-                else:
-                    if new_n2:
-                        n2 = self.new_nodes_id+1
+                    new_n2 = False
+
+                    if abs(tc.dir) == 1:
+                        pos1 = (tc.left,tc.center()[1],tc.z)
+                        pos2 = (tc.right,tc.center()[1],tc.z)
+                        
+                    elif abs(tc.dir) ==2 :
+                        pos1 = (tc.center()[0], tc.bottom,tc.z)
+                        pos2 = (tc.center()[0],tc.top,tc.z)
+                    
+                    if pos1 in self.nodes_dict_3d:
+                        n1 = self.nodes_dict_3d[pos1]
                     else:
-                        n2 = self.new_nodes_id
-                n1,n2 = self.rebuild_graph_add_edge(tc,n1,n2,1e-12,1e-12,etype='return')
+                        n1 = self.new_nodes_id
+                        new_n2 = True
+                    if pos2 in self.nodes_dict_3d:
+                        n2 = self.nodes_dict_3d[pos2]
+                    else:
+                        if new_n2:
+                            n2 = self.new_nodes_id+1
+                        else:
+                            n2 = self.new_nodes_id
+                    n1,n2 = self.rebuild_graph_add_edge(tc,n1,n2,1e-12,1e-12,etype='return')
 
         if loop_obj.num_loops > 1: # ADD mutual value
             for tc1 in loop_obj.tc_to_id:
@@ -664,6 +681,8 @@ class LayoutLoopInterface():
 
                         if not (e1 in m_dict):
                             self.mutual_pair[(e1,e2)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2])
+                            #self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
+                            #print ("Mutual pair",self.mutual_pair)
                             m_dict[e1] = e2
                             m_dict[e2] = e1
 
@@ -1105,7 +1124,7 @@ class LayoutLoopInterface():
                     #print(ptrace.eval_length())
                     self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace)
                 
-    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=False):
+    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=True):
         if mode == 1: # save figure as file   
             plt.figure("mesh")
             nx.draw(self.graph,self.pos,with_labels=True)

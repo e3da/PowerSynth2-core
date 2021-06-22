@@ -747,6 +747,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         width,height =get_dims(floor_plan=floor_plan)
         seed = get_seed(seed)
+        print ("MY SEED", seed)
         """
         if optimization == True:
             choice = opt_choices(algorithm=algorithm)
