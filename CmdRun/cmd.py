@@ -795,7 +795,7 @@ class Cmd_Handler:
                     self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,dbunit=self.dbunit)
-                
+                    self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
 
             if opt == 1:
 
@@ -865,8 +865,8 @@ class Cmd_Handler:
                                                              measures=self.measures)
 
 
+                
                     self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
-
             elif opt == 'quit':
                 cont = False
 
@@ -968,6 +968,9 @@ class Cmd_Handler:
                 # plt.show()
                 plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
 
+    
+
+
     def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
 
 
@@ -1025,6 +1028,9 @@ class Cmd_Handler:
         # function to show the plot
         #plt.show()
         plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+
+        
+
         if len(self.measures)==2:
             self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
 
@@ -1058,15 +1064,15 @@ if __name__ == "__main__":
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro_data_collection_final.txt
             
         elif sel==5:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-            
+            args = ['python','cmd.py','-m','/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Unit_Test_Cases/Case_0_0/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            #Public/ICCAD_2021_Electrical_API_Testing/Unit_Test_Cases/Case_0_0
         elif sel==6:
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/DMC_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_25_wire_bondless/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/2D_case_0/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
-        #f = open('output.txt','w')
+        #f = open('output.txt','w')macro_script.txt
         #sys.stdout = f
         cmd.cmd_handler_flow(arguments=args)
            
