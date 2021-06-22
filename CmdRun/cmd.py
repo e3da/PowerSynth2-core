@@ -227,6 +227,7 @@ class Cmd_Handler:
                         devices = info[1].split(",")
                     if info[0] == 'Device_Power:':
                         power = info[1].split(",")
+                        
                         power = [float(i) for i in power]
                     if info[0] == 'Heat_Convection:':
                         try:
@@ -645,7 +646,7 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
         print("init api:", type)
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
@@ -814,7 +815,7 @@ class Cmd_Handler:
                     self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,dbunit=self.dbunit)
-                
+                    self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
 
             if opt == 1:
 
@@ -884,8 +885,8 @@ class Cmd_Handler:
                                                              measures=self.measures,seed=seed)
 
 
+                
                     self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
-
             elif opt == 'quit':
                 cont = False
 
@@ -930,7 +931,7 @@ class Cmd_Handler:
                     sol=self.structure_3D.solutions[i]
                     data=[sol.solution_id,sol.parameters[perf_names[0]],sol.parameters[perf_names[1]]]
                     csv_writer.writerow(data)
-            my_csv.close()
+                my_csv.close()
         # '''
             sol_data = {}
             file = file_name
@@ -987,7 +988,10 @@ class Cmd_Handler:
                 # plt.show()
                 plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
 
-    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None,plot=True):
+    
+
+
+    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
 
 
         data_x=[]
@@ -1031,11 +1035,14 @@ class Cmd_Handler:
             # giving a title to my graph
             plt.title('Solution Space')
 
-            # function to show the plot
-            #plt.show()
-            plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
-            if len(self.measures)==2:
-                self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
+        # function to show the plot
+        #plt.show()
+        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+
+        
+
+        if len(self.measures)==2:
+            self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
 
 
 

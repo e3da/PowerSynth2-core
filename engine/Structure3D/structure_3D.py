@@ -114,52 +114,54 @@ class Structure_3D():
         for i in range(len(self.layers)):
             layer=self.layers[i]
             patch_dict = layer.new_engine.init_data[0]
-            init_data_islands = layer.new_engine.init_data[3]
+            #init_data_islands = layer.new_engine.init_data[3]
+            init_data_islands = layer.islands
             init_cs_islands=layer.new_engine.init_data[2]
+            #init_cs_islands=layer.updated_cs_sym_info
             fp_width, fp_height = layer.size
-        fig_dict = {(fp_width, fp_height): []}
-        for k, v in list(patch_dict.items()):
-            fig_dict[(fp_width, fp_height)].append(v)
-        init_rects = {}
-        for k, v in list(layer.new_engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
-            rect=v[0]
-            x,y,width,height= [rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]]
-            type = v[2]
-            rect_up=[type,x,y,width,height]
-            init_rects[k] = rect_up
-        
-        if fp_width>dbunit:
+            fig_dict = {(fp_width, fp_height): []}
+            for k, v in list(patch_dict.items()):
+                fig_dict[(fp_width, fp_height)].append(v)
+            init_rects = {}
+            for k, v in list(layer.new_engine.init_data[1].items()): # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
+                rect=v[0]
+                x,y,width,height= [rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]]
+                type = v[2]
+                rect_up=[type,x,y,width,height]
+                init_rects[k] = rect_up
             
-            s=1
-        else:
-            s=dbunit
-        cs_sym_info = {(fp_width * s, fp_height * s): init_rects}
-        layer.updated_cs_sym_info=[cs_sym_info]
-        for isl in init_cs_islands:
-            for node in isl.mesh_nodes:
-                node.pos[0] = node.pos[0] * s
-                node.pos[1] = node.pos[1] * s
-        for island in init_data_islands:
-            for element in island.elements:
+            if fp_width>dbunit:
+                
+                s=1
+            else:
+                s=dbunit
+            cs_sym_info = {(fp_width * s, fp_height * s): init_rects}
+            layer.updated_cs_sym_info=[cs_sym_info]
+            for isl in init_cs_islands:
+                for node in isl.mesh_nodes:
+                    node.pos[0] = node.pos[0] * s
+                    node.pos[1] = node.pos[1] * s
+            for island in init_data_islands:
+                for element in island.elements:
 
 
-                element[1]=element[1]*s
-                element[2] = element[2] * s
-                element[3] = element[3] * s
-                element[4] = element[4] * s
-
-            if len(island.child)>0:
-                for element in island.child:
-
-
-                    element[1] = element[1] * s
+                    element[1]=element[1]*s
                     element[2] = element[2] * s
                     element[3] = element[3] * s
                     element[4] = element[4] * s
 
-            for isl in init_cs_islands:
-                if isl.name==island.name:
-                    island.mesh_nodes= copy.deepcopy(isl.mesh_nodes)
+                if len(island.child)>0:
+                    for element in island.child:
+
+
+                        element[1] = element[1] * s
+                        element[2] = element[2] * s
+                        element[3] = element[3] * s
+                        element[4] = element[4] * s
+
+                for isl in init_cs_islands:
+                    if isl.name==island.name:
+                        island.mesh_nodes= copy.deepcopy(isl.mesh_nodes)
 
         md_data.islands[layer.name] = init_data_islands
         md_data.footprint[layer.name] = (fp_width * s, fp_height * s)
@@ -707,6 +709,7 @@ class Structure_3D():
             for i in range(len(connected_vias)):
                 #for j in range(connected_vias[i]):
                 for via_name, layers in info.items():
+                    
                     for layer in layers:
                         
                         for via_name2, layers2 in info.items():
@@ -718,12 +721,14 @@ class Structure_3D():
                                             connected_vias[j].remove(via_name2)
             
             connected_vias=[x for x in connected_vias if x!=[]]
-            
+        
+        
         via_connected_layer_info={}
         if len(connected_vias)>0:
             for i in range(len(connected_vias)):
                 via_name=connected_vias[i][0]
-                layers=info[via_name]
+                layers_=copy.deepcopy(info[via_name])
+                
                 if len(connected_vias[i])>1:
                     for name in connected_vias[i]:
                         if name!=connected_vias[i][0]:
@@ -731,21 +736,24 @@ class Structure_3D():
                             
                             for layer in list(info[name]):
                                 
-                                if layer not in layers:
-                                    layers.append(layer)
+                                if layer not in layers_:
+                                    layers_.append(layer)
                 
-                via_connected_layer_info[via_name]=layers
+                via_connected_layer_info[via_name]=layers_
         
         layer_wise_vias={}
         for i in range(len(self.layers)):
             layer_wise_vias[self.layers[i].name]=[]
         
         for via_name, layers in info.items():
+            
             for layer_name in layers:
                 if layer_name in layer_wise_vias:
+                    
                     layer_wise_vias[layer_name].append(via_name)
 
         via_names=(layer_wise_vias.values())
+        
         via_names_list = []
         [via_names_list.append(x) for x in via_names if x not in via_names_list]
         via_names_list=[tuple(i) for i in via_names_list]
@@ -753,11 +761,36 @@ class Structure_3D():
         for via_name in via_names_list:
             interfacing_layer_info[via_name]=[]
 
-        for layer_name, via_name_list in layer_wise_vias.items():
-            if tuple(via_name_list) in interfacing_layer_info:
+        
+        for key in interfacing_layer_info.keys():
+            for layer_name, via_name_list in layer_wise_vias.items():
+                #print(key,via_name_list)
+                a=set(key)
+                
+                b=set(via_name_list)
+                
+                if b.issubset(a):
+                    #print(layer_name)
+                    if layer_name not in interfacing_layer_info[key]:
+                        interfacing_layer_info[key].append(layer_name)
+                        
+            '''if tuple(via_name_list) in interfacing_layer_info:
                 if layer_name not in interfacing_layer_info[tuple(via_name_list)]:
-                    interfacing_layer_info[tuple(via_name_list)].append(layer_name)
-        #print(interfacing_layer_info)
+                    interfacing_layer_info[tuple(via_name_list)].append(layer_name)'''
+        '''removable_keys=[]
+        for key1 in interfacing_layer_info.keys():
+            for key2 in interfacing_layer_info.keys():
+                if key1!=key2:
+                    a=set(key1)
+                
+                    b=set(key2)
+                
+                    if b.issubset(a):
+                        removable_keys.append(key2)
+
+        for key in removable_keys:
+            del interfacing_layer_info[key]'''
+        
         for via_name_list in interfacing_layer_info:
             count=0
             name=via_name_list[count]
@@ -775,7 +808,7 @@ class Structure_3D():
             
 
             self.interfacing_layer_info[name]=interfacing_layer_info[via_name_list]
-        #print(self.interfacing_layer_info)
+        
         self.via_connected_layer_info=via_connected_layer_info
                 
     def create_root(self):
@@ -1692,7 +1725,7 @@ class Node_3D(Node):
         ZDL=self.ZDL
         ZDL=list(set(ZDL))
         ZDL.sort()
-        #print(ZDL)
+        
         dictList1 = []      
         for foo in edges:
             dictList1.append(foo.getEdgeDict())

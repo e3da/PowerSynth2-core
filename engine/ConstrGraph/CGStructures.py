@@ -31,7 +31,10 @@ class Edge():
         # self.edgeDict = {(self.source, self.dest): self.constraint.constraintval}
 
     def getEdgeDict(self):
-        self.edgeDict = {(self.source.index, self.dest.index): [self.constraint, self.type, self.index, self.comp_type]}
+        try:
+            self.edgeDict = {(self.source.index, self.dest.index): [self.constraint, self.type, self.index, self.comp_type]}
+        except:
+            self.edgeDict = {(self.source, self.dest): [self.constraint, self.type, self.index, self.comp_type]}
         return self.edgeDict
 
     def getEdgeWeight(self, source, dest):
