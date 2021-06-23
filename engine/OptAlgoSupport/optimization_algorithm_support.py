@@ -77,8 +77,9 @@ class new_engine_opt:
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
                 '''
-                R=100    # Temporarily hard coded to Evaluation runtime
-                L=100    # Temporarily hard coded to Evaluation runtime
+                import random
+                R=100 + random.random()    # Temporarily hard coded to Evaluation runtime
+                L=100 + random.random()   # Temporarily hard coded to Evaluation runtime
                 print ("RL",R,L)
                     
                 #except:
@@ -94,7 +95,7 @@ class new_engine_opt:
             if isinstance(measure, ThermalMeasure):
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
                 #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                max_t = 300  # Temporarily hard coded to bypass MatLab
+                max_t = 300 + random.random()  # Temporarily hard coded to bypass MatLab
                 result.append(max_t)
 
         return result

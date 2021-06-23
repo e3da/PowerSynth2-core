@@ -23,39 +23,12 @@ class Window(QtWidgets.QDialog):
         # it takes the Canvas widget and a parent
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        # Just some button connected to `plot` method
-        self.button = QtWidgets.QPushButton('Plot')
-        self.button.clicked.connect(self.plot)
-
         # set the layout
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self.toolbar)
         layout.addWidget(self.canvas)
         layout.addWidget(self.button)
         self.setLayout(layout)
-
-    def plot(self):
-        ''' Plot the power module designs '''
-
-        ax = plt.axes(projection ='3d')
-
-        # Create rectangles to represent traces
-        data = np.loadtxt(os.getcwd() + '/UI/data.txt')
-        x, y, dx, dy = data[:, 0], data[:, 1], data[:, 2], data[:, 3]
-        z = [3] * (len(x) // 2)
-        z += [1] * (len(x) // 2)
-        dz = [0.1] * len(x)
-
-        fig = self.figure
-        ax = fig.gca(projection='3d')
-
-        ax.set_zlim3d(0,4)
-
-        ax.bar3d(x, y, z, dx, dy, dz, color='gray')
-        ax.set_title('Test 3D Graph')
-
-        # refresh canvas
-        self.canvas.draw()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)

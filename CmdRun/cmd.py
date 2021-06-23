@@ -27,7 +27,8 @@ import copy
 import csv
 from core.general.settings import settings
 
-import core.UI.UI_main as main
+import core.UI.Ui_main as main
+from matplotlib.figure import Figure
 
 
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
@@ -90,6 +91,7 @@ class Cmd_Handler:
         self.plot=False # flag for plotting solution layouts
         # Data storage
         self.db_file = None  # A file to store layout database
+        self.solutionsFigure = Figure()
 
         # CornerStitch Initial Objects
         self.structure_3D=Structure_3D()
@@ -973,7 +975,6 @@ class Cmd_Handler:
 
     def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
 
-
         data_x=[]
         data_y=[]
         perf_metrices=[]
@@ -988,11 +989,10 @@ class Cmd_Handler:
                 data_y.append(sol.parameters[perf_metrices[1]])
             else:
                 data_y.append(sol.solution_id)
-
-        plt.cla()
         
+        axes = self.solutionsFigure.gca()
         #print (data_x,data_y)
-        plt.scatter(data_x, data_y)
+        axes.scatter(data_x, data_y, picker=True)
         for solution in solutions:
             labels=list(solution.parameters.keys())
             break
@@ -1016,22 +1016,21 @@ class Cmd_Handler:
         '''
 
 
-        plt.xlim(min(data_x)-2, max(data_x)+2)
-        plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
+        axes.set_xlim(min(data_x)-2, max(data_x)+2)
+        axes.set_ylim(min(data_y)-0.5, max(data_y)+0.5)
         # naming the x axis
-        plt.xlabel(x_label)
+        axes.set_xlabel(x_label)
         # naming the y axis
-        plt.ylabel(y_label)
+        axes.set_ylabel(y_label)
 
         # giving a title to my graph
-        plt.title('Solution Space')
+        axes.set_title('Solution Space')
 
         # function to show the plot
         #plt.show()
-        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+        #axes.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
         if len(self.measures)==2:
             self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
-        print("Nice.")
 
 
 
@@ -1039,7 +1038,7 @@ class Cmd_Handler:
 if __name__ == "__main__":  
     
     main.main()
-    
+
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
 
