@@ -1040,6 +1040,8 @@ if __name__ == "__main__":
     application = main.GUI()
     application.run()
 
+    sys.exit()
+
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
 

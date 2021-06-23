@@ -4,6 +4,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.pyplot import close
 from core.CmdRun.cmd import Cmd_Handler
 from core.UI.solutionBrowser import Ui_solutionBrowser
 from core.UI.mainWindow_master import Ui_MainWindow
@@ -11,19 +12,38 @@ from core.UI.mainWindow_master import Ui_MainWindow
 
 class GUI():
 
+    def __init__(self):
+        self.currentWindow = None
+        self.running = False
+
+    def setWindow(self, newWindow):
+            if self.currentWindow:
+                self.currentWindow.close()
+            self.currentWindow = newWindow
+
+    def closeEvent(self, event):
+        self.mainWindow()
+
     def mainWindow(self):
         '''Generates the Main Window'''
         MainWindow = QtWidgets.QMainWindow()
         ui = Ui_MainWindow()
         ui.setupUi(MainWindow)
+        self.setWindow(MainWindow)
+
+        ui.btn_open_sol_browser.pressed.connect(self.solutionBrowser)
+
         MainWindow.show()
-        self.app.exec_()
+        if not self.running:
+            self.running = True
+            self.app.exec_()
 
     def solutionBrowser(self):
         '''Generates Solution Browser'''
-        CornerStitch_Dialog = QtWidgets.QDialog()
+        solutionBrowser = QtWidgets.QDialog()
         ui = Ui_solutionBrowser()
-        ui.setupUi(CornerStitch_Dialog)
+        ui.setupUi(solutionBrowser)
+        self.setWindow(solutionBrowser)
 
         def on_pick(event):
             imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/Mode_2_gen_only/layout_' + str(event.ind[0]) + '_I1.png'
@@ -53,10 +73,11 @@ class GUI():
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.callbacks.connect('pick_event', on_pick)
 
-        widget = ui.grview_sols_browser.scene().addWidget(canvas)
+        ui.grview_sols_browser.scene().addWidget(canvas)
 
-        CornerStitch_Dialog.show()
-        sys.exit(self.app.exec_())
+        solutionBrowser.closeEvent = self.closeEvent
+
+        solutionBrowser.show()
 
 
     def run(self):
@@ -74,4 +95,3 @@ class GUI():
 
         self.mainWindow()
 
-        self.solutionBrowser()
