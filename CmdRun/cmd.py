@@ -1037,7 +1037,8 @@ class Cmd_Handler:
 
 if __name__ == "__main__":  
     
-    main.main()
+    application = main.GUI()
+    application.run()
 
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     

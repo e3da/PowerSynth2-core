@@ -1,59 +1,77 @@
 import sys
 import os
-from core.CmdRun.cmd import Cmd_Handler
-from core.UI.solutionBrowser import Ui_solutionBrowser
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-import sys
+from core.CmdRun.cmd import Cmd_Handler
+from core.UI.solutionBrowser import Ui_solutionBrowser
+from core.UI.mainWindow_master import Ui_MainWindow
     
 
-def main():
+class GUI():
 
-    macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
-    settingsPath = '/nethome/jgm019/testcases/settings.info'
+    def mainWindow(self):
+        '''Generates the Main Window'''
+        MainWindow = QtWidgets.QMainWindow()
+        ui = Ui_MainWindow()
+        ui.setupUi(MainWindow)
+        MainWindow.show()
+        self.app.exec_()
 
-    cmd = Cmd_Handler(debug=False)
+    def solutionBrowser(self):
+        '''Generates Solution Browser'''
+        CornerStitch_Dialog = QtWidgets.QDialog()
+        ui = Ui_solutionBrowser()
+        ui.setupUi(CornerStitch_Dialog)
 
-    args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+        def on_pick(event):
+            imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/Mode_2_gen_only/layout_' + str(event.ind[0]) + '_I1.png'
 
-    cmd.cmd_handler_flow(arguments=args)
+            imageObject = QImage()
+            imageObject.load(imagePath)
+            image = QPixmap.fromImage(imageObject)
 
-    app = QtWidgets.QApplication(sys.argv)
-    CornerStitch_Dialog = QtWidgets.QDialog()
-    ui = Ui_solutionBrowser()
-    ui.setupUi(CornerStitch_Dialog)
+            ui.grview_layout_sols.scene().addPixmap(image)
 
-    def on_pick(event):
-        imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/Mode_2_gen_only/layout_' + str(event.ind[0]) + '_I1.png'
+        scene = QtWidgets.QGraphicsScene()
+        ui.grview_sols_browser.setScene(scene)
+
+        scene = QtWidgets.QGraphicsScene()
+        ui.grview_layout_sols.setScene(scene)
+
+        scene = QtWidgets.QGraphicsScene()
+        imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/initial_layout_I1.png'
 
         imageObject = QImage()
         imageObject.load(imagePath)
         image = QPixmap.fromImage(imageObject)
 
-        ui.grview_layout_sols.scene().addPixmap(image)
+        scene.addPixmap(image)
+        ui.grview_init_layout.setScene(scene)
 
-    scene = QtWidgets.QGraphicsScene()
-    ui.grview_sols_browser.setScene(scene)
+        canvas = FigureCanvas(self.cmd.solutionsFigure)
+        canvas.callbacks.connect('pick_event', on_pick)
 
-    scene = QtWidgets.QGraphicsScene()
-    ui.grview_layout_sols.setScene(scene)
+        widget = ui.grview_sols_browser.scene().addWidget(canvas)
 
-    scene = QtWidgets.QGraphicsScene()
-    imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/initial_layout_I1.png'
+        CornerStitch_Dialog.show()
+        sys.exit(self.app.exec_())
 
-    imageObject = QImage()
-    imageObject.load(imagePath)
-    image = QPixmap.fromImage(imageObject)
 
-    scene.addPixmap(image)
-    ui.grview_init_layout.setScene(scene)
+    def run(self):
+        '''Main Function to run the GUI'''
+        macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
+        settingsPath = '/nethome/jgm019/testcases/settings.info'
 
-    canvas = FigureCanvas(cmd.solutionsFigure)
-    canvas.callbacks.connect('pick_event', on_pick)
+        self.cmd = Cmd_Handler(debug=False)
 
-    widget = ui.grview_sols_browser.scene().addWidget(canvas)
+        args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
 
-    CornerStitch_Dialog.show()
-    sys.exit(app.exec_())
+        self.cmd.cmd_handler_flow(arguments=args)
+
+        self.app = QtWidgets.QApplication(sys.argv)
+
+        self.mainWindow()
+
+        self.solutionBrowser()
