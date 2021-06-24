@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 from PyQt5 import QtWidgets
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
@@ -8,6 +9,7 @@ from core.CmdRun.cmd import Cmd_Handler
 from core.UI.solutionBrowser import Ui_solutionBrowser
 from core.UI.mainWindow_master import Ui_MainWindow
 from core.UI.createProject import Ui_Dialog as Ui_createProject
+from core.UI.openProject import Ui_Dialog as Ui_openProject
     
 
 class GUI():
@@ -16,6 +18,8 @@ class GUI():
         self.settingsPath = None
         self.macroPath = None
         self.projectDirectory = None
+        self.layoutPath = None
+        self.techLibPath = None
         self.currentWindow = None
         self.running = False
 
@@ -36,46 +40,28 @@ class GUI():
 
         ui.btn_open_sol_browser.pressed.connect(self.solutionBrowser)
         ui.btn_newProject.pressed.connect(self.newProject)
+        ui.btn_openProject.pressed.connect(self.openProject)
 
         MainWindow.show()
         if not self.running:
             self.running = True
             self.app.exec_()
 
-    def newProject(self):
-        '''Load UI for new Project'''
-        createProject = QtWidgets.QDialog()
-        ui = Ui_createProject()
-        ui.setupUi(createProject)
-        self.setWindow(createProject)
-        
-        def getDirectory():
-            directoryPath = QtWidgets.QFileDialog.getExistingDirectory(createProject, 'Set Project Directory', os.getenv('HOME'))
-            ui.lineEdit_2.setText(directoryPath)
+    def openProject(self):
+        '''Load UI for opening a previously existing project'''
+        openProject = QtWidgets.QDialog()
+        ui = Ui_openProject()
+        ui.setupUi(openProject)
 
         def getSettingsPath():
-            settingsInfo = QtWidgets.QFileDialog.getOpenFileName(createProject, 'Open settings.info', os.getenv('HOME'))
+            settingsInfo = QtWidgets.QFileDialog.getOpenFileName(openProject, 'Open settings.info', os.getenv('HOME'))
             ui.lineEdit_3.setText(settingsInfo[0])
 
         def getMacroPath():
-            macroInfo = QtWidgets.QFileDialog.getOpenFileName(createProject, 'Open macro.txt', os.getenv('HOME'))
+            macroInfo = QtWidgets.QFileDialog.getOpenFileName(openProject, 'Open macro.txt', os.getenv('HOME'))
             ui.lineEdit_4.setText(macroInfo[0])
 
-        def create():
-            if not ui.lineEdit.text():
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid name for the project.")
-                popup.exec_()
-                return
-
-            if not os.path.exists(ui.lineEdit_2.text()):
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to a project directory.")
-                popup.exec_()
-                return
-
+        def open():
             if not os.path.exists(ui.lineEdit_3.text()) or "settings.info" not in ui.lineEdit_3.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
@@ -94,19 +80,101 @@ class GUI():
             self.settingsPath = ui.lineEdit_3.text()
             self.macroPath = ui.lineEdit_4.text()
 
+            # Reopen Main Window-- probably.
+
+
+            openProject.close()
+
+        ui.btn_cancel.pressed.connect(openProject.close)
+        ui.btn_open_macro.pressed.connect(getMacroPath)
+        ui.btn_open_settings_2.pressed.connect(getSettingsPath)
+        ui.btn_create_project.pressed.connect(open)
+
+        openProject.show()
+
+    def newProject(self):
+        '''Load UI for new Project'''
+        createProject = QtWidgets.QDialog()
+        ui = Ui_createProject()
+        ui.setupUi(createProject)
+        
+        def getDirectory():
+            directoryPath = QtWidgets.QFileDialog.getExistingDirectory(createProject, 'Set Project Directory', os.getenv('HOME'))
+            ui.lineEdit_2.setText(directoryPath)
+
+        def getLayoutPath():
+            layoutInfo = QtWidgets.QFileDialog.getOpenFileName(createProject, 'Open layout_script', os.getenv('HOME'))
+            ui.lineEdit_4.setText(layoutInfo[0])
+        
+        def getTechLib():
+            techLib = QtWidgets.QFileDialog.getExistingDirectory(createProject, 'Locate tech_lib Folder', os.getenv('HOME'))
+            ui.lineEdit_5.setText(techLib)
+
+        def create():
+            if not ui.lineEdit.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid name for the project.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_2.text()):
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to a project directory.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_5.text()):
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the tech_lib folder.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_4.text()) or ".txt" not in ui.lineEdit_4.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the layout_script file.")
+                popup.exec_()
+                return
+
+            # Save paths to macro/settings
+            self.techLibPath = ui.lineEdit_5.text()
+            self.layoutPath = ui.lineEdit_4.text()
+
             # Create a new project folder
             self.projectDirectory = ui.lineEdit_2.text() + "/" + ui.lineEdit.text()
-            mode = 0o666
+            mode = 0o777
             os.mkdir(self.projectDirectory, mode)
 
+            # Copy the layout script into the new folder
+            shutil.copy(self.layoutPath, self.projectDirectory + "/" + self.layoutPath.split("/")[-1])
+
+            self.settingsPath = self.projectDirectory + "/settings.info"
+
+            settingsFile = open(self.settingsPath, "w")
+            settingsFile.write(f"""# Settings and Paths\nDEFAULT_TECH_LIB_DIR: {self.techLibPath}
+LAST_ENTRIES_PATH: ./export_data/app_data/last_entries.p
+TEMP_DIR: ./export_data/temp
+CACHED_CHAR_PATH: ./export_data/cached_thermal
+MATERIAL_LIB_PATH: {self.techLibPath}/Material/Materials.csv
+EXPORT_DATA_PATH: ./export_data
+GMSH_BIN_PATH: ./gmsh-2.7.0-Windows
+ELMER_BIN_PATH: ./Elmer_8.2-Release/bin
+ANSYS_IPY64: C:/Program Files/AnsysEM/AnsysEM18.2/Win64/common/IronPython
+FASTHENRY_FOLDER: ./FastHenry
+MANUAL: ./PowerSynth_User_Manual.pdf""")
+
+            # Reopen Main Window-- probably.
 
             createProject.close()
 
         # Adjust buttons here
         ui.btn_cancel.pressed.connect(createProject.close)
         ui.btn_open_folder.pressed.connect(getDirectory)
-        ui.btn_open_macro.pressed.connect(getMacroPath)
-        ui.btn_open_settings_2.pressed.connect(getSettingsPath)
+        ui.btn_open_macro.pressed.connect(getLayoutPath)
+        ui.btn_open_macro_2.pressed.connect(getTechLib)
         ui.btn_create_project.pressed.connect(create)
 
         createProject.show()

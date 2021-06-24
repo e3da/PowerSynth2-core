@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>531</width>
-    <height>217</height>
+    <width>500</width>
+    <height>150</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -15,36 +15,22 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Project Name</string>
+        <string>Path to settings.info</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit"/>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QLabel" name="label_2">
-       <property name="text">
-        <string>Project Directory</string>
-       </property>
-      </widget>
+      <widget class="QLineEdit" name="lineEdit_3"/>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineEdit_2"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btn_open_folder">
+      <widget class="QPushButton" name="btn_open_settings_2">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
+         <horstretch>10</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
@@ -56,51 +42,12 @@
        </property>
        <property name="maximumSize">
         <size>
-         <width>85</width>
+         <width>55</width>
          <height>16777215</height>
         </size>
        </property>
        <property name="text">
-        <string>Open Folder</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <item>
-      <widget class="QLabel" name="label_5">
-       <property name="text">
-        <string>Path to tech_lib folder</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit_5"/>
-     </item>
-     <item>
-      <widget class="QPushButton" name="btn_open_macro_2">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="minimumSize">
-        <size>
-         <width>0</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>85</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Open Folder</string>
+        <string>Open</string>
        </property>
       </widget>
      </item>
@@ -111,7 +58,7 @@
      <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Path to layout_script</string>
+        <string>Path to macro.txt</string>
        </property>
       </widget>
      </item>
@@ -163,7 +110,7 @@
      <item>
       <widget class="QPushButton" name="btn_create_project">
        <property name="text">
-        <string>Create Project</string>
+        <string>Open Project</string>
        </property>
       </widget>
      </item>
