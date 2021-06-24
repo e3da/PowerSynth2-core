@@ -1036,7 +1036,7 @@ class Cmd_Handler:
 
 
 if __name__ == "__main__":  
-    
+
     application = main.GUI()
     application.run()
 
