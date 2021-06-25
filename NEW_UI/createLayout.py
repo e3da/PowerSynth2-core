@@ -1,0 +1,110 @@
+# -*- coding: utf-8 -*-
+
+# Form implementation generated from reading ui file 'NEW_UI/ui/createLayout.ui'
+#
+# Created by: PyQt5 UI code generator 5.15.4
+#
+# WARNING! All changes made in this file will be lost!
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class Ui_Dialog(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(531, 217)
+        self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.label_2 = QtWidgets.QLabel(Dialog)
+        self.label_2.setObjectName("label_2")
+        self.horizontalLayout_2.addWidget(self.label_2)
+        self.lineEdit_2 = QtWidgets.QLineEdit(Dialog)
+        self.lineEdit_2.setObjectName("lineEdit_2")
+        self.horizontalLayout_2.addWidget(self.lineEdit_2)
+        self.btn_open_layout = QtWidgets.QPushButton(Dialog)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_open_layout.sizePolicy().hasHeightForWidth())
+        self.btn_open_layout.setSizePolicy(sizePolicy)
+        self.btn_open_layout.setMinimumSize(QtCore.QSize(0, 0))
+        self.btn_open_layout.setMaximumSize(QtCore.QSize(85, 16777215))
+        self.btn_open_layout.setObjectName("btn_open_layout")
+        self.horizontalLayout_2.addWidget(self.btn_open_layout)
+        self.verticalLayout.addLayout(self.horizontalLayout_2)
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.label_5 = QtWidgets.QLabel(Dialog)
+        self.label_5.setObjectName("label_5")
+        self.horizontalLayout_6.addWidget(self.label_5)
+        self.lineEdit_5 = QtWidgets.QLineEdit(Dialog)
+        self.lineEdit_5.setObjectName("lineEdit_5")
+        self.horizontalLayout_6.addWidget(self.lineEdit_5)
+        self.btn_open_bondwire = QtWidgets.QPushButton(Dialog)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_open_bondwire.sizePolicy().hasHeightForWidth())
+        self.btn_open_bondwire.setSizePolicy(sizePolicy)
+        self.btn_open_bondwire.setMinimumSize(QtCore.QSize(0, 0))
+        self.btn_open_bondwire.setMaximumSize(QtCore.QSize(85, 16777215))
+        self.btn_open_bondwire.setObjectName("btn_open_bondwire")
+        self.horizontalLayout_6.addWidget(self.btn_open_bondwire)
+        self.verticalLayout.addLayout(self.horizontalLayout_6)
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
+        self.label_4 = QtWidgets.QLabel(Dialog)
+        self.label_4.setObjectName("label_4")
+        self.horizontalLayout_4.addWidget(self.label_4)
+        self.lineEdit_4 = QtWidgets.QLineEdit(Dialog)
+        self.lineEdit_4.setObjectName("lineEdit_4")
+        self.horizontalLayout_4.addWidget(self.lineEdit_4)
+        self.btn_open_layout_stack = QtWidgets.QPushButton(Dialog)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_open_layout_stack.sizePolicy().hasHeightForWidth())
+        self.btn_open_layout_stack.setSizePolicy(sizePolicy)
+        self.btn_open_layout_stack.setMinimumSize(QtCore.QSize(0, 0))
+        self.btn_open_layout_stack.setMaximumSize(QtCore.QSize(85, 16777215))
+        self.btn_open_layout_stack.setObjectName("btn_open_layout_stack")
+        self.horizontalLayout_4.addWidget(self.btn_open_layout_stack)
+        self.verticalLayout.addLayout(self.horizontalLayout_4)
+        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_5.addItem(spacerItem)
+        self.btn_create_project = QtWidgets.QPushButton(Dialog)
+        self.btn_create_project.setObjectName("btn_create_project")
+        self.horizontalLayout_5.addWidget(self.btn_create_project)
+        self.btn_cancel = QtWidgets.QPushButton(Dialog)
+        self.btn_cancel.setObjectName("btn_cancel")
+        self.horizontalLayout_5.addWidget(self.btn_cancel)
+        self.verticalLayout.addLayout(self.horizontalLayout_5)
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        self.label_2.setText(_translate("Dialog", "Path to layout_script"))
+        self.btn_open_layout.setText(_translate("Dialog", "Open File"))
+        self.label_5.setText(_translate("Dialog", "Path to bondwire_setup"))
+        self.btn_open_bondwire.setText(_translate("Dialog", "Open File"))
+        self.label_4.setText(_translate("Dialog", "Path to layout_stack"))
+        self.btn_open_layout_stack.setText(_translate("Dialog", "Open File"))
+        self.btn_create_project.setText(_translate("Dialog", "Create Layout"))
+        self.btn_cancel.setText(_translate("Dialog", "Cancel"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Dialog = QtWidgets.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    Dialog.show()
+    sys.exit(app.exec_())
+

@@ -1,0 +1,67 @@
+# Input scipts:
+Layout_script: ./layout_geometry_script_up.txt
+Bondwire_setup: ./bonding_wires_setup_up.txt
+Layer_stack: ./layer_stack.csv  # ABOVE 3 ALWAYS REQUIRED, GENERATES LAYOUT
+Parasitic_model: ./imam_journal.rsmdl   # PARASITIC MODEL AND TRACE_ORI ONLY FOR ELECTRICAL
+Fig_dir: ./Figs_Final
+Solution_dir: ./Solutions_Final
+Constraint_file: ./layout.csv  # CONSTRAINTS -- HANDLE AFTER GENERATING LAYOUT
+Trace_Ori: ./Trace_Ori.txt
+
+# Layout Generation Set up:
+# Options -- 0: layout generation, 1:single layout evaluation, 2:layout optimization
+# Layout Modes -- 0: minimum size, 1:variable size, 2:fixed size, 3:fixed size with fixed locations
+# if New ==1 constraint file is required to setup if ==0 constraint file will be reloaded
+# if Flexible_Wire==0: horizontal/vertical wire bond is considered, else: flexible connection is considered.
+# Reliability-awareness==0,1,2 #0: no reliability constraints, 1: worst case consideration, 2: average case
+Reliability-awareness: 0
+New: 1
+Plot_Solution: 1
+Flexible_Wire: 0
+Option: 2  #  THIS AFFECTS WHAT IS NEEDED -- BELOW ONLY FOR 0 AND 2, ELECTRICAL/THERMAL ONLY FOR 1 AND 2
+Layout_Mode: 2
+Floor_plan: 50,50 
+Num_of_layouts: 25
+Seed: 10 # 0 and 2
+# Algorithms options: "NG-RANDOM"
+Optimization_Algorithm: NG-RANDOM
+
+# Model Setup
+# For macro mode, only support a single electrical measure and single thermal measure as objectives for optimization
+# 0 for resistance 1 for inductance
+# WORK IN PROGRESS
+# Model Setup
+# For macro mode, only support a single electrical measure and single thermal measure as objectives for optimization
+# 0 for resistance 1 for inductance
+# model type: Loop, PowerSynthPEEC, FastHenry
+
+Electrical_Setup:  # 1 and 2
+Model_Type: LoopFHcompare
+Measure_Name: FastHenry
+Measure_Type: 1
+# Device Connection Table
+Device_Connection:
+D1 1,0,0
+D2 1,0,0
+D5 1,0,0
+D6 1,0,0
+End_Device_Connection.
+Source: L1 #Cap_top
+Sink: L2 #Cap_bot
+Frequency: 100000 #kHz
+End_Electrical_Setup.
+
+Thermal_Setup:
+# Model : 0 for TSFM or 1 for Analytical or 2 for ParaPower
+Model_Select: 2
+Measure_Name: Loop
+Selected_Devices: D1,D2,D5,D6
+Device_Power: 10,10,10,10
+Heat_Convection: 1000
+Ambient_Temperature: 300
+End_Thermal_Setup.
+
+Workflow:
+Run Macro -- 3D Visualizer.
+Create Macro -- Give paths to first three files -- show layout -- ask for option -- ask for electrical/thermal options based on option
+             -- ask for trace_ori/parasitic if electrical is chosen -- edit constraints? -- done.
