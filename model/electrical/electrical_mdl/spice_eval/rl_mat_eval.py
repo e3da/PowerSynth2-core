@@ -219,14 +219,15 @@ class RL_circuit():
             
             # This is used to check the connnectivity to certain nodes. Uncomment to use
             #check_lists = [14,16,30,24,18,31,25,17]
-            #if 'return' in edata['data']['type']: # bondwire contribution
-            #    print ('edge',n1,n2)
+            #if 'fw' in edata['data']['type']: # bondwire contribution
+            #    print(n1,n2)
             #    print(edata)
-            #    print(edata['res'],edata['ind'])
+            #print(edata['res'],edata['ind'])
             #if n1 in check_lists or n2 in check_lists:
             #    print('edge', n1, n2)
             #    print(edata['res'], edata['ind'])
-
+            print(n1,n2)
+            print(edata)
             e_name = str(n1)+str(n2)
             R_val = abs(edata['res'])
             L_val = abs(edata['ind'])
@@ -277,15 +278,19 @@ class RL_circuit():
             M_val = msh_obj.mutual_pair[k][1] # Mval is same
 
             e1_name = str(e1[0]) + str(e1[1])
+            e2_name = str(e2[0]) + str(e2[1])
+
             L1_name = "B{0}".format(e1_name)
+            L2_name = "B{0}".format(e2_name)
+
             # at this point e1_name should be in the element list, if not the name is inverted
             if not L1_name in self.element:
                 e1_name = str(e1[1]) + str(e1[0])
+                L1_name = "B{0}".format(e1_name)
+            if not L2_name in self.element:
                 e2_name = str(e2[1]) + str(e2[0])
-            else:
-                e2_name = str(e2[0]) + str(e2[1])
-            L1_name = "B{0}".format(e1_name)
-            L2_name = "B{0}".format(e2_name)
+                L2_name = "B{0}".format(e2_name)
+            
             M_name='M'+'_'+L1_name+'_'+L2_name
             self._graph_add_M(M_name,L1_name,L2_name,M_val)
             

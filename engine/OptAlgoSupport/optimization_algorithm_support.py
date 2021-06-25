@@ -118,8 +118,11 @@ class new_engine_opt:
                     R = L_FH
                     L = L_loop
                     print ("FH",L_FH,"LOOP",L_loop)
+                    '''if abs(L_loop-L_FH)/L_FH >0.3:
+                        input("CHECK THIS CASE")
+                    '''
                     self.e_api.e_mdl = 'LoopFHcompare'
-                    input()
+                    #input()
                     
                 print ("RL",R,L)
                     

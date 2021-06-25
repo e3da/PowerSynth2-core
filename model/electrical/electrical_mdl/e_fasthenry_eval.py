@@ -169,11 +169,11 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                                 net_to_add = name
                                 self.fh_point_dict.pop(net_to_add,None)
                                 add_start= True
-                        if net_pos[1] == y_stop: # only connect to the left of the trace
-                                # equiv to start loc of trace 
-                                net_to_add = name
-                                self.fh_point_dict.pop(net_to_add,None)
-                                add_end = True
+                            if net_pos[1] == y_stop: # only connect to the left of the trace
+                                    # equiv to start loc of trace 
+                                    net_to_add = name
+                                    self.fh_point_dict.pop(net_to_add,None)
+                                    add_end = True
                     if add_start:
                         output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz,type=tc_type,eq_to_start=net_to_add)
                     elif add_end:
@@ -242,8 +242,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         return text_out
 
-    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =10 ,nhinc =10,type = 0,eq_to_start=None,eq_to_end=None):
-        print ("TRACE-FH:", 'Start:', start_loc, 'Stop', end_loc, 'Width:' , width)
+    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =7 ,nhinc =7,type = 0,eq_to_start=None,eq_to_end=None):
+        #print ("TRACE-FH:", 'Start:', start_loc, 'Stop', end_loc, 'Width:' , width)
         
         
         name='trace_' + str(type)
@@ -262,10 +262,10 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         textout = Trace.format(name, start_loc[0]/1000,start_loc[1]/1000,start_loc[2]/1000, end_loc[0]/1000,end_loc[1]/1000,end_loc[2]/1000, width/1000,thick,self.cond,nwinc,nhinc,self.tc_id)
         self.tc_id+=1 
         if eq_to_start!=None: # equiv a net to start
-            #print ("EQUIV_START",eq_to_start,start_name)
+            print ("EQUIV_START",eq_to_start,start_name)
             textout += equiv.format(start_name,eq_to_start)
         if eq_to_end!=None: # equiv a net to start
-            #print ("EQUIV_END",eq_to_end,end_name)
+            print ("EQUIV_END",eq_to_end,end_name)
             textout += equiv.format(end_name,eq_to_end)
         return textout
     
@@ -483,32 +483,39 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         #input()
         #process= Popen(cmd, stdout =PIPE, stderr = DEVNULL, shell=False)
         #stdout,stderr =process.communicate()
+        curdir = os.getcwd()
+        outputfile = os.path.join(curdir,'Zc.mat')
+        if os.path.isfile(outputfile):
+            print ("CLEAR OLD RESULT")
+            os.system("rm "+outputfile)
+
         os.system(cmd)
         # READ output file
-        curdir = os.getcwd()
         
-        outputfile = os.path.join(curdir,'Zc.mat')
         
         f_list =[]
         r_list = []
         l_list = []
-        with open(outputfile,'r') as f:
-            for row in f:
-                row= row.strip(' ').split(' ')
-                row=[i for i in row if i!='']
-                if row[0]=='Impedance':
-                    f_list.append(float(row[5]))
-                elif row[0]!='Row':
-                    r_list.append(float(row[0]))            # resistance in ohm
-                    l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
+        try:
+            with open(outputfile,'r') as f:
+                for row in f:
+                    row= row.strip(' ').split(' ')
+                    row=[i for i in row if i!='']
+                    if row[0]=='Impedance':
+                        f_list.append(float(row[5]))
+                    elif row[0]!='Row':
+                        r_list.append(float(row[0]))            # resistance in ohm
+                        l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
         # removee the Zc.mat file incase their is error
         #cmd = 'rm '+outputfile
         #print (cmd)
         #os.system(cmd)
-        try:
+        
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
+            return r_list[0],l_list[0]
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
+            return -1,-1
         #print ('R',r_list,'L',l_list)
-        return r_list[0],l_list[0]
+        

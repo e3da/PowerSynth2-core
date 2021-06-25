@@ -744,7 +744,7 @@ class LoopEval():
         trace_mesh.thick = tc.thick * 1e-6
         trace_mesh.nwinc = int(nw)
         trace_mesh.nhinc = int(nh)
-        self.mesh_method == 'nonuniform'
+        self.mesh_method == 'uniform'
         if el_type == 'S':
             self.num_loops+=1
             trace_mesh.type = 1

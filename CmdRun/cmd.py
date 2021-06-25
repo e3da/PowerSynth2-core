@@ -991,7 +991,7 @@ class Cmd_Handler:
     
 
 
-    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
+    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None,plot=False):
 
 
         data_x=[]
@@ -1070,8 +1070,9 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'ECCE_2021_cases/2D_case_0/cmd'},\
+                   {qmle_nethome:'ECCE_2021_cases/2D_case_1/cmd'},\
                    {qmle_csrc:'loop_half_bridge_2dv_1/cmd'},\
-                   {qmle_csrc:'Unit_tests/U_0/cmd'},\
+                   {qmle_nethome:'Unit_Test_Cases/Case_0_0/cmd'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_1/macro_script.txt'}]
 
         for tc in tc_list:

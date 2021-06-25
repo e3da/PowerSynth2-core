@@ -29,6 +29,7 @@ class LayoutLoopInterface():
     # all unit in um
     def __init__(self,islands = None, hier_E = None, freq =1e6, layer_stack =None):
         self.freq = freq
+        self.short_bw = False # Set true to short all bw for trace validation
         self.layout_info = islands
         self.layer_stack = layer_stack
         self.hier = hier_E
@@ -41,13 +42,18 @@ class LayoutLoopInterface():
         # all list to store x and y trace cell with defined directions:
         self.x_cells = []
         self.y_cells = []
+        # all list to store x and y bondwires cell
+        self.x_wires = {}
+        self.y_wires = {}
+        
         # networkx vars:
         self.pos = {} # to store location of the node on the graph # 2D pos only
         self.pos3d = {}
         self.nodes_dict_3d = {} # inversion of the self.pos3d above 
+        self.tbl_isl_loc_net = {} # 3D table for electrical nets: isl_name -->3d pos --> node id before contraction
         self.digraph = nx.DiGraph()
         # Connect wire mesh on all trace level 
-        self.dir_dict= {} # check if there are full connection on all directions
+        self.tbl_isl_node_connection= {} #  check if there are full connection on all directions
         self.ribbon_dict = {} # represents bondwire group in form of ribbons and store the edge - ribbon data here
         self.tc_to_edges_init = {} # initial trace cell to edges
         self.tc_to_edges_splitted = {} # trace cell to edges duing bundle creation.
@@ -161,11 +167,9 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    #print ('bwribbon',rib_tc.eval_length()/1000)
-
-                    
+                    print ('bwribbon',rib_tc.eval_length()/1000, ori)
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
-                self.graph.add_edge(nets[e[0]], nets[e[1]],e_type = e_type)
+                self.graph.add_edge(nets[e[0]], nets[e[1]],e_type = e_type,res_int=1)
     
     def form_bundles(self):
         
@@ -200,8 +204,9 @@ class LayoutLoopInterface():
             if edata['e_type'] == 'trace':
                 ptrace = edata['p_trace'] # Get parent trace
                 # based on edge data to check direction
-                for dir in self.dir_dict[e[0]]: # from the first edge find the direction of the second edge
-                    if self.dir_dict[e[0]][dir] == e[1]:
+                # NOTE TO SELF: tbl_isl_node_connection needs to map isl --> net --> directions_dict (SIMPLIFY LOOPS)
+                for dir in self.tbl_isl_node_connection[e[0]]: # from the first edge find the direction of the second edge
+                    if self.tbl_isl_node_connection[e[0]][dir] == e[1]:
                         # Need to change trace cell bottom and top positions accordingly
                         if dir == 'N':
                             trace = deepcopy(ptrace)
@@ -242,7 +247,11 @@ class LayoutLoopInterface():
                 #bw_net = self.contracted_nodes[e[0]] 
                 n1 = e[0]
                 n2 = e[1]
-                rib_tc,thick,z,ori = self.ribbon_dict[(n1,n2)]
+                try:
+                    rib_tc,thick,z,ori = self.ribbon_dict[(n1,n2)]
+                except:
+                    rib_tc,thick,z,ori = self.ribbon_dict[(n2,n1)]
+
                 rib_tc.struct = 'bw'
                 p1 = self.graph.nodes[n1]['locs']
                 p2 = self.graph.nodes[n2]['locs']
@@ -250,15 +259,26 @@ class LayoutLoopInterface():
                 if ori ==1:
                     if p1[0] > p2[0]:
                         dir = -1
-                    self.x_cells.append(rib_tc)
+                    #self.x_cells.append(rib_tc)
+                    rib_tc.dir =1
+                    if not (p1[0],p2[0]) in self.x_wires:
+                        self.x_wires[p1[0],p2[0]] = [rib_tc]
+                    else:
+                        self.x_wires[p1[0],p2[0]].append(rib_tc)
+
                     
                 elif ori == 2:
                     if p1[1] > p2[1]:
-                        dir = -2        
-                    self.y_cells.append(rib_tc)
-                    
+                        dir = -2 
+                    rib_tc.dir =2       
+                    #self.y_cells.append(rib_tc)
+                    if not (p1[1],p2[1]) in self.y_wires:
+                        self.y_wires[p1[1],p2[1]] = [rib_tc]
+                    else:
+                        self.y_wires[p1[1],p2[1]].append(rib_tc)
                 rib_tc.dir = dir
                 ori_str = ('h' if ori == 1 else 'v')  
+                print ('ori',ori_str)
                 data = {'type': edata,'ori':ori_str,'obj':rib_tc}
                 #self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
                 #print ('bw_edge',n1,n2)
@@ -275,7 +295,7 @@ class LayoutLoopInterface():
         '''
         self.x_bundles = {} # Store all bundle in x to compute in parallel
         self.y_bundles = {} # Store all bundle in y to compute in parallel
-
+        # Split on Trace Level only
         self.split_bundles(direction = 'x')
         self.split_bundles(direction = 'y')
 
@@ -297,7 +317,7 @@ class LayoutLoopInterface():
                 y_locs.append(c[1])
                 x_locs += [tx.left,tx.right]
                 e = self.tc_to_edges_init[tx] # get the initial trace cell
-                #x_locs_edge[(tx.left,tx.right,c[1])] = e # map the left, right, y to edge  
+                x_locs_edge[(tx.left,tx.right,c[1])] = e # map the left, right, y to edge  
             # Step 2: Now search through each trace and split them
             y_locs = list(set(y_locs))
             y_locs.sort()
@@ -427,8 +447,8 @@ class LayoutLoopInterface():
                                 self.y_cells.append(new_ty)
 
                 # Get the center point go get y locs
-            #self.plot_xy_trace(mode=1,dir = 'X')
-            #self.plot_xy_trace(mode=1,dir = 'Y')
+            #self.plot_xy_trace(mode=0,dir = 'X')
+            #self.plot_xy_trace(mode=0,dir = 'Y')
 
 
     def plot_xy_trace(self, mode = 0, dir = 'X'):
@@ -455,7 +475,8 @@ class LayoutLoopInterface():
                 elif tx.dir == -1:
                     ax1.plot_surface(X,Y,Z, color = 'blue')            
             if mode == 0:
-                    plt.savefig("fig/horizontal bundles")
+                plt.show()
+                #plt.savefig("fig/horizontal bundles")
             else:
                 m_name = './pickles/x_bundle'  + '.p'
                 #self.save_plot_pickle(ax1,m_name)    
@@ -476,7 +497,9 @@ class LayoutLoopInterface():
                 elif tx.dir == -2:
                     ax1.plot_surface(X,Y,Z, color = 'blue')
             if mode == 0:
-                plt.savefig("fig/vertical bundles")
+                plt.show()
+
+                #plt.savefig("fig/vertical bundles")
             else:
                 m_name = './pickles/y_bundle'  + '.p'
                 #self.save_plot_pickle(ax1,m_name)
@@ -495,7 +518,7 @@ class LayoutLoopInterface():
                 c = tx.center()  
                 ax3d.plot3D(c[0])
 
-    def find_ground_wire(self, ori = 0, traces=[]):
+    def find_ground_wire(self, ori = 0, traces=[]): # NEED TO RETHINK THIS 
         # find the ground wire of the group of each bundle
         # ori = 0 or 1 for horizontal vs vertical cases
         # traces in a bundle
@@ -547,7 +570,7 @@ class LayoutLoopInterface():
         z = tc.z
 
         if tc.struct=='trace': # for normal bundles
-            print("TRACE:", tc)
+            #print("TRACE:", tc)
             if abs(tc.dir) == 1:
                 pos1 = (tc.left,tc.center()[1],z)
                 pos2 = (tc.right,tc.center()[1],z)
@@ -612,9 +635,11 @@ class LayoutLoopInterface():
 
             ori = ('h' if tc.dir==1 else 'v')
             data= {'type':etype+'_bw','ori':ori,'obj':tc}
+            print (data,R,L)
             # THIS IS TO EXCLUDE BW LOOP (TESTING) 
-            #R = 1e-12
-            #L = 1e-12
+            if self.short_bw:
+                R = 1e-12
+                L = 1e-12
             self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
         return n1,n2
     def rebuild_graph(self,loop_obj,mode = "normal"):
@@ -680,6 +705,7 @@ class LayoutLoopInterface():
                         e2 = m_dict[tc2]
 
                         if not (e1 in m_dict):
+                            #if not self.short_bw:
                             self.mutual_pair[(e1,e2)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2])
                             #self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
                             #print ("Mutual pair",self.mutual_pair)
@@ -781,7 +807,6 @@ class LayoutLoopInterface():
         # SOLVE X BUNDLES
         
         self.new_nodes_id = max(self.graph.nodes) +1 # start from the max value of sefl.graph.nodes
-        # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
         bundle_id = 0
         x_loops = []
 
@@ -795,7 +820,6 @@ class LayoutLoopInterface():
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
             #loop_model.update_mutual_mat()
-
             x_loops.append(loop_model)
 
         # SOLVE Y BUNDLES
@@ -804,7 +828,6 @@ class LayoutLoopInterface():
         self.rebuild_graph(loop_model)
         '''
         y_loops = []
-        # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
         bundle_id = 0
         for bundle in self.y_bundles:
             #print("SOLVING BUNDLE: ", bundle)
@@ -816,8 +839,40 @@ class LayoutLoopInterface():
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
             y_loops.append(loop_model)
+        bundle_id = 0
+        
+        for bundle in self.x_wires:
+            loop_model = LoopEval('x_wire_'+str(bundle_id))
+
+            bundle_id+=1
+
+            wire_type = self.find_ground_wire(ori = 0, traces = self.x_wires[bundle])
+            for trace in self.x_wires[bundle]:
+                loop_model.add_trace_cell(trace,el_type = wire_type[trace])
+            loop_model.form_partial_impedance_matrix()
+            x_loops.append(loop_model)
+        bundle_id = 0
+        
+        for bundle in self.y_wires:
+            loop_model = LoopEval('y_wire_'+str(bundle_id))
+
+            bundle_id+=1
+
+            wire_type = self.find_ground_wire(ori = 1, traces = self.y_wires[bundle])
+            for trace in self.y_wires[bundle]:
+                loop_model.add_trace_cell(trace,el_type = wire_type[trace])
+            loop_model.form_partial_impedance_matrix()
+            y_loops.append(loop_model)
+        print ('num x bundles', len(x_loops))
+        print ('num y bundles', len(y_loops))
+
         all_loops = x_loops+y_loops
+        
         update_all_mutual_ele(all_loops)
+
+
+        # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
+
         for loop_model in all_loops:
             loop_model.form_mesh_matrix()
             loop_model.update_P(1e8)
@@ -843,7 +898,7 @@ class LayoutLoopInterface():
                 selected_node.append(e[0])
                 selected_node.append(e[1])
 
-        #self.plot(mode=4,save=False)
+        self.plot(mode=4,save=False)
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
@@ -860,7 +915,67 @@ class LayoutLoopInterface():
         #nx.draw(self.digraph,self.pos,with_labels=True)
         #plt.savefig('digraph_contracted.png')
     
-        
+    def add_and_update_nodes(self,locs,isl_name,tc,type='trace'):
+        if not locs in self.tbl_isl_loc_net[isl_name]:
+            self.graph.add_node(self.node_id, locs = locs ,island = isl_name, type = type,parent = [tc])
+            self.tbl_isl_loc_net[isl_name][locs] = self.node_id
+            self.node_id +=1
+    # Support function to reduce complexity
+    def add_node_tracecell(self,tc,x,y,z,isl_name):
+        '''
+        add a hierachical loc on trace_cell 
+        --------------------------
+        -        *               -
+        --------------------------
+        '''
+        if self.ori_map[tc.name] == 'H':
+            locx =(x,tc.bottom+tc.height/2,z)
+            self.graph.add_node(self.node_id,locs=locx,island = isl_name, type = 'trace',parent = [tc])
+            self.tbl_isl_loc_net[isl_name][locx]= self.node_id
+            self.node_id+=1 
+        elif self.ori_map[tc.name] == 'V':
+            locy =(tc.left+tc.width/2,y,z)
+            self.graph.add_node(self.node_id,locs=locy,island = isl_name, type = 'trace',parent = [tc])
+            self.tbl_isl_loc_net[isl_name][locy]= self.node_id
+
+            self.node_id+=1
+        ''' HANDLE PLANAR CASE LATER
+        else: # planar case
+            self.graph.add_node(self.node_id,locs=[x,y,z],island = isl_name, type = 'trace',parent = [tc])
+            isl_nodes.append(self.node_id)
+            self.node_id+=1
+        '''
+    def add_node_float(self, loc, net,isl_name):
+        '''
+        add a floating net from device terminal that is not on the trace mesh (e.g for a device signal pin or via)
+        '''
+        self.graph.add_node(self.node_id,locs=loc,island = isl_name, type = 'hier',parent = None) # double check this in 3D
+        self.tbl_isl_loc_net[isl_name][loc] = self.node_id
+        self.comp_net_id[net] = self.node_id
+        self.node_id+=1
+    def create_strace(self, edge_data,isl_name,elv,dz):
+        '''
+        create a simple trace and add nodes  ("H" or "V")
+        '''
+        e= edge_data
+        l,r,b,t = [e[1],e[1]+e[3],e[2],e[2]+e[4]] # get info to convert this to trace cell type
+        tc = TraceCell(left=l, right=r, bottom=b, top=t)
+        tc.z = elv
+        tc.thick = dz * 1000
+        tc.name = e[5]
+        if self.ori_map[tc.name] == 'H':
+            # LEFT AND RIGHT NODE
+            l_locs = (l,b+e[4]/2,elv)
+            r_locs = (r,b+e[4]/2,elv)
+            self.add_and_update_nodes(l_locs,isl_name,tc,type = 'trace')
+            self.add_and_update_nodes(r_locs,isl_name,tc,type = 'trace')
+        elif self.ori_map[tc.name] == 'V':
+            # TOP AND BOTTOM NODES
+            b_locs = (l+e[3]/2,b,elv)
+            t_locs = (l+e[3]/2,t,elv)
+            self.add_and_update_nodes(t_locs,isl_name,tc,type = 'trace')
+            self.add_and_update_nodes(b_locs,isl_name,tc,type = 'trace')
+        return tc
     def form_wire_frame(self, island,isl_name,elv,dz):
         '''
         The objective is to form a simplest wireframe graph, this is used to get the inital orientation of all traces
@@ -877,35 +992,22 @@ class LayoutLoopInterface():
         # Find the longest extension for the trace based on the layout infomation
         # Define initial orientation
         traces = []
-        xs = []
-        ys = []
-        isl_nodes = []
         mnodes_mode = 0 # mannual mode: 0 CS mode:1
+        self.tbl_isl_loc_net[isl_name] = {}
         cs_node_map = {} # each table will have an island name, node Id --> node info (same for all meshes)
-        
         for e in elements: # get all traces in this island
             if self.find_ori:
                 self.find_trace_ori(e)
+            '''
             l,r,b,t = [e[1],e[1]+e[3],e[2],e[2]+e[4]] # get info to convert this to trace cell type
             tc = TraceCell(left=l, right=r, bottom=b, top=t)
             tc.z = elv
             tc.thick = dz * 1000
             tc.name = e[5]
+            '''
             if mnodes_mode == 0: # Mannually adding the nodes based on the initial layout
-                if self.ori_map[tc.name] == 'H':
-                    self.graph.add_node(self.node_id, locs = [l,b+e[4]/2,elv],island = isl_name, type = 'trace',parent = [tc])
-                    isl_nodes.append(self.node_id)
-                    self.node_id +=1
-                    self.graph.add_node(self.node_id, locs = [r,b+e[4]/2,elv],island = isl_name, type = 'trace',parent = [tc])
-                    isl_nodes.append(self.node_id)
-                    self.node_id +=1
-                elif self.ori_map[tc.name] == 'V':
-                    self.graph.add_node(self.node_id, locs = [l+e[3]/2,b,elv],island = isl_name, type = 'trace',parent = [tc])
-                    isl_nodes.append(self.node_id)
-                    self.node_id +=1
-                    self.graph.add_node(self.node_id, locs = [l+e[3]/2,t,elv],island = isl_name, type = 'trace',parent = [tc])
-                    isl_nodes.append(self.node_id)
-                    self.node_id +=1
+                tc = self.create_strace(edge_data= e, isl_name= isl_name, elv= elv, dz = dz)
+                '''  # HANDLE PLANAR TRACE LATER HERE
                 else: # planar trace
                     self.graph.add_node(self.node_id, locs = [l,b,elv],island = isl_name, type = 'trace',parent = [tc])
                     isl_nodes.append(self.node_id)
@@ -919,8 +1021,7 @@ class LayoutLoopInterface():
                     self.graph.add_node(self.node_id, locs = [r,t,elv],island = isl_name, type = 'trace',parent = [tc])
                     isl_nodes.append(self.node_id)
                     self.node_id +=1
-                
-
+                '''
             traces.append(tc)
         # This is the first step to form the mesh table need to maintain this for every layout
         if mnodes_mode == 1: 
@@ -943,12 +1044,14 @@ class LayoutLoopInterface():
                     else: # Handle orthogonal traces
                         #add corner anchor to the graph
                         if o1 == 'H': # o2 =='V'
-                            self.graph.add_node(self.node_id,locs=[t2.left+t2.width/2,t1.bottom+t1.height/2,elv],island = isl_name, type = 'trace',parent = [t1,t2])
-                            isl_nodes.append(self.node_id)
+                            c_loc = (t2.left+t2.width/2,t1.bottom+t1.height/2,elv)
+                            self.graph.add_node(self.node_id,locs= c_loc,island = isl_name, type = 'trace',parent = [t1,t2])
+                            self.tbl_isl_loc_net[isl_name][c_loc] = self.node_id
                             self.node_id +=1
                         else:
-                            self.graph.add_node(self.node_id,locs=[t1.left+t1.width/2,t2.bottom+t2.height/2,elv],island = isl_name, type = 'trace',parent = [t1,t2])
-                            isl_nodes.append(self.node_id)
+                            c_loc = (t1.left+t1.width/2,t2.bottom+t2.height/2,elv)
+                            self.graph.add_node(self.node_id,locs=c_loc,island = isl_name, type = 'trace',parent = [t1,t2])
+                            self.tbl_isl_loc_net[isl_name][c_loc] = self.node_id
                             self.node_id +=1
 
         
@@ -967,14 +1070,12 @@ class LayoutLoopInterface():
                 if comp != None and not (comp in self.comp_dict):  # In case this is an component with multiple pins
                     if not (sheet_data.net in self.comp_net_id):
                         comp.build_graph(mode =1) # Evaluate bondwires edge data here... 
-                        conn_type = "hier"
                         # Get x,y,z positions
                         x, y = sheet_data.rect.center()
                         z = sheet_data.z
-                        cp = [x , y , z ]
                         for tc in traces:
                             if tc.encloses(x , y ):
-                                self.add_node_tracecell(tc,x,y,tc.z,isl_name,isl_nodes) # merge the z level to trace for simplification in connection
+                                self.add_node_tracecell(tc,x,y,tc.z,isl_name) # merge the z level to trace for simplification in connection
                                         
                         self.comp_net_id[sheet_data.net] = self.node_id-1
                         self.comp_dict[comp] = 1
@@ -983,36 +1084,36 @@ class LayoutLoopInterface():
                         if sheet_data.node == None:  # floating net
                             x, y = sheet_data.rect.center()
                             z = sheet_data.z
-                            cp = [x , y , z ]
                             # print "CP",cp
                             if not (sheet_data.net in self.comp_net_id):
                                 # print self.node_count
-                                self.graph.add_node(self.node_id,locs=[x,y,z],island = isl_name, type = 'hier',parent = None) # double check this in 3D
-                                isl_nodes.append(self.node_id)
-                                self.node_id+=1
-                                self.comp_net_id[sheet_data.net] = self.node_id-1
+                                # floating node
+                                print ('float',sheet_data.net)
+                                self.add_node_float(loc = (x,y,z), net = sheet_data.net,isl_name= isl_name)
                                 self.comp_dict[comp] = 1
                 else:  # In case this is simply a lead connection
                     if not (sheet_data.net in self.comp_net_id):
 
-                        type = "hier"
                         # Get x,y,z positions
                         x, y = sheet_data.rect.center()
                         z = sheet_data.z
-                        cp = [x , y , z ]
                         for tc in traces:  # find which trace cell includes this component
+                            #print('tc-z',tc.z)
+                            print(sheet_data.net, z)
                             if tc.encloses(x , y ):
-                                self.graph.add_node(self.node_id,locs=[x,y,tc.z],island = isl_name)
-                                self.add_node_tracecell(tc,x,y,tc.z,isl_name,isl_nodes)  # merge the z level to trace for simplification in connection
+                                #self.graph.add_node(self.node_id,locs=[x,y,tc.z],island = isl_name)
+                                self.add_node_tracecell(tc,x,y,tc.z,isl_name)  # merge the z level to trace for simplification in connection
                         self.comp_net_id[sheet_data.net] = self.node_id-1
                         #self.comp_nodes[group].append(cp_node)
                         #self.comp_dict[comp] = 1
 
                     
         
-        for n in isl_nodes:
-            self.dir_dict[n] = {'N':-1,'S':-1,'E':-1,'W':-1}
-        for n1 in isl_nodes: 
+        for k in self.tbl_isl_loc_net[isl_name]:
+            n = self.tbl_isl_loc_net[isl_name][k]
+            self.tbl_isl_node_connection[n] = {'N':-1,'S':-1,'E':-1,'W':-1}
+        for k1 in self.tbl_isl_loc_net[isl_name]: 
+            n1 =  self.tbl_isl_loc_net[isl_name][k1]
             dN = 1e6
             dS = 1e6
             dE = 1e6
@@ -1022,7 +1123,8 @@ class LayoutLoopInterface():
             remN = -1
             remS = -1
             dir = None
-            for n2 in isl_nodes:
+            for k2 in self.tbl_isl_loc_net[isl_name]:
+                n2 =  self.tbl_isl_loc_net[isl_name][k2]
                 if n1 != n2 and not(self.graph.has_edge(n2,n1)): # find the best node to connect
                     p1 = self.graph.nodes[n1]['locs']
                     p2 = self.graph.nodes[n2]['locs']
@@ -1042,20 +1144,19 @@ class LayoutLoopInterface():
                     if len(intersect) == 0: # no intersection between parent traces, means no direct connection
                         #print("no connect",n1,n2)
                         continue
-                    if n1 ==2 and n2 ==39:
-                        print("wrong connect")
+                    
                     if p1[2]!= p2[2]: # not same level
                         continue
                     else:
                         if p1[0] == p2[0]: # horizontal connection
                             dis_ = abs(p1[1]-p2[1])
                             if p2[1] > p1[1]: # check North connection
-                                if self.dir_dict[n1]['N'] == -1:       
+                                if self.tbl_isl_node_connection[n1]['N'] == -1:       
                                     dir= 'N'      
                                 else:
                                     continue
                             else: # check South connection
-                                if self.dir_dict[n1]['S'] == -1:      
+                                if self.tbl_isl_node_connection[n1]['S'] == -1:      
                                     dir= 'S'      
                                 else:
                                     continue
@@ -1064,13 +1165,13 @@ class LayoutLoopInterface():
                             dir = 'V'
                             dis_ = abs(p1[0]-p2[0])
                             if p2[0] > p1[0]: # check East connection
-                                if self.dir_dict[n1]['E'] == -1 :      
+                                if self.tbl_isl_node_connection[n1]['E'] == -1 :      
                                     dir= 'E'      
                                 else:
                                     continue
                             else: # check West connection
                                 dis_ = abs(p1[0]-p2[0])
-                                if self.dir_dict[n1]['W'] == -1 :     
+                                if self.tbl_isl_node_connection[n1]['W'] == -1 :     
                                     dir= 'W'      
                                 else:
                                     continue
@@ -1097,17 +1198,17 @@ class LayoutLoopInterface():
                 r = rem_list[i]
                 if r!=-1:
                     if i == 0 : #  North
-                        self.dir_dict[n1]['N']=r 
-                        self.dir_dict[r]['S']=n1 
+                        self.tbl_isl_node_connection[n1]['N']=r 
+                        self.tbl_isl_node_connection[r]['S']=n1 
                     elif i == 1 : #  South
-                        self.dir_dict[n1]['S']=r
-                        self.dir_dict[r]['N']=n1
+                        self.tbl_isl_node_connection[n1]['S']=r
+                        self.tbl_isl_node_connection[r]['N']=n1
                     elif i == 2 : #  East
-                        self.dir_dict[n1]['E']=r
-                        self.dir_dict[r]['W']=n1
+                        self.tbl_isl_node_connection[n1]['E']=r
+                        self.tbl_isl_node_connection[r]['W']=n1
                     elif i == 3 : #  West
-                        self.dir_dict[n1]['W']=r
-                        self.dir_dict[r]['E']=n1
+                        self.tbl_isl_node_connection[n1]['W']=r
+                        self.tbl_isl_node_connection[r]['E']=n1
                     e_data = EdgeData()
                     p_list1 = self.graph.nodes[n1]['parent']
                     p_list2 = self.graph.nodes[r]['parent']
@@ -1122,9 +1223,9 @@ class LayoutLoopInterface():
                     #print(n1,r)
                     #print("parent_trace",ptrace.name)
                     #print(ptrace.eval_length())
-                    self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace)
+                    self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace,res_int=1)
                 
-    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=True):
+    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=False):
         if mode == 1: # save figure as file   
             plt.figure("mesh")
             nx.draw(self.graph,self.pos,with_labels=True)
@@ -1140,7 +1241,8 @@ class LayoutLoopInterface():
             ax1 = fig1.add_subplot(111)
             ax1.set_title(isl)
             nx.draw(graph,pos,with_labels=True) # mesh graph
-            m_name = './pickles/mesh' + isl + '.p'
+            plt.show()
+            #m_name = './pickles/mesh' + isl + '.p'
 
         elif mode == 3:
             # plot by each elevation level.
@@ -1165,7 +1267,7 @@ class LayoutLoopInterface():
         elif mode ==4:
             plt.figure("net_graph")
             nx.draw_networkx(self.net_graph, pos=self.net_2d_pos,
-                             with_labels=True, node_size=50, font_size=9)
+                             with_labels=True, node_size=50, font_size=10)
             plt.title('NET GRAPH')
             # plt.savefig('pickles/netgraph')
             plt.show()
@@ -1174,20 +1276,6 @@ class LayoutLoopInterface():
                 plt.savefig('net_graph.png')
             else:
                 plt.show()
-    # Support function to reduce complexity
-    def add_node_tracecell(self,tc,x,y,z,isl_name,isl_nodes):
-        if self.ori_map[tc.name] == 'H':
-            self.graph.add_node(self.node_id,locs=[x,tc.bottom+tc.height/2,z],island = isl_name, type = 'trace',parent = [tc])
-            isl_nodes.append(self.node_id)
-            self.node_id+=1 
-        elif self.ori_map[tc.name] == 'V':
-            self.graph.add_node(self.node_id,locs=[tc.left+tc.width/2,y,z],island = isl_name, type = 'trace',parent = [tc])
-            isl_nodes.append(self.node_id)
-            self.node_id+=1
-        else: # planar case
-            self.graph.add_node(self.node_id,locs=[x,y,z],island = isl_name, type = 'trace',parent = [tc])
-            isl_nodes.append(self.node_id)
-            self.node_id+=1
     
     def save_plot_pickle(self,ax,fname):
         pickle.dump(ax,open(fname,"wb"))
@@ -1203,20 +1291,20 @@ class LayoutLoopInterface():
         #print (nx.has_path(self.graph,s1,s2))
         #print(self.graph.has_node(0))
         paths = nx.all_simple_paths(self.graph,s1,s2)
-        #print(paths)
         for p in paths:
+            print(p)
             for i in range(len(p)-1):
                 if not(self.digraph.has_edge(p[i],p[i+1])):
-                    
                     self.digraph.add_edge(p[i],p[i+1])
+        #input()
         
         # update the graph by combining all contracted node pairs
         # the 2nd node v will be merged into the first node u
         
-
+        print (self.contracted_nodes)
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        #self.plot(mode=3)
+        self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 

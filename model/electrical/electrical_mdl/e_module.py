@@ -202,11 +202,11 @@ class EWires(EComp):
         Return an average representation in form of a trace model
         A bondwire group is represented in term of a single ribbon type bondwire. 
         '''
-        c_s = start#self.sheet[0].get_center()
-        c_e = stop#self.sheet[1].get_center()
+        c_s = self.sheet[0].get_center()
+        c_e = self.sheet[1].get_center()
         
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))  # using integer input, this is the overall length of the group
-        print('BW-loop: ','start',start,'stop',stop,'length',length/1000)
+        #print('BW-loop: ','start',start,'stop',stop,'length',length/1000)
         average_width = self.num_wires*self.r*2 *1000
         average_thickness = self.r*2 *1000
         z1 = self.sheet[0].z
@@ -233,7 +233,7 @@ class EWires(EComp):
             ori = 2
         return [left,right,top,bottom,average_thickness,average_z,ori] # send the ribbon representation to loop model
     def add_simple_edges(self):
-        self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': 1e-6, 'L': 1e-10, 'C': None})
+        self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': 1e-12, 'L': 1e-12, 'C': None})
     def  update_wires_parasitic(self):
         '''
         Update the parasitics of a wire group. Return single R,L,C result
