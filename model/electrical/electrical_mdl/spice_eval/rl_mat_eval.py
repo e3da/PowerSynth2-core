@@ -226,8 +226,8 @@ class RL_circuit():
             #if n1 in check_lists or n2 in check_lists:
             #    print('edge', n1, n2)
             #    print(edata['res'], edata['ind'])
-            print(n1,n2)
-            print(edata)
+            #print(n1,n2)
+            #print(edata)
             e_name = str(n1)+str(n2)
             R_val = abs(edata['res'])
             L_val = abs(edata['ind'])

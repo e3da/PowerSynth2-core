@@ -340,7 +340,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         self.wire_id +=1
                 else: # generate equivatlent ribbon representation
                 
-                    #print("RIBBON representation")
+                    print("RIBBON representation",'z',start.z)
                     average_width = numwires*w.r*2 *1000
                     #print (average_width)
                     bw_text+= "\n* START RIBBON TRACE\n"

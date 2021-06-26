@@ -240,20 +240,20 @@ class EFilament():
         w2 = element.width
         t1 = self.thick
         t2 = element.thick
-        if self.ori ==0 and element.ori ==0:
-            l3 = self.start_pt[0] - element.start_pt[0]
-            E = abs(self.start_pt[1] - element.start_pt[1])
+        y0 = min(self.start_pt[1],self.end_pt[1])
+        y1 = min(element.start_pt[1],element.end_pt[1])
+        x0 = min(self.start_pt[0],self.end_pt[0])
+        x1 = min(element.start_pt[0],element.end_pt[0])
+        if self.ori ==0 and element.ori ==0: # HORIZONTAL CASE PLANE YZ
+            l3 = abs(x1-x0)
+            E = abs(y1-y0)
         if self.ori ==1 and element.ori ==1:
-            l3 = self.start_pt[1] - element.start_pt[1]
-            E = abs(self.start_pt[0] - element.start_pt[0])
+            l3 = abs(y1-y0)
+            E = abs(x1-x0)
          
         p = abs(self.start_pt[2] - element.start_pt[2])
-        if p == 0 and E == 0:  # ??? WHY
-            E = 0.00025
         params = [w1,l1,t1,w2,l2,t2,l3,p,E]
         params =[int(p*1e6) for p in params] # convert to um
-
-
 
         return params # w1,l1,t1,w2,l2,t2,l3,p,E
     
@@ -268,8 +268,9 @@ class EFilament():
         r = sqrt(self.width**2+self.thick**2)
         k = len/r
         #Lval = len*CalVal2(k)
-        #Lval = bar_ind(int(self.width*1e6),int(len*1e6),int(self.thick*1e6)) *1e-3* 1e-9
-        Lval = self_ind_c_type(self.width,len,self.thick) # input values in cm
+        Lval = self_ind_py(self.width,len,self.thick) *1e-3* 1e-9
+        #Lval = self_ind_c_type(self.width,len,self.thick) # input values in cm
+
         Rval = copper_res*len/(self.width*self.thick)
         #print ("lapprox-lreal",Lval1,Lval)
         self.R = Rval
@@ -383,7 +384,7 @@ class LoopEval():
         self.mutual_map = {}
         self.mesh_id = 0
         self.mesh_method = 'nonuniform'
-        self.view = 'False'
+        self.view_en = 'False'
         self.mesh_id_dict={}
         self.open_loop = True
         self.tc_to_id = {}
@@ -433,6 +434,7 @@ class LoopEval():
                 else:
                     if self.all_eles[i].ori == self.all_eles[k].ori:
                         w1,l1,t1,w2,l2,t2,l3,p,E = self.all_eles[i].get_mutual_params(self.all_eles[k])
+                        #print(w1,l1,t1,w2,l2,t2,l3,p,E)
                     else:
                         continue
                     dis = sqrt(l3**2 + p**2 + E**2)
@@ -619,7 +621,11 @@ class LoopEval():
         view_plane = input("Select a view: [xy/yz/xz] ")
         view_mode = int(input("select between [0: Mesh, 1: current density]"))
         rects=[]
-        fig, ax = plt.subplots(1)
+        fig,ax = plt.subplots()
+        ax.set_title(self.name+ '_view')
+        xs = []
+        ys = []
+        zs = []
         if view_plane == "yz":
             if view_mode == 1:
                 cmap=plt.cm.jet
@@ -629,6 +635,8 @@ class LoopEval():
                 for el in self.all_eles:
                     if el.ori == 0:
                         xy = (el.start_pt[1]*1e3,el.start_pt[2]*1e3)
+                        ys.append(el.start_pt[1]*1e3)
+                        zs.append(el.start_pt[2]*1e3)
                         if view_mode == 0:
                             if el.type ==0:
                                 c = 'red'
@@ -644,6 +652,11 @@ class LoopEval():
                             c = cmap(norm(jmap[el.id]))   
                         r = Rectangle(xy = xy,width = el.width*1e3, height =el.thick*1e3,fc = c, ec = ec)
                         ax.add_patch(r)
+                        
+                        rects.append(r)
+                XLIM = [min(ys)-5, max(ys)+5]
+                YLIM = [min(zs)-5, max(zs)+5]
+
         if view_plane == "xz":
             if view_mode == 1:
                 cmap=plt.cm.jet
@@ -694,10 +707,11 @@ class LoopEval():
                     else:
                         r = Rectangle(xy = xy,width = el.width*1e3, height =el.length*1e3,fc = c, ec = ec)
                     ax.add_patch(r)
-        #p = PatchCollection(rects, alpha=0.4,edgecolor='black')
-        #ax.add_collection(p)
-        plt.xlim(0, 40)
-        plt.ylim(0, 40)      
+        p = PatchCollection(rects, alpha=0.4,edgecolor='black')
+        ax.add_collection(p)
+        
+        plt.xlim(XLIM[0], XLIM[1])
+        plt.ylim(YLIM[0], YLIM[1])      
         plt.show()
     
     def eval_current_density(self):
@@ -708,7 +722,7 @@ class LoopEval():
             else:
                 el_current = np.absolute(np.sum(self.I[el.id,:]))
             el_js.append((el_current)/(el.width*el.thick))
-        #print(el_js)
+        print(el_js)
         norm = mpl.colors.Normalize(vmin=min(el_js), vmax=max(el_js))
         return norm,el_js        
 
@@ -718,23 +732,24 @@ class LoopEval():
         '''
         trace_mesh = ETrace()
         trace_mesh.dir = tc.dir
+        #print (tc.bottom,tc.z,tc.width,tc.thick,el_type)
         if tc.dir == 1: # current from left to right
-            start_pt = [tc.left, tc.bottom + tc.height/2,tc.z]
-            end_pt = [tc.right, tc.bottom + tc.height/2,tc.z]
+            start_pt = [tc.left, tc.bottom ,tc.z]
+            end_pt = [tc.right, tc.bottom ,tc.z]
             trace_mesh.width = tc.height*1e-6
         elif tc.dir == -1:
-            start_pt = [tc.right, tc.bottom + tc.height/2,tc.z]
-            end_pt = [tc.left, tc.bottom + tc.height/2,tc.z]
+            start_pt = [tc.right, tc.bottom ,tc.z]
+            end_pt = [tc.left, tc.bottom ,tc.z]
             trace_mesh.width = tc.height*1e-6
         elif tc.dir == 2:
-            start_pt = [tc.left+tc.width/2, tc.bottom,tc.z]
-            end_pt = [tc.left+tc.width/2, tc.top,tc.z]
+            start_pt = [tc.left, tc.bottom,tc.z]
+            end_pt = [tc.left, tc.top,tc.z]
             trace_mesh.width = tc.width*1e-6
             trace_mesh.ori = 1
 
         elif tc.dir == -2:
-            end_pt = [tc.left+tc.width/2, tc.bottom ,tc.z]
-            start_pt = [tc.left+tc.width/2, tc.top ,tc.z]
+            end_pt = [tc.left, tc.bottom ,tc.z]
+            start_pt = [tc.left, tc.top ,tc.z]
             trace_mesh.width = tc.width*1e-6
             trace_mesh.ori = 1
 
@@ -744,7 +759,7 @@ class LoopEval():
         trace_mesh.thick = tc.thick * 1e-6
         trace_mesh.nwinc = int(nw)
         trace_mesh.nhinc = int(nh)
-        self.mesh_method == 'uniform'
+        self.mesh_method = 'uniform'
         if el_type == 'S':
             self.num_loops+=1
             trace_mesh.type = 1
