@@ -543,7 +543,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
-            #plot_solution_structure(sol)
+            plot_solution_structure(sol)
             #for f in sol.features_list:
                 #f.printFeature()
             PS_solutions.append(sol)
@@ -1688,15 +1688,15 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
         #print ("V",child.name,child.id,child.node_mode_2_locations)
         #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
-                #print(via_name,sub_root_node_list )
-                for node in sub_root_node_list:
-                    node.set_min_loc()
-                    #print (node.node_min_locations)
-                    node.vertices.sort(key= lambda x:x.index, reverse=False)
-                    ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
-                    node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
-            
-                    #print(node.node_mode_2_locations)
+            #print(via_name,sub_root_node_list )
+            for node in sub_root_node_list:
+                node.set_min_loc()
+                #print (node.node_min_locations)
+                node.vertices.sort(key= lambda x:x.index, reverse=False)
+                ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
+                node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
+        
+                #print(node.node_mode_2_locations)
         #nput()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
@@ -1845,7 +1845,29 @@ if __name__ == '__main__':
                         end=i
                         layers.append((start+1,end))
                     
+        new_script_rows={}
+        for j in range(len(layers)):
+            count_range=layers[j]
+            #print(count_range)
+            for i in range(len(solution_rows)):
+                row=solution_rows[i]
+                if row[0][0]=='I' and i<count_range[0]:
+                    if row[0] not in new_script_rows:
+                        new_script_rows[row[0]]=[]
+            for i in range(len(solution_rows)):
+                row=solution_rows[i]
+                if row[0][0]=='I':
+                    layer_name=row[0]
                 
+                    
+                elif i>=count_range[0] and i<=count_range[1]:
+                    
+
+                    new_script_rows[layer_name].append(row)
+                    
+
+            #print(new_script_rows)
+        
         
         #print solution_rows
         solution_script=[]
@@ -1856,58 +1878,81 @@ if __name__ == '__main__':
             texts = l.split(' ')
             solution_script.append(texts)
         #print len(solution_script),solution_script
-        
+        layer_name=None
+        layer_wise_parts={}
+        for i in range(len(solution_script)):
+            line=solution_script[i]
+            texts=l.strip().split(' ')
+            print(texts)
+            input()
+            if line[0] in new_script_rows:
+                layer_name=texts[0]
+            else:
+                if layer_name!=None:
+                    for row in new_script_rows[layer_name]:
+                        if row[0] in texts:
+                            ind_=texts.index(row[0])
+                            texts[ind_+1:]=row[1:]
+
+
+            
+
+
+        input()        
         solution_script_info=[]
 
 
 
-        for j in layers:
-            for i in range (len(solution_rows)):
-                row= solution_rows[i]
-                if row[0] == 'Substrate':
-                    solution_script_info.append([row[3],row[4]])
-                else:
+        #for j in layers:
+        for layer_name,row_lists in new_script_rows.items():
+            for i in range(len(row_lists)):
 
-                    for l in line:
-                        texts=l.strip().split(' ')
-                        
-                        if len(texts)>=5:
+                row= row_lists[i]
+            if row[0] == 'Substrate':
+                #solution_script_info.append([row[3],row[4]])
+                continue
+            else:
 
-                            if row[0]!='Substrate' and row[0] in texts and i>=j[0] and i <=j[1] :
-                                texts_new = copy.deepcopy(texts)
+                for l in line:
+                    texts=l.strip().split(' ')
+                    
+                    if len(texts)>=5:
 
-                                if (row[0][0]=='T' or row[0][0]=='B'):
+                        if row[0]!='Substrate' and row[0] in texts :
+                            texts_new = copy.deepcopy(texts)
 
-                                    for i in range(len(texts)):
-                                        if texts[i].isdigit():
-                                            #x_index=i
-                                            #print i
-                                            break
-                                        else:
-                                            texts_new[i]=texts[i]
-                                    
-                                    texts_new[i]=row[1]
-                                    texts_new[i+1]=row[2]
-                                    #if row[0][0]!='D' or row[0][0]!='L':
-                                    texts_new[i+2]=row[3]
-                                    texts_new[i+3]=row[4]
-                                else:
-                                    for i in range(len(texts)):
-                                        if texts[i].isdigit():
-                                            #x_index=i
-                                            #print i
-                                            break
-                                        else:
-                                            texts_new[i]=texts[i]
-                                    texts_new[i]=row[1]
-                                    texts_new[i+1]=row[2]
+                            if (row[0][0]=='T' or row[0][0]=='B'):
+
+                                for i in range(len(texts)):
+                                    if texts[i].isdigit():
+                                        #x_index=i
+                                        #print i
+                                        break
+                                    else:
+                                        texts_new[i]=texts[i]
+                                
+                                texts_new[i]=row[1]
+                                texts_new[i+1]=row[2]
+                                #if row[0][0]!='D' or row[0][0]!='L':
+                                texts_new[i+2]=row[3]
+                                texts_new[i+3]=row[4]
+                            else:
+                                for i in range(len(texts)):
+                                    if texts[i].isdigit():
+                                        #x_index=i
+                                        #print i
+                                        break
+                                    else:
+                                        texts_new[i]=texts[i]
+                                texts_new[i]=row[1]
+                                texts_new[i+1]=row[2]
 
 
 
-                                if texts_new not in solution_script_info:
-                                    solution_script_info.append(texts_new)
+                            if texts_new not in solution_script_info:
+                                solution_script_info.append(texts_new)
 
-            print (len(solution_script_info))
+        print (len(solution_script_info))
         directory=os.path.dirname(initial_input_script)
         #print directory
         file = open(directory+"/Exported.txt", "w")

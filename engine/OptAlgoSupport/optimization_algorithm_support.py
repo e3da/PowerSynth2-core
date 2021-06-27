@@ -64,7 +64,7 @@ class new_engine_opt:
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
                 type = measure.measure
-                #'''
+                '''
                 self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
                 print ('API type', self.e_api.type)
@@ -80,7 +80,7 @@ class new_engine_opt:
                 R=100
                 L=100    
                 #print ("RL",R,L)
-                '''
+                
                     
                 #except:
                 #R=10000

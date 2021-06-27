@@ -1070,7 +1070,7 @@ if __name__ == "__main__":
             args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/DMC_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/2D_case_0/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_16_up/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         #f = open('output.txt','w')macro_script.txt
         #sys.stdout = f
