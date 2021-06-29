@@ -93,7 +93,7 @@ class Ui_Dialog(object):
         self.btn_open_layout.setText(_translate("Dialog", "Open File"))
         self.label_5.setText(_translate("Dialog", "Path to bondwire_setup"))
         self.btn_open_bondwire.setText(_translate("Dialog", "Open File"))
-        self.label_4.setText(_translate("Dialog", "Path to layout_stack"))
+        self.label_4.setText(_translate("Dialog", "Path to layer_stack"))
         self.btn_open_layout_stack.setText(_translate("Dialog", "Open File"))
         self.btn_create_project.setText(_translate("Dialog", "Create Layout"))
         self.btn_cancel.setText(_translate("Dialog", "Cancel"))

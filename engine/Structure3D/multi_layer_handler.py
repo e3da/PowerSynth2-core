@@ -13,6 +13,8 @@ import re
 from core.engine.CornerStitch.CornerStitch import Node
 from core.model.electrical.electrical_mdl.cornerstitch_API import *
 from core.model.thermal.cornerstitch_API import *
+from matplotlib.figure import Figure
+
 
 
 class Layer():
@@ -538,7 +540,7 @@ class Layer():
         return input_rects, bondwire_landing_info
     
     #plots initial layout for each layer
-    def plot_init_layout(self,fig_dir=None,dbunit=1000):
+    def plot_init_layout(self,fig_dir=None,dbunit=1000,UI=False):
 
         #print(self.bondwire_landing_info)
         #print(self.bondwires)
@@ -620,7 +622,12 @@ class Layer():
             )
             Patches.append(P)
 
-        ax=plt.subplots()[1]
+        if UI:
+            figure = Figure()
+            ax = figure.add_subplot()
+        else:
+            ax=plt.subplots()[1]
+            
         for p in Patches:
             ax.add_patch(p)
 
@@ -632,6 +639,8 @@ class Layer():
         if fig_dir!=None:
             plt.savefig(fig_dir+'/initial_layout_'+self.name+'.png')
         else:
+            if UI:
+                return figure  # For the UI
             plt.show()
         plt.close()
 

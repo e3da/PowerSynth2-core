@@ -97,7 +97,7 @@
      <item>
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Path to layout_stack</string>
+        <string>Path to layer_stack</string>
        </property>
       </widget>
      </item>

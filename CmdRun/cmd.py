@@ -115,6 +115,7 @@ class Cmd_Handler:
         self.output_option= False
         self.thermal_mode = None
         self.electrical_mode = None
+        self.UI_active = False
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):

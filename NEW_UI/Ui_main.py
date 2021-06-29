@@ -1,3 +1,4 @@
+from core.NEW_UI.generateLayout import generateLayout
 import sys
 import os
 import shutil
@@ -8,6 +9,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.CmdRun.cmd import Cmd_Handler
 from core.NEW_UI.macro import Ui_Dialog as Ui_createMacro
 from core.NEW_UI.createLayout import Ui_Dialog as Ui_createLayout
+from core.NEW_UI.showInitialLayout import Ui_Dialog as Ui_showInitialLayout
 
 class GUI():
 
@@ -16,7 +18,7 @@ class GUI():
         self.currentWindow = None
         self.pathToLayoutScript = None
         self.pathToBondwireSetup = None
-        self.pathToLayoutStack = None
+        self.pathToLayerStack = None
 
     def setWindow(self, newWindow):
         if self.currentWindow:
@@ -49,32 +51,39 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(createLayout, 'Open layout_stack', os.getenv('HOME'))[0])
 
         def create():
+            '''
             if not os.path.exists(ui.lineEdit_2.text()) or ".txt" not in ui.lineEdit_2.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layout_script file.")
                 popup.exec_()
-                #return
+                return
 
-            if not os.path.exists(ui.lineEdit_5.text()) or ".csv" not in ui.lineEdit_5.text():
+            if not os.path.exists(ui.lineEdit_5.text()) or ".txt" not in ui.lineEdit_5.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the bondwire_setup file.")
                 popup.exec_()
-                #return
+                return
 
-            if not os.path.exists(ui.lineEdit_4.text()) or ".txt" not in ui.lineEdit_4.text():
+            if not os.path.exists(ui.lineEdit_4.text()) or ".csv" not in ui.lineEdit_4.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to the layout_stack file.")
+                popup.setText("Please enter a valid path to the layer_stack file.")
                 popup.exec_()
-                #return
+                return
+
             
             self.pathToLayoutScript = ui.lineEdit_2.text()
             self.pathToBondwireSetup = ui.lineEdit_5.text()
-            self.pathToLayoutStack = ui.lineEdit_4.text()
-            createLayout.close()
-            self.generateLayout()
+            self.pathToLayerStack = ui.lineEdit_4.text()'''
+            self.pathToLayoutScript = "/nethome/jgm019/TEST/LAYOUT_SCRIPT.txt"
+            self.pathToBondwireSetup = "/nethome/jgm019/TEST/BONDWIRE_SETUP.txt"
+            self.pathToLayerStack = "/nethome/jgm019/TEST/LAYER_STACK.csv"  # Speeds up process.
+            
+            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
+
+            self.showInitialLayout(figure)
 
 
         ui.btn_cancel.pressed.connect(self.createMacro)
@@ -85,12 +94,24 @@ class GUI():
 
         createLayout.show()
 
-    def generateLayout(self):
-        print("AHHHH")
+    def showInitialLayout(self, figure):
+        showInitialLayout = QtWidgets.QDialog()
+        ui = Ui_showInitialLayout()
+        ui.setupUi(showInitialLayout)
+        self.setWindow(showInitialLayout)
+
+        scene = QtWidgets.QGraphicsScene()
+        ui.graphicsView.setScene(scene)
+
+        canvas = FigureCanvas(figure)
+        scene.addWidget(canvas)
+
+        showInitialLayout.show()
 
     def run(self):
         '''Main Function to run the GUI'''
 
+        '''
         macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
         settingsPath = '/nethome/jgm019/testcases/settings.info'
 
@@ -99,6 +120,7 @@ class GUI():
         args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
 
         self.cmd.cmd_handler_flow(arguments=args)
+        '''
 
         self.app = QtWidgets.QApplication(sys.argv)
 
