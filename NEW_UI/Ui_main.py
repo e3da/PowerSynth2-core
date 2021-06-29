@@ -83,7 +83,7 @@ class GUI():
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
-            self.showInitialLayout(figure)
+            self.showLayout(figure)
 
 
         ui.btn_cancel.pressed.connect(self.createMacro)
@@ -94,7 +94,8 @@ class GUI():
 
         createLayout.show()
 
-    def showInitialLayout(self, figure):
+    def showLayout(self, figure):
+
         showInitialLayout = QtWidgets.QDialog()
         ui = Ui_showInitialLayout()
         ui.setupUi(showInitialLayout)
@@ -103,6 +104,26 @@ class GUI():
         scene = QtWidgets.QGraphicsScene()
         ui.graphicsView.setScene(scene)
 
+        # Hide necessary layouts at the start
+        ui.layout_generation_setup.hide()
+
+        def option0():
+            ui.layout_generation_setup.show()
+
+        def option1():
+            ui.layout_generation_setup.hide()
+
+        def option2():
+            ui.layout_generation_setup.show()
+
+
+        ui.option_1.pressed.connect(option0)
+        ui.option_2.pressed.connect(option1)
+        ui.option_3.pressed.connect(option2)
+
+
+        figure.set_figheight(4)  # Adjusts the size of the Figure
+        figure.set_figwidth(4)
         canvas = FigureCanvas(figure)
         scene.addWidget(canvas)
 
