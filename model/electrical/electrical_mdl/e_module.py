@@ -143,7 +143,7 @@ class EComp:
         for c, v in zip(self.conn, self.passive):
             self.net_graph.add_edge(c[0], c[1], edge_data=v)
 
-    def build_graph(self):
+    def build_graph(self, mode =0):
         self.update_edges()
 
 class EVia(EComp):
@@ -159,7 +159,7 @@ class EVia(EComp):
         EComp.__init__(self, sheet=[start, stop], conn=[[start.net, stop.net]], type="via")
         self.class_type ='via'
     
-    def build_graph(self):
+    def build_graph(self, mode =0):
         # perfect conductor. will add function for via evaluation later 
         R_val = 1e-6
         L_val = 1e-11
@@ -196,6 +196,44 @@ class EWires(EComp):
         else:
             self.mode = 'interpolated'
 
+    
+    def gen_ribbon(self, start,stop):
+        '''
+        Return an average representation in form of a trace model
+        A bondwire group is represented in term of a single ribbon type bondwire. 
+        '''
+        c_s = self.sheet[0].get_center()
+        c_e = self.sheet[1].get_center()
+        
+        length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))  # using integer input, this is the overall length of the group
+        #print('BW-loop: ','start',start,'stop',stop,'length',length/1000)
+        average_width = self.num_wires*self.r*2 *1000
+        average_thickness = self.r*2 *1000
+        z1 = self.sheet[0].z
+        z2 = self.sheet[1].z
+        #print('zbws',z1,z2)
+        #print (self.sheet[0].node)
+        average_z = (self.sheet[0].z + self.sheet[1].z)/2
+        # evaluate the general direction (either horizontal or vertical of a wire group)
+        dx = abs(c_s[0] - c_e[0])
+        dy = abs(c_s[1] - c_e[1])
+        if dx >= dy: # general dir is horizontal 
+            y_ave = (c_s[1] + c_e[1])/2
+            left =  min([c_s[0],c_e[0]])
+            right =  max([c_s[0],c_e[0]]) 
+            bottom = y_ave - average_width/2
+            top = y_ave + average_width/2
+            ori = 1
+        else:
+            x_ave = (c_s[0] + c_e[0])/2
+            left = x_ave - average_width/2
+            right = x_ave + average_width/2
+            bottom = min([c_s[1],c_e[1]])
+            top = max([c_s[1],c_e[1]])
+            ori = 2
+        return [left,right,top,bottom,average_thickness,average_z,ori] # send the ribbon representation to loop model
+    def add_simple_edges(self):
+        self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': 1e-12, 'L': 1e-12, 'C': None})
     def  update_wires_parasitic(self):
         '''
         Update the parasitics of a wire group. Return single R,L,C result
@@ -217,6 +255,7 @@ class EWires(EComp):
             R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
             L_val = wire_inductance(r=self.r, l=length) * 1e-9
             branch_val = 1j * L_val + R_val
+            #print("wire",L_val)
             if self.num_wires>1: # CASE 1 we need to care about mutual between wires
                 for i in range(self.num_wires):
                     RLname = 'B{0}'.format(i)
@@ -235,13 +274,16 @@ class EWires(EComp):
                             #input()
                             self.circuit._graph_add_M(M_name, L1_name, L2_name, M_val)
                 self.circuit.assign_freq(self.f)
+                self.circuit.graph_to_circuit_minimization()
+
                 self.circuit.indep_current_source(0, 1, val=1)
                 self.circuit.build_current_info()
                 try:
-                    self.circuit.solve_iv()
+                    self.circuit.solve_iv(mode =2)
                     imp =self.circuit.results['v1']
                     R = abs(np.real(imp))
                     L = abs(np.imag(imp) / (2 * np.pi * self.f))
+                    print ("wire group", R, L)
                 except:
                     #print "Error occur, fast estimation used"
                     debug = False
@@ -258,9 +300,12 @@ class EWires(EComp):
 
             # print self.net_graph.edges(data=True)
 
-    def build_graph(self):
+    def build_graph(self,mode = 0):
         #print "update wires para"
-        self.update_wires_parasitic()
+        if mode == 0: # in PEEC mode, need to evaluate the inductance of each wire
+            self.update_wires_parasitic()
+        else: # simply add the edge 
+            self.add_simple_edges()
 
 
 class ESolderBalls(EComp):
@@ -747,7 +792,7 @@ def test_bondwires_group():
     nets = ['bw1_s', 'bw1_e']
     rects_sh = [R7, R8]
     sheets = [Sheet(rect=sh, net_name=nets[rects_sh.index(sh)], type='point', n=(0, 0, 1), z=0.4) for sh in rects_sh]
-    wire_group = EWires(0.15, 5, 1, sheets[0], sheets[1], None, 1000e3)
+    wire_group = EWires(0.15, 2, 0.1, sheets[0], sheets[1], None, 1000e3)
     wire_group.update_wires_parasitic()
 
 def test_bondwires_group_with_length():
@@ -761,8 +806,21 @@ def test_bondwires_group_with_length():
         sheets = [Sheet(rect=sh, net_name=nets[rects_sh.index(sh)], type='point', n=(0, 0, 1), z=0.4) for sh in
                   rects_sh]
         #print(('length:',l))
-        wire_group = EWires(0.15, 5, 0.8, sheets[0], sheets[1], None, 1000e3,circuit=Circuit())
+        wire_group = EWires(0.15, 5, 0.1, sheets[0], sheets[1], None, 1000e3,circuit=Circuit())
         wire_group.update_wires_parasitic()
+def test_single_bondwire_group():   
+    from powercad.electrical_mdl.spice_eval.peec_num_solver import Circuit
+    from powercad.general.data_struct.util import Rect
+    R1 = Rect(1,0,0,1)
+    l = 6.5
+    R2 = Rect(1,0,l,l+1)
+    nets = ['bw1_s', 'bw1_e']
+    rects_sh = [R1, R2]
+    sheets = [Sheet(rect=sh, net_name=nets[rects_sh.index(sh)], type='point', n=(0, 0, 1), z=0.4) for sh in
+                rects_sh]
+    #print(('length:',l))
+    wire_group = EWires(0.15, 5, 0.1, sheets[0], sheets[1], None, 1000e3,circuit=Circuit())
+    wire_group.update_wires_parasitic()    
 def test_solderball_group():
     from powercad.electrical_mdl.spice_eval.peec_num_solver import Circuit
     R7 = Rect(49, 48, 34, 35)
@@ -789,4 +847,5 @@ if __name__ == '__main__':
     # test_bondwires_group()
     #test_solderball_group()
     #test_read_srcipt()
-    test_bondwires_group_with_length()
+    #test_bondwires_group_with_length()
+    test_single_bondwire_group()

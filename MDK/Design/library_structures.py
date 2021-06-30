@@ -15,14 +15,14 @@ class MaterialProperties:
         Keyword arguments:
         name -- (string) name identification
         id -- (string) name in Q3D for this material
-        --- Thermal constants
-        thermal_cond -- W/(m*K) -- "Thermal Conductivity"
+        --- thermal constants
+        thermal_cond -- W/(m*K) -- "thermal Conductivity"
         spec_heat_cap -- J/(kg*K) -- "Specific Heat Capacity"
         --- Mechanical constants
         density -- kg/m^3 -- "Material Density"
         young_modulus -- -- "Young Modulus"
         poissons_ratios -- "Poissons Ratios"
-        thermal_expansion_coeffcient -- -- "Thermal Expansion Coefficient"
+        thermal_expansion_coeffcient -- -- "thermal Expansion Coefficient"
         --- electrical_mdl constants
         electrical_res -- (ohm*m) -- "electrical_mdl Resistivity"
         rel_permit -- (unitless) -- "Relative Permittivity"

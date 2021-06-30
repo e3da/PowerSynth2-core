@@ -33,7 +33,7 @@ def characterize_devices(sym_layout, temp_dir=settings.TEMP_DIR, conv_tol=1e-3):
     checks for cached characterizations.
     
     A thermal characterization depends on the dimensions and 
-    material properties (Density and Thermal Cond.) of:
+    material properties (Density and thermal Cond.) of:
         - Baseplate, Sub. Attach, Substrate, Device Attach, and Device
         - Convection coefficient of the baseplate
         
@@ -191,11 +191,11 @@ def characterize_devices(sym_layout, temp_dir=settings.TEMP_DIR, conv_tol=1e-3):
                 sub_tf = SublayerThermalFeatures(sub_res, t_amb, metal_cond, metal_t)
                 
             if avg_temp <= 0.0:
-                raise Exception("Error: Thermal characterization returned a negative temperature! Contact programmer!")
+                raise Exception("Error: thermal characterization returned a negative temperature! Contact programmer!")
             if power <= 0.0:
-                raise Exception("Error: Thermal characterization returned a negative power! Contact programmer!")
+                raise Exception("Error: thermal characterization returned a negative power! Contact programmer!")
             
-            # Build Thermal Features object
+            # Build thermal Features object
             tf = DieThermalFeatures()
             tf.iso_top_fluxes = flux_contours
             tf.iso_top_avg_temp = avg_temp

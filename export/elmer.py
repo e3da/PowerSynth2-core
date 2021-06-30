@@ -255,10 +255,10 @@ def elmer_solve(directory, sif_fn, mesh_fn):
     stdout, stderr = p.communicate()
     print(stdout,stderr)
     if stdout.count(b"Failed convergence tolerances.") > 0:
-        print("Thermal characterization FEM model failed to converge!")
+        print("thermal characterization FEM model failed to converge!")
         return False
     elif stdout.count(b"Failed") > 0:
-        print("Thermal characterization failed!")
+        print("thermal characterization failed!")
         return False
     return True
     

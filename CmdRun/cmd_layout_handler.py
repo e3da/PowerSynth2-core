@@ -43,11 +43,12 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],la
             if len (performance_names) >=2: # Multi (2) objectives optimization
                 csv_writer.writerow(["Size", performance_names[0], performance_names[1]])
                 # for k, v in _fetch_currencies.iteritems():
-                
-                Perf_1 = solutions[i].parameters[performance_names[0]]
-                Perf_2 =  solutions[i].parameters[performance_names[1]]
-                #Perf_1 = 1
-                #Perf_2 =  300
+                try:
+                    Perf_1 = solutions[i].parameters[performance_names[0]]
+                    Perf_2 =  solutions[i].parameters[performance_names[1]]
+                except:
+                    Perf_1 = 3000
+                    Perf_2 =  3000
                 data = [size, Perf_1, Perf_2]
             else: # Single objective eval
                 csv_writer.writerow(["Size", performance_names[0]])
@@ -805,6 +806,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         width,height =get_dims(floor_plan=floor_plan)
         seed = get_seed(seed)
+        print ("MY SEED", seed)
         """
         if optimization == True:
             choice = opt_choices(algorithm=algorithm)

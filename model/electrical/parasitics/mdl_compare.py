@@ -58,7 +58,14 @@ def trace_resistance(f=None, w=None, l=None, t=None, h=None, p=1.724e-8):
 
     # returns resistance in milli-ohms
     return r
-
+def trace_res_dc(w,l,t,p=1.724e-8):
+    w = fabs(w)
+    l = fabs(l)
+    t1 = t*1e-3                 # transfer to unit in m;
+    w1 = w*1e-3                 # transfer to unit in m;
+    l1 = l*1e-3                 # transfer to unit in m;
+    Rdc = p*l1/w1/t1*1e3
+    return Rdc
 #--------------------------------------------------------------------------
 #-----------  resistance model of traces on ground plane ------------------
 #--------------------------------------------------------------------------

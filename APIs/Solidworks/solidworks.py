@@ -30,37 +30,37 @@ def output_solidworks_vbscript(md, output_filename, data_dir, final_dir):
             Part Creation:
                 BpName -- (string) -- Baseplate name used for saving and calling part file
                 BpMatname -- (string) Baseplate material name identification used in material library
-                BpThermal -- thermal_cond -- W/(m*K) -- Baseplate "Thermal Conductivity"
+                BpThermal -- thermal_cond -- W/(m*K) -- Baseplate "thermal Conductivity"
                 BpHeat -- spec_heat_cap -- J/(kg*K) -- Baseplate "Specific Heat Capacity"
                 BpDensity -- density -- kg/m^3 -- Baseplate "Material Density"
                 
                 SubName -- (string) -- Substrate name used for saving and calling part file
                 SubMatname -- (string) Substrate material name identification used in material library
-                SubThermal -- thermal_cond -- W/(m*K) -- Substrate "Thermal Conductivity"
+                SubThermal -- thermal_cond -- W/(m*K) -- Substrate "thermal Conductivity"
                 SubHeat -- spec_heat_cap -- J/(kg*K) -- Substrate "Specific Heat Capacity"
                 SubDensity -- density -- kg/m^3 -- Substrate "Material Density"
                 
                 IsoName -- (string) -- Isolation layer name used for saving and calling part file
                 IsoMatname -- (string) Isolation layer name identification used in material library
-                IsoThermal -- thermal_cond -- W/(m*K) -- Isolation layer "Thermal Conductivity"
+                IsoThermal -- thermal_cond -- W/(m*K) -- Isolation layer "thermal Conductivity"
                 IsoHeat -- spec_heat_cap -- J/(kg*K) -- Isolation layer "Specific Heat Capacity"
                 IsoDensity -- density -- kg/m^3 -- Isolation layer "Material Density"
                 
                 SolderName -- (string) -- Solder name used for saving and calling part file
                 SolderMatname -- (string) Solder material name identification used in material library
-                SolderThermal -- thermal_cond -- W/(m*K) -- Solder layer "Thermal Conductivity"
+                SolderThermal -- thermal_cond -- W/(m*K) -- Solder layer "thermal Conductivity"
                 SolderHeat -- spec_heat_cap -- J/(kg*K) -- Solder layer "Specific Heat Capacity"
                 SolderDensity -- density -- kg/m^3 -- Solder layer "Material Density"
                 
                 DieName -- (string) -- Die name used for saving and calling part file
                 DieMatname -- (string) Die material name identification used in material library
-                DieThermal -- thermal_cond -- W/(m*K) -- Die layer "Thermal Conductivity"
+                DieThermal -- thermal_cond -- W/(m*K) -- Die layer "thermal Conductivity"
                 DieHeat -- spec_heat_cap -- J/(kg*K) -- Die layer "Specific Heat Capacity"
                 DieDensity -- density -- kg/m^3 -- Die layer "Material Density"
                 
                 DieAttachName -- (string) -- Die attach name used for saving and calling part file
                 DieAttachMatname -- (string) Die attach material name identification used in material library
-                DieAttachThermal -- thermal_cond -- W/(m*K) -- Die attach layer "Thermal Conductivity"
+                DieAttachThermal -- thermal_cond -- W/(m*K) -- Die attach layer "thermal Conductivity"
                 DieAttachHeat -- spec_heat_cap -- J/(kg*K) -- Die attach layer "Specific Heat Capacity"
                 DieAttachDensity -- density -- kg/m^3 -- Die attach layer "Material Density"
         
@@ -373,7 +373,7 @@ custom_material = """
                 <NUXY displayname="Poisson's Ration in XY" value="0.394" usepropertycurve="0"/>
                 <GXY displayname="Shear Modulus in XY" value="318900000" usepropertycurve="0"/>
                 <DENS displayname="Mass Density" value="{2}" usepropertycurve="0"/>
-                <KX displayname="Thermal Conductivity in X" value="{3}" usepropertycurve="0"/>
+                <KX displayname="thermal Conductivity in X" value="{3}" usepropertycurve="0"/>
                 <C displayname="Specific Heat" value="{4}" usepropertycurve="0"/>
                 <SIGXT displayname="Tensile Strength in X" value="30000000" usepropertycurve="0"/>
             </physicalproperties>

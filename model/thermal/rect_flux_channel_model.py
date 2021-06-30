@@ -19,7 +19,7 @@ class Baseplate:
         length        float: Dimension of baseplate along y-axis (m)
         thickness     float: Dimension of baseplate along z-axis (m)
         conv_coeff    float: Convection coefficient at bottom of plate (W*(m^-2)*(K^-1))
-        thermal_cond     float: Thermal conductivity of material (W*(m^-1)*(K^-1))
+        thermal_cond     float: thermal conductivity of material (W*(m^-1)*(K^-1))
         """
         self.width = width
         self.length = length
@@ -34,7 +34,7 @@ class ExtaLayer:
         
         Keyword arguments:
         thickness     float: Dimension along z-axis (m)
-        thermal_cond  float: Thermal conductivity of material (W*(m^-1)*(K^-1))
+        thermal_cond  float: thermal conductivity of material (W*(m^-1)*(K^-1))
         """
         self.thickness = thickness
         self.thermal_cond = thermal_cond

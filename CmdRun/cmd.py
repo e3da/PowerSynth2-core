@@ -1,10 +1,11 @@
 # This is the layout generation and optimization flow using command line only
 import sys, os
-sys.path.append('..')
-'''# Set relative location
+#sys.path.append('..')
+# Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
-cur_path = cur_path[0:-16] #exclude "power/cmd_run"
-sys.path.append(cur_path)'''
+cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
+print(cur_path)
+sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
 from core.model.thermal.cornerstitch_API import ThermalMeasure
@@ -68,8 +69,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        #print ("settings.GMSH",settings.GMSH_BIN_PATH)
-		
+        print ("settings.GMSH",settings.GMSH_BIN_PATH)
 class Cmd_Handler: 
     def __init__(self,debug=False):
         # Input files
@@ -138,6 +138,7 @@ class Cmd_Handler:
         e_name = None
         num_gen=None
         dev_conn ={}
+        e_mdl_type = "PowerSynthPEEC" # default
         with open(file, 'r') as inputfile:
 
             dev_conn_mode=False
@@ -157,7 +158,10 @@ class Cmd_Handler:
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
-                    self.rs_model_file = os.path.abspath(info[1])
+                    if info[1]!= 'default': # use the equations
+                        self.rs_model_file = os.path.abspath(info[1])
+                    else:
+                        self.rs_model_file = 'default'
                 if info[0] == "Fig_dir:":
                     self.fig_dir = os.path.abspath(info[1])
                 if info[0] == "Solution_dir:":
@@ -237,6 +241,8 @@ class Cmd_Handler:
                 if self.electrical_mode != None:
                     if info[0] == 'Measure_Name:' and e_name==None:
                         e_name = info[1]
+                    if info[0] == 'Model_Type:':
+                        e_mdl_type = info[1]
                     if info[0] == 'Measure_Type:':
                         type = int(info[1])
                     if info[0] == 'End_Device_Connection.':
@@ -259,14 +265,15 @@ class Cmd_Handler:
         check_file = os.path.isfile
         check_dir = os.path.isdir
         # Check if these files exist
+        rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
         cont = check_file(self.layout_script) \
                and check_file(self.bondwire_setup) \
                and check_file(self.layer_stack_file) \
-               and check_file(self.rs_model_file) \
+               and rs_model_check\
                and check_file(self.constraint_file)
         # make dir if they are not existed
-        #print(("self.new_mode",self.new_mode))
-        #print(("self.flex",self.flexible))
+        print(("self.new_mode",self.new_mode))
+        print(("self.flex",self.flexible))
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -286,14 +293,17 @@ class Cmd_Handler:
             else:
                 print ("Normal meshing algorithm is used")
 
-            print ("run layout generation and (or) evaluation")
+            print ("run the optimization")
             self.init_cs_objects(run_option=run_option)
-            self.set_up_db() # temp commented out
+
+            self.set_up_db() # temp commented1 out
             
             if run_option == 0:
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan,dbunit=self.dbunit)
+                                         floor_plan=floor_plan)
+
+
 
                 
 
@@ -302,7 +312,7 @@ class Cmd_Handler:
                 if self.electrical_mode != None:
                     e_measure_data = {'name': e_name, 'type': type, 'source': source, 'sink': sink}
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency,
-                                          meas_data=e_measure_data)
+                                          meas_data=e_measure_data, type = e_mdl_type)
 
                 if self.thermal_mode!=None:
 
@@ -346,7 +356,7 @@ class Cmd_Handler:
 
                 if self.electrical_mode!=None:
                     e_measure_data = {'name':e_name,'type':type,'source':source,'sink':sink}
-                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data)
+                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
 
 
                 
@@ -354,8 +364,7 @@ class Cmd_Handler:
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
 
-                
-                self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode)
+                self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode,plot = self.plot)
         else:
             # First check all file path
             if not (check_file(self.layout_script)):
@@ -639,15 +648,21 @@ class Cmd_Handler:
 
     def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
         print("init api:", type)
+        if type == 'Loop':
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
         if type == 'PowerSynthPEEC':
-            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
-            self.e_api.load_rs_model(self.rs_model_file)
-
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC')
+            if self.rs_model_file != 'default':
+                self.e_api.load_rs_model(self.rs_model_file)
+            else:
+                self.e_api.rs_model = None
         elif type == 'FastHenry':
             self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
             self.e_api.rs_model = None
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
-
+        elif type == 'LoopFHcompare':
+            self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
+            
         #print mode
         if mode == 'command':
             self.e_api.form_connection_table(mode='command')
@@ -659,9 +674,13 @@ class Cmd_Handler:
             self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
             self.e_api.get_frequency(frequency)
             self.e_api.get_layer_stack(self.layer_stack)
+            if type =='LoopFHcompare':
+                self.e_api.e_mdl = "LoopFHcompare"
+                
+
             self.measures += self.e_api.measurement_setup(meas_data)
         if self.layout_ori_file != None:
-            print("this is a test now")
+            #print("this is a test now")
             self.e_api.process_trace_orientation(self.layout_ori_file)
         #if self.output_option:
         #    self.e_api.export_netlist(dir = self.netlist_dir, mode = self.netlist_mode)
@@ -688,6 +707,7 @@ class Cmd_Handler:
         elif mode == 'macro':
             self.measures += self.t_api.measurement_setup(data=meas_data)
             self.t_api.set_up_device_power(data=setup_data)
+            #print("here",setup_data)
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
@@ -862,7 +882,7 @@ class Cmd_Handler:
                     self.soluions = generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,
                                                              optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,
                                                              apis={'E': self.e_api, 'T': self.t_api},
-                                                             measures=self.measures)
+                                                             measures=self.measures,seed=seed)
 
 
                 
@@ -971,7 +991,7 @@ class Cmd_Handler:
     
 
 
-    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None):
+    def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None,plot=False):
 
 
         data_x=[]
@@ -987,7 +1007,7 @@ class Cmd_Handler:
             if (len(sol.parameters)>=2):
                 data_y.append(sol.parameters[perf_metrices[1]])
             else:
-                data_y.append(sol.index)
+                data_y.append(sol.solution_id)
 
         plt.cla()
         
@@ -1003,27 +1023,17 @@ class Cmd_Handler:
         else:
             x_label=labels[0]
             y_label=labels[1]
-        '''
-        if labels[0]=='Inductance':
-            x_label = labels[0]
-        else:
-            x_label='index'
-        if labels[1]=='Max_Temperature':
-            y_label = labels[1]
-        else:
-            y_label='index'
-        '''
+        
+        if plot:
+            plt.xlim(min(data_x)-2, max(data_x)+2)
+            plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
+            # naming the x axis
+            plt.xlabel(x_label)
+            # naming the y axis
+            plt.ylabel(y_label)
 
-
-        plt.xlim(min(data_x)-2, max(data_x)+2)
-        plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
-        # naming the x axis
-        plt.xlabel(x_label)
-        # naming the y axis
-        plt.ylabel(y_label)
-
-        # giving a title to my graph
-        plt.title('Solution Space')
+            # giving a title to my graph
+            plt.title('Solution Space')
 
         # function to show the plot
         #plt.show()
@@ -1038,39 +1048,43 @@ class Cmd_Handler:
 
 
 if __name__ == "__main__":
-    print("----------------------PowerSynth Version 1.4: Command line version------------------")
+    print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
-
     cmd = Cmd_Handler(debug=False)
     print (str(sys.argv))
     debug = True
+    qmle_nethome = "/nethome/qmle/testcases"
+    imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
+    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test"
+    qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
-        sel= int(input("select a test case to run: 1-quang_simple_test_quang_pc 2-Imam_journal_quang_pc 3-quang_journal_quang_pc 4-Imam_journal_Imam_pc"))
-        if sel == 1: 
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/Mutual_IND_Case/two_dev_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-        elif sel ==2:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/PSV2_Testing/Cmd_flow_case/Half_bridge_Imam/half_bridge_pm_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-        elif sel ==3:
-            args = ['python','cmd.py','-m','/nethome/qmle/testcases/Case1_S-param/Layout1_macro.txt','-settings',"/nethome/qmle/testcases/settings.info"]
-            
-        elif sel==4:
-            args = ['python','cmd.py','-m','D:/Demo/3D_Layout_Engine_Testing/Cmd_flow_case/ECCE_Case/cmd_macro_hier_updated.txt','-settings',"D:/Demo/New_Flow_w_Hierarchy/Journal_Case/settings.info"]
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
-            #D:\Demo\New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Testing_Journal_case_w_Py_3/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
-           
-            #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro_data_collection_final.txt
-            
-        elif sel==5:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Unit_Test_Cases/Case_0_0/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-            #Public/ICCAD_2021_Electrical_API_Testing/Unit_Test_Cases/Case_0_0
-        elif sel==6:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/DMC_Case/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+        tc_list = [{qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_2/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_21/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_6/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_12/macro_script.txt'},\
+                   {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
+                   {qmle_nethome:'ECCE_2021_cases/2D_case_0/cmd'},\
+                   {qmle_nethome:'ECCE_2021_cases/2D_case_1/cmd'},\
+                   {qmle_nethome:'Unit_Test_Cases/Case_0_0/cmd'},\
+                   {qmle_nethome:'Unit_Test_Cases/Case_0_1/macro_script.txt'},\
+                   {qmle_nethome:'Unit_Test_Cases/Case_0_2/macro_script.txt'},\
+                    {imam_nethome1:'Case_16_up/macro_script.txt'}  ]
+
+        for tc in tc_list:
+            print("Case id:", tc_list.index(tc))
+            k = list(tc.keys())[0]
+            v = list(tc.values())[0]
+            print("----Test case folder:",k)
+            print("----Test case name:",v)
+
+        sel= int(input("select a test case to run:"))
+        tc = tc_list[sel]
+        k = list(tc.keys())[0]
+        v = list(tc.values())[0]
+        macro_dir = os.path.join(k,v)
         
-        elif sel==7:
-            args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_16_up/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+        #elif sel==7:
+            #args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_16_up/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
         
         #f = open('output.txt','w')macro_script.txt
         #sys.stdout = f
@@ -1079,3 +1093,5 @@ if __name__ == "__main__":
 
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
+
+    

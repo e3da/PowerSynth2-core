@@ -245,7 +245,7 @@ def average_rect(rect, points, data, samples):
     pts = griddata(points, data, (X, Y), method='cubic')
     avg = np.average(pts)
     if np.isnan(avg):
-        raise Exception("Error: Thermal characterization integration returned NAN! Contact programmer!")
+        raise Exception("Error: thermal characterization integration returned NAN! Contact programmer!")
     return avg
     
 def find_center(points, max_val_indices):
