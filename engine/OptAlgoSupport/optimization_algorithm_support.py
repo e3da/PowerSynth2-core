@@ -134,9 +134,9 @@ class new_engine_opt:
                 if type == 0:  # LOOP RESISTANCE
                     result.append(R)  # resistance in mOhm
                 if type == 1:  # LOOP INDUCTANCE
-                    result = [L_FH,L_loop]         
+                    #result = [L_FH,L_loop]         
 
-                    #result.append(L)  # resistance in mOhm
+                    result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint

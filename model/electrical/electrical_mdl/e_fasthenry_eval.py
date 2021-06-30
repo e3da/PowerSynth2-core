@@ -32,7 +32,7 @@ from subprocess import Popen,PIPE, DEVNULL
 class FastHenryAPI(CornerStitch_Emodel_API):
     imam_fh = '/nethome/ialrazi/PS_2_test_Cases/fasthenry'
     qmle_fh = '/nethome/qmle/temp_fh'
-    def __init__(self, comp_dict={}, wire_conn={},ws =qmle_fh):
+    def __init__(self, comp_dict={}, wire_conn={},ws =imam_fh):
         '''
         :param comp_dict: list of all components and routing objects
         :param wire_conn: a simple table for bondwires setup

@@ -1364,7 +1364,7 @@ class LayoutLoopInterface():
         
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        self.plot(mode=3)
+        #self.plot(mode=3)
         
         '''
         # modify to create more edges in x and y 

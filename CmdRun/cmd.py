@@ -1083,12 +1083,12 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        #elif sel==7:
-            #args = ['python','cmd.py','-m','/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_16_up/macro_script.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
-        
-        #f = open('output.txt','w')macro_script.txt
-        #sys.stdout = f
-        cmd.cmd_handler_flow(arguments=args)
+        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings.info"#os.path.join(k,"settings.info")
+        print("MACRO DIR:", macro_dir)
+        print("SETTING DIR", setting_dir)
+        # From now all of these testcases serve for recursive test for the inductance model
+        args = ['python','cmd.py','-m',macro_dir,'-settings',setting_dir]
+        cmd.cmd_handler_flow(arguments= args)
            
 
     else:
