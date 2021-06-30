@@ -43,7 +43,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "PowerSynth"))
         self.label_3.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:14pt; font-weight:600; font-style:italic;\">Welcome to PowerSynth 2.0!</span></p></body></html>"))
         self.label.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:10pt;\">Would you like to run a pre-existing macro or create a new one?</span></p></body></html>"))
         self.pushButton.setText(_translate("Dialog", "Run Macro"))
