@@ -10,6 +10,7 @@ from core.CmdRun.cmd import Cmd_Handler
 from core.NEW_UI.macro import Ui_Dialog as Ui_newMacro
 from core.NEW_UI.createLayout import Ui_Macro_Input_Paths as Ui_createLayout
 from core.NEW_UI.createMacro import Ui_Dialog as Ui_createMacro
+from core.NEW_UI.optimizationSetup import Ui_Dialog as Ui_optimizationSetup
 
 class GUI():
 
@@ -84,7 +85,8 @@ class GUI():
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
-            self.createMacro(figure)
+            #self.createMacro(figure)
+            self.optimizationSetup()
 
 
         ui.btn_cancel.pressed.connect(self.newMacro)
@@ -94,6 +96,91 @@ class GUI():
         ui.btn_create_project.pressed.connect(create)
 
         createLayout.show()
+
+    def optimizationSetup(self):
+
+        optimizationSetup = QtWidgets.QDialog()
+        ui = Ui_optimizationSetup()
+        ui.setupUi(optimizationSetup)
+        self.setWindow(optimizationSetup)
+
+        ui.layout_generation_setup.hide()
+        ui.performance_selector.hide()
+        ui.electrical_setup.hide()
+        ui.thermal_setup.hide()
+
+        def next_clicked():
+            if not ui.run_options.isHidden(): # Run Options Visible
+                if ui.option_2.isChecked():
+                    ui.performance_selector.show()
+                    ui.run_options.hide()
+                elif ui.option_1.isChecked():
+                    ui.layout_generation_setup.show()
+                    ui.run_options.hide()
+                    ui.next_btn.setText("Finish")
+                elif ui.option_3.isChecked():
+                    ui.layout_generation_setup.show()
+                    ui.run_options.hide()
+            elif not ui.layout_generation_setup.isHidden():  # Layout Generation Visible
+                if ui.option_1.isChecked():
+                    print("CLOSED!")
+                    #optimizationSetup.close()
+                elif ui.option_2.isChecked() or ui.option_3.isChecked():
+                    ui.layout_generation_setup.hide()
+                    ui.performance_selector.show()
+            elif not ui.performance_selector.isHidden():  # Performance Selector Visible
+                if ui.activate_electrical_2.isChecked():
+                    ui.electrical_setup.show()
+                    ui.performance_selector.hide()
+                    if not ui.activate_thermal_2.isChecked():
+                        ui.next_btn.setText("Finish")
+                elif ui.activate_thermal_2.isChecked():
+                    ui.thermal_setup.show()
+                    ui.performance_selector.hide()
+                    ui.next_btn.setText("Finish")
+            elif not ui.electrical_setup.isHidden():  # Electrical Setup Visible
+                if ui.activate_thermal_2.isChecked():
+                    ui.thermal_setup.show()
+                    ui.electrical_setup.hide()
+                    ui.next_btn.setText("Finish")
+                else:
+                    print("CLOSED!")
+                    #optimizationSetup.close()
+            elif not ui.thermal_setup.isHidden():  # Thermal Setup Visible
+                print("CLOSED!")
+                #optimizationSetup.close()
+
+
+        def back_clicked():
+            ui.next_btn.setText("Next")
+            if not ui.run_options.isHidden(): # Run Options Visible
+                pass
+            elif not ui.layout_generation_setup.isHidden():  # Layout Generation Visible
+                ui.layout_generation_setup.hide()
+                ui.run_options.show()
+            elif not ui.performance_selector.isHidden():  # Performance Selector Visible
+                if ui.option_3.isChecked():
+                    ui.layout_generation_setup.show()
+                    ui.performance_selector.hide()
+                elif ui.option_2.isChecked():
+                    ui.run_options.show()
+                    ui.performance_selector.hide()
+            elif not ui.electrical_setup.isHidden():  # Electrical Setup Visible
+                ui.performance_selector.show()
+                ui.electrical_setup.hide()
+            elif not ui.thermal_setup.isHidden():  # Thermal Setup Visible
+                if ui.activate_electrical_2.isChecked():
+                    ui.electrical_setup.show()
+                    ui.thermal_setup.hide()
+                else:
+                    ui.performance_selector.show()
+                    ui.thermal_setup.hide()
+        
+        ui.next_btn.pressed.connect(next_clicked)
+        ui.back_btn.pressed.connect(back_clicked)
+
+        optimizationSetup.show()
+
 
     def createMacro(self, figure):
 
