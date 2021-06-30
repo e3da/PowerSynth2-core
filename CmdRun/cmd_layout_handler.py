@@ -543,7 +543,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
-            plot_solution_structure(sol)
+            #plot_solution_structure(sol)
             #for f in sol.features_list:
                 #f.printFeature()
             PS_solutions.append(sol)
@@ -1011,7 +1011,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         else:
             for solution in PS_solutions:
                 solution.params={'Perf_1':None,'Perf_2':None}
-        if plot:
+        if plot and optimization==True:
             export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
         return PS_solutions
 

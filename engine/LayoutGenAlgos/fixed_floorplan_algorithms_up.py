@@ -475,7 +475,11 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                 #print(longest_path,min_constraints)
                 #for edge in graph.nx_graph_edges:
                     #edge.printEdge()
-                allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                #allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                if sink.coordinate in locations and source.coordinate in locations:
+                    allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                else:
+                    allocated_distance=longest_distance
                 #print(longest_distance,allocated_distance)
                 #input()
                 if longest_distance>0:
@@ -534,6 +538,8 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                                             graph=update_graph(locations,graph)
                                             #print("A",len(graph.nx_graph_edges))
                                             #input()"""
+                    
+                    
                     #else:
                         #print("ERROR: NO LONGEST PATH FROM", source.coordinate, "TO", sink.coordinate, "in ID:", ID)
                         #exit()
