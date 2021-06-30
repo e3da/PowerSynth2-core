@@ -6,7 +6,7 @@
 # 4. Reuse the Loop definition every time for accelerated mesh generation
 import networkx as nx
 import sys, os
-import dill
+#import dill
 from networkx.readwrite import edgelist
 
 from matplotlib.pyplot import Arrow
