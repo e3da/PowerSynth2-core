@@ -77,8 +77,8 @@ class new_engine_opt:
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     R,L = self.e_api.run_fast_henry_script()
                 #'''
-                R=100
-                L=100    
+                #R=100
+                #L=100    
                 #print ("RL",R,L)
                 
                     
