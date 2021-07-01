@@ -5,11 +5,12 @@ This is the main code of PCM
 import sys, csv
 from PyQt5.QtGui import *
 from PyQt5 import QtCore, QtGui
-from StructureCode import MaterialProperties
-from Edit_Library import *
+from core.NEW_UI.MDKEditor.StructureCode import MaterialProperties
+from core.NEW_UI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
+from core.NEW_UI.testMain import Ui_MainWindow
 
 class EditLibrary(QMainWindow, Ui_MDKWindow):
     selected = []       #variable pass material information to PowerSynth
@@ -93,7 +94,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return: Nothing
         """
         EditLibrary.mat_lib = []
-        filename, ok = QFileDialog.getOpenFileName(parent=self, caption='Select Open File', dir='.', filter='CSV Files (*.csv)')
+        filename, ok = QFileDialog.getOpenFileName(parent=self, caption='Select Open File', filter='CSV Files (*.csv)')
         with open(filename) as data:
             reader = csv.DictReader(data)
             for row in reader:
@@ -141,7 +142,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return: Nothing
         """
         rows = EditLibrary.mat_lib
-        filename, ok = QFileDialog.getSaveFileName(parent=self, caption='Select Save File', dir='.', filter='CSV Files (*.csv)')
+        filename, ok = QFileDialog.getSaveFileName(parent=self, caption='Select Save File', filter='CSV Files (*.csv)')
         with open(filename, 'wb') as csvFile:
             header = ["name", "thermal_cond", "thermal_cond_liq", "spec_heat_cap",
                       "spec_heat_cap_liq", "density", "density_liq", "electrical_res",

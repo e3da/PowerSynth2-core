@@ -73,7 +73,6 @@ Instead of all on one window, make it multiple windows (back, next)
 
 
 TODO:
-
 Make your UI look more like the MDK Editor.
 Integrate the Technology Elements step with the MDK Editor (shouldn't be hard)
 3D Visualizer!
