@@ -2,7 +2,7 @@ from core.NEW_UI.generateLayout import generateLayout
 import sys
 import os
 import shutil
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtOpenGL
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -81,6 +81,7 @@ class GUI():
             self.pathToBondwireSetup = ui.lineEdit_5.text()
             self.pathToLayerStack = ui.lineEdit_4.text()
             '''
+
             self.pathToLayoutScript = "/nethome/jgm019/TEST/LAYOUT_SCRIPT.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/TEST/BONDWIRE_SETUP.txt"
             self.pathToLayerStack = "/nethome/jgm019/TEST/LAYER_STACK.csv"  # Speeds up process.

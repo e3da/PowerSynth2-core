@@ -9,9 +9,10 @@ def generateLayout(layout_script, bondwire_setup, layer_stack_file):
     layer_stack = LayerStack()
     layer_stack.import_layer_stack_from_csv(layer_stack_file)
 
-    all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=layout_script, bond_wire_info=bondwire_setup, layer_stack_info=layer_stack)
+    all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=layout_script, bond_wire_info=bondwire_setup, layer_stack_info=layer_stack, flexible=True)
 
     layer = all_layers[0]
+    #print(layer.input_geometry)
 
     return layer.plot_init_layout(UI=True) # plotting each layer initial layout
 

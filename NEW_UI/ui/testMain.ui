@@ -33,10 +33,10 @@
      <widget class="QPushButton" name="btn_openMDK">
       <property name="geometry">
        <rect>
-        <x>460</x>
-        <y>280</y>
-        <width>121</width>
-        <height>23</height>
+        <x>350</x>
+        <y>210</y>
+        <width>161</width>
+        <height>61</height>
        </rect>
       </property>
       <property name="text">
@@ -51,10 +51,10 @@
      <widget class="QGraphicsView" name="graphicsView">
       <property name="geometry">
        <rect>
-        <x>330</x>
-        <y>60</y>
-        <width>553</width>
-        <height>403</height>
+        <x>240</x>
+        <y>100</y>
+        <width>411</width>
+        <height>311</height>
        </rect>
       </property>
      </widget>
