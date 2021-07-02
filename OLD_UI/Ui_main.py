@@ -1,224 +1,190 @@
+from core.NEW_UI.generateLayout import generateLayout
 import sys
 import os
 import shutil
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtOpenGL
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.CmdRun.cmd import Cmd_Handler
-from core.UI.solutionBrowser import Ui_solutionBrowser
-from core.UI.mainWindow_master import Ui_MainWindow
-from core.UI.createProject import Ui_Dialog as Ui_createProject
-from core.UI.openProject import Ui_Dialog as Ui_openProject
-    
+from core.NEW_UI.macro import Ui_Dialog as Ui_newMacro
+from core.NEW_UI.createLayout import Ui_Macro_Input_Paths as Ui_createLayout
+from core.NEW_UI.createMacro import Ui_Dialog as Ui_createMacro
+from core.NEW_UI.optimizationSetup import Ui_Dialog as Ui_optimizationSetup
+from core.NEW_UI.testMain import Ui_MainWindow
+from core.NEW_UI.MDKEditor.MainCode import EditLibrary
 
 class GUI():
 
     def __init__(self):
-        self.settingsPath = None
-        self.macroPath = None
-        self.projectDirectory = None
-        self.layoutPath = None
-        self.techLibPath = None
+        self.app = None
         self.currentWindow = None
-        self.running = False
+        self.pathToLayoutScript = None
+        self.pathToBondwireSetup = None
+        self.pathToLayerStack = None
 
     def setWindow(self, newWindow):
-            if self.currentWindow:
-                self.currentWindow.close()
-            self.currentWindow = newWindow
+        if self.currentWindow:
+            self.currentWindow.close()
+        self.currentWindow = newWindow
 
-    def closeEvent(self, event):
-        self.mainWindow()
+    def newMacro(self):
+        macro = QtWidgets.QDialog()
+        ui = Ui_newMacro()
+        ui.setupUi(macro)
+        self.setWindow(macro)
 
-    def mainWindow(self):
-        '''Generates the Main Window'''
-        MainWindow = QtWidgets.QMainWindow()
-        ui = Ui_MainWindow()
-        ui.setupUi(MainWindow)
-        self.setWindow(MainWindow)
+        ui.pushButton_2.pressed.connect(self.createLayout)
 
-        ui.btn_open_sol_browser.pressed.connect(self.solutionBrowser)
-        ui.btn_newProject.pressed.connect(self.newProject)
-        ui.btn_openProject.pressed.connect(self.openProject)
+        macro.show()
+    
+    def createLayout(self):
+        createLayout = QtWidgets.QDialog()
+        ui = Ui_createLayout()
+        ui.setupUi(createLayout)
+        self.setWindow(createLayout)
 
-        MainWindow.show()
-        if not self.running:
-            self.running = True
-            self.app.exec_()
+        def getLayoutScript():
+            ui.lineEdit_2.setText(QtWidgets.QFileDialog.getOpenFileName(createLayout, 'Open layout_script', os.getenv('HOME'))[0])
 
-    def openProject(self):
-        '''Load UI for opening a previously existing project'''
-        openProject = QtWidgets.QDialog()
-        ui = Ui_openProject()
-        ui.setupUi(openProject)
-
-        def getSettingsPath():
-            settingsInfo = QtWidgets.QFileDialog.getOpenFileName(openProject, 'Open settings.info', os.getenv('HOME'))
-            ui.lineEdit_3.setText(settingsInfo[0])
-
-        def getMacroPath():
-            macroInfo = QtWidgets.QFileDialog.getOpenFileName(openProject, 'Open macro.txt', os.getenv('HOME'))
-            ui.lineEdit_4.setText(macroInfo[0])
-
-        def open():
-            if not os.path.exists(ui.lineEdit_3.text()) or "settings.info" not in ui.lineEdit_3.text():
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to the settings.info file.")
-                popup.exec_()
-                return
-
-            if not os.path.exists(ui.lineEdit_4.text()) or ".txt" not in ui.lineEdit_4.text():
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to the macro.txt file.")
-                popup.exec_()
-                return
-
-            # Save paths to macro/settings
-            self.settingsPath = ui.lineEdit_3.text()
-            self.macroPath = ui.lineEdit_4.text()
-
-            # Reopen Main Window-- probably.
-
-
-            openProject.close()
-
-        ui.btn_cancel.pressed.connect(openProject.close)
-        ui.btn_open_macro.pressed.connect(getMacroPath)
-        ui.btn_open_settings_2.pressed.connect(getSettingsPath)
-        ui.btn_create_project.pressed.connect(open)
-
-        openProject.show()
-
-    def newProject(self):
-        '''Load UI for new Project'''
-        createProject = QtWidgets.QDialog()
-        ui = Ui_createProject()
-        ui.setupUi(createProject)
+        def getBondwire():
+            ui.lineEdit_5.setText(QtWidgets.QFileDialog.getOpenFileName(createLayout, 'Open bondwire_setup', os.getenv('HOME'))[0])
         
-        def getDirectory():
-            directoryPath = QtWidgets.QFileDialog.getExistingDirectory(createProject, 'Set Project Directory', os.getenv('HOME'))
-            ui.lineEdit_2.setText(directoryPath)
-
-        def getLayoutPath():
-            layoutInfo = QtWidgets.QFileDialog.getOpenFileName(createProject, 'Open layout_script', os.getenv('HOME'))
-            ui.lineEdit_4.setText(layoutInfo[0])
-        
-        def getTechLib():
-            techLib = QtWidgets.QFileDialog.getExistingDirectory(createProject, 'Locate tech_lib Folder', os.getenv('HOME'))
-            ui.lineEdit_5.setText(techLib)
+        def getLayoutStack():
+            ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(createLayout, 'Open layer_stack', os.getenv('HOME'))[0])
 
         def create():
-            if not ui.lineEdit.text():
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid name for the project.")
-                popup.exec_()
-                return
-
-            if not os.path.exists(ui.lineEdit_2.text()):
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to a project directory.")
-                popup.exec_()
-                return
-
-            if not os.path.exists(ui.lineEdit_5.text()):
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to the tech_lib folder.")
-                popup.exec_()
-                return
-
-            if not os.path.exists(ui.lineEdit_4.text()) or ".txt" not in ui.lineEdit_4.text():
+            '''
+            if not os.path.exists(ui.lineEdit_2.text()) or ".txt" not in ui.lineEdit_2.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layout_script file.")
                 popup.exec_()
                 return
 
-            # Save paths to macro/settings
-            self.techLibPath = ui.lineEdit_5.text()
-            self.layoutPath = ui.lineEdit_4.text()
+            if not os.path.exists(ui.lineEdit_5.text()) or ".txt" not in ui.lineEdit_5.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the bondwire_setup file.")
+                popup.exec_()
+                return
 
-            # Create a new project folder
-            self.projectDirectory = ui.lineEdit_2.text() + "/" + ui.lineEdit.text()
-            mode = 0o777
-            os.mkdir(self.projectDirectory, mode)
+            if not os.path.exists(ui.lineEdit_4.text()) or ".csv" not in ui.lineEdit_4.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the layer_stack file.")
+                popup.exec_()
+                return
 
-            # Copy the layout script into the new folder
-            shutil.copy(self.layoutPath, self.projectDirectory + "/" + self.layoutPath.split("/")[-1])
+            
+            self.pathToLayoutScript = ui.lineEdit_2.text()
+            self.pathToBondwireSetup = ui.lineEdit_5.text()
+            self.pathToLayerStack = ui.lineEdit_4.text()
+            '''
 
-            self.settingsPath = self.projectDirectory + "/settings.info"
+            self.pathToLayoutScript = "/nethome/jgm019/TEST/LAYOUT_SCRIPT.txt"
+            self.pathToBondwireSetup = "/nethome/jgm019/TEST/BONDWIRE_SETUP.txt"
+            self.pathToLayerStack = "/nethome/jgm019/TEST/LAYER_STACK.csv"  # Speeds up process.
+            
+            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
-            settingsFile = open(self.settingsPath, "w")
-            settingsFile.write(f"""# Settings and Paths\nDEFAULT_TECH_LIB_DIR: {self.techLibPath}
-LAST_ENTRIES_PATH: ./export_data/app_data/last_entries.p
-TEMP_DIR: ./export_data/temp
-CACHED_CHAR_PATH: ./export_data/cached_thermal
-MATERIAL_LIB_PATH: {self.techLibPath}/Material/Materials.csv
-EXPORT_DATA_PATH: ./export_data
-GMSH_BIN_PATH: ./gmsh-2.7.0-Windows
-ELMER_BIN_PATH: ./Elmer_8.2-Release/bin
-ANSYS_IPY64: C:/Program Files/AnsysEM/AnsysEM18.2/Win64/common/IronPython
-FASTHENRY_FOLDER: ./FastHenry
-MANUAL: ./PowerSynth_User_Manual.pdf""")
+            #self.createMacro(figure)
+            #self.optimizationSetup()
+            self.testMain(figure)
 
-            # Reopen Main Window-- probably.
 
-            createProject.close()
-
-        # Adjust buttons here
-        ui.btn_cancel.pressed.connect(createProject.close)
-        ui.btn_open_folder.pressed.connect(getDirectory)
-        ui.btn_open_macro.pressed.connect(getLayoutPath)
-        ui.btn_open_macro_2.pressed.connect(getTechLib)
+        ui.btn_cancel.pressed.connect(self.newMacro)
+        ui.btn_open_layout.pressed.connect(getLayoutScript)
+        ui.btn_open_bondwire.pressed.connect(getBondwire)
+        ui.btn_open_layout_stack.pressed.connect(getLayoutStack)
         ui.btn_create_project.pressed.connect(create)
 
-        createProject.show()
+        createLayout.show()
 
-    def solutionBrowser(self):
-        '''Generates Solution Browser'''
-        solutionBrowser = QtWidgets.QDialog()
-        ui = Ui_solutionBrowser()
-        ui.setupUi(solutionBrowser)
-        self.setWindow(solutionBrowser)
+    def testMain(self, figure):
+        main = QtWidgets.QMainWindow()
+        ui = Ui_MainWindow()
+        ui.setupUi(main)
+        self.setWindow(main)
 
-        def on_pick(event):
-            imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/Mode_2_gen_only/layout_' + str(event.ind[0]) + '_I1.png'
+        ui.tabWidget.setTabEnabled(1, False)
+        ui.tabWidget.setTabEnabled(2, False)
+        ui.tabWidget.setTabEnabled(3, False)
+        ui.tabWidget.setTabEnabled(4, False)
 
-            imageObject = QImage()
-            imageObject.load(imagePath)
-            image = QPixmap.fromImage(imageObject)
+        def option1():
+            ui.tabWidget.setTabEnabled(1, True)
+            ui.tabWidget.setTabEnabled(2, False)
+            ui.tabWidget.setTabEnabled(3, False)
+            ui.tabWidget.setTabEnabled(4, False)
+        
+        def option2():
+            ui.tabWidget.setTabEnabled(1, False)
+            ui.tabWidget.setTabEnabled(2, True)
+            if ui.activate_electrical_2.isChecked():
+                ui.tabWidget.setTabEnabled(3, True)
+            if ui.activate_thermal_2.isChecked():
+                ui.tabWidget.setTabEnabled(4, True)
+            
+        def option3():
+            ui.tabWidget.setTabEnabled(1, True)
+            ui.tabWidget.setTabEnabled(2, True)
+            if ui.activate_electrical_2.isChecked():
+                ui.tabWidget.setTabEnabled(3, True)
+            if ui.activate_thermal_2.isChecked():
+                ui.tabWidget.setTabEnabled(4, True)
 
-            ui.grview_layout_sols.scene().addPixmap(image)
+        def electrical():
+            if ui.activate_electrical_2.isChecked():
+                ui.tabWidget.setTabEnabled(3, False)
+            else:
+                ui.tabWidget.setTabEnabled(3, True)
 
+        def thermal():
+            if ui.activate_thermal_2.isChecked():
+                ui.tabWidget.setTabEnabled(4, False)
+            else:
+                ui.tabWidget.setTabEnabled(4, True)
+
+
+        ui.option_1.pressed.connect(option1)
+        ui.option_2.pressed.connect(option2)
+        ui.option_3.pressed.connect(option3)
+        ui.activate_electrical_2.pressed.connect(electrical)
+        ui.activate_thermal_2.pressed.connect(thermal)
+
+        # Get the initial layout to show
         scene = QtWidgets.QGraphicsScene()
-        ui.grview_sols_browser.setScene(scene)
+        ui.graphicsView.setScene(scene)
 
-        scene = QtWidgets.QGraphicsScene()
-        ui.grview_layout_sols.setScene(scene)
+        figure.set_figheight(3)  # Adjusts the size of the Figure
+        figure.set_figwidth(3)
+        canvas = FigureCanvas(figure)
+        scene.addWidget(canvas)
 
-        scene = QtWidgets.QGraphicsScene()
-        imagePath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/Figs/initial_layout_I1.png'
+        # Connect to MDK Editor
+        def openMDK():
+            MDK = QtWidgets.QMainWindow()
+            ui = EditLibrary()
+            ui.setupUi(MDK)
+            self.currentWindow = MDK
+            
 
-        imageObject = QImage()
-        imageObject.load(imagePath)
-        image = QPixmap.fromImage(imageObject)
+            MDK.show()
 
-        scene.addPixmap(image)
-        ui.grview_init_layout.setScene(scene)
+        ui.btn_openMDK.pressed.connect(openMDK)
 
-        canvas = FigureCanvas(self.cmd.solutionsFigure)
-        canvas.callbacks.connect('pick_event', on_pick)
+        def getParasiticModel():
+            ui.parasitic_textedit.setText(QtWidgets.QFileDialog.getOpenFileName(main, 'Open parasitic_model', os.getenv('HOME'))[0])
 
-        ui.grview_sols_browser.scene().addWidget(canvas)
+        def getTraceOri():
+            ui.trace_textedit.setText(QtWidgets.QFileDialog.getOpenFileName(main, 'Open trace_ori', os.getenv('HOME'))[0])
+        
+        ui.btn_open_parasitic.pressed.connect(getParasiticModel)
+        ui.btn_open_trace.pressed.connect(getTraceOri)
 
-        solutionBrowser.closeEvent = self.closeEvent
 
-        solutionBrowser.show()
+        main.show()
 
 
     def run(self):
@@ -237,5 +203,6 @@ MANUAL: ./PowerSynth_User_Manual.pdf""")
 
         self.app = QtWidgets.QApplication(sys.argv)
 
-        self.mainWindow()
+        self.newMacro()
 
+        self.app.exec_()  # Make sure this is only called after first function!

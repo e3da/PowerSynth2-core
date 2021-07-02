@@ -62,14 +62,11 @@ Ambient_Temperature: 300
 End_Thermal_Setup.
 
 
-Workflow:
-Run Macro -- 3D Visualizer.
-Create Macro -- Give paths to first three files -- show layout -- ask for option -- ask for electrical/thermal options based on option
-             -- ask for trace_ori/parasitic if electrical is chosen -- edit constraints? -- done.
+FLOW:
 
-Technology elements --> Adjust Layout --> Optimization Steps
-
-
-TODO:
-Make your UI look more like the MDK Editor.
-3D Visualizer!
+Would you like to edit the materials list?  If not, the defaults will be used (MDKEditor)
+Enter Paths to layer_stack, layout, and bondwire (Initial Structure and Layout)
+POPUP -- Edit the constraints!  Click OK when finished.
+Display run options as buttons.
+Based on which is clicked, display Layout Setup and Electrical/Thermal Setups (Performance Evaluation/Optimization)
+Run PowerSynth.
