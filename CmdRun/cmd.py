@@ -27,7 +27,7 @@ import copy
 import csv
 from core.general.settings import settings
 
-import core.NEW_UI.Ui_main as main
+import core.NEW_UI.main as main
 from matplotlib.figure import Figure
 
 

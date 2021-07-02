@@ -10,7 +10,6 @@ from core.NEW_UI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
-from core.NEW_UI.testMain import Ui_MainWindow
 
 class EditLibrary(QMainWindow, Ui_MDKWindow):
     selected = []       #variable pass material information to PowerSynth
