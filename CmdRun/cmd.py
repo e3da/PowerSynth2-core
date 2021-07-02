@@ -110,6 +110,7 @@ class Cmd_Handler:
         self.output_option= False
         self.thermal_mode = None
         self.electrical_mode = None
+        self.export_ansys_em = None
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -201,10 +202,15 @@ class Cmd_Handler:
                     floor_plan = [float(i) for i in floor_plan]
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
+                if info[0] == 'Export_AnsusEM_Setup':
+                    self.export_ansys_em = True
+                    self.export_ansys_em_info = []
+                if info[0] == 'End_Export_AnsusEM_Setup.':
+                    self.export_ansys_em = False
                 if info[0]== 'Thermal_Setup:':
                     self.thermal_mode = True
                 if info[0] == 'End_Thermal_Setup.':
-                    self.thermal_mode = False
+                    self.electrical_mode = False
                 if info[0] == 'Electrical_Setup:':
                     self.electrical_mode = True
                 if info[0] == 'End_Electrical_Setup.':
@@ -218,7 +224,12 @@ class Cmd_Handler:
                         self.netlist_dir = info[1]
                     if info[0] == 'Netlist_Mode':
                         self.netlist_mode = int(info[1])
-                if self.thermal_mode !=None:
+                if(self.export_ansys_em):
+                    if info[0] == 'Run_Mode:':
+                        self.export_ansys_em_info.append(int(info[1]))    
+                    if info[0] == 'Simulator:':
+                        self.export_ansys_em_info.append(int(info[1]))   
+                if(self.thermal_mode):
                     if info[0] == 'Model_Select:':
                         thermal_model = int(info[1])
                     if info[0] == 'Measure_Name:' and t_name==None:
