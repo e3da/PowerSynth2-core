@@ -70,3 +70,9 @@ POPUP -- Edit the constraints!  Click OK when finished.
 Display run options as buttons.
 Based on which is clicked, display Layout Setup and Electrical/Thermal Setups (Performance Evaluation/Optimization)
 Run PowerSynth.
+
+
+TODO:
+Look into linking with QML instead of Python?  QT Creator instead of QT Designer
+3D Visuals Continue.
+Continue building UI based on above flow.

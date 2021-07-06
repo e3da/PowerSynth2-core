@@ -11,6 +11,8 @@ from core.NEW_UI.editMaterials import Ui_Dialog as UI_edit_materials
 from core.NEW_UI.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 from core.NEW_UI.editConstraints import Ui_Dialog as UI_edit_constraints
 from core.NEW_UI.MDKEditor.MainCode import EditLibrary
+from core.NEW_UI.generateLayout import generateLayout
+import webbrowser
 
 class GUI():
 
@@ -33,7 +35,7 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
-            print("Here's your help.")
+            webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
         
         def runProject():
             self.editMaterials()
@@ -59,7 +61,7 @@ class GUI():
             MDK.show()
         
         def continueProject():
-            print("TO BE CONTINUED...")
+            self.editLayout()
         
         ui.btn_edit_materials.pressed.connect(openMDK)
         ui.btn_default_materials.pressed.connect(continueProject)
@@ -72,7 +74,70 @@ class GUI():
         ui.setupUi(editLayout)
         self.setWindow(editLayout)
 
+        def getLayerStack():
+            ui.lineEdit_layer.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open layer_stack', os.getenv('HOME'))[0])
+
+        def getLayoutScript():
+            ui.lineEdit_layout.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open layout_script', os.getenv('HOME'))[0])
+
+        def getBondwire():
+            ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
+
+        def createLayout():
+            '''
+            if not os.path.exists(ui.lineEdit_layer.text()) or ".csv" not in ui.lineEdit_layer.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the layer_stack file.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_layout.text()) or ".txt" not in ui.lineEdit_layout.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the layout_script file.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_bondwire.text()) or ".txt" not in ui.lineEdit_bondwire.text():
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the bondwire_setup file.")
+                popup.exec_()
+                return
+            
+            self.pathToLayerStack = ui.lineEdit_layer.text()
+            self.pathToLayoutScript = ui.lineEdit_layout.text()
+            self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
+            '''
+
+            self.pathToLayoutScript = "/nethome/jgm019/TEST/LAYOUT_SCRIPT.txt"
+            self.pathToBondwireSetup = "/nethome/jgm019/TEST/BONDWIRE_SETUP.txt"
+            self.pathToLayerStack = "/nethome/jgm019/TEST/LAYER_STACK.csv"  # Speeds up process.
+            
+            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
+
+            self.editConstraints(figure)
+
+        ui.btn_open_layout_stack.pressed.connect(getLayerStack)
+        ui.btn_open_layout.pressed.connect(getLayoutScript)
+        ui.btn_open_bondwire.pressed.connect(getBondwire)
+        ui.btn_create_project.pressed.connect(createLayout)
+
         editLayout.show()
+    
+    def editConstraints(self, figure):
+        editConstraints = QtWidgets.QDialog()
+        ui = UI_edit_constraints()
+        ui.setupUi(editConstraints)
+        self.setWindow(editConstraints)
+
+        ui.pushButton.pressed.connect(self.next)
+
+        editConstraints.show()
+
+    def next(self):
+        print("Done.")
 
     def run(self):
         '''Main Function to run the GUI'''

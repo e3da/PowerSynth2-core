@@ -10,6 +10,7 @@ from core.NEW_UI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
+from core.NEW_UI.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 
 class EditLibrary(QMainWindow, Ui_MDKWindow):
     selected = []       #variable pass material information to PowerSynth
@@ -32,6 +33,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         self.load_button.clicked.connect(self.load)
         self.save_button.clicked.connect(self.save)
         self.cancel_button.clicked.connect(self.cancel)
+        self.cancel_button.setText("CONTINUE")
         self.search_button.clicked.connect(self.search)
         self.sort_button.clicked.connect(self.sort)
         self.add_all_button.clicked.connect(self.add_all)
@@ -461,7 +463,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         msg.exec_()
 
     def cancel(self):
-        self.close()
+        print("Nice!")
 
     def search(self):
         """

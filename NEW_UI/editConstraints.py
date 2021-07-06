@@ -11,15 +11,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(292, 88)
+        Dialog.resize(353, 93)
         self.pushButton = QtWidgets.QPushButton(Dialog)
-        self.pushButton.setGeometry(QtCore.QRect(200, 50, 75, 23))
+        self.pushButton.setGeometry(QtCore.QRect(260, 60, 75, 23))
         self.pushButton.setObjectName("pushButton")
-        self.label = QtWidgets.QLabel(Dialog)
-        self.label.setGeometry(QtCore.QRect(20, 10, 251, 21))
-        self.label.setObjectName("label")
         self.label_2 = QtWidgets.QLabel(Dialog)
-        self.label_2.setGeometry(QtCore.QRect(20, 30, 251, 21))
+        self.label_2.setGeometry(QtCore.QRect(10, 10, 331, 51))
+        self.label_2.setTextFormat(QtCore.Qt.RichText)
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName("label_2")
 
         self.retranslateUi(Dialog)
@@ -29,8 +28,7 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Layout Synthesis"))
         self.pushButton.setText(_translate("Dialog", "OK"))
-        self.label.setText(_translate("Dialog", "Please edit the constraints in the constraints.csv file,"))
-        self.label_2.setText(_translate("Dialog", "then click OK when finished."))
+        self.label_2.setText(_translate("Dialog", "<html><head/><body><p align=\"center\">Please edit the constraints in the constraints.csv file,</p><p align=\"center\">then click OK when finished.</p></body></html>"))
 
 
 if __name__ == "__main__":
