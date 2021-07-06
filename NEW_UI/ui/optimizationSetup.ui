@@ -284,6 +284,9 @@
      <property name="text">
       <string>Run Powersynth</string>
      </property>
+     <property name="default">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
   </layout>

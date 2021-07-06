@@ -139,6 +139,7 @@ class Ui_Dialog(object):
         self.horizontalLayout.addWidget(self.btn_thermal_setup)
         self.verticalLayout.addWidget(self.electrical_thermal_frame)
         self.btn_run_powersynth = QtWidgets.QPushButton(Dialog)
+        self.btn_run_powersynth.setDefault(True)
         self.btn_run_powersynth.setObjectName("btn_run_powersynth")
         self.verticalLayout.addWidget(self.btn_run_powersynth)
 

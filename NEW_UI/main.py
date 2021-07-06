@@ -1,6 +1,6 @@
 import sys
 import os
-import shutil
+import webbrowser
 from PyQt5 import QtWidgets, QtOpenGL
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
@@ -12,7 +12,11 @@ from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 from core.NEW_UI.py.editConstraints import Ui_Dialog as UI_edit_constraints
 from core.NEW_UI.MDKEditor.MainCode import EditLibrary
 from core.NEW_UI.generateLayout import generateLayout
-import webbrowser
+from core.NEW_UI.py.optimizationSetup import Ui_Dialog as UI_optimization_setup
+from core.NEW_UI.py.electricalSetup import Ui_Dialog as UI_electrical_setup
+from core.NEW_UI.py.thermalSetup import Ui_Dialog as UI_thermal_setup
+from core.NEW_UI.py.runOptions import Ui_Dialog as UI_run_options
+from core.NEW_UI.py.solutionBrowser import Ui_Dialog as UI_solution_browser
 
 class GUI():
 
@@ -22,6 +26,7 @@ class GUI():
         self.pathToLayoutScript = None
         self.pathToBondwireSetup = None
         self.pathToLayerStack = None
+        self.option = None
     
     def setWindow(self, newWindow):
         if self.currentWindow:
@@ -53,10 +58,9 @@ class GUI():
 
         # Connect to MDK Editor
         def openMDK():
-            MDK = QtWidgets.QMainWindow()
+            MDK = QtWidgets.QMainWindow(parent=self.currentWindow)
             ui = EditLibrary()
             ui.setupUi(MDK)
-            self.currentWindow = MDK
             
             MDK.show()
         
@@ -132,17 +136,69 @@ class GUI():
         ui.setupUi(editConstraints)
         self.setWindow(editConstraints)
 
-        ui.pushButton.pressed.connect(self.next)
+        ui.pushButton.pressed.connect(self.runOptions)
 
         editConstraints.show()
 
-    def next(self):
-        print("Done.")
+    def runOptions(self):
+        runOptions = QtWidgets.QDialog()
+        ui = UI_run_options()
+        ui.setupUi(runOptions)
+        self.setWindow(runOptions)
 
-    def run(self):
-        '''Main Function to run the GUI'''
+        def option0():
+            self.option = 0
+            self.optimizationSetup()
+        
+        def option1():
+            self.option = 1
+            self.optimizationSetup()
 
-        '''
+        def option2():
+            self.option = 2
+            self.optimizationSetup()
+
+        ui.pushButton.pressed.connect(option0)
+        ui.pushButton_2.pressed.connect(option1)
+        ui.pushButton_3.pressed.connect(option2)        
+
+        runOptions.show()
+
+    def optimizationSetup(self):
+        optimizationSetup = QtWidgets.QDialog()
+        ui = UI_optimization_setup()
+        ui.setupUi(optimizationSetup)
+        self.setWindow(optimizationSetup)
+
+        if self.option == 0:
+            ui.electrical_thermal_frame.hide()
+        elif self.option == 1:
+            ui.layout_generation_setup_frame.hide()
+
+        ui.btn_electrical_setup.pressed.connect(self.electricalSetup)
+        ui.btn_thermal_setup.pressed.connect(self.thermalSetup)
+        ui.btn_run_powersynth.pressed.connect(self.runPowerSynth)
+
+        optimizationSetup.show()
+
+    def electricalSetup(self):
+        electricalSetup = QtWidgets.QDialog(parent=self.currentWindow)
+        ui = UI_electrical_setup()
+        ui.setupUi(electricalSetup)
+
+        electricalSetup.show()
+
+    def thermalSetup(self):
+        thermalSetup = QtWidgets.QDialog(parent=self.currentWindow)
+        ui = UI_thermal_setup()
+        ui.setupUi(thermalSetup)
+
+        thermalSetup.show()
+    
+    def runPowerSynth(self):
+        self.currentWindow.close()
+        self.currentWindow = None
+
         macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
         settingsPath = '/nethome/jgm019/testcases/settings.info'
 
@@ -151,7 +207,16 @@ class GUI():
         args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
 
         self.cmd.cmd_handler_flow(arguments=args)
-        '''
+
+        solutionBrowser = QtWidgets.QDialog()
+        ui = UI_solution_browser()
+        ui.setupUi(solutionBrowser)
+        self.setWindow(solutionBrowser)
+
+        solutionBrowser.show()
+
+    def run(self):
+        '''Main Function to run the GUI'''
 
         self.app = QtWidgets.QApplication(sys.argv)
 
