@@ -22,6 +22,7 @@ class Ui_MDKWindow(object):
         self.cancel_button.setGeometry(QtCore.QRect(640, 500, 75, 23))
         self.cancel_button.setMouseTracking(True)
         self.cancel_button.setObjectName("cancel_button")
+        self.cancel_button.pressed.connect(self.cancel)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(0, 0, 741, 491))
         self.tabWidget.setObjectName("tabWidget")
@@ -349,13 +350,16 @@ class Ui_MDKWindow(object):
         self.toolBox.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MDKWindow)
 
+    def cancel(self):
+        print("Nice!")
+
     def retranslateUi(self, MDKWindow):
         _translate = QtCore.QCoreApplication.translate
         MDKWindow.setWindowTitle(_translate("MDKWindow", "PowerSynth MDK Window"))
         self.save_button.setToolTip(_translate("MDKWindow", "Save tables\' materials to MDK file"))
         self.save_button.setText(_translate("MDKWindow", "Save"))
         self.cancel_button.setToolTip(_translate("MDKWindow", "Close this window"))
-        self.cancel_button.setText(_translate("MDKWindow", "Cancel"))
+        self.cancel_button.setText(_translate("MDKWindow", "Continue"))
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MDKWindow", "Name"))
         item = self.tableWidget.horizontalHeaderItem(1)

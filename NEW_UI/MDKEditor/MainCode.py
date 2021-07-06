@@ -32,8 +32,6 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         self.select_button.clicked.connect(self.select)
         self.load_button.clicked.connect(self.load)
         self.save_button.clicked.connect(self.save)
-        self.cancel_button.clicked.connect(self.cancel)
-        self.cancel_button.setText("CONTINUE")
         self.search_button.clicked.connect(self.search)
         self.sort_button.clicked.connect(self.sort)
         self.add_all_button.clicked.connect(self.add_all)
@@ -461,9 +459,6 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         msg.setText("All materials are saved to Materials.csv file")
         msg.setWindowTitle("Message")
         msg.exec_()
-
-    def cancel(self):
-        print("Nice!")
 
     def search(self):
         """

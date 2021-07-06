@@ -6,10 +6,10 @@ from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.CmdRun.cmd import Cmd_Handler
-from core.NEW_UI.openingWindow import Ui_Dialog as UI_opening_window
-from core.NEW_UI.editMaterials import Ui_Dialog as UI_edit_materials
-from core.NEW_UI.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
-from core.NEW_UI.editConstraints import Ui_Dialog as UI_edit_constraints
+from core.NEW_UI.py.openingWindow import Ui_Dialog as UI_opening_window
+from core.NEW_UI.py.editMaterials import Ui_Dialog as UI_edit_materials
+from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
+from core.NEW_UI.py.editConstraints import Ui_Dialog as UI_edit_constraints
 from core.NEW_UI.MDKEditor.MainCode import EditLibrary
 from core.NEW_UI.generateLayout import generateLayout
 import webbrowser
