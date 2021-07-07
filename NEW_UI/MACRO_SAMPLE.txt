@@ -75,9 +75,7 @@ Run PowerSynth.
 TODO:
 
 Solution browser -- Thursday
-Visualize layer stack -- Wednesday
 Visualize layout -- Thursday
-Visualizer constraints -- Wednesday
-Complete Electrical and Thermal Setup -- Wednesday
+Visualize constraints -- Wednesday
 Improve UI -- Monday
 Create Macro File -- Monday

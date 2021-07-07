@@ -1,5 +1,6 @@
 import sys
 import os
+import csv
 import webbrowser
 from PyQt5 import QtWidgets, QtOpenGL
 from PyQt5 import QtGui
@@ -10,6 +11,7 @@ from core.CmdRun.cmd import Cmd_Handler
 from core.NEW_UI.py.openingWindow import Ui_Dialog as UI_opening_window
 from core.NEW_UI.py.editMaterials import Ui_Dialog as UI_edit_materials
 from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
+from core.NEW_UI.py.layerStack import Ui_Dialog as UI_layer_stack
 from core.NEW_UI.py.editConstraints import Ui_Dialog as UI_edit_constraints
 from core.NEW_UI.MDKEditor.MainCode import EditLibrary
 from core.NEW_UI.generateLayout import generateLayout
@@ -28,6 +30,7 @@ class GUI():
         self.pathToBondwireSetup = None
         self.pathToLayerStack = None
         self.option = None
+        self.optimizationUI = None
     
     def setWindow(self, newWindow):
         if self.currentWindow:
@@ -123,7 +126,7 @@ class GUI():
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
-            self.editConstraints(figure)
+            self.displayLayerStack(self.pathToLayerStack)
 
         ui.btn_open_layout_stack.pressed.connect(getLayerStack)
         ui.btn_open_layout.pressed.connect(getLayoutScript)
@@ -132,7 +135,42 @@ class GUI():
 
         editLayout.show()
     
-    def editConstraints(self, figure):
+    def displayLayerStack(self, path):
+        displayLayerStack = QtWidgets.QDialog()
+        ui = UI_layer_stack()
+        ui.setupUi(displayLayerStack)
+        self.setWindow(displayLayerStack)
+
+        with open(path, 'r') as csvfile:
+            csvreader = csv.reader(csvfile)
+
+            for i, row in enumerate(csvreader):
+                if i:  # Skip the column headers
+                    for j, val in enumerate(row):
+                        if j:  # Skip the ID column
+                            textedit = QtWidgets.QTableWidgetItem()
+                            textedit.setText(val)
+                            ui.tableWidget.setItem(i-1, j-1, textedit)
+
+        def continue_UI():
+            with open(path, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile)
+
+                csvwriter.writerow(["ID", "Name" , "Origin" , "Width" , "Length" , "Thickness" , "Material" , "Type" , "Electrical"])
+
+                for i in range(ui.tableWidget.rowCount()):
+                    row = [i+1]
+                    for j in range(ui.tableWidget.columnCount()):
+                        row.append(ui.tableWidget.item(i, j).text())
+                    csvwriter.writerow(row)
+
+            self.editConstraints()
+
+        ui.btn_continue.pressed.connect(continue_UI)
+
+        displayLayerStack.show()
+
+    def editConstraints(self):
         editConstraints = QtWidgets.QDialog()
         ui = UI_edit_constraints()
         ui.setupUi(editConstraints)
@@ -169,6 +207,7 @@ class GUI():
     def optimizationSetup(self):
         optimizationSetup = QtWidgets.QDialog()
         ui = UI_optimization_setup()
+        self.optimizationUI = ui
         ui.setupUi(optimizationSetup)
         self.setWindow(optimizationSetup)
 
@@ -196,6 +235,7 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
+            self.optimizationUI.btn_electrical_setup.setDisabled(True)
 
             electricalSetup.close()
 
@@ -223,6 +263,30 @@ class GUI():
         thermalSetup = QtWidgets.QDialog(parent=self.currentWindow)
         ui = UI_thermal_setup()
         ui.setupUi(thermalSetup)
+
+        def continue_UI():
+            # SAVE VALUES HERE
+
+            self.optimizationUI.btn_thermal_setup.setDisabled(True)
+
+            thermalSetup.close()
+
+        def addRow():
+            index = ui.tableWidget.rowCount()
+            ui.tableWidget.insertRow(index)
+            spinbox = QtWidgets.QSpinBox()
+            spinbox.setButtonSymbols(2) # Removes buttons
+            spinbox.setValue(10)
+            spinbox.setMaximum(10000)
+            ui.tableWidget.setCellWidget(index, 1, spinbox)
+
+        def removeRow():
+            if ui.tableWidget.rowCount() > 0:
+                ui.tableWidget.removeRow(ui.tableWidget.rowCount() - 1)
+
+        ui.btn_continue.pressed.connect(continue_UI)
+        ui.btn_add_device.pressed.connect(addRow)
+        ui.btn_remove_device.pressed.connect(removeRow)
 
         thermalSetup.show()
     

@@ -332,6 +332,12 @@
        <property name="text">
         <string>Continue</string>
        </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+       <property name="flat">
+        <bool>false</bool>
+       </property>
       </widget>
      </item>
     </layout>

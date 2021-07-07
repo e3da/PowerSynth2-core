@@ -160,6 +160,8 @@ class Ui_Dialog(object):
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem3)
         self.btn_continue = QtWidgets.QPushButton(Dialog)
+        self.btn_continue.setDefault(True)
+        self.btn_continue.setFlat(False)
         self.btn_continue.setObjectName("btn_continue")
         self.horizontalLayout.addWidget(self.btn_continue)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
