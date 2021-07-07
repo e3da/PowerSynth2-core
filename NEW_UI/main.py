@@ -2,6 +2,7 @@ import sys
 import os
 import webbrowser
 from PyQt5 import QtWidgets, QtOpenGL
+from PyQt5 import QtGui
 from PyQt5.QtGui import QPixmap, QImage
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -193,8 +194,29 @@ class GUI():
         def getTraceOri():
             ui.trace_textedit.setText(QtWidgets.QFileDialog.getOpenFileName(electricalSetup, 'Open trace_orientation', os.getenv('HOME'))[0])
 
+        def continue_UI():
+            # SAVE VALUES HERE
+
+            electricalSetup.close()
+
+        def addRow():
+            index = ui.tableWidget.rowCount()
+            ui.tableWidget.insertRow(index)
+            combo = QtWidgets.QComboBox()
+            combo.addItem("Drain-to-Source")
+            combo.addItem("Drain-to-Gate")
+            combo.addItem("Gate-to-Source")
+            ui.tableWidget.setCellWidget(index, 1, combo)
+
+        def removeRow():
+            if ui.tableWidget.rowCount() > 0:
+                ui.tableWidget.removeRow(ui.tableWidget.rowCount() - 1)
+
         ui.btn_open_parasitic.pressed.connect(getParasiticModel)
         ui.btn_open_trace.pressed.connect(getTraceOri)
+        ui.btn_continue.pressed.connect(continue_UI)
+        ui.btn_add_device.pressed.connect(addRow)
+        ui.btn_remove_device.pressed.connect(removeRow)
         electricalSetup.show()
 
     def thermalSetup(self):
