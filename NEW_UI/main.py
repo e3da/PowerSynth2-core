@@ -164,19 +164,40 @@ class GUI():
                         row.append(ui.tableWidget.item(i, j).text())
                     csvwriter.writerow(row)
 
-            self.editConstraints()
+            self.editConstraints(path)
 
         ui.btn_continue.pressed.connect(continue_UI)
 
         displayLayerStack.show()
 
-    def editConstraints(self):
+    def editConstraints(self, path):
         editConstraints = QtWidgets.QDialog()
         ui = UI_edit_constraints()
         ui.setupUi(editConstraints)
         self.setWindow(editConstraints)
 
-        ui.pushButton.pressed.connect(self.runOptions)
+        def continue_UI():
+            newPath = path.split("/")
+            newPath.pop(-1)
+            newPath = "/".join(newPath) + "/constraint.csv"
+            
+            with open(newPath, 'w') as csvfile:
+                csvwriter = csv.writer(csvfile)
+
+                headers = ["Min Dimensions", "MinHorEnclosure", "MinVerEnclosure", "MinHorSpacing", "MinVerSpacing"]
+                columns1 = ["MinWidth", "MinLength", "MinHorExtension", "MinVerExtension"]
+                columns2 = ["EMPTY", "power_trace", "bonding wire pad", "power_lead"]
+                for k, tableWidget in enumerate([ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]):
+                    l = [headers[k], "EMPTY" , "power_trace" , "bonding wire pad" , "power_lead"]
+                    csvwriter.writerow(l)
+                    for i in range(tableWidget.rowCount()):
+                        row = [columns1[i] if k == 0 else columns2[i]]
+                        for j in range(tableWidget.columnCount()):
+                            row.append(tableWidget.item(i, j).text())
+                        csvwriter.writerow(row)
+            self.runOptions()
+
+        ui.btn_continue.pressed.connect(continue_UI)
 
         editConstraints.show()
 
