@@ -16,7 +16,7 @@ class Ui_Dialog(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(Dialog)
         self.label_2.setText("")
-        self.label_2.setPixmap(QtGui.QPixmap("./NEW_UI/ui/compressed.png"))
+        self.label_2.setPixmap(QtGui.QPixmap("./NEW_UI/pdfs/compressed.png"))
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName("label_2")
         self.verticalLayout.addWidget(self.label_2)

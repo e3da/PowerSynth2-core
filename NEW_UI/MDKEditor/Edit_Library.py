@@ -9,6 +9,8 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MDKWindow(object):
+    continue_ui = None
+
     def setupUi(self, MDKWindow):
         MDKWindow.setObjectName("MDKWindow")
         MDKWindow.resize(911, 580)
@@ -22,7 +24,6 @@ class Ui_MDKWindow(object):
         self.cancel_button.setGeometry(QtCore.QRect(640, 500, 75, 23))
         self.cancel_button.setMouseTracking(True)
         self.cancel_button.setObjectName("cancel_button")
-        self.cancel_button.pressed.connect(self.cancel)
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(0, 0, 741, 491))
         self.tabWidget.setObjectName("tabWidget")
@@ -350,16 +351,17 @@ class Ui_MDKWindow(object):
         self.toolBox.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MDKWindow)
 
-    def cancel(self):
-        print("Nice!")
-
     def retranslateUi(self, MDKWindow):
+        def continue_UI():
+            MDKWindow.close()
+            self.continue_ui()
         _translate = QtCore.QCoreApplication.translate
         MDKWindow.setWindowTitle(_translate("MDKWindow", "PowerSynth MDK Window"))
         self.save_button.setToolTip(_translate("MDKWindow", "Save tables\' materials to MDK file"))
         self.save_button.setText(_translate("MDKWindow", "Save"))
         self.cancel_button.setToolTip(_translate("MDKWindow", "Close this window"))
         self.cancel_button.setText(_translate("MDKWindow", "Continue"))
+        self.cancel_button.pressed.connect(continue_UI)
         item = self.tableWidget.horizontalHeaderItem(0)
         item.setText(_translate("MDKWindow", "Name"))
         item = self.tableWidget.horizontalHeaderItem(1)

@@ -40,7 +40,8 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
-            webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
+            webbrowser.open_new("./NEW_UI/pdfs/PowerSynth_v1.9.pdf")  
+            # webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
         
         def runProject():
             self.editMaterials()
@@ -58,11 +59,11 @@ class GUI():
 
         # Connect to MDK Editor
         def openMDK():
-            MDK = QtWidgets.QMainWindow(parent=self.currentWindow)
             ui = EditLibrary()
-            ui.setupUi(MDK)
+            self.currentWindow.close()
+            self.currentWindow = None
+            ui.continue_ui = self.editLayout
             
-            MDK.show()
         
         def continueProject():
             self.editLayout()
@@ -186,6 +187,14 @@ class GUI():
         ui = UI_electrical_setup()
         ui.setupUi(electricalSetup)
 
+        def getParasiticModel():
+            ui.parasitic_textedit.setText(QtWidgets.QFileDialog.getOpenFileName(electricalSetup, 'Open parasitic_model', os.getenv('HOME'))[0])
+
+        def getTraceOri():
+            ui.trace_textedit.setText(QtWidgets.QFileDialog.getOpenFileName(electricalSetup, 'Open trace_orientation', os.getenv('HOME'))[0])
+
+        ui.btn_open_parasitic.pressed.connect(getParasiticModel)
+        ui.btn_open_trace.pressed.connect(getTraceOri)
         electricalSetup.show()
 
     def thermalSetup(self):

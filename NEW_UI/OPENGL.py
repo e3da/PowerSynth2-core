@@ -208,6 +208,26 @@ class GLWidget(QOpenGLWidget):
         genList = gl.glGenLists(1)
         gl.glNewList(genList, gl.GL_COMPILE)
 
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT)
+        gl.glColor3f(0.0,1.0,0.0)
+
+        gl.glPointSize(5.0)
+
+        gl.glBegin(gl.GL_LINES)        # GL_POINTS -> GL_LINES
+
+        gl.glVertex2f(0.0, 0.0)
+
+        gl.glVertex2f(1.0, 1.0)         # Added another Vertex specifying end coordinates of line
+
+        gl.glEnd()
+        gl.glEndList()
+
+        gl.glFlush()
+
+        return genList
+        genList = gl.glGenLists(1)
+        gl.glNewList(genList, gl.GL_COMPILE)
+
         gl.glBegin(gl.GL_QUADS)
 
         x1 = +0.06

@@ -10,7 +10,6 @@ from core.NEW_UI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
 from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
-from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 
 class EditLibrary(QMainWindow, Ui_MDKWindow):
     selected = []       #variable pass material information to PowerSynth
@@ -94,6 +93,8 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         """
         EditLibrary.mat_lib = []
         filename, ok = QFileDialog.getOpenFileName(parent=self, caption='Select Open File', filter='CSV Files (*.csv)')
+        if not filename:
+            return
         with open(filename) as data:
             reader = csv.DictReader(data)
             for row in reader:
@@ -142,6 +143,8 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         """
         rows = EditLibrary.mat_lib
         filename, ok = QFileDialog.getSaveFileName(parent=self, caption='Select Save File', filter='CSV Files (*.csv)')
+        if not filename:
+            return
         with open(filename, 'wb') as csvFile:
             header = ["name", "thermal_cond", "thermal_cond_liq", "spec_heat_cap",
                       "spec_heat_cap_liq", "density", "density_liq", "electrical_res",
@@ -776,6 +779,9 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return: Nothing
         """
         value = self.tableWidget.currentRow()
+        if value == -1:
+            print("Error: No value is selected.")
+            return
         rows = EditLibrary.mat_lib
         item = rows[value]
         clone = deepcopy(item)

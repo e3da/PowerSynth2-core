@@ -73,6 +73,11 @@ Run PowerSynth.
 
 
 TODO:
-Look into linking with QML instead of Python?  QT Creator instead of QT Designer
-3D Visuals Continue.
-Continue building UI based on above flow.
+
+Solution browser -- Thursday
+Visualize layer stack -- Wednesday
+Visualize layout -- Thursday
+Visualizer constraints -- Wednesday
+Complete Electrical and Thermal Setup -- Wednesday
+Improve UI -- Monday
+Create Macro File -- Monday
