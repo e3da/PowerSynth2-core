@@ -1,21 +1,35 @@
 #-----------------------------------------   String translator for IronPython below
 
 #C:/Program Files/AnsysEM/AnsysEM{year}/Win64
-Start_ansys_desktop_script_env='''
+
+Run_in_IronPython_Windows='''
 import sys
 # THIS PART WILL ADD THE ANSYS EM SCRIPT PACKAGE DIRECTORY TO PYTHON PATH
 sys.path.append("{path_to_anasysem}") 
 sys.path.append("{path_to_anasysem}/PythonFiles/DesktopPlugin")
+'''
+
+Start_ansys_desktop_script_env='''
+
 import ScriptEnv
 ScriptEnv.Initialize("Ansoft.ElectronicsDesktop")
+oDesktop.RestoreWindow()
+print ("Create new project")
+oProject = oDesktop.NewProject()
+
 '''
 # The script below add q3d design to current project        
 Add_design='''  
+print ("Add new design")
 oProject.InsertDesign("{active_design}", "{design_name}", "{design_type}", "") # New Design here      
+oDesign = oProject.SetActiveDesign("{design_name}")
+oEditor = oDesign.SetActiveEditor("3D Modeler")
 '''
 
 
-
+Save_project_as_current_dir='''
+oProject.SaveAs("./{name}.aedt", True)
+'''
 
 New_script='''
 # This script will initialize a new project with one initial design
@@ -380,11 +394,52 @@ oEditor.ChangeProperty(
 
 
 '''
+
+New_wire = '''
+oEditor.CreateBondwire(
+	[
+		"NAME:BondwireParameters",
+		"WireType:="		, "JEDEC_4Points",
+		"WireDiameter:="	, "{diameter} mm",
+		"NumSides:="		, "6",
+		"XPadPos:="		, "{x} mm",
+		"YPadPos:="		, "{y} mm",
+		"ZPadPos:="		, "{z} mm",
+		"XDir:="		, "{dx}mm",
+		"YDir:="		, "{dy}mm",
+		"ZDir:="		, "{dz}mm",
+		"Distance:="		, "{distance}mm",
+		"h1:="			, "0.2 mm",
+		"h2:="			, "0mm",
+		"alpha:="		, "80deg",
+		"beta:="		, "0",
+		"WhichAxis:="		, "Z",
+		"ReverseDirection:="	, False
+	], 
+	[
+		"NAME:Attributes",
+		"Name:="		, "{name}",
+		"Flags:="		, "",
+		"Color:="		, "(211 211 211)",
+		"Transparency:="	, 0,
+		"PartCoordinateSystem:=", "Global",
+		"UDMId:="		, "",
+		"MaterialValue:="	, "\\"{material}\\"",
+		"SurfaceMaterialValue:=", "\\"Steel-oxidised-surface\\"",
+		"SolveInside:="		, True,
+		"IsMaterialEditable:="	, True,
+		"UseMaterialAppearance:=", False,
+		"IsLightweight:="	, False
+	])
+
+'''
+
 New_box='''
 #0: x pos  #1: y pos  #2: z pos
 #3: x size #4: y size #5: z size
 #6: obj_name (ID of an object in q3d) #7: material
 #8: color
+print ("Add a new box object", "Name:","{6}","xyz",{0},{1},{2},"dxdydz", {3},{4},{5})
 # New Box 
 oEditor.CreateBox(
     [

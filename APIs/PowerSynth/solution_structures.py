@@ -57,20 +57,21 @@ class PSFeature(object):
         for printing each feature object (debugging purpose)
         '''
         print("Feature_name: {}, x: {}, y: {}, z: {}, width: {}, length: {}, height: {}, material_name: {}, power: {}, h_val: {}".format(self.name, self.x, self.y, self.z, self.width, self.length, self.height, self.material_name, self.power, self.h_val) )
-        
-
+    def __str__(self): 
+        # overwrite default output string
+        return "Feature_name: {}, x: {}, y: {}, z: {}, width: {}, length: {}, height: {}, material_name: {}, power: {}, h_val: {}".format(self.name, self.x, self.y, self.z, self.width, self.length, self.height, self.material_name, self.power, self.h_val) 
         
 class PSSolution(object):
     """A collection of features in a PowerSynth solution.
 
     """
-    def __init__(self, solution_id, features_list=None, parameters=None, boundary_conditions=None):
+    def __init__(self, solution_id, features_list=None, parameters=None, boundary_conditions=None,module_data = None):
         self.solution_id = solution_id
         self.features_list = features_list
         self.parameters= parameters
         self.boundary_conditions = boundary_conditions
-
-    def add_feature(self, name, x, y, z, width, lenght, height, material_name, power=0, h_val=0):
+        self.module_data = module_data
+    def add_feature(self, name, x, y, z, width, length, height, material_name, power=0, h_val=0):
         if self.features_list is None:
             self.features_list = []
         self.features_list.append(PSFeature(name,
@@ -93,8 +94,10 @@ class PSSolution(object):
         cs_solution: layout engine solution object
         module_data: layout_engine_module_info
         '''
+        self.module_data=module_data
         features=[]
         for id, layer_object in module_data.layer_stack.all_layers_info.items():
+            print (id)
             if (layer_object.e_type=='C' or layer_object.e_type=='S') : # from layer stack all layers with electrical components are excluded here
                 continue
             else:
