@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.CmdRun.cmd import Cmd_Handler
 from core.NEW_UI.py.openingWindow import Ui_Dialog as UI_opening_window
+from core.NEW_UI.py.runMacro import Ui_Dialog as UI_run_macro
 from core.NEW_UI.py.editMaterials import Ui_Dialog as UI_edit_materials
 from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 from core.NEW_UI.py.layerStack import Ui_Dialog as UI_layer_stack
@@ -45,6 +46,7 @@ class GUI():
         self.numLayouts = ""
         self.seed = ""
         self.optimizationAlgorithm = ""
+        self.numGenerations = ""
 
         # Variables for Electrical Setup
         self.measureNameElectrical = ""
@@ -77,13 +79,60 @@ class GUI():
             webbrowser.open_new("./NEW_UI/pdfs/PowerSynth_v1.9.pdf")  
             # webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
         
-        def runProject():
+        def startProject():
             self.editMaterials()
 
+        def runProject():
+            self.runMacro()
+
         ui.open_manual.pressed.connect(manual)
-        ui.start_project.pressed.connect(runProject)
+        ui.start_project.pressed.connect(startProject)
+        ui.runProject.pressed.connect(runProject)
 
         openingWindow.show()
+
+    def runMacro(self):
+        runMacro = QtWidgets.QDialog()
+        ui = UI_run_macro()
+        ui.setupUi(runMacro)
+        self.setWindow(runMacro)
+
+        def getSettingsInfo():
+            ui.lineEdit_3.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open settings.info', os.getenv('HOME'))[0])
+
+        def getMacroScript():
+            ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
+
+        def runPowerSynth():
+            settingsPath = ui.lineEdit_3.text()
+            macroPath = ui.lineEdit_4.text()
+
+            self.currentWindow.close()
+            self.currentWindow = None
+
+            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_1/macro_script.txt'
+            settingsPath = '/nethome/jgm019/testcases/settings.info'
+            macroPath = '/nethome/jgm019/TEST/macro_script_copy.txt'
+
+            self.cmd = Cmd_Handler(debug=False)
+
+            args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+
+            self.cmd.cmd_handler_flow(arguments=args)
+
+            solutionBrowser = QtWidgets.QDialog()
+            UI = UI_solution_browser()
+            UI.setupUi(solutionBrowser)
+            self.setWindow(solutionBrowser)
+
+            solutionBrowser.show()
+
+        ui.btn_create_project.pressed.connect(runPowerSynth)
+        ui.btn_cancel.pressed.connect(self.openingWindow)
+        ui.btn_open_settings_2.pressed.connect(getSettingsInfo)
+        ui.btn_open_macro.pressed.connect(getMacroScript)
+
+        runMacro.show()
 
     def editMaterials(self):
         editMaterials = QtWidgets.QDialog()
@@ -123,7 +172,7 @@ class GUI():
             ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
 
         def createLayout():
-            '''
+            
             if not os.path.exists(ui.lineEdit_layer.text()) or ".csv" not in ui.lineEdit_layer.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
@@ -150,9 +199,9 @@ class GUI():
             self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
             '''
 
-            self.pathToLayoutScript = "/nethome/jgm019/TEST/LAYOUT_SCRIPT.txt"
-            self.pathToBondwireSetup = "/nethome/jgm019/TEST/BONDWIRE_SETUP.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/LAYER_STACK.csv"  # Speeds up process.
+            self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
+            self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_setup.txt"
+            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
@@ -210,7 +259,7 @@ class GUI():
             newPath = self.pathToLayoutScript.split("/")
             newPath.pop(-1)
             newPath = "/".join(newPath) + "/constraint.csv"
-            self.pathToConstraints = newPath
+            self.pathToConstraints = "/nethome/jgm019/TEST/constraint.csv"
             
             with open(newPath, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile)
@@ -262,12 +311,12 @@ class GUI():
         self.optimizationUI = ui
         ui.setupUi(optimizationSetup)
         self.setWindow(optimizationSetup)
-        optimizationSetup.setFixedHeight(380)
+        optimizationSetup.setFixedHeight(410)
         optimizationSetup.setFixedWidth(400)
 
         if self.option == 0:
             ui.electrical_thermal_frame.hide()
-            optimizationSetup.setFixedHeight(350)
+            optimizationSetup.setFixedHeight(380)
         elif self.option == 1:
             optimizationSetup.setFixedHeight(225)
             ui.layout_generation_setup_frame.hide()
@@ -285,6 +334,7 @@ class GUI():
                 self.numLayouts = ui.num_layouts.text()
                 self.seed = ui.seed.text()
                 self.optimizationAlgorithm = ui.combo_optimization_algorithm.currentText()
+                self.numGenerations = ui.num_generations.text()
 
             self.runPowerSynth()
 
@@ -402,8 +452,8 @@ class GUI():
         with open(macroPath, "w") as file:
             createMacro(file, self)
 
-        #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
         settingsPath = '/nethome/jgm019/testcases/settings.info'
+        #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
 
         self.cmd = Cmd_Handler(debug=False)
 

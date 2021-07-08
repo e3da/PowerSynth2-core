@@ -74,13 +74,7 @@ Run PowerSynth.
 
 TODO:
 
-Solution browser -- Thursday
-Visualize layout -- Thursday
-Improve UI -- Monday
-Create Macro File -- Monday
-
-Completed:
-Visualize constraints
-Visualize layer_stack
-Finished electrical/thermal setups
-Fixed MDKEditor
+Solution browser -- Monday
+Visualize layout -- Monday
+Make PowerSynth Run -- Tuesday
+Inspect MDKEditor -- Tuesday

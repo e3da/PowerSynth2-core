@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(388, 246)
+        Dialog.resize(403, 302)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(Dialog)
@@ -34,10 +34,14 @@ class Ui_Dialog(object):
         self.open_manual.setObjectName("open_manual")
         self.horizontalLayout.addWidget(self.open_manual)
         self.start_project = QtWidgets.QPushButton(Dialog)
-        self.start_project.setDefault(True)
+        self.start_project.setDefault(False)
         self.start_project.setObjectName("start_project")
         self.horizontalLayout.addWidget(self.start_project)
         self.verticalLayout.addLayout(self.horizontalLayout)
+        self.runProject = QtWidgets.QPushButton(Dialog)
+        self.runProject.setDefault(True)
+        self.runProject.setObjectName("runProject")
+        self.verticalLayout.addWidget(self.runProject)
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -46,9 +50,10 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "PowerSynth"))
         self.label_3.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:14pt; font-weight:600; font-style:italic;\">Welcome to PowerSynth 2.0!</span></p></body></html>"))
-        self.label.setText(_translate("Dialog", "<html><head/><body><p>Open the manual for help or click on Begin Project to start PowerSynth.</p></body></html>"))
+        self.label.setText(_translate("Dialog", "<html><head/><body><p align=\"center\">Click on Create a Project to start a new project from an existing layout </p><p align=\"center\">or click on Run a Project to run a pre-existing macro_script.</p></body></html>"))
         self.open_manual.setText(_translate("Dialog", "Open Manual"))
-        self.start_project.setText(_translate("Dialog", "Begin Project"))
+        self.start_project.setText(_translate("Dialog", "Create a Project"))
+        self.runProject.setText(_translate("Dialog", "Run a Project"))
 
 
 if __name__ == "__main__":

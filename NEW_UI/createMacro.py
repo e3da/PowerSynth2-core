@@ -36,6 +36,7 @@ def createMacro(file: TextIOWrapper, self):
         file.write("Num_of_layouts: " + self.numLayouts + "\n")
         file.write("Seed: " + self.seed + "\n")
         file.write("Optimization_Algorithm: " + self.optimizationAlgorithm + "\n")
+        file.write("Num_generations: " + self.numGenerations + "\n")
 
     file.write("\n")
 
