@@ -20,6 +20,7 @@ from core.NEW_UI.py.electricalSetup import Ui_Dialog as UI_electrical_setup
 from core.NEW_UI.py.thermalSetup import Ui_Dialog as UI_thermal_setup
 from core.NEW_UI.py.runOptions import Ui_Dialog as UI_run_options
 from core.NEW_UI.py.solutionBrowser import Ui_Dialog as UI_solution_browser
+from core.NEW_UI.createMacro import createMacro
 
 class GUI():
 
@@ -29,6 +30,9 @@ class GUI():
         self.pathToLayoutScript = None
         self.pathToBondwireSetup = None
         self.pathToLayerStack = None
+        self.pathToConstraints = None
+        self.pathToParasiticModel = ""
+        self.pathToTraceOri = ""
         self.option = None
         self.optimizationUI = None
     
@@ -126,7 +130,7 @@ class GUI():
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
-            self.displayLayerStack(self.pathToLayerStack)
+            self.displayLayerStack()
 
         ui.btn_open_layout_stack.pressed.connect(getLayerStack)
         ui.btn_open_layout.pressed.connect(getLayoutScript)
@@ -135,13 +139,13 @@ class GUI():
 
         editLayout.show()
     
-    def displayLayerStack(self, path):
+    def displayLayerStack(self):
         displayLayerStack = QtWidgets.QDialog()
         ui = UI_layer_stack()
         ui.setupUi(displayLayerStack)
         self.setWindow(displayLayerStack)
 
-        with open(path, 'r') as csvfile:
+        with open(self.pathToLayerStack, 'r') as csvfile:
             csvreader = csv.reader(csvfile)
 
             for i, row in enumerate(csvreader):
@@ -153,7 +157,7 @@ class GUI():
                             ui.tableWidget.setItem(i-1, j-1, textedit)
 
         def continue_UI():
-            with open(path, 'w') as csvfile:
+            with open(self.pathToLayerStack, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile)
 
                 csvwriter.writerow(["ID", "Name" , "Origin" , "Width" , "Length" , "Thickness" , "Material" , "Type" , "Electrical"])
@@ -164,22 +168,23 @@ class GUI():
                         row.append(ui.tableWidget.item(i, j).text())
                     csvwriter.writerow(row)
 
-            self.editConstraints(path)
+            self.editConstraints()
 
         ui.btn_continue.pressed.connect(continue_UI)
 
         displayLayerStack.show()
 
-    def editConstraints(self, path):
+    def editConstraints(self):
         editConstraints = QtWidgets.QDialog()
         ui = UI_edit_constraints()
         ui.setupUi(editConstraints)
         self.setWindow(editConstraints)
 
         def continue_UI():
-            newPath = path.split("/")
+            newPath = self.pathToLayoutScript.split("/")
             newPath.pop(-1)
             newPath = "/".join(newPath) + "/constraint.csv"
+            self.pathToConstraints = newPath
             
             with open(newPath, 'w') as csvfile:
                 csvwriter = csv.writer(csvfile)
@@ -231,10 +236,14 @@ class GUI():
         self.optimizationUI = ui
         ui.setupUi(optimizationSetup)
         self.setWindow(optimizationSetup)
+        optimizationSetup.setFixedHeight(380)
+        optimizationSetup.setFixedWidth(400)
 
         if self.option == 0:
             ui.electrical_thermal_frame.hide()
+            optimizationSetup.setFixedHeight(350)
         elif self.option == 1:
+            optimizationSetup.setFixedHeight(225)
             ui.layout_generation_setup_frame.hide()
 
         ui.btn_electrical_setup.pressed.connect(self.electricalSetup)
@@ -256,6 +265,9 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
+            self.pathToParasiticModel = ui.parasitic_textedit.text()
+            self.pathToTraceOri = ui.trace_textedit.text()
+
             self.optimizationUI.btn_electrical_setup.setDisabled(True)
 
             electricalSetup.close()
@@ -314,6 +326,13 @@ class GUI():
     def runPowerSynth(self):
         self.currentWindow.close()
         self.currentWindow = None
+
+        macroPath = self.pathToLayoutScript.split("/")
+        macroPath.pop(-1)
+        macroPath = "/".join(macroPath) + "/macro_script.txt"
+
+        with open(macroPath, "w") as file:
+            createMacro(file, self)
 
         macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
         settingsPath = '/nethome/jgm019/testcases/settings.info'

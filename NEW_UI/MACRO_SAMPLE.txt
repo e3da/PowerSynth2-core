@@ -76,6 +76,11 @@ TODO:
 
 Solution browser -- Thursday
 Visualize layout -- Thursday
-Visualize constraints -- Wednesday
 Improve UI -- Monday
 Create Macro File -- Monday
+
+Completed:
+Visualize constraints
+Visualize layer_stack
+Finished electrical/thermal setups
+Fixed MDKEditor
