@@ -1068,7 +1068,8 @@ if __name__ == "__main__":
                    {qmle_nethome:'Unit_Test_Cases/Case_0_0/cmd'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_1/macro_script.txt'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_2/macro_script.txt'},\
-                    {imam_nethome1:'Case_16_up/macro_script.txt'}  ]
+                    {imam_nethome1:'Imam_Journal_Case_1/macro_script.txt'},\
+                    {imam_nethome1:'Imam_Journal_Case_2/macro_script.txt'}  ]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
