@@ -46,7 +46,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_5">
+         <widget class="QComboBox" name="combo_reliability">
           <item>
            <property name="text">
             <string>no constraints</string>
@@ -76,7 +76,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox">
+         <widget class="QCheckBox" name="checkbox_plot_solutions">
           <property name="text">
            <string/>
           </property>
@@ -94,7 +94,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="checkBox_2">
+         <widget class="QCheckBox" name="checkbox_flexible_wires">
           <property name="text">
            <string/>
           </property>
@@ -131,7 +131,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_3">
+         <widget class="QComboBox" name="combo_layout_mode">
           <item>
            <property name="text">
             <string>minimum-sized solutions</string>
@@ -161,7 +161,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_5">
+         <widget class="QSpinBox" name="floor_plan_x">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -202,7 +202,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_6">
+         <widget class="QSpinBox" name="floor_plan_y">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -235,7 +235,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_7">
+         <widget class="QSpinBox" name="num_layouts">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -277,7 +277,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_8">
+         <widget class="QSpinBox" name="seed">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -319,7 +319,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_4">
+         <widget class="QComboBox" name="combo_optimization_algorithm">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>

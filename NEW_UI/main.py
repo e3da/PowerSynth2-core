@@ -35,6 +35,32 @@ class GUI():
         self.pathToTraceOri = ""
         self.option = None
         self.optimizationUI = None
+
+        # Variables for Layout Generation Setup
+        self.reliabilityAwareness = ""
+        self.plotSolution = ""
+        self.flexibleWire = ""
+        self.layoutMode = ""
+        self.floorPlan = ["", ""]
+        self.numLayouts = ""
+        self.seed = ""
+        self.optimizationAlgorithm = ""
+
+        # Variables for Electrical Setup
+        self.measureNameElectrical = ""
+        self.measureType = ""
+        self.deviceConnection = dict()
+        self.source = ""
+        self.sink = ""
+        self.frequency = ""
+
+        # Variables for Thermal Setup
+        self.modelSelect = ""
+        self.measureNameThermal = ""
+        self.devicePower = dict()
+        self.heatConvection = ""
+        self.ambientTemperature = ""
+
     
     def setWindow(self, newWindow):
         if self.currentWindow:
@@ -246,9 +272,25 @@ class GUI():
             optimizationSetup.setFixedHeight(225)
             ui.layout_generation_setup_frame.hide()
 
+        def run():
+            # SAVE VALUES HERE
+            self.reliabilityAwareness = "0" if ui.combo_reliability.currentText() == "no constraints" else "1" if ui.combo_reliability.currentText() == "worst case consideration" else "2"
+            self.plotSolution = "1" if ui.checkbox_plot_solutions.isChecked() else "0"
+            self.flexibleWire = "1" if ui.checkbox_flexible_wires.isChecked() else "0"
+
+            if self.option != 1:
+                self.layoutMode = "0" if ui.combo_layout_mode.currentText() == "minimum-sized solutions" else "1" if ui.combo_layout_mode.currentText() == "variable-sized solutions" else "2"
+                self.floorPlan[0] = ui.floor_plan_x.text()
+                self.floorPlan[1] = ui.floor_plan_y.text()
+                self.numLayouts = ui.num_layouts.text()
+                self.seed = ui.seed.text()
+                self.optimizationAlgorithm = ui.combo_optimization_algorithm.currentText()
+
+            self.runPowerSynth()
+
         ui.btn_electrical_setup.pressed.connect(self.electricalSetup)
         ui.btn_thermal_setup.pressed.connect(self.thermalSetup)
-        ui.btn_run_powersynth.pressed.connect(self.runPowerSynth)
+        ui.btn_run_powersynth.pressed.connect(run)
 
         optimizationSetup.show()
 
@@ -265,6 +307,16 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
+            self.measureNameElectrical = ui.lineedit_measure_name.text()
+            self.measureType = "0" if ui.combo_measure_type.currentText() == "inductance" else "1"
+            
+            for i in range(ui.tableWidget.rowCount()):
+                self.deviceConnection[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).currentText()
+            
+            self.source = ui.source_lineedit.text()
+            self.sink = ui.sink_lineedit.text()
+            self.frequency = ui.frequency.text()
+
             self.pathToParasiticModel = ui.parasitic_textedit.text()
             self.pathToTraceOri = ui.trace_textedit.text()
 
@@ -299,6 +351,15 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
+            self.modelSelect = "0"  if ui.combo_model_select.currentText() == "TSFM" else "1" if ui.combo_model_select.currentText() == "Analytical" else "2"
+            self.measureNameThermal = ui.lineedit_measure_name.text()
+
+            for i in range(ui.tableWidget.rowCount()):
+                self.devicePower[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).text()
+
+            self.heatConvection = ui.heat_convection.text()
+            self.ambientTemperature = ui.ambient_temperature.text()
+
 
             self.optimizationUI.btn_thermal_setup.setDisabled(True)
 
@@ -324,6 +385,7 @@ class GUI():
         thermalSetup.show()
     
     def runPowerSynth(self):
+
         self.currentWindow.close()
         self.currentWindow = None
 
@@ -331,10 +393,16 @@ class GUI():
         macroPath.pop(-1)
         macroPath = "/".join(macroPath) + "/macro_script.txt"
 
+
+        # Currently provide path hardcoded -- Is it supposed to be always necessary?
+        self.pathToParasiticModel = '/nethome/jgm019/TEST/ARL_module.rsmdl'
+
+
+
         with open(macroPath, "w") as file:
             createMacro(file, self)
 
-        macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
+        #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/macro_script.txt'
         settingsPath = '/nethome/jgm019/testcases/settings.info'
 
         self.cmd = Cmd_Handler(debug=False)

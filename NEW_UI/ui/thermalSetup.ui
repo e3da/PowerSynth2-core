@@ -40,7 +40,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_8">
+         <widget class="QComboBox" name="combo_model_select">
           <item>
            <property name="text">
             <string>TSFM</string>
@@ -70,7 +70,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_2"/>
+         <widget class="QLineEdit" name="lineedit_measure_name"/>
         </item>
        </layout>
       </item>
@@ -149,7 +149,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_10">
+         <widget class="QSpinBox" name="heat_convection">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -191,7 +191,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="spinBox_11">
+         <widget class="QSpinBox" name="ambient_temperature">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
             <horstretch>0</horstretch>
