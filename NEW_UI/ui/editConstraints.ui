@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>650</width>
-    <height>260</height>
+    <width>965</width>
+    <height>412</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -159,7 +159,7 @@
      </widget>
      <widget class="QWidget" name="min_hor_enclosure">
       <attribute name="title">
-       <string>Min Hor Enclosure</string>
+       <string>MinHorEnclosure</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_2">
        <item row="0" column="0">
@@ -290,7 +290,7 @@
      </widget>
      <widget class="QWidget" name="min_ver_enclosure">
       <attribute name="title">
-       <string>Min Ver Enclosure</string>
+       <string>MinVerEnclosure</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout">
        <item row="0" column="0">
@@ -421,7 +421,7 @@
      </widget>
      <widget class="QWidget" name="min_hor_spacing">
       <attribute name="title">
-       <string>Min Hor Spacing</string>
+       <string>MinHorSpacing</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_4">
        <item row="0" column="0">
@@ -552,7 +552,7 @@
      </widget>
      <widget class="QWidget" name="min_ver_spacing">
       <attribute name="title">
-       <string>Min Ver Spacing</string>
+       <string>MinVerSpacing</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
        <item row="0" column="0">

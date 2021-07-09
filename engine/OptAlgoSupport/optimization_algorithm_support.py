@@ -64,7 +64,7 @@ class new_engine_opt:
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
                 type = measure.measure
-                '''
+                
                 self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
                 print ('API type', self.e_api.type)
@@ -79,9 +79,9 @@ class new_engine_opt:
                 '''
                 import random
                 R=100 + random.random()    # Temporarily hard coded to Evaluation runtime
-                L=100 + random.random()   # Temporarily hard coded to Evaluation runtime
+                L=100 + random.random()   # Temporarily hard coded to Evaluation runtime'''
                 print ("RL",R,L)
-                    
+                
                 #except:
                 #R=10000
                 #L=10000
@@ -94,8 +94,8 @@ class new_engine_opt:
 
             if isinstance(measure, ThermalMeasure):
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                max_t = 300 + random.random()  # Temporarily hard coded to bypass MatLab
+                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                #max_t = 300 + random.random()  # Temporarily hard coded to bypass MatLab
                 result.append(max_t)
 
         return result

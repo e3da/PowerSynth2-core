@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>410</height>
+    <height>400</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -77,24 +77,6 @@
         </item>
         <item>
          <widget class="QCheckBox" name="checkbox_plot_solutions">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_18">
-        <item>
-         <widget class="QLabel" name="label_25">
-          <property name="text">
-           <string>Flexible wires:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="checkbox_flexible_wires">
           <property name="text">
            <string/>
           </property>

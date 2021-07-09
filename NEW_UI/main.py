@@ -40,7 +40,6 @@ class GUI():
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
         self.plotSolution = ""
-        self.flexibleWire = ""
         self.layoutMode = ""
         self.floorPlan = ["", ""]
         self.numLayouts = ""
@@ -49,6 +48,7 @@ class GUI():
         self.numGenerations = ""
 
         # Variables for Electrical Setup
+        self.modelType = ""
         self.measureNameElectrical = ""
         self.measureType = ""
         self.deviceConnection = dict()
@@ -112,20 +112,87 @@ class GUI():
 
             #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_1/macro_script.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
-            macroPath = '/nethome/jgm019/TEST/macro_script_copy.txt'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
 
-            self.cmd = Cmd_Handler(debug=False)
+            def showSolutionBrowser():
+                self.currentWindow.close()
+                self.currentWindow = None
 
-            args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+                self.cmd = Cmd_Handler(debug=False)
 
-            self.cmd.cmd_handler_flow(arguments=args)
+                args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
 
-            solutionBrowser = QtWidgets.QDialog()
-            UI = UI_solution_browser()
-            UI.setupUi(solutionBrowser)
-            self.setWindow(solutionBrowser)
+                self.cmd.cmd_handler_flow(arguments=args)
 
-            solutionBrowser.show()
+                solutionBrowser = QtWidgets.QDialog()
+                UI = UI_solution_browser()
+                UI.setupUi(solutionBrowser)
+                self.setWindow(solutionBrowser)
+
+                solutionBrowser.show()
+
+            editConstraints = QtWidgets.QDialog()
+            UI = UI_edit_constraints()
+            UI.setupUi(editConstraints)
+            self.setWindow(editConstraints)
+
+            with open(macroPath, 'r') as file:
+                for line in file:
+                    if "Constraint_file: " in line:
+                        self.pathToConstraints = line.split()[1]
+
+            # Fill out the constraints from the given constraint file
+            with open(self.pathToConstraints, 'r') as csvfile:
+                csvreader = csv.reader(csvfile)
+
+                tableWidgets = [UI.tableWidget, UI.tableWidget_2, UI.tableWidget_3, UI.tableWidget_4, UI.tableWidget_5]
+                k = -1
+                for row in csvreader:
+                    try:
+                        float(row[-1])
+                    except ValueError:    # This is a header line
+                        UI.tabWidget.setTabText(k+1, row[0])
+                        for _ in range(len(row) - 5):
+                            tableWidgets[k+1].insertColumn(tableWidgets[k+1].columnCount())
+                        for header_index in range(len(row) - 1):
+                            textedit = textedit = QtWidgets.QTableWidgetItem()
+                            textedit.setText(row[header_index + 1])
+                            tableWidgets[k+1].setHorizontalHeaderItem(header_index, textedit)
+                        rowcount = 0
+                        k += 1
+                    if rowcount + 1 > 5:
+                        tableWidgets[k].insertRow(tableWidgets[k].rowCount())
+                    
+                    for j, val in enumerate(row):
+                        textedit = QtWidgets.QTableWidgetItem()
+                        textedit.setText(val)
+                        if j:
+                            tableWidgets[k].setItem(rowcount-1, j-1, textedit)
+                        else:
+                            tableWidgets[k].setVerticalHeaderItem(rowcount-1, textedit)
+                    rowcount += 1
+
+            def continue_UI():
+                with open(self.pathToConstraints, 'w') as csvfile:
+                    csvwriter = csv.writer(csvfile)
+
+                    for k, tableWidget in enumerate([UI.tableWidget, UI.tableWidget_2, UI.tableWidget_3, UI.tableWidget_4, UI.tableWidget_5]):
+                        l = [UI.tabWidget.tabText(k)]
+                        for i in range(tableWidget.columnCount()):
+                            l.append(tableWidget.horizontalHeaderItem(i).text())
+                        csvwriter.writerow(l)
+                        for i in range(tableWidget.rowCount()):
+                            row = [tableWidget.verticalHeaderItem(i).text()]
+                            for j in range(tableWidget.columnCount()):
+                                row.append(tableWidget.item(i, j).text())
+                            csvwriter.writerow(row)
+
+                showSolutionBrowser()
+
+            UI.btn_continue.pressed.connect(continue_UI)
+
+            editConstraints.show()
+
 
         ui.btn_create_project.pressed.connect(runPowerSynth)
         ui.btn_cancel.pressed.connect(self.openingWindow)
@@ -172,7 +239,7 @@ class GUI():
             ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
 
         def createLayout():
-            
+            '''
             if not os.path.exists(ui.lineEdit_layer.text()) or ".csv" not in ui.lineEdit_layer.text():
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
@@ -200,8 +267,8 @@ class GUI():
             '''
 
             self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
-            self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_setup.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
+            self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
+            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.
             
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
 
@@ -225,6 +292,8 @@ class GUI():
 
             for i, row in enumerate(csvreader):
                 if i:  # Skip the column headers
+                    if i > 5:
+                        ui.tableWidget.insertRow(i-1)
                     for j, val in enumerate(row):
                         if j:  # Skip the ID column
                             textedit = QtWidgets.QTableWidgetItem()
@@ -240,7 +309,8 @@ class GUI():
                 for i in range(ui.tableWidget.rowCount()):
                     row = [i+1]
                     for j in range(ui.tableWidget.columnCount()):
-                        row.append(ui.tableWidget.item(i, j).text())
+                        if ui.tableWidget.item(i, j):
+                            row.append(ui.tableWidget.item(i, j).text())
                     csvwriter.writerow(row)
 
             self.editConstraints()
@@ -256,25 +326,25 @@ class GUI():
         self.setWindow(editConstraints)
 
         def continue_UI():
+
             newPath = self.pathToLayoutScript.split("/")
             newPath.pop(-1)
             newPath = "/".join(newPath) + "/constraint.csv"
             self.pathToConstraints = "/nethome/jgm019/TEST/constraint.csv"
             
-            with open(newPath, 'w') as csvfile:
-                csvwriter = csv.writer(csvfile)
+            with open(self.pathToConstraints, 'w') as csvfile:
+                    csvwriter = csv.writer(csvfile)
 
-                headers = ["Min Dimensions", "MinHorEnclosure", "MinVerEnclosure", "MinHorSpacing", "MinVerSpacing"]
-                columns1 = ["MinWidth", "MinLength", "MinHorExtension", "MinVerExtension"]
-                columns2 = ["EMPTY", "power_trace", "bonding wire pad", "power_lead"]
-                for k, tableWidget in enumerate([ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]):
-                    l = [headers[k], "EMPTY" , "power_trace" , "bonding wire pad" , "power_lead"]
-                    csvwriter.writerow(l)
-                    for i in range(tableWidget.rowCount()):
-                        row = [columns1[i] if k == 0 else columns2[i]]
-                        for j in range(tableWidget.columnCount()):
-                            row.append(tableWidget.item(i, j).text())
-                        csvwriter.writerow(row)
+                    for k, tableWidget in enumerate([ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]):
+                        l = [ui.tabWidget.tabText(k)]
+                        for i in range(tableWidget.columnCount()):
+                            l.append(tableWidget.horizontalHeaderItem(i).text())
+                        csvwriter.writerow(l)
+                        for i in range(tableWidget.rowCount()):
+                            row = [tableWidget.verticalHeaderItem(i).text()]
+                            for j in range(tableWidget.columnCount()):
+                                row.append(tableWidget.item(i, j).text())
+                            csvwriter.writerow(row)
             self.runOptions()
 
         ui.btn_continue.pressed.connect(continue_UI)
@@ -325,7 +395,6 @@ class GUI():
             # SAVE VALUES HERE
             self.reliabilityAwareness = "0" if ui.combo_reliability.currentText() == "no constraints" else "1" if ui.combo_reliability.currentText() == "worst case consideration" else "2"
             self.plotSolution = "1" if ui.checkbox_plot_solutions.isChecked() else "0"
-            self.flexibleWire = "1" if ui.checkbox_flexible_wires.isChecked() else "0"
 
             if self.option != 1:
                 self.layoutMode = "0" if ui.combo_layout_mode.currentText() == "minimum-sized solutions" else "1" if ui.combo_layout_mode.currentText() == "variable-sized solutions" else "2"
@@ -357,11 +426,15 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
+            self.modelType = ui.combo_measure_type_2.currentText()
             self.measureNameElectrical = ui.lineedit_measure_name.text()
             self.measureType = "0" if ui.combo_measure_type.currentText() == "inductance" else "1"
             
             for i in range(ui.tableWidget.rowCount()):
-                self.deviceConnection[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).currentText()
+                try:
+                    self.deviceConnection[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).currentText()
+                except AttributeError:
+                    print("Error: Please specify a name for each device.")
             
             self.source = ui.source_lineedit.text()
             self.sink = ui.sink_lineedit.text()
@@ -405,7 +478,10 @@ class GUI():
             self.measureNameThermal = ui.lineedit_measure_name.text()
 
             for i in range(ui.tableWidget.rowCount()):
-                self.devicePower[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).text()
+                try:
+                    self.devicePower[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).text()
+                except AttributeError:
+                    print("Error: Please specify a name for each device.")
 
             self.heatConvection = ui.heat_convection.text()
             self.ambientTemperature = ui.ambient_temperature.text()
@@ -453,7 +529,7 @@ class GUI():
             createMacro(file, self)
 
         settingsPath = '/nethome/jgm019/testcases/settings.info'
-        #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
+        # macroPath = '/nethome/jgm019/TEST/macro_script.txt'
 
         self.cmd = Cmd_Handler(debug=False)
 

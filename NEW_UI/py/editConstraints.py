@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(650, 260)
+        Dialog.resize(965, 412)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label = QtWidgets.QLabel(Dialog)
@@ -430,7 +430,7 @@ class Ui_Dialog(object):
         item = self.tableWidget_2.item(3, 3)
         item.setText(_translate("Dialog", "1"))
         self.tableWidget_2.setSortingEnabled(__sortingEnabled)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_hor_enclosure), _translate("Dialog", "Min Hor Enclosure"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_hor_enclosure), _translate("Dialog", "MinHorEnclosure"))
         item = self.tableWidget_3.verticalHeaderItem(0)
         item.setText(_translate("Dialog", "EMPTY"))
         item = self.tableWidget_3.verticalHeaderItem(1)
@@ -482,7 +482,7 @@ class Ui_Dialog(object):
         item = self.tableWidget_3.item(3, 3)
         item.setText(_translate("Dialog", "1"))
         self.tableWidget_3.setSortingEnabled(__sortingEnabled)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_ver_enclosure), _translate("Dialog", "Min Ver Enclosure"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_ver_enclosure), _translate("Dialog", "MinVerEnclosure"))
         item = self.tableWidget_4.verticalHeaderItem(0)
         item.setText(_translate("Dialog", "EMPTY"))
         item = self.tableWidget_4.verticalHeaderItem(1)
@@ -534,7 +534,7 @@ class Ui_Dialog(object):
         item = self.tableWidget_4.item(3, 3)
         item.setText(_translate("Dialog", "1"))
         self.tableWidget_4.setSortingEnabled(__sortingEnabled)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_hor_spacing), _translate("Dialog", "Min Hor Spacing"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_hor_spacing), _translate("Dialog", "MinHorSpacing"))
         item = self.tableWidget_5.verticalHeaderItem(0)
         item.setText(_translate("Dialog", "EMPTY"))
         item = self.tableWidget_5.verticalHeaderItem(1)
@@ -586,7 +586,7 @@ class Ui_Dialog(object):
         item = self.tableWidget_5.item(3, 3)
         item.setText(_translate("Dialog", "1"))
         self.tableWidget_5.setSortingEnabled(__sortingEnabled)
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_ver_spacing), _translate("Dialog", "Min Ver Spacing"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_ver_spacing), _translate("Dialog", "MinVerSpacing"))
         self.btn_continue.setText(_translate("Dialog", "Continue"))
 
 

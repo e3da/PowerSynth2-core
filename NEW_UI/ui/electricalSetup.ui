@@ -6,14 +6,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>401</width>
-    <height>458</height>
+    <width>400</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Electrical Setup</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3">
+  <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QFrame" name="electrical_setup_2">
      <property name="frameShape">
@@ -29,6 +29,41 @@
          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;justify&quot;&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Electrical Setup&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_17">
+        <item>
+         <widget class="QLabel" name="label_24">
+          <property name="text">
+           <string>Model Type:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="combo_measure_type_2">
+          <item>
+           <property name="text">
+            <string>Loop</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>FastHenry</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>PEEC</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Response Surface</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_12">

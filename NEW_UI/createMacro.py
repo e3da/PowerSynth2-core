@@ -27,7 +27,6 @@ def createMacro(file: TextIOWrapper, self):
     file.write("Reliability-awareness: " + self.reliabilityAwareness + "\n")
     file.write("New: 0\n")
     file.write("Plot_Solution: " + self.plotSolution + "\n")
-    file.write("Flexible_Wire: " + self.flexibleWire + "\n")
     file.write("Option: " + str(self.option) + "\n")
 
     if self.option == 0 or self.option == 2:
@@ -43,7 +42,7 @@ def createMacro(file: TextIOWrapper, self):
     if self.option == 1 or self.option == 2:
         # Electrical Setup
         file.write("Electrical_Setup:\n")
-        file.write("Model_Type: LoopFHcompare\n")
+        file.write("Model_Type: " + self.modelType + "\n")
         file.write("Measure_Name: " + self.measureNameElectrical + "\n")
         file.write("Measure_Type: " + self.measureType + "\n")
         file.write("# Device Connection Table\nDevice_Connection:\n")
