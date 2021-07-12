@@ -643,7 +643,7 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
         print("init api:", type)
         if type == 'PowerSynthPEEC':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table)
