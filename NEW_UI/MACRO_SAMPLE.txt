@@ -76,13 +76,15 @@ TODO:
 
 Solution browser -- Monday
 Visualize layout -- Monday
-Make PowerSynth Run -- Tuesday
 Inspect MDKEditor -- Tuesday
 
 
-Visualize Constraints in normal flow after inputting reliability awareness.
 MATLAB issue  -- Figure out with Imam
 Flow of greying out buttons
 
 Hierarchy Representation - work on after flow
 ASEE Conference?
+
+
+MAKE IT RUN
+FIX LAYOUT OF OPTIMIZATION SETUP

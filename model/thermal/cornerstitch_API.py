@@ -72,10 +72,10 @@ class CornerStitch_Tmodel_API:
         :return eng: An instance of the MATLAB engine.
         """
         
-        #import matlab.engine
-        #self.matlab_engine = matlab.engine.start_matlab()
+        import matlab.engine
+        self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        #self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
+        self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
 
     def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
         layer_average_list = []
@@ -300,7 +300,7 @@ class CornerStitch_Tmodel_API:
                 print(('min iso_temp:', min(temp)))
                 print(('max iso temp:', max(temp)))
                 #Analyze and save the characterized data
-                xs = 1000.0 * xs;
+                xs = 1000.0 * xs
                 ys = 1000.0 * ys  # Convert back to mm
                 temp_contours, _, avg_temp = characterize_dist(xs, ys, temp, self.t_amb, device_part_obj.footprint, False)
                 flux_contours, power, _ = characterize_dist(xs, ys, z_flux, 0.0, device_part_obj.footprint, True)

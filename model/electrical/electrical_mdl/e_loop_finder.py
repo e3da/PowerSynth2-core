@@ -13,7 +13,7 @@ from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
 from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
-import _thread
+#import _thread
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy

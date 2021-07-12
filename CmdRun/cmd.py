@@ -4,7 +4,7 @@ import sys, os
 # Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-print(cur_path)
+#print(cur_path)
 sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
@@ -1060,7 +1060,7 @@ if __name__ == "__main__":
     application.run()
 
     sys.exit()
-
+    '''
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
     cmd = Cmd_Handler(debug=False)
@@ -1110,4 +1110,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    
+    '''

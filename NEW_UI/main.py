@@ -36,6 +36,7 @@ class GUI():
         self.pathToTraceOri = ""
         self.option = None
         self.optimizationUI = None
+        self.extraConstraints = []
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -269,12 +270,18 @@ class GUI():
             self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
             self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.
-            
-            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack)
+            self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
+
+            newPath = self.pathToLayoutScript.split("/")
+            newPath.pop(-1)
+            newPath = "/".join(newPath) + "/constraint.csv"
+            self.pathToConstraints = newPath
+
+            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
 
             self.displayLayerStack()
 
-        ui.btn_open_layout_stack.pressed.connect(getLayerStack)
+        ui.btn_open_layer_stack.pressed.connect(getLayerStack)
         ui.btn_open_layout.pressed.connect(getLayoutScript)
         ui.btn_open_bondwire.pressed.connect(getBondwire)
         ui.btn_create_project.pressed.connect(createLayout)
@@ -325,12 +332,46 @@ class GUI():
         ui.setupUi(editConstraints)
         self.setWindow(editConstraints)
 
-        def continue_UI():
+        # Fill out the constraints from the given constraint file
+        with open(self.pathToConstraints, 'r') as csvfile:
+            csvreader = csv.reader(csvfile)
 
-            newPath = self.pathToLayoutScript.split("/")
-            newPath.pop(-1)
-            newPath = "/".join(newPath) + "/constraint.csv"
-            self.pathToConstraints = "/nethome/jgm019/TEST/constraint.csv"
+            tableWidgets = [ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]
+            k = -1
+            DONE = False
+            for row in csvreader:
+                if DONE:  # Saves voltage specification and such
+                    self.extraConstraints.append(row)
+                    continue
+                try:
+                    float(row[-1])
+                except ValueError:    # This is a header line
+                    if k > 3:
+                        self.extraConstraints.append(row)
+                        DONE = True
+                        continue
+                    ui.tabWidget.setTabText(k+1, row[0])
+                    for _ in range(len(row) - 5):
+                        tableWidgets[k+1].insertColumn(tableWidgets[k+1].columnCount())
+                    for header_index in range(len(row) - 1):
+                        textedit = textedit = QtWidgets.QTableWidgetItem()
+                        textedit.setText(row[header_index + 1])
+                        tableWidgets[k+1].setHorizontalHeaderItem(header_index, textedit)
+                    rowcount = 0
+                    k += 1
+                if rowcount + 1 > 5:
+                    tableWidgets[k].insertRow(tableWidgets[k].rowCount())
+                
+                for j, val in enumerate(row):
+                    textedit = QtWidgets.QTableWidgetItem()
+                    textedit.setText(val)
+                    if j:
+                        tableWidgets[k].setItem(rowcount-1, j-1, textedit)
+                    else:
+                        tableWidgets[k].setVerticalHeaderItem(rowcount-1, textedit)
+                rowcount += 1
+
+        def continue_UI():
             
             with open(self.pathToConstraints, 'w') as csvfile:
                     csvwriter = csv.writer(csvfile)
@@ -345,6 +386,9 @@ class GUI():
                             for j in range(tableWidget.columnCount()):
                                 row.append(tableWidget.item(i, j).text())
                             csvwriter.writerow(row)
+                    for row in self.extraConstraints:
+                        csvwriter.writerow(row)
+
             self.runOptions()
 
         ui.btn_continue.pressed.connect(continue_UI)
@@ -386,20 +430,19 @@ class GUI():
 
         if self.option == 0:
             ui.electrical_thermal_frame.hide()
-            optimizationSetup.setFixedHeight(380)
+            optimizationSetup.setFixedHeight(325)
         elif self.option == 1:
-            optimizationSetup.setFixedHeight(225)
+            optimizationSetup.setFixedHeight(205)
             ui.layout_generation_setup_frame.hide()
 
         def run():
             # SAVE VALUES HERE
-            self.reliabilityAwareness = "0" if ui.combo_reliability.currentText() == "no constraints" else "1" if ui.combo_reliability.currentText() == "worst case consideration" else "2"
+            self.floorPlan[0] = ui.floor_plan_x.text()
+            self.floorPlan[1] = ui.floor_plan_y.text()
             self.plotSolution = "1" if ui.checkbox_plot_solutions.isChecked() else "0"
 
             if self.option != 1:
                 self.layoutMode = "0" if ui.combo_layout_mode.currentText() == "minimum-sized solutions" else "1" if ui.combo_layout_mode.currentText() == "variable-sized solutions" else "2"
-                self.floorPlan[0] = ui.floor_plan_x.text()
-                self.floorPlan[1] = ui.floor_plan_y.text()
                 self.numLayouts = ui.num_layouts.text()
                 self.seed = ui.seed.text()
                 self.optimizationAlgorithm = ui.combo_optimization_algorithm.currentText()

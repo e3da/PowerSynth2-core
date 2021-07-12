@@ -6,7 +6,7 @@ import networkx as nx
 import pandas as pd
 import copy
 import os
-from colormap import rgb2hex
+#from colormap import rgb2hex
 import matplotlib
 from core.engine.ConstrGraph.CGStructures import Vertex, Edge, Graph, find_longest_path, fixed_edge_handling
 from core.engine.CornerStitch.CornerStitch import Node
@@ -362,6 +362,12 @@ class Structure_3D():
             #name = constraint_file.split('.')
             #file_name = name[0] + '_' + all_layers[i].name + '.' + name[1] 
             cons_df = pd.read_csv(constraint_file) #reading constraint info from csv file.
+
+        elif mode == 99:
+
+            # THIS IS A SPECIAL MODE JUST FOR THE GUI TO BYPASS TAKING INPUT
+            self.save_constraint_table(cons_df=self.constraint_df, file=constraint_file)
+            cons_df = pd.read_csv(constraint_file)
 
         else:
             
