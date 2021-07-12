@@ -1607,8 +1607,8 @@ class Node_3D(Node):
                                 if e not in self.parent.edges:
                                     self.parent.edges.append(e)
                                     
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
    
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1:
