@@ -20,7 +20,7 @@ from core.NEW_UI.py.optimizationSetup import Ui_Dialog as UI_optimization_setup
 from core.NEW_UI.py.electricalSetup import Ui_Dialog as UI_electrical_setup
 from core.NEW_UI.py.thermalSetup import Ui_Dialog as UI_thermal_setup
 from core.NEW_UI.py.runOptions import Ui_Dialog as UI_run_options
-from core.NEW_UI.py.solutionBrowser import Ui_Dialog as UI_solution_browser
+from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
 from core.NEW_UI.createMacro import createMacro
 
 class GUI():
@@ -37,6 +37,7 @@ class GUI():
         self.option = None
         self.optimizationUI = None
         self.extraConstraints = []
+        self.setupsDone = 0
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -115,7 +116,7 @@ class GUI():
             settingsPath = '/nethome/jgm019/testcases/settings.info'
             macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
 
-            def showSolutionBrowser():
+            def solutionBrowser():
                 self.currentWindow.close()
                 self.currentWindow = None
 
@@ -125,12 +126,8 @@ class GUI():
 
                 self.cmd.cmd_handler_flow(arguments=args)
 
-                solutionBrowser = QtWidgets.QDialog()
-                UI = UI_solution_browser()
-                UI.setupUi(solutionBrowser)
-                self.setWindow(solutionBrowser)
+                showSolutionBrowser()
 
-                solutionBrowser.show()
 
             editConstraints = QtWidgets.QDialog()
             UI = UI_edit_constraints()
@@ -146,13 +143,21 @@ class GUI():
             with open(self.pathToConstraints, 'r') as csvfile:
                 csvreader = csv.reader(csvfile)
 
-                tableWidgets = [UI.tableWidget, UI.tableWidget_2, UI.tableWidget_3, UI.tableWidget_4, UI.tableWidget_5]
+                tableWidgets = [ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]
                 k = -1
+                DONE = False
                 for row in csvreader:
+                    if DONE:  # Saves voltage specification and such
+                        self.extraConstraints.append(row)
+                        continue
                     try:
                         float(row[-1])
                     except ValueError:    # This is a header line
-                        UI.tabWidget.setTabText(k+1, row[0])
+                        if k > 3:
+                            self.extraConstraints.append(row)
+                            DONE = True
+                            continue
+                        ui.tabWidget.setTabText(k+1, row[0])
                         for _ in range(len(row) - 5):
                             tableWidgets[k+1].insertColumn(tableWidgets[k+1].columnCount())
                         for header_index in range(len(row) - 1):
@@ -187,8 +192,10 @@ class GUI():
                             for j in range(tableWidget.columnCount()):
                                 row.append(tableWidget.item(i, j).text())
                             csvwriter.writerow(row)
+                    for row in self.extraConstraints:
+                        csvwriter.writerow(row)
 
-                showSolutionBrowser()
+                solutionBrowser()
 
             UI.btn_continue.pressed.connect(continue_UI)
 
@@ -427,8 +434,10 @@ class GUI():
         self.setWindow(optimizationSetup)
         optimizationSetup.setFixedHeight(410)
         optimizationSetup.setFixedWidth(400)
+        ui.btn_run_powersynth.setDisabled(True)
 
         if self.option == 0:
+            ui.btn_run_powersynth.setDisabled(False)
             ui.electrical_thermal_frame.hide()
             optimizationSetup.setFixedHeight(325)
         elif self.option == 1:
@@ -486,7 +495,9 @@ class GUI():
             self.pathToParasiticModel = ui.parasitic_textedit.text()
             self.pathToTraceOri = ui.trace_textedit.text()
 
-            self.optimizationUI.btn_electrical_setup.setDisabled(True)
+            self.setupsDone += 1
+            if self.setupsDone == 2:
+                self.optimizationUI.btn_run_powersynth.setDisabled(False)
 
             electricalSetup.close()
 
@@ -529,8 +540,9 @@ class GUI():
             self.heatConvection = ui.heat_convection.text()
             self.ambientTemperature = ui.ambient_temperature.text()
 
-
-            self.optimizationUI.btn_thermal_setup.setDisabled(True)
+            self.setupsDone += 1
+            if self.setupsDone == 2:
+                self.optimizationUI.btn_run_powersynth.setDisabled(False)
 
             thermalSetup.close()
 
@@ -580,12 +592,19 @@ class GUI():
 
         self.cmd.cmd_handler_flow(arguments=args)
 
+        self.showSolutionBrowser()
+
+
+    def showSolutionBrowser(self):
         solutionBrowser = QtWidgets.QDialog()
         ui = UI_solution_browser()
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
+        #  DISPLAY STUFF HERE!
+
         solutionBrowser.show()
+
 
     def run(self):
         '''Main Function to run the GUI'''

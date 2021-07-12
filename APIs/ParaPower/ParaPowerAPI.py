@@ -142,7 +142,7 @@ class ParaPowerInterface(object):
         self.matlab_engine = None
         # self.path = matlab_path
         # TODO: Save location is hardcoded 
-        self.path = "/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
+        self.path = "/nethome/jgm019/TEST/"
 		#self.path="/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
         #self.eng = self.init_matlab()
         self.solution_name = solution_name

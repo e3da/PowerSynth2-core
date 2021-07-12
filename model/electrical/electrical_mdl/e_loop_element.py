@@ -1,13 +1,13 @@
 # Get parasitic package here
 import sys
 
-cur_path =sys.path[0] # get current path (meaning this file location)
+#cur_path =sys.path[0] # get current path (meaning this file location)
 
-cur_path = cur_path[0:-36] #exclude "powercad/electrical_mdl"
-print ("cur path",cur_path)
+#cur_path = cur_path[0:-36] #exclude "powercad/electrical_mdl"
+#print ("cur path",cur_path)
 
-sys.path.append(cur_path)
-print (sys.path[0])
+#sys.path.append(cur_path)
+#print (sys.path[0])
 
 # get the 3 fold integral mutual equation.
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind

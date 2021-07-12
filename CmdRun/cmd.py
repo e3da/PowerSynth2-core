@@ -1035,9 +1035,9 @@ class Cmd_Handler:
             plt.xlim(min(data_x)-2, max(data_x)+2)
             plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
-            plt.xlabel(x_label)
+            #plt.xlabel(x_label)
             # naming the y axis
-            plt.ylabel(y_label)
+            #plt.ylabel(y_label)
 
             # giving a title to my graph
             plt.title('Solution Space')

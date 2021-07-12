@@ -79,12 +79,5 @@ Visualize layout -- Monday
 Inspect MDKEditor -- Tuesday
 
 
-MATLAB issue  -- Figure out with Imam
-Flow of greying out buttons
-
 Hierarchy Representation - work on after flow
 ASEE Conference?
-
-
-MAKE IT RUN
-FIX LAYOUT OF OPTIMIZATION SETUP
