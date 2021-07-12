@@ -159,7 +159,7 @@ class CornerStitch_Tmodel_API:
             tg.trace_islands = islands
             tg.sublayer_features = self.sub_thermal_feature
             res = solve_TFSM(tg,1.0)
-            #print ("Thermal",res)
+            #print ("thermal",res)
             self.temp_res = dict(list(zip(names, list(res))))
             #print self.temp_res
 
@@ -316,7 +316,7 @@ class CornerStitch_Tmodel_API:
                 dev_mat = self.layer_stack.material_lib.get_mat(device_part_obj.material_id)
                 dev_cond = dev_mat.thermal_cond
                 dev_dim = device_part_obj.footprint
-                # Build Thermal Features object
+                # Build thermal Features object
                 tf = DieThermalFeatures()
                 tf.iso_top_fluxes = flux_contours
                 tf.iso_top_avg_temp = avg_temp

@@ -6,6 +6,7 @@ from matplotlib.path import Path
 from core.engine.CornerStitch.CSinterface import Rectangle
 from core.engine.LayoutSolution.database import create_connection,create_table,retrieve_data
 import copy
+import csv
 
 class LayerSolution():
     def __init__(self, name):

@@ -41,6 +41,26 @@ class TraceCell(Rect):
         self.has_left = False
         self.has_right = False
         self.comp_locs = []
+        self.name =''
+        self.start_node = 0 # start anchor node
+        self.end_node = 0 # end anchor node
+        self.struct = 'trace'
+        self.thick = 0
+        self.z = 0
+        # this var shows the direction of the general current flow in this trace cell
+        self.dir= 0
+        # Special var to connect bondwires 
+        self.bwn1=0
+        self.bwn2=0
+        '''
+        where:
+        1: x+
+        -1: x-
+        2: y+
+        -2: y-
+        3 : z+
+        -3: z- 
+        '''
 
     def find_corner_type(self):
         # Define corner type based on the neighbour
@@ -86,7 +106,11 @@ class TraceCell(Rect):
         plt.scatter(xs, ys)
         plt.show()
 
-
+    def eval_length(self):
+        if self.dir == 1:
+            return abs(self.left-self.right)
+        elif self.dir == 2:
+            return abs(self.top-self.bottom)
 class MeshNode:
     def __init__(self, pos=[], type='', node_id=0, group_id=None, mode=1):
         '''
@@ -418,13 +442,13 @@ class EMesh():
                 # Handle small length pieces by linear approximation
                 all_r = [trace_resistance_full(self.f, w, l, t, h,p=p) for w, l in zip(self.all_W, self.all_L)]
                 #all_r = [1e-6 for i in range(len(self.all_W))]
-                if self.mdl_type ==0:
-                    all_l = trace_ind_krige(self.f, self.all_W, self.all_L, mdl=self.mdl['L'],mode=mode).tolist()
-                elif self.mdl_type == 1:
-                    all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
+                #if self.mdl_type ==0:
+                #    all_l = trace_ind_krige(self.f, self.all_W, self.all_L, mdl=self.mdl['L'],mode=mode).tolist()
+                #elif self.mdl_type == 1:
+                #    all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
                 #self.plot_trace_RL_val_RS(zdata=all_l,dtype='L')
 
-                # all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
+                all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
                 #print (self.all_W)
                 #print (self.all_L)
                 #print (all_r)
@@ -853,6 +877,7 @@ class EMesh():
         add_M_edge = self.m_graph.add_edge
 
         ''' Evaluation in Cython '''
+
         mutual_matrix = np.array(self.mutual_matrix)
         #print("start mutual eval")
         result = []
@@ -865,6 +890,8 @@ class EMesh():
         #print(("finished mutual eval", time.time()-start))
         # We first eval all parallel pieces with bar equation, then, we
         debug = False
+        err_count = 0
+        
         for n in range(len(self.edges)):
             edge = self.edges[n]
             if result[n] > 0 and not(math.isinf(result[n])):
@@ -881,6 +908,9 @@ class EMesh():
                 else:
                     print(("nan case", edge[0], edge[1]))
                     print((mutual_matrix[n]))
+            else:
+                err_count+=1
+        print("mutual inductance error pairs:",err_count)
     def find_E(self, ax=None):
         bound_graph = nx.Graph()
         bound_nodes = []
@@ -1177,57 +1207,58 @@ class EMesh():
         for sh in self.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
-
+            
             if island_name == group.name:  # means if this sheet is in this island
                 if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
                     self.comp_nodes[group] = []
+            
 
-            comp = sh.data.component  # Get the component of a sheet.
-            # print "C_DICT",len(self.comp_dict),self.comp_dict
-            if comp != None and not (comp in self.comp_dict):
-                comp.build_graph()
-                conn_type = "hier"
-                # Get x,y,z positions
-                x, y = sheet_data.rect.center()
-                z = sheet_data.z
-                cp = [x, y, z]
-                if not (sheet_data.net in self.comp_net_id):
-                    cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
-                    self.comp_net_id[sheet_data.net] = self.node_count
-                    self.add_node(cp_node)
-                    self.comp_nodes[group].append(cp_node)
-                    self.comp_dict[comp] = 1
-                for n in comp.net_graph.nodes(data=True):  # node without parents
-                    sheet_data = n[1]['node']
+                comp = sh.data.component  # Get the component of a sheet.
+                # print "C_DICT",len(self.comp_dict),self.comp_dict
+                if comp != None and not (comp in self.comp_dict):
+                    comp.build_graph()
+                    conn_type = "hier"
+                    # Get x,y,z positions
+                    x, y = sheet_data.rect.center()
+                    z = sheet_data.z
+                    cp = [x, y, z]
+                    if not (sheet_data.net in self.comp_net_id):
+                        cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                        self.comp_net_id[sheet_data.net] = self.node_count
+                        self.add_node(cp_node)
+                        self.comp_nodes[group].append(cp_node)
+                        self.comp_dict[comp] = 1
+                    for n in comp.net_graph.nodes(data=True):  # node without parents
+                        sheet_data = n[1]['node']
 
-                    if sheet_data.node == None:  # floating net
-                        x, y = sheet_data.rect.center()
-                        z = sheet_data.z
-                        
-                        cp = [x, y, z]
-                        # print "CP",cp
-                        if not (sheet_data.net in self.comp_net_id):
-                            cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
-                            # print self.node_count
-                            self.comp_net_id[sheet_data.net] = self.node_count
-                            self.add_node(cp_node)
-                            self.comp_dict[comp] = 1
+                        if sheet_data.node == None:  # floating net
+                            x, y = sheet_data.rect.center()
+                            z = sheet_data.z
+                            
+                            cp = [x, y, z]
+                            # print "CP",cp
+                            if not (sheet_data.net in self.comp_net_id):
+                                cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                                # print self.node_count
+                                self.comp_net_id[sheet_data.net] = self.node_count
+                                self.add_node(cp_node)
+                                self.comp_dict[comp] = 1
 
-            else:
-                type = "hier"
-                # Get x,y,z positions
-                x, y = sheet_data.rect.center()
-                z = sheet_data.z
-                
-                cp = [x, y, z]
+                else:
+                    type = "hier"
+                    # Get x,y,z positions
+                    x, y = sheet_data.rect.center()
+                    z = sheet_data.z
+                    
+                    cp = [x, y, z]
 
-                if not (sheet_data.net in self.comp_net_id):
-                    cp_node = MeshNode(pos=cp, type=type, node_id=self.node_count, group_id=None)
-                    self.comp_net_id[sheet_data.net] = self.node_count
-                    self.add_node(cp_node)
-                    self.comp_nodes[group].append(cp_node)
+                    if not (sheet_data.net in self.comp_net_id):
+                        cp_node = MeshNode(pos=cp, type=type, node_id=self.node_count, group_id=None)
+                        self.comp_net_id[sheet_data.net] = self.node_count
+                        self.add_node(cp_node)
+                        self.comp_nodes[group].append(cp_node)
 
-        self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
+                #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
 
     def mesh_edges(self, thick=None, cond=5.96e7, z_level = 0):
         '''

@@ -2671,6 +2671,7 @@ class ConstraintGraph:
                             if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
+                                
                                 added_constraint=edge.constraint
                                 
                                 
@@ -2679,11 +2680,12 @@ class ConstraintGraph:
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
+                                #print("ADDED",e.printEdge())
                                 
                                 
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
@@ -2713,6 +2715,7 @@ class ConstraintGraph:
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
+                                    #print("ADDED",e.printEdge())
                                     
                                     
                                     
@@ -2953,8 +2956,8 @@ class ConstraintGraph:
                                 
 
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:

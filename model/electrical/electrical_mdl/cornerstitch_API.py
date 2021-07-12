@@ -2,6 +2,7 @@
 from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
 from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh
 from core.model.electrical.electrical_mdl.e_mesh_corner_stitch import EMesh_CS
+#from corner_stitch.input_script import *
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 from core.MDK.Design.parts import Part
@@ -9,6 +10,7 @@ from core.general.data_struct.util import Rect
 from core.model.electrical.electrical_mdl.e_netlist import ENetlist
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.model.electrical.parasitics.mdl_compare import load_mdl
+from core.model.electrical.electrical_mdl.e_loop_finder import LayoutLoopInterface
 import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -25,6 +27,7 @@ import gc
 import numpy as np
 import copy
 import os
+import time
 #import objgraph
 
 
@@ -47,12 +50,13 @@ class ElectricalMeasure(object):
 
 class CornerStitch_Emodel_API:
     # This is an API with NewLayout Engine
-    def __init__(self, comp_dict={}, wire_conn={}):
+    def __init__(self, comp_dict={}, wire_conn={},e_mdl = 'PowerSynthPEEC'):
         '''
 
         :param comp_dict: list of all components and routing objects
         :param wire_conn: a simple table for bondwires setup
         '''
+        self.e_mdl = e_mdl
         self.pins = None
         self.comp_dict = comp_dict
         self.conn_dict = {}  # key: comp name, Val: list of connecition based on the connection table input
@@ -73,7 +77,8 @@ class CornerStitch_Emodel_API:
         self.wires = []
         self.vias = []
         # this is fixed to internal
-        self.type = 'PowerSynthPEEC'
+        
+        self.rs_model = None
     def process_trace_orientation(self,trace_ori_file=None):
         with open(trace_ori_file, 'r') as file_data:
             for line in file_data.readlines():
@@ -144,7 +149,7 @@ class CornerStitch_Emodel_API:
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
         return layer.z_level
-
+        
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -177,32 +182,34 @@ class CornerStitch_Emodel_API:
         
         
         for isl in islands:
+            
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
-
                 
-                z_id = int(name.split(".")[1])
-                z = int(self.get_z_loc(z_id)*1000)
-                dz = int(self.get_thick(z_id)*1000)
-                x,y,w,h = trace[1:5]
-                new_rect = Rect(top=(y + h) 
-                                , bottom=y, left=x, right=(x + w))
-                p = E_plate(rect=new_rect, z=z, dz=dz,z_id = z_id)
-                #print ("trace height", p.z)
-                #print ("trace thickness", p.dz)
-                p.group_id=isl.name
-                p.name=trace[5]
-                self.e_plates.append(p)
+                if name[0] != 'C':
+                    z_id = int(name.split(".")[1])
+                    z = int(self.get_z_loc(z_id)*1000)
+                    dz = int(self.get_thick(z_id)*1000)
+                    x,y,w,h = trace[1:5]
+                    new_rect = Rect(top=(y + h)
+                                    , bottom=y, left=x, right=(x + w))
+                    p = E_plate(rect=new_rect, z=z, dz=dz,z_id = z_id)
+                    #print ("trace height", p.z)
+                    #print ("trace thickness", p.dz)
+                    p.group_id=isl.name
+                    p.name=trace[5]
+                    self.e_plates.append(p)
+                else:
+                    continue
             for comp in isl.child: # get all components in isl
                 x, y, w, h = comp[1:5]
                 name = comp[5] # get the comp name from layout script
-
+                
 
                 N_v = (0,0,1) # all up vectors
                 obj = self.comp_dict[name] # Get object type based on the name
                 type = name[0]
                 z_id = obj.layer_id
-
                 '''
                 # TODO: revmove when fixed
                 
@@ -221,9 +228,9 @@ class CornerStitch_Emodel_API:
                 # TODO: revmove when fixed
                 if 'L' in name and name!='L3' and name!='L5':
                     z_id +=1
-                '''
+                '''   
                 z=int(self.get_z_loc(z_id)*1000)
-
+                
                 if isinstance(obj, RoutingPath):  # If this is a routing object Trace or Bondwire "Pad"
                     # reuse the rect info and create a sheet
                     
@@ -244,14 +251,13 @@ class CornerStitch_Emodel_API:
 
                     self.net_to_sheet[name] = pin
                 elif isinstance(obj, Part):
-
+                    
                     if obj.type == 0:  # If this is lead type:
                         
                         new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
                         if type == 'V': # Handling Vias type
                             via_name = name.split(".")[0]
-                            
                             if not(via_name in self.via_dict): # if this group is not formed
                                 self.via_dict[via_name] = []
                             if len(self.via_dict[via_name]) < 2:# cannot find all connections
@@ -319,12 +325,13 @@ class CornerStitch_Emodel_API:
         self.wires  = []
         self.vias =[]
         # convert the layout info to electrical objects per layer
+        
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             self.get_layer_data_to_electrical(islands=island_data,layer_id =l_key)
         # handle bondwire group 
         self.make_wire_and_via_table()
-
+        
         # Update module object
         self.module = EModule(plate=self.e_plates, sheet=self.e_sheets, components=self.wires + self.e_comps + self.vias)
         self.module.form_group_cs_hier()
@@ -340,17 +347,120 @@ class CornerStitch_Emodel_API:
         islands = []
         for isl_group in list(module_data.islands.values()):
             islands.extend(isl_group)
-        self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack)
+        if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
+            self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack)
 
         #self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type)
-        self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
-        if self.trace_ori == {}:
-            self.emesh.mesh_init(mode =0)
-        else:
-            self.emesh.mesh_init(mode =1)
-            
+            self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
+            if self.trace_ori == {}:
+                self.emesh.mesh_init(mode =0)
+            else:
+                self.emesh.mesh_init(mode =1)
+        elif "Loop" in self.e_mdl:
+            # Call loop finder here
+            self.emesh = LayoutLoopInterface(islands=islands,hier_E = self.hier, freq =self.freq, layer_stack =self.layer_stack)
+            self.emesh.ori_map =self.trace_ori # Update the trace orientation if given
+            #print("define current directions")
+            self.emesh.form_graph()
+            #print("find path")
+            self.emesh.find_all_paths(src='L1',sink = 'L2')
+            self.emesh.form_bundles()
+            #self.emesh.plot()
+            #print("define bundle")
+            #print("solve loops model separatedly")
+            # = time.time()
+            #print("bundles eval time", time.time() - s, 's')
+            #self.e_mdl = 'Loop-PEEC-compare'
+            debug = False
+            if self.e_mdl == "Loop":
+                s = time.time()
+
+                self.emesh.solve_all_bundles()
+                print("bundles eval time", time.time() - s, 's')
+                if debug:
+                    #self.emesh.solve_all_bundles() # solve and save original trace data to net_graph
+
+                    s = time.time()
+                    self.emesh.build_PEEC_graph() # build PEEC from net_graph
+                    print("Dense Matrix eval time", time.time() - s, 's')
+                    #self.emesh.solve_bundle_PEEC()
+
+
+
+            print("graph constraction and combined")
+            #self.emesh.graph_to_circuit_transfomation()
+            print("solve MNA")
         
+
+    def eval_RL_Loop_mode(self,src=None,sink=None):
+        self.circuit = RL_circuit()
+        pt1 = self.emesh.comp_net_id[src]
+        pt2 = self.emesh.comp_net_id[sink]
+        #pt1= 28
+        #pt2 = 23
+        #pt2 = 31
+        self.circuit._graph_read_loop(self.emesh)
+        print(pt1, pt2)
+        if not (networkx.has_path(self.emesh.net_graph, pt1, pt2)):
+            print(pt1, pt2)
+            eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
+        else:
+            pass
+            #print "PATH EXISTS"
+        #self.circuit.m_graph_read(self.emesh.m_graph)
+        self.circuit.assign_freq(self.freq*1000)
+
+        self.circuit.indep_current_source(pt1, 0, 1)
+        # print "src",pt1,"sink",pt2
+        self.circuit._add_termial(pt2)
+        self.circuit.graph_to_circuit_minimization()
+
+        self.circuit.build_current_info()
+        stime=time.time()
+        self.circuit.solve_iv()
+        print("LOOP circuit eval time",time.time()-stime)
+        vname1 = 'v' + str(self.circuit.net_map[pt1])
+        vname2 = 'v' + str(self.circuit.net_map[pt2])
+        #vname = vname.encode() # for python3
+        print(vname1,vname2)
+        imp = self.circuit.results[vname1]
+
+        #print (imp)
+        R = abs(np.real(imp) * 1e3)
+        L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
+        print('loop RL',R,L)
+        debug=False
+        if debug:
+            self.tmp_circuit = RL_circuit()
+            self.tmp_circuit._graph_read_PEEC_Loop(self.emesh)
+            self.tmp_circuit.assign_freq(self.freq * 1000)
+
+            self.tmp_circuit.graph_to_circuit_minimization()
+            self.tmp_circuit.indep_current_source(pt1, 0, 1)
+            # print "src",pt1,"sink",pt2
+            self.tmp_circuit._add_termial(pt2)
+            self.tmp_circuit.build_current_info()
+            if not (networkx.has_path(self.emesh.PEEC_graph, pt1, pt2)):
+                print(pt1, pt2)
+                eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
+            else:
+                pass
+            stime = time.time()
+            self.tmp_circuit.solve_iv()
+            print("PEEC circuit eval time", time.time() - stime)
+            vname1 = 'v' + str(self.tmp_circuit.net_map[pt1])
+            vname2 = 'v' + str(self.tmp_circuit.net_map[pt2])
+            # vname = vname.encode() # for python3
+            print(vname1, vname2)
+            imp = self.tmp_circuit.results[vname1]
+            print(imp)
+            Rp= abs(np.real(imp) * 1e3)
+            Lp = abs(np.imag(imp)) * 1e9 / (2 * np.pi * self.circuit.freq)
+            print('PEEC-loop RL', Rp, Lp)
+            print("DIFF", abs(Rp-R)/R * 100,abs(Lp-L)/L*100)
+        return R,L
     def mesh_and_eval_elements(self):
+        start = time.time()
         if self.trace_ori == {}:
             self.emesh.mesh_update(mode =0)
         else:
@@ -359,7 +469,7 @@ class CornerStitch_Emodel_API:
         self.emesh.update_hier_edge_RL()
         self.emesh.mutual_data_prepare(mode=0)
         self.emesh.update_mutual(mode=0)
-
+        print("formation time PEEC",time.time()-start)
 
     def init_layout_isl(self,module_data=None):
         '''
@@ -749,6 +859,7 @@ class CornerStitch_Emodel_API:
         self.e_plates = []  # list of electrical components
         self.e_sheets = []  # list of sheets for connector presentaion
         self.e_comps = []  # list of all components
+        
         self.net_to_sheet = {}  # quick look up table to find the sheet object based of the net_name
         # Update based on layout info
         #print "inside",self.layout_data
@@ -870,7 +981,7 @@ class CornerStitch_Emodel_API:
     def make_wire_and_via_table(self):
         #first form via connection for trace to trace case
         self.form_t2t_via_connections()
-
+        
         for wire_table in list(self.wire_dict.values()):
             for obj in wire_table:
                 wire_data = wire_table[obj]  # get the wire data
@@ -897,7 +1008,7 @@ class CornerStitch_Emodel_API:
                     s2 = self.net_to_sheet[stop]
                     via = EVia(start=s1,stop=s2)
                     self.vias.append(via)
-
+                    
             #self.e_comps+=self.wires
         
     
@@ -954,51 +1065,6 @@ class CornerStitch_Emodel_API:
         del self.module
         return 1,1
 
-    def extract_RLM(self,src1=None,sink1=None,src2=None,sink2=None):
-        pt1 = self.emesh.comp_net_id[src1]
-        pt2 = self.emesh.comp_net_id[sink1]
-        pt3 = self.emesh.comp_net_id[src2]
-        pt4 = self.emesh.comp_net_id[sink2]
-        self.circuit = RL_circuit()
-        self.circuit._graph_read(self.emesh.graph)
-        if not(networkx.has_path(self.emesh.graph,pt1,pt2)) or not(networkx.has_path(self.emesh.graph,pt3,pt4)) :
-            print (pt1,pt2)
-            print (pt3,pt4)
-            eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
-        else:
-            pass
-        self.circuit.m_graph_read(self.emesh.m_graph)
-        self.circuit.assign_freq(self.freq)
-        # first we compute R1 L1
-        self.circuit.indep_current_source(pt1, 0, 1)
-        #self.circuit.indep_current_source(pt3, 0, 1)
-        # print "src",pt1,"sink",pt2
-        self.circuit._add_termial(pt2)
-        self.circuit.build_current_info()
-        self.circuit.solve_iv()
-        vname = 'v' + str(pt1)
-        #vname = vname.encode() # for python3 
-        imp1 = self.circuit.results[vname]
-        R1 = abs(np.real(imp1) * 1e3)
-        L1 = abs(np.imag(imp1)) * 1e9 / (2 * np.pi * self.circuit.freq)
-        # once we have R1,L1 we can calculate for R2,L2 and R12,M12
-        self.circuit = RL_circuit()
-        self.circuit._graph_read(self.emesh.graph)
-        self.circuit.indep_current_source(pt1, 0, 1)
-        self.circuit.indep_current_source(pt3, 0, 1)
-        self.circuit._add_termial(pt2)
-        self.circuit._add_termial(pt4)
-        self.circuit.build_current_info()
-        self.circuit.solve_iv()
-        vname = 'v' + str(pt1)
-        imp2 = self.circuit.results[vname]
-        R12 = abs(np.real(imp2-imp1) * 1e3)
-        L12 = abs(np.imag(imp2-imp1)) * 1e9 / (2 * np.pi * self.circuit.freq)
-        vname = 'v' + str(pt3)
-        imp3 = self.circuit.results[vname]
-        R2 = abs(np.real(imp3) * 1e3) + R12
-        L2 = abs(np.imag(imp3)) * 1e9 / (2 * np.pi * self.circuit.freq) + L12
-        return R1,L1,R2,L2,R12,L12
 
     def extract_RL(self, src=None, sink=None,export_netlist=False):
         '''
@@ -1023,18 +1089,23 @@ class CornerStitch_Emodel_API:
             #print "PATH EXISTS"
         self.circuit.m_graph_read(self.emesh.m_graph)
         self.circuit.assign_freq(self.freq*1000)
+        self.circuit.graph_to_circuit_minimization()
+
         self.circuit.indep_current_source(pt1, 0, 1)
+
         # print "src",pt1,"sink",pt2
         self.circuit._add_termial(pt2)
         self.circuit.build_current_info()
+        stime=time.time()
         self.circuit.solve_iv()
+        print("PEEC circuit eval time",time.time()-stime)
         vname1 = 'v' + str(pt1)
         vname2 = 'v' + str(pt2)
         #vname = vname.encode() # for python3 
         imp = self.circuit.results[vname1]/1
         print (imp)
         R = abs(np.real(imp) * 1e3)
-        L = abs(np.imag(imp)) * 1e9 / (2 * np.pi * self.circuit.freq)
+        L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
         #self.emesh.graph.clear()
         #self.emesh.m_graph.clear()
         #self.emesh.graph=None

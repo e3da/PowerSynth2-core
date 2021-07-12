@@ -23,7 +23,7 @@ def solve_for_temps(die_thermals, sublayer_res, ambient_temp):
     
     rs = sublayer_res
     
-    # Thermal Resistance Array
+    # thermal Resistance Array
     A = []
     
     for i in range(len(die_thermals)):

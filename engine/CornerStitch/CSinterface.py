@@ -277,7 +277,7 @@ class CornerStitch():
                 y2 = int(inp[2])
                 
                 
-
+                print(x1,y1,x2,y2,inp[5])
                 Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
 
                 ParentH = Htree.hNodeList[0]

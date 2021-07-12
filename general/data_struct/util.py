@@ -172,7 +172,7 @@ class Rect:
         self.height = self.height_eval()
         self.cs_type = 'h' # for cornerstich object, this defines if the rectangles are coming from H_CS or V_CS
     def __str__(self):
-        return str(self.top)+', '+str(self.bottom)+', '+str(self.left)+', '+str(self.right)
+        return 'L:'+str(self.left)+', R:'+str(self.right)+', B:'+str(self.bottom)+', T:'+str(self.top)
 
     def set_pos_dim(self, x, y, width, length):
         self.top = y+length
@@ -203,7 +203,7 @@ class Rect:
         else:
             return False
 
-    def encloses1(self, x, y):
+    def encloses_hard(self, x, y):
         if x > self.left and x < self.right and y > self.bottom and y < self.top:
             return True
         else:

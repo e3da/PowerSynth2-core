@@ -1,4 +1,5 @@
 
+from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar
 import platform
 if platform.system() == 'Windows': # Matlab doesnt work on the server yet, this must be fixed later 
@@ -9,6 +10,7 @@ import numpy as np
 import random
 import os
 import time
+from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
@@ -39,12 +41,13 @@ class new_engine_opt:
         self.num_disc = 10
         # API for ET measure.
         self.e_api = apis['E']
+        self.e_api_1 = None # for comparison only
         self.t_api = apis['T']
         self.fh_api = None
         # List of measure object
         self.measures = measures
     
-    def eval_3D_layout(self,module_data=None,solution=None):
+    def eval_3D_layout(self,module_data=None,solution=None,init = False):
         '''
         module data: for electrical layout evaluation 
         solution: single PS_Solution object for thermal evaluation (ParaPower API)
@@ -59,29 +62,70 @@ class new_engine_opt:
             if isinstance(measure,ThermalMeasure):
                 measures[1]=measure
         self.measures=measures
+        
         for i in range(len(self.measures)):
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
                 type = measure.measure
-                
-                self.e_api.init_layout_3D(module_data=module_data)
+                if not "compare" in self.e_api.e_mdl: # use this when there is no compare mode
+                    self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
-                print ('API type', self.e_api.type)
-                if self.e_api.type == 'PowerSynthPEEC':
+                #self.e_api.type = 'Loop' # hardcodedß
+                print ('API type', self.e_api.e_mdl)
+                id_select = None # specify a value for debug , None otherwise
+
+                if self.e_api.e_mdl == 'PowerSynthPEEC':
+                    start = time.time()
                     self.e_api.mesh_and_eval_elements()
                     R, L = self.e_api.extract_RL(src=measure.source, sink=measure.sink)
-                    
-                elif self.e_api.type == 'FastHenry':
+                    print ('eval time', time.time()-start)
+                if self.e_api.e_mdl == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
-                    R,L = self.e_api.run_fast_henry_script()
-                '''
-                import random
-                R=100 + random.random()    # Temporarily hard coded to Evaluation runtime
-                L=100 + random.random()   # Temporarily hard coded to Evaluation runtime'''
+                    R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                    if solution.solution_id == id_select:
+                        print ("RL_FH",R,L)
+                        input()
+
+                if self.e_api.e_mdl == "Loop":
+                    R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                    if solution.solution_id == id_select:
+                        print ("RL_loop",R,L)
+                        input()
+
+                if self.e_api.e_mdl == "LoopFHcompare": # Compare mode = Inductance
+                    # Reinit and recalculate
+                    print ("enter comparison mode")
+                    self.e_api.e_mdl = 'Loop'
+
+                    self.e_api.init_layout_3D(module_data=module_data)
+                    R_loop,L_loop = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
+                    if self.e_api_1 == None: # Copy e_api info to compare
+                        self.e_api_1 = FastHenryAPI(comp_dict = self.e_api.comp_dict, wire_conn = self.e_api.wire_dict)
+                        self.e_api_1.rs_model = None
+                        self.e_api_1.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+                        self.e_api_1.e_mdl = 'FastHenry'
+                        self.e_api_1.conn_dict = self.e_api.conn_dict
+                        self.e_api_1.trace_ori = self.e_api.trace_ori
+                        self.e_api_1.layer_stack = self.e_api.layer_stack
+                        self.e_api_1.freq = self.e_api.freq
+                    self.e_api_1.init_layout_3D(module_data=module_data)
+                    self.e_api_1.form_isl_script()    
+                    self.e_api_1.add_source_sink(measure.source,measure.sink)
+                    R_FH,L_FH = self.e_api_1.run_fast_henry_script(parent_id = solution.solution_id)
+                    # Temp to store result
+                    R = L_FH
+                    L = L_loop
+                    print ("FH",L_FH,"LOOP",L_loop)
+                    '''if abs(L_loop-L_FH)/L_FH >0.3:
+                        input("CHECK THIS CASE")
+                    '''
+                    self.e_api.e_mdl = 'LoopFHcompare'
+                    #input()
+                    
                 print ("RL",R,L)
-                
+                    
                 #except:
                 #R=10000
                 #L=10000
@@ -90,6 +134,8 @@ class new_engine_opt:
                 if type == 0:  # LOOP RESISTANCE
                     result.append(R)  # resistance in mOhm
                 if type == 1:  # LOOP INDUCTANCE
+                    #result = [L_FH,L_loop]         
+
                     result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
@@ -97,9 +143,11 @@ class new_engine_opt:
                 max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
                 #max_t = 300 + random.random()  # Temporarily hard coded to bypass MatLab
                 result.append(max_t)
-
         return result
     
+
+    
+
     def populate_thermal_info_to_sol_feat(self,solution=None):
         
         #print( self.dev_powerload_table)

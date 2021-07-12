@@ -1,6 +1,6 @@
 class OptSetup:
     def __init__(self):
-        # Thermal
+        # thermal
         self.thermal_mode = 0 # 0 for FEM approximate 1 for analytical
         self.thermal_func = 0 # 0 for maximum, 1 for avg, 2 for std dev
         self.thermal_dev_tbl = None

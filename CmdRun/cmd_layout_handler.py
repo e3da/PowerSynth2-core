@@ -1,5 +1,6 @@
 #@Author: Quang & Imam
-
+import sys
+sys.path.append('..')
 import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -9,8 +10,9 @@ import copy
 from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import collections
+import csv
 
-
+#from core.CmdRun.cmd import export_solution_layout_attributes
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
 from core.engine.LayoutSolution.database import create_connection, insert_record
@@ -27,6 +29,54 @@ from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeas
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 
 # --------------Plot function---------------------
+def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],layout_solutions=None,dbunit=1000):
+
+    parameters=solutions[0].parameters
+    performance_names=list(parameters.keys())
+    performance_names=['Inductance','Max_Temp']
+    for i in range(len(solutions)):
+        item='Solution_'+str(solutions[i].solution_id)
+        #item = solutions[i].name
+        file_name = sol_path + '/' + item + '.csv'
+        with open(file_name, 'w', newline='') as my_csv:
+            csv_writer = csv.writer(my_csv, delimiter=',')
+            if len (performance_names) >=2: # Multi (2) objectives optimization
+                csv_writer.writerow(["Size", performance_names[0], performance_names[1]])
+                # for k, v in _fetch_currencies.iteritems():
+                try:
+                    Perf_1 = solutions[i].parameters[performance_names[0]]
+                    Perf_2 =  solutions[i].parameters[performance_names[1]]
+                except:
+                    Perf_1 = 3000
+                    Perf_2 =  3000
+                data = [size, Perf_1, Perf_2]
+            else: # Single objective eval
+                csv_writer.writerow(["Size", performance_names[0]])
+                Size = size
+                Perf_1 = solutions[i].parameters[performance_names[0]]
+                data = [Size, Perf_1]
+
+            csv_writer.writerow(data)
+            
+            #for f in solutions[i].features_list:
+                #layout_data = [f.name, f.x, f.y, f.width, f.length]
+                #csv_writer.writerow(layout_data)
+            
+            for layer_sol in layout_solutions[i].layer_solutions:
+                #print(layer_sol.abstract_infos)
+                data=[layer_sol.name,size[0]/dbunit,size[1]/dbunit]
+                csv_writer.writerow(data)
+                csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
+                
+                for k,v in layer_sol.abstract_infos[layer_sol.name]['rect_info'].items():
+                    k=k.split('.')[0]
+                    if v.width==1:v.width*=1000
+                    if v.height==1:v.height*=1000
+                    layout_data = [k, v.x/dbunit, v.y/dbunit, v.width/dbunit, v.height/dbunit]
+                    csv_writer.writerow(layout_data)
+        
+        my_csv.close()
+
 def plot_fig_data(Layout_Rects,level,bw_type=None,min_dimensions=None,Min_X_Loc=None,Min_Y_Loc=None):
     #global min_dimensions
     # Prepares solution rectangles as patches according to the requirement of mode of operation
@@ -444,6 +494,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         md_data=[module_data]
         Solutions = []
         #name='Solution_0'
+        index=0
         solution = CornerStitchSolution(index=0)
         solution.module_data=module_data #updated module data is in the solution
 
@@ -457,6 +508,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
+            #layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
        
@@ -468,6 +520,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 for j in range(len(solution.layer_solutions)):
                     size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
                     size=[size[0] / dbunit, size[1] / dbunit]
+                    
                     structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects[0],layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=i, db=db,bw_type=bw_type,size=size)
         
         if plot:
@@ -481,6 +534,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
                     solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
 
+        
+        
+        
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
         for i in range(len(Solutions)):
@@ -504,13 +560,16 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         if optimization==True:
             opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
             PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+            
 
         else:
             results=[None,None]
             for solution in PS_solutions:
                 solution.parameters={'Perf_1': None, 'Perf_2': None}
         
-
+        if plot:
+            export_solution_layout_attributes(sol_dir,PS_solutions,size,Solutions,dbunit)
+        
 
         return PS_solutions
 
@@ -747,6 +806,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         width,height =get_dims(floor_plan=floor_plan)
         seed = get_seed(seed)
+        print ("MY SEED", seed)
         """
         if optimization == True:
             choice = opt_choices(algorithm=algorithm)
@@ -948,12 +1008,13 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         
         if optimization==True:
                 opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
                 print("Gen",gen_time)
         else:
             for solution in PS_solutions:
                 solution.params={'Perf_1':None,'Perf_2':None}
-
+        if plot and optimization==True:
+            export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
         return PS_solutions
 
            
@@ -1629,15 +1690,15 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
         #print ("V",child.name,child.id,child.node_mode_2_locations)
         #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
-                #print(via_name,sub_root_node_list )
-                for node in sub_root_node_list:
-                    node.set_min_loc()
-                    #print (node.node_min_locations)
-                    node.vertices.sort(key= lambda x:x.index, reverse=False)
-                    ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
-                    node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
-            
-                    #print(node.node_mode_2_locations)
+            #print(via_name,sub_root_node_list )
+            for node in sub_root_node_list:
+                node.set_min_loc()
+                #print (node.node_min_locations)
+                node.vertices.sort(key= lambda x:x.index, reverse=False)
+                ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
+                node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
+        
+                #print(node.node_mode_2_locations)
         #nput()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
@@ -1753,8 +1814,195 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
 
     
     return structure, cg_interface
+
+if __name__ == '__main__':
+    import csv
+    import copy
+    import sys
+    import os
+
+    def input_script_generator(solution_csv=None,initial_input_script=None):
+        '''
+        :param solution_csv: a csv file with bottom-left coordinate of each component in the layout
+        :param initial_input_script: initial input script
+        :return: updated input script
+        '''
+
+        solution_rows=[]
+        layers=[]
+        with open(solution_csv, 'r') as csv_file:
+            reader = csv.reader(csv_file)
+            next(reader)  # skip first row
+            
+            #for row in reader:
+            for i, row in enumerate(reader):
+                print(i,row)
+                solution_rows.append(row)
+                if row[0]=='Component_Name':
+                    start=i
+                    continue
+                elif len(row)>4:
+                    
+                    if row[0]=='Substrate':
+                        end=i
+                        layers.append((start+1,end))
+                    
+        new_script_rows={}
+        for j in range(len(layers)):
+            count_range=layers[j]
+            #print(count_range)
+            for i in range(len(solution_rows)):
+                row=solution_rows[i]
+                if row[0][0]=='I' and i<count_range[0]:
+                    if row[0] not in new_script_rows:
+                        new_script_rows[row[0]]=[]
+            for i in range(len(solution_rows)):
+                row=solution_rows[i]
+                if row[0][0]=='I':
+                    layer_name=row[0]
+                
+                    
+                elif i>=count_range[0] and i<=count_range[1]:
+                    
+
+                    new_script_rows[layer_name].append(row)
+                    
+
+            #print(new_script_rows)
         
         
+        #print solution_rows
+        solution_script=[]
+
+        with open(initial_input_script) as fp:
+            line = fp.readlines()
+        for l in line:
+            texts = l.split(' ')
+            solution_script.append(texts)
+        #print len(solution_script),solution_script
+        layer_name=None
+        layer_wise_parts={}
+        for i in range(len(solution_script)):
+            line=solution_script[i]
+            texts=l.strip().split(' ')
+            print(texts)
+            input()
+            if line[0] in new_script_rows:
+                layer_name=texts[0]
+            else:
+                if layer_name!=None:
+                    for row in new_script_rows[layer_name]:
+                        if row[0] in texts:
+                            ind_=texts.index(row[0])
+                            texts[ind_+1:]=row[1:]
+
+
+            
+
+
+        input()        
+        solution_script_info=[]
+
+
+
+        #for j in layers:
+        for layer_name,row_lists in new_script_rows.items():
+            for i in range(len(row_lists)):
+
+                row= row_lists[i]
+            if row[0] == 'Substrate':
+                #solution_script_info.append([row[3],row[4]])
+                continue
+            else:
+
+                for l in line:
+                    texts=l.strip().split(' ')
+                    
+                    if len(texts)>=5:
+
+                        if row[0]!='Substrate' and row[0] in texts :
+                            texts_new = copy.deepcopy(texts)
+
+                            if (row[0][0]=='T' or row[0][0]=='B'):
+
+                                for i in range(len(texts)):
+                                    if texts[i].isdigit():
+                                        #x_index=i
+                                        #print i
+                                        break
+                                    else:
+                                        texts_new[i]=texts[i]
+                                
+                                texts_new[i]=row[1]
+                                texts_new[i+1]=row[2]
+                                #if row[0][0]!='D' or row[0][0]!='L':
+                                texts_new[i+2]=row[3]
+                                texts_new[i+3]=row[4]
+                            else:
+                                for i in range(len(texts)):
+                                    if texts[i].isdigit():
+                                        #x_index=i
+                                        #print i
+                                        break
+                                    else:
+                                        texts_new[i]=texts[i]
+                                texts_new[i]=row[1]
+                                texts_new[i+1]=row[2]
+
+
+
+                            if texts_new not in solution_script_info:
+                                solution_script_info.append(texts_new)
+
+        print (len(solution_script_info))
+        directory=os.path.dirname(initial_input_script)
+        #print directory
+        file = open(directory+"/Exported.txt", "w")
+
+        #file.write("Text to write to file")
+        #file.close()
+        lines=[]
+        for line in solution_script:
+
+            if len(line)==2 and line[0].isdigit():
+                for row in solution_script_info:
+                    if len(row)==2:
+                        line[0]=row[0]
+                        line[1]=row[1]
+            else:
+                for row in solution_script_info:
+                    if row[1] in line:
+                        start_index=line.index(row[1])
+                        end_index=start_index+len(row)
+                        #print start_index, end_index
+                        line[start_index:end_index+1]=row[1:]
+
+            #print line
+            for element in line:
+                #print element
+                file.write(element)
+                file.write(' ')
+
+            file.write('\n')
+            lines.append(line)
+
+        #file.write("\n".join(str(item) for item in lines))
+        #for line in lines:
+            #file.write(line)
+
+
+        file.close()
+
+
+
+
+
+    solution_csv='/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_17/Solutions_Final/Solution_0.csv'
+    initial_input_script='/nethome/ialrazi/Public/ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_17/layout_geometry_script.txt'
+    input_script_generator(solution_csv=solution_csv,initial_input_script=initial_input_script)
+
+            
+            
 
 
 

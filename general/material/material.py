@@ -37,7 +37,7 @@ class Material_lib:
                         material.name=line[1].strip("'")
                         material.id=material.name
 
-                '''Thermal Constant'''
+                '''thermal Constant'''
             elif "thermal_conductivity" in line and 'simple' in line:
                 start=line.find('thermal_conductivity')+len('thermal_conductivity')+3
                 stop=len(line)-1
