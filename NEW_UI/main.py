@@ -28,6 +28,7 @@ class GUI():
     def __init__(self):
         self.app = None
         self.currentWindow = None
+        self.pathToWorkFolder = None
         self.pathToLayoutScript = None
         self.pathToBondwireSetup = None
         self.pathToLayerStack = None
@@ -112,9 +113,9 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
 
-            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_1/macro_script.txt'
+            macroPath = '/nethome/jgm019/TEST/macro_script.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
+            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
 
             def solutionBrowser():
                 self.currentWindow.close()
@@ -126,7 +127,7 @@ class GUI():
 
                 self.cmd.cmd_handler_flow(arguments=args)
 
-                showSolutionBrowser()
+                self.showSolutionBrowser()
 
 
             editConstraints = QtWidgets.QDialog()
@@ -138,12 +139,14 @@ class GUI():
                 for line in file:
                     if "Constraint_file: " in line:
                         self.pathToConstraints = line.split()[1]
+                    if "Fig_dir: " in line:
+                        self.pathToWorkFolder = line.split()[1].rsplit('/', 1)[0] + "/"
 
             # Fill out the constraints from the given constraint file
             with open(self.pathToConstraints, 'r') as csvfile:
                 csvreader = csv.reader(csvfile)
 
-                tableWidgets = [ui.tableWidget, ui.tableWidget_2, ui.tableWidget_3, ui.tableWidget_4, ui.tableWidget_5]
+                tableWidgets = [UI.tableWidget, UI.tableWidget_2, UI.tableWidget_3, UI.tableWidget_4, UI.tableWidget_5]
                 k = -1
                 DONE = False
                 for row in csvreader:
@@ -157,7 +160,7 @@ class GUI():
                             self.extraConstraints.append(row)
                             DONE = True
                             continue
-                        ui.tabWidget.setTabText(k+1, row[0])
+                        UI.tabWidget.setTabText(k+1, row[0])
                         for _ in range(len(row) - 5):
                             tableWidgets[k+1].insertColumn(tableWidgets[k+1].columnCount())
                         for header_index in range(len(row) - 1):
@@ -281,8 +284,8 @@ class GUI():
 
             newPath = self.pathToLayoutScript.split("/")
             newPath.pop(-1)
-            newPath = "/".join(newPath) + "/constraint.csv"
-            self.pathToConstraints = newPath
+            self.pathToWorkFolder = "/".join(newPath) + "/"
+            self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
 
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
 
@@ -601,7 +604,13 @@ class GUI():
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
-        #  DISPLAY STUFF HERE!
+        pix = QPixmap(self.pathToWorkFolder + "Figs/initial_layout_I1.png")
+        #pix = pix.scaledToWidth(550)
+        item = QtWidgets.QGraphicsPixmapItem(pix)
+        scene = QtWidgets.QGraphicsScene()
+        scene.addItem(item)
+        ui.grview_init_layout.setScene(scene)
+
 
         solutionBrowser.show()
 
