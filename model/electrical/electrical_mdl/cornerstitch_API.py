@@ -597,7 +597,7 @@ class CornerStitch_Emodel_API:
         '''
         self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type)
         self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
-        print (self.trace_ori)
+        #print (self.trace_ori)
         if self.trace_ori == {}:
             self.emesh.mesh_update(mode =0)
         else:

@@ -544,7 +544,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
-            plot_solution_structure(sol)
+            #plot_solution_structure(sol)
             #for f in sol.features_list:
                 #f.printFeature()
             PS_solutions.append(sol)
@@ -1701,8 +1701,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                 ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
                 node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
                 #print(node.id,node.parent.id)
-                print(node.node_mode_2_locations)
-        input()
+                #print(node.node_mode_2_locations)
+        #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
             
@@ -1720,7 +1720,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
                     
                     structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
-                    
+                    #print(structure.layers[i].mode_2_location_v)
+                    #input()
 
 
         """
