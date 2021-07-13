@@ -10,6 +10,7 @@ sys.path.append(cur_path)
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
+from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
 from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
@@ -110,6 +111,11 @@ class Cmd_Handler:
         self.output_option= False
         self.thermal_mode = None
         self.electrical_mode = None
+        self.export_ansys_em = None
+        self.export_task = []
+        self.export_ansys_em_info = {}
+        self.thermal_models_info = {}
+        self.electrical_models_info = {}
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -138,7 +144,6 @@ class Cmd_Handler:
         e_name = None
         num_gen=None
         dev_conn ={}
-        e_mdl_type = "PowerSynthPEEC" # default
         with open(file, 'r') as inputfile:
 
             dev_conn_mode=False
@@ -201,10 +206,14 @@ class Cmd_Handler:
                     floor_plan = [float(i) for i in floor_plan]
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
+                if info[0] == 'Export_AnsysEM_Setup:':
+                    self.export_ansys_em = True
+                if info[0] == 'End_Export_AnsusEM_Setup.':
+                    self.export_ansys_em = False
                 if info[0]== 'Thermal_Setup:':
                     self.thermal_mode = True
                 if info[0] == 'End_Thermal_Setup.':
-                    self.thermal_mode = False
+                    self.electrical_mode = False
                 if info[0] == 'Electrical_Setup:':
                     self.electrical_mode = True
                 if info[0] == 'End_Electrical_Setup.':
@@ -218,17 +227,27 @@ class Cmd_Handler:
                         self.netlist_dir = info[1]
                     if info[0] == 'Netlist_Mode':
                         self.netlist_mode = int(info[1])
-                if self.thermal_mode !=None:
+                if(self.export_ansys_em):
+                    if info[0] == 'Design_name:':
+                        self.export_ansys_em_info['design_name']= info[1]  
+                    if info[0] == 'Version:':
+                        self.export_ansys_em_info['version']= info[1]  
+                    if info[0] == 'Run_mode:':
+                        self.export_ansys_em_info['run_mode']= int(info[1])    
+                    if info[0] == 'Simulator:':
+                        self.export_ansys_em_info['simulator'] = int(info[1])   
+                if(self.thermal_mode): # Get info for thermal setup
                     if info[0] == 'Model_Select:':
-                        thermal_model = int(info[1])
+                        self.thermal_models_info['model'] = int(info[1])
                     if info[0] == 'Measure_Name:' and t_name==None:
+                        self.thermal_models_info['measure_name']= info[1]
                         t_name = info[1]
                     if info[0] == 'Selected_Devices:':
-                        devices = info[1].split(",")
+                        self.thermal_models_info['devices']= info[1].split(",")
                     if info[0] == 'Device_Power:':
                         power = info[1].split(",")
-                        
                         power = [float(i) for i in power]
+                        self.thermal_models_info['devices_power']= power
                     if info[0] == 'Heat_Convection:':
                         try:
                             h_conv = float(info[1])
@@ -236,15 +255,23 @@ class Cmd_Handler:
                         except:
                             h_val = info[1].split(",")
                             h_conv = [float(i) for i in h_val]
+                        self.thermal_models_info['heat_convection']= h_conv
+                        
                     if info[0] == 'Ambient_Temperature:':
                         t_amb = float(info[1])
+                        self.thermal_models_info['ambient_temperature'] = t_amb
                 if self.electrical_mode != None:
                     if info[0] == 'Measure_Name:' and e_name==None:
                         e_name = info[1]
+                        self.electrical_models_info['measure_name']= e_name
                     if info[0] == 'Model_Type:':
                         e_mdl_type = info[1]
+                        self.electrical_models_info['model_type']= e_mdl_type
+
                     if info[0] == 'Measure_Type:':
-                        type = int(info[1])
+                        e_measure_type = int(info[1])
+                        self.electrical_models_info['measure_type']= e_measure_type
+
                     if info[0] == 'End_Device_Connection.':
                         dev_conn_mode = False
                     if dev_conn_mode:
@@ -252,20 +279,27 @@ class Cmd_Handler:
                         conn = info[1].split(",")
                         conn = [int(i) for i in conn]
                         dev_conn[dev_name] = conn
+                        self.electrical_models_info['device_connections']= dev_conn
+
                     if info[0] == 'Device_Connection:':
                         dev_conn_mode = True
 
 
                     if info[0] == 'Source:':
-                        source = info[1]
+                        self.electrical_models_info['source']= info[1]
+
                     if info[0] == 'Sink:':
-                        sink = info[1]
+                        self.electrical_models_info['sink']= info[1]
+
                     if info[0] == 'Frequency:':
-                        frequency = float(info[1])
+                        self.electrical_models_info['frequency']= float(info[1])
+
         check_file = os.path.isfile
         check_dir = os.path.isdir
         # Check if these files exist
-        rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
+        #rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
+        self.rs_model_file = 'default'
+        rs_model_check = True
         cont = check_file(self.layout_script) \
                and check_file(self.bondwire_setup) \
                and check_file(self.layer_stack_file) \
@@ -292,35 +326,23 @@ class Cmd_Handler:
                 print ("Trace orientation is included, mesh acceleration for electrical evaluation is activated")
             else:
                 print ("Normal meshing algorithm is used")
-
-            print ("run the optimization")
             self.init_cs_objects(run_option=run_option)
-
             self.set_up_db() # temp commented1 out
+            self.setup_models() # setup electrothermal models, the e_t apis are initiated anyway for AnsysEm and Solidworks extraction purpose
             
+            
+            self.need_electrical_setup()
+            self.init_export_tasks()
             if run_option == 0:
+                
+                '''Generate 3D layout strcutures'''
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan)
-
-
-
+                
                 
 
             elif run_option == 1:
-                self.measures=[]
-                if self.electrical_mode != None:
-                    e_measure_data = {'name': e_name, 'type': type, 'source': source, 'sink': sink}
-                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency,
-                                          meas_data=e_measure_data, type = e_mdl_type)
-
-                if self.thermal_mode!=None:
-
-                    t_setup_data={'Power': power,'heat_conv':h_conv,'t_amb':t_amb}
-                    t_measure_data={'name':t_name,'devices':devices}
-                    self.setup_thermal(mode='macro', setup_data=t_setup_data,meas_data=t_measure_data,model_type=thermal_model)
-
-
                 
                 solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
                 initial_solutions=[solution]
@@ -347,24 +369,13 @@ class Cmd_Handler:
                                                     #apis={'E': self.e_api,'T': self.t_api}, measures=self.measures,module_info=md_data)
             if run_option == 2:
 
-                self.measures = []
-                if self.thermal_mode!=None:
-                    t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
-                    t_measure_data = {'name': t_name, 'devices': devices}
-                    self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
-                                       model_type=thermal_model)
-
-                if self.electrical_mode!=None:
-                    e_measure_data = {'name':e_name,'type':type,'source':source,'sink':sink}
-                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
-
-
-                
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
 
                 self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode,plot = self.plot)
+            self.generate_export_files()
+
         else:
             # First check all file path
             if not (check_file(self.layout_script)):
@@ -384,8 +395,81 @@ class Cmd_Handler:
             print ("Check your input again ! ")
 
             return cont
+    
+    #------------------- Models Setup and Init----------------------------------------------------
 
-    # ------------------ File Resquest -------------------------------------------------
+    def setup_models(self):
+        print(self.thermal_models_info.keys())
+        print(self.electrical_models_info.keys())
+        if self.thermal_models_info!= {}:
+            power = self.thermal_models_info['devices_power']
+            h_conv = self.thermal_models_info['heat_convection']
+            t_amb = self.thermal_models_info['ambient_temperature']
+            t_name = self.thermal_models_info['measure_name']
+            thermal_model = self.thermal_models_info['model']
+            devices = self.thermal_models_info['devices']
+        else:
+            power,h_conv,t_amb,t_name,devices,thermal_model = [None for i in range(6)]
+
+        if self.electrical_models_info != {}:
+            e_name = self.electrical_models_info['measure_name'] 
+            e_measure_type = self.electrical_models_info['measure_type']
+            source = self.electrical_models_info['source']
+            sink = self.electrical_models_info['sink']
+            dev_conn = self.electrical_models_info['device_connections']
+            frequency = self.electrical_models_info['frequency']
+            e_mdl_type = self.electrical_models_info['model_type']
+        else:
+            e_name,e_measure_type,source,sink,dev_conn,frequency, e_mdl_type = [None for i in range(7)]
+        
+        self.measures = []
+        if self.thermal_mode!=None:
+            t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
+            t_measure_data = {'name': t_name, 'devices': devices}
+            self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
+                                model_type=thermal_model)
+
+        if self.electrical_mode!=None:
+            e_measure_data = {'name':e_name,'type':e_measure_type,'source':source,'sink':sink}
+            self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
+    
+    
+    def need_electrical_setup(self):
+        '''Set of messages for electrical connection in different scennarios'''
+        if self.electrical_mode==None:
+            if self.export_ansys_em:
+                print("Need Electrical Setup for bondwires connection in ANSYSEM")
+                print("The tool will attempt to extract Ansysem design without bondwires connection")
+    # ------------------ Export Features ---------------------------------------------
+    def init_export_tasks(self):
+        '''Start ANSYSEM, and others export features'''
+        if self.export_ansys_em_info!={}:
+            version = self.export_ansys_em_info['version']
+            design_name = self.export_ansys_em_info['design_name']
+            if self.export_ansys_em_info['simulator'] == 1:
+                active_design = 'Q3D Extractor'
+            else:
+                active_design = 'HFSS'
+            workspace = self.db_dir+'/AnsysEM'
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api)
+            self.export_task.append(ansysem)
+    def generate_export_files(self):
+        '''Generate export files after the solution3D is generated'''
+        '''List of export tasks'''
+        for task in self.export_task:
+            if isinstance(task,AnsysEM_API): # Handle AnsysEM
+                ansysem = task
+                if not(os.path.exists(ansysem.exported_script_dir)):
+                    cmd = 'mkdir ' + ansysem.exported_script_dir
+                    os.system(cmd)
+                for sol in self.structure_3D.solutions:
+                    if self.export_ansys_em_info['run_mode'] == 2:
+                        ansysem_export = copy.deepcopy(ansysem) # copy the original structure
+                        ansysem_export.design_name+=str(sol.solution_id) # update names based on solution id
+                        ansysem_export.translate_powersynth_solution_to_ansysem(sol)
+                        ansysem_export.write_script()
+    
+    # ------------------ File Request -------------------------------------------------
     def database_dir_request(self):
         print ("Please enter a directory to save layout database")
         correct = True
@@ -1065,14 +1149,21 @@ if __name__ == "__main__":
                    {qmle_nethome:'ICCAD_2021_Electrical_API_Testing/Test_Cases/Case_0/macro_script.txt'},\
                    {qmle_nethome:'ECCE_2021_cases/2D_case_0/cmd'},\
                    {qmle_nethome:'ECCE_2021_cases/2D_case_1/cmd'},\
+                   {qmle_nethome:'ECCE_2021_cases/3D_case_0/cmd'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_0/cmd'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_1/macro_script.txt'},\
                    {qmle_nethome:'Unit_Test_Cases/Case_0_2/macro_script.txt'},\
+<<<<<<< HEAD
                     {imam_nethome1:'Imam_Journal_Case_1/macro_script.txt'},\
                     {imam_nethome1:'Imam_Journal_Case_2/macro_script.txt'},\
                     {imam_nethome1:'Case_0_0/macro_script.txt'},\
                     {imam_nethome1:'Case_2/macro_script.txt'},\
                     {imam_nethome1:'Case_12/macro_script.txt'}  ]
+=======
+                   {qmle_nethome:'DMC_Tristan/Case0/cmd'},\
+                   {qmle_nethome:'DMC_Tristan/Case1/cmd'},\
+                   {qmle_nethome:'DMC_Tristan/Case2/cmd'}]
+>>>>>>> origin/AnsysEM_API_dev
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))

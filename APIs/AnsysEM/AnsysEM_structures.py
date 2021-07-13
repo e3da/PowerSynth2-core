@@ -1,9 +1,9 @@
 import math
 
-from core.APIs.Q3D.Q3d_ipy_raw_script import *
+from core.APIs.AnsysEM.AnsysEM_scripts import NGon_Box,New_box
 
 
-class Q3d_N_Gon_Box:
+class AnsysEM_Polyhedron_Box:
     # This will create an n sides Polyhedron box in Q3D ( on , or parallel to XY plane). The box will be drawn from its center...
         
     def __init__(self,x_cen=None,y_cen=None,z_cen=None,numsides=None,height=None,radius=None,obj_id=None):
@@ -49,11 +49,13 @@ class Q3d_N_Gon_Box:
     def set_material(self,material):
         #change material
         self.material=material
-        
+       
 
-class Q3D_rect_script:
+class AnsysEM_Box:
     # This object will translate a simple boxes in python to q3d. This will draw the Box from its corner (x,y,z)
     # color list: http://www.discoveryplayground.com/computer-programming-for-kids/rgb-colors/
+    
+    
     def __init__(self,x=None,y=None,z=None,dx=None,dy=None,dz=None,obj_id=None):
         # Create a box in q3d 
         #initalize new box
@@ -72,9 +74,24 @@ class Q3D_rect_script:
         # obj_id to distinguish different objects in Q3D
         self.obj_id=obj_id # this is in string , the name of this box
         
-        self.q3dbox=None   # An object represent a box in q3d
-        self.q3d_id=1 # by default unless running multiple Q3D design in 1 project
-        
+        self.script=None   # An object represent a box in q3d
+
+    def read_ps_feature(self,ps_feature=None,id=0): 
+        '''
+        translate ps_feature to box
+        ''' 
+        self.set_name(ps_feature.name)
+        self.x = ps_feature.x
+        self.y = ps_feature.y
+        self.z = ps_feature.z
+        self.dx = ps_feature.width
+        self.dy = ps_feature.length
+        self.dz = ps_feature.height
+        if ps_feature.material_name =='SiC': # not included in ANSYS
+            self.material = 'copper'
+        self.obj_id = id
+        self.make()
+
     def set_name(self,name):
         self.obj_id=name
     def set_x(self,x):
@@ -106,21 +123,13 @@ class Q3D_rect_script:
         self.dx=dx # in mm
         self.dy=dy # in mm   
     def make(self):
-        self.q3dbox = New_box.format(self.x,self.y,self.z,self.dx,self.dy,self.dz,self.obj_id,self.material,self.color) 
+        self.script = New_box.format(self.x,self.y,self.z,self.dx,self.dy,self.dz,self.obj_id,self.material,self.color) 
 
     def get_script(self):
+        return self.script
             # return a string represent boxes in q3d iron python script
             # Use this one when everything is set.
-        return self.q3dbox
+        return self.script
     
     
-        
-
-   
-
- 
-class Geometry(Q3D_rect_script):
-    def __init__(self,choice):
-        if choice==1:
-            self.geometry=Q3D_rect_script
         

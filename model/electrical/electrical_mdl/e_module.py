@@ -196,7 +196,9 @@ class EWires(EComp):
         else:
             self.mode = 'interpolated'
 
-    
+    def __str__(self):
+        return "{0} connection,radius {1} mm".format(self.class_type,self.r)
+
     def gen_ribbon(self, start,stop):
         '''
         Return an average representation in form of a trace model
