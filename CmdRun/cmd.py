@@ -81,7 +81,7 @@ class Cmd_Handler:
         self.layout_script = None  # layout file dir
         self.bondwire_setup = None  # bondwire setup dir
         self.layer_stack_file = None  # layerstack file dir
-        self.rs_model_file = None  # rs model file dir
+        self.rs_model_file = 'default'        
         self.fig_dir = None  # Default dir to save figures
         self.db_dir = None  # Default dir to save layout db
         self.constraint_file=None # Default csv file to save constraint table
@@ -107,7 +107,7 @@ class Cmd_Handler:
         self.e_api = None
         self.t_api = None
         # Solutions
-        self.soluions = None
+        self.solutions = None
 
         self.macro =None
         self.layout_ori_file = None
@@ -116,6 +116,8 @@ class Cmd_Handler:
         self.thermal_mode = None
         self.electrical_mode = None
         self.UI_active = False
+        self.data_x = None
+        self.data_y = None
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):

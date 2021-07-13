@@ -35,10 +35,11 @@ class GUI():
         self.pathToConstraints = None
         self.pathToParasiticModel = ""
         self.pathToTraceOri = ""
+        self.pathToFigs = ""
         self.option = None
         self.optimizationUI = None
         self.extraConstraints = []
-        self.setupsDone = 0
+        self.setupsDone = [0, 0]
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -113,7 +114,7 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
 
-            macroPath = '/nethome/jgm019/TEST/macro_script.txt'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
             #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
 
@@ -139,8 +140,13 @@ class GUI():
                 for line in file:
                     if "Constraint_file: " in line:
                         self.pathToConstraints = line.split()[1]
+                        if self.pathToConstraints.startswith("./"):
+                            self.pathToConstraints = self.pathToConstraints.replace("./", macroPath.rsplit("/", 1)[0] + "/")
                     if "Fig_dir: " in line:
                         self.pathToWorkFolder = line.split()[1].rsplit('/', 1)[0] + "/"
+                        self.pathToFigs = line.split()[1] + "/"
+                    if "Option: " in line:
+                        self.option = int(line.split()[1])
 
             # Fill out the constraints from the given constraint file
             with open(self.pathToConstraints, 'r') as csvfile:
@@ -286,6 +292,7 @@ class GUI():
             newPath.pop(-1)
             self.pathToWorkFolder = "/".join(newPath) + "/"
             self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
+            self.pathToFigs = self.pathToWorkFolder + "Figs/"
 
             figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
 
@@ -498,8 +505,8 @@ class GUI():
             self.pathToParasiticModel = ui.parasitic_textedit.text()
             self.pathToTraceOri = ui.trace_textedit.text()
 
-            self.setupsDone += 1
-            if self.setupsDone == 2:
+            self.setupsDone[0] += 1
+            if self.setupsDone[0] > 0 and self.setupsDone[1] > 0:
                 self.optimizationUI.btn_run_powersynth.setDisabled(False)
 
             electricalSetup.close()
@@ -543,8 +550,8 @@ class GUI():
             self.heatConvection = ui.heat_convection.text()
             self.ambientTemperature = ui.ambient_temperature.text()
 
-            self.setupsDone += 1
-            if self.setupsDone == 2:
+            self.setupsDone[1] += 1
+            if self.setupsDone[0] > 0 and self.setupsDone[1] > 0:
                 self.optimizationUI.btn_run_powersynth.setDisabled(False)
 
             thermalSetup.close()
@@ -604,13 +611,40 @@ class GUI():
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
-        pix = QPixmap(self.pathToWorkFolder + "Figs/initial_layout_I1.png")
+        pix = QPixmap(self.pathToFigs + "initial_layout_I1.png")
         #pix = pix.scaledToWidth(550)
         item = QtWidgets.QGraphicsPixmapItem(pix)
         scene = QtWidgets.QGraphicsScene()
         scene.addItem(item)
         ui.grview_init_layout.setScene(scene)
 
+        # Solutions Graph
+        axes = self.cmd.solutionsFigure.gca()
+
+        data_x=[]
+        data_y=[]
+        perf_metrices=[]
+        if self.option:
+            for sol in self.cmd.structure_3D.solutions:
+                for key in sol.parameters:
+                    perf_metrices.append(key)
+        for sol in self.cmd.structure_3D.solutions:
+            if self.option == 0:
+                data_x.append(sol.solution_id)
+                data_y.append(sol.solution_id)
+            else:
+                data_x.append(sol.parameters[perf_metrices[0]])
+                if (len(sol.parameters)>=2):
+                    data_y.append(sol.parameters[perf_metrices[1]])
+                else:
+                    data_y.append(sol.solution_id)
+
+        axes.scatter(data_x, data_y, picker=True)
+        canvas = FigureCanvas(self.cmd.solutionsFigure)
+        canvas.draw()
+        scene2 = QtWidgets.QGraphicsScene()
+        scene2.addWidget(canvas)
+        ui.grview_sols_browser.setScene(scene2)
 
         solutionBrowser.show()
 

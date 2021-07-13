@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1195</width>
-    <height>820</height>
+    <width>1400</width>
+    <height>900</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>PowerSynth (v1.2) Layout Engine </string>
+   <string>Solution Browser </string>
   </property>
   <layout class="QGridLayout" name="gridLayout_7">
    <item row="0" column="0" rowspan="3">
@@ -80,6 +80,18 @@
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="0" column="0">
        <widget class="QComboBox" name="cmb_modes">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>100</height>
+         </size>
+        </property>
         <item>
          <property name="text">
           <string>Minimum Size Layout</string>

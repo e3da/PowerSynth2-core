@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_CornerStitch_Dialog(object):
     def setupUi(self, CornerStitch_Dialog):
         CornerStitch_Dialog.setObjectName("CornerStitch_Dialog")
-        CornerStitch_Dialog.resize(1195, 820)
+        CornerStitch_Dialog.resize(1400, 900)
         self.gridLayout_7 = QtWidgets.QGridLayout(CornerStitch_Dialog)
         self.gridLayout_7.setObjectName("gridLayout_7")
         self.grbox_view = QtWidgets.QGroupBox(CornerStitch_Dialog)
@@ -46,6 +46,12 @@ class Ui_CornerStitch_Dialog(object):
         self.gridLayout_5 = QtWidgets.QGridLayout(self.grbox_modes)
         self.gridLayout_5.setObjectName("gridLayout_5")
         self.cmb_modes = QtWidgets.QComboBox(self.grbox_modes)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.cmb_modes.sizePolicy().hasHeightForWidth())
+        self.cmb_modes.setSizePolicy(sizePolicy)
+        self.cmb_modes.setMaximumSize(QtCore.QSize(16777215, 100))
         self.cmb_modes.setObjectName("cmb_modes")
         self.cmb_modes.addItem("")
         self.cmb_modes.addItem("")
@@ -121,7 +127,7 @@ class Ui_CornerStitch_Dialog(object):
 
     def retranslateUi(self, CornerStitch_Dialog):
         _translate = QtCore.QCoreApplication.translate
-        CornerStitch_Dialog.setWindowTitle(_translate("CornerStitch_Dialog", "PowerSynth (v1.2) Layout Engine "))
+        CornerStitch_Dialog.setWindowTitle(_translate("CornerStitch_Dialog", "Solution Browser "))
         self.grbox_view.setTitle(_translate("CornerStitch_Dialog", "Layout Visualization"))
         self.groupBox_4.setTitle(_translate("CornerStitch_Dialog", "Generated Layout"))
         self.groupBox_5.setTitle(_translate("CornerStitch_Dialog", "Input (initial) Layout"))
