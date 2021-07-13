@@ -1701,8 +1701,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                 ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
                 node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
                 #print(node.id,node.parent.id)
-                #print(node.node_mode_2_locations)
-        #input()
+                print(node.node_mode_2_locations)
+        input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
             
