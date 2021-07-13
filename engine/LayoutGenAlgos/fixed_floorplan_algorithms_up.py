@@ -228,12 +228,13 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
             if edge.source.coordinate==vertex.coordinate:
                 vertex.successors.update(edge.source.successors)
     '''
-    for vertex in graph.vertices:
-        print(vertex.coordinate, vertex.removable)
-        print("P",vertex.predecessors)
-        print("S",vertex.successors)
-    
-    input()
+    if ID==-3:
+        for vertex in graph.vertices:
+            print(vertex.coordinate, vertex.removable)
+            print("P",vertex.predecessors)
+            print("S",vertex.successors)
+        
+        input()
     '''
     fixed_vert_coords=list(locations.keys())
     for vert in graph.vertices:
@@ -263,7 +264,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                 sub_graph.append(vert)
         
         potential_sub_graph_verts.append(sub_graph)
-       
+      
     isolated_sub_graphs=[]
     combined_sub_graphs=[]
     for sub_graph in potential_sub_graph_verts:
@@ -271,6 +272,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
         coords=[vert.coordinate for vert in sub_graph]
         
         coords.sort()
+       
         isolated=True
         
         for vert in sub_graph:
@@ -298,10 +300,18 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
             else:
                 isolated_sub_graphs.append(sub_graph)
         else:
-            combined_sub_graphs.append(sub_graph)
+            if len(sub_graph)==2:
+                if sub_graph[0].coordinate in fixed_vert_coords and sub_graph[1].coordinate in fixed_vert_coords:
+                    continue
+                else:
+                    combined_sub_graphs.append(sub_graph)
+            else:
+                combined_sub_graphs.append(sub_graph)
 
     #print("COM")
-    #print(len(combined_sub_graphs))
+    #if ID==-3:
+        #print(len(combined_sub_graphs))
+
     if len(combined_sub_graphs)>1:
         
         for edge in graph.nx_graph_edges:
@@ -379,7 +389,8 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
         sub_graph=isolated_sub_graphs[i]
         sub_coords=[vert.coordinate for vert in sub_graph]
         sub_coords.sort()
-        #print(sub_coords,ID)
+
+        
         source=sub_graph[0]
         sink=sub_graph[-1]
         end=len(sub_graph)-1
@@ -427,7 +438,8 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                             sub_graph.remove(node)
 
         connected=is_connected(adj_matrix=adj_matrix,src=source.index,dest=sink.index)
-        #print(source.coordinate,sink.coordinate,connected)
+        #if ID==-3:
+            #print(source.coordinate,sink.coordinate,connected)
         
         
         if (connected):
@@ -619,12 +631,12 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
         
     #print("B",len(graph.nx_graph_edges),len(graph.edges))
     graph=update_graph(locations,graph)
-    """if ID==-2:
+    '''if ID==-3:
         print("A",ID,len(graph.nx_graph_edges),len(graph.edges))
         print(ID,locations)
         for edge in graph.nx_graph_edges:
             edge.printEdge()
-        input()"""
+        input()'''
     
     if len(graph.nx_graph_edges)==0 :#or len(locations)==len(graph.vertices):
         #print("END",ID,locations)
@@ -633,6 +645,9 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
         
         #print(len(graph.nx_graph_edges),len(graph.edges))
         #print("REC",locations)
+        '''if ID==-3:
+            print(locations)
+            input()'''
         return solution_eval(graph_in=graph, locations=locations, ID=ID, Random=Random, seed=seed)
         #print("L",locations)
 

@@ -695,6 +695,7 @@ class Structure_3D():
         #info={'V1':['I1','I4'],'V2':['I2','I3']}
         #info={'V1':['I1','I4'],'V2':['I2','I1'],'V3':['I3','I4'],'V4':['I3','I2']}
         #print(info)
+        
         through_vias=[]
         info=copy.deepcopy(info)
         for key,value in info.items():
@@ -810,6 +811,11 @@ class Structure_3D():
             self.interfacing_layer_info[name]=interfacing_layer_info[via_name_list]
         
         self.via_connected_layer_info=via_connected_layer_info
+        '''
+        print("Interfacing_Layer_Info",self.interfacing_layer_info)
+        print("Via_Connected_Layer_Info",self.via_connected_layer_info)
+        input()
+        '''
                 
     def create_root(self):
         '''
@@ -871,6 +877,22 @@ class Structure_3D():
                 self.sub_roots[via_name]=[via_root_node_h,via_root_node_v] #sub root node for each via connected group
                 
                 id-=1 #decrementing id to assign next via connected group
+            #-----------for debugging--------
+            '''
+            for child in self.root_node_h.child:
+                child.printNode()
+            input()
+            for via_name,node_list in self.sub_roots.items():
+                print(via_name)
+                for node in node_list:
+                    node.printNode()
+            input()
+            for via_name,node_list in self.interfacing_layer_nodes.items():
+                print("inte",via_name)
+                for node in node_list:
+                    node.printNode()
+            input()
+            '''
         else: # 2D case (only one layer is available)
             if len(self.layers)==1:
                 self.root_node_h.child.append(self.layers[0].new_engine.Htree.hNodeList[0])
@@ -905,21 +927,26 @@ class Structure_3D():
                             via_node_h.child.append(layer.new_engine.Htree.hNodeList[0])
                             via_node_h.child_names.append(layer.name)
                             via_node_h.boundary_coordinates=[layer.origin[0],layer.origin[0]+layer.width]
+                            via_node_h.boundary_coordinates.sort()
                             for via_location in list(layer.via_locations.values()):
                                 via_node_h.via_coordinates.append(via_location[0]) #x
-                                via_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width
-                                
-
+                                via_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width        
+                        via_node_h.via_coordinates=list(set(via_node_h.via_coordinates))
+                        via_node_h.via_coordinates.sort()
+                
                         # adding the root node of the layer sub-tree as the child node of the via connected group
                         if layer.new_engine.Vtree.vNodeList[0].parent==None:
                             layer.new_engine.Vtree.vNodeList[0].parent=via_node_v
                             via_node_v.child.append(layer.new_engine.Vtree.vNodeList[0])
                             via_node_v.child_names.append(layer.name)
                             via_node_v.boundary_coordinates=[layer.origin[1],layer.origin[1]+layer.height]
+                            via_node_v.boundary_coordinates.sort()
                             for via_location in list(layer.via_locations.values()):
                                 
                                 via_node_v.via_coordinates.append(via_location[1]) #y
                                 via_node_v.via_coordinates.append(via_location[1]+via_location[3]) #y+height
+                            via_node_v.via_coordinates=list(set(via_node_v.via_coordinates))
+                            via_node_v.via_coordinates.sort()
                 id-=1
                 self.interfacing_layer_nodes[via_name]=[via_node_h,via_node_v]
            
@@ -1425,7 +1452,11 @@ class Node_3D(Node):
         graph.create_nx_graph()
         
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
-        
+        '''if self.id==-3:
+            for vert in self.vertices:
+                print(vert.coordinate)
+            for edge in graph.nx_graph_edges:
+                edge.printEdge()'''
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
@@ -1435,13 +1466,13 @@ class Node_3D(Node):
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
-        
-        """if self.id==-4:
+        '''print("A")
+        if self.id==-3:
             for vert in self.vertices:
                 print(vert.coordinate)
             for edge in graph.nx_graph_edges:
                 edge.printEdge()
-        input()"""
+        input()'''
         if len(graph.nx_graph_edges)>0:
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=self.id)
         
@@ -1516,7 +1547,7 @@ class Node_3D(Node):
             for edge in graph.nx_graph_edges:
                 edge.printEdge()
         input()"""
-            
+        
         self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
         
         
@@ -2009,10 +2040,11 @@ class Node_3D(Node):
             #print("P",self.id,ZDL_P)
             self.tb_eval_graph.create_nx_graph()
             '''
-            for vert in self.tb_eval_graph.vertices:
-                print(vert.coordinate,vert.min_loc)
-            for edge in self.tb_eval_graph.nx_graph_edges:
-                edge.printEdge()
+            if self.id==-3:
+                for vert in self.tb_eval_graph.vertices:
+                    print(vert.coordinate,vert.min_loc)
+                for edge in self.tb_eval_graph.nx_graph_edges:
+                    edge.printEdge()
             '''
             
             locations_=[]
@@ -2037,7 +2069,8 @@ class Node_3D(Node):
                     loc[right]=loc[end]-ledge_dim
                 
                 seed=seed+count*1000
-                #print("B",loc)
+                #if self.id==-3:
+                    #print("B",loc)
 
                 
                 loc= solution_eval(graph_in=copy.deepcopy(self.tb_eval_graph), locations=loc, ID=self.id, Random=Random, seed=seed)
