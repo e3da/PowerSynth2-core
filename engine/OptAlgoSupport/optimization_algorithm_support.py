@@ -125,10 +125,11 @@ class new_engine_opt:
                     #input()
                     
                 print ("RL",R,L)
-                    
+                #"""   
                 #except:
                 #R=10000
                 #L=10000
+
                 
 
                 if type == 0:  # LOOP RESISTANCE
@@ -139,9 +140,9 @@ class new_engine_opt:
                     result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
-                solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                #max_t=300
+                #solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
+                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                max_t=300
                 result.append(max_t)
         return result
     
