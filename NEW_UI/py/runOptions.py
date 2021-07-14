@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(280, 153)
+        Dialog.resize(300, 150)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_2 = QtWidgets.QLabel(Dialog)
@@ -24,6 +24,7 @@ class Ui_Dialog(object):
         self.pushButton_2.setObjectName("pushButton_2")
         self.verticalLayout.addWidget(self.pushButton_2)
         self.pushButton_3 = QtWidgets.QPushButton(Dialog)
+        self.pushButton_3.setDefault(True)
         self.pushButton_3.setObjectName("pushButton_3")
         self.verticalLayout.addWidget(self.pushButton_3)
 
@@ -32,7 +33,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Options"))
         self.label_2.setText(_translate("Dialog", "<html><head/><body><p align=\"center\"><span style=\" font-size:10pt; font-weight:600;\">How would you like to run PowerSynth?</span></p></body></html>"))
         self.pushButton.setText(_translate("Dialog", "Initial layout evaluation"))
         self.pushButton_2.setText(_translate("Dialog", "Layout solution generation only"))

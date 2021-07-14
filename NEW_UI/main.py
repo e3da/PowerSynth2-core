@@ -108,15 +108,28 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
 
         def runPowerSynth():
+            if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the settings.info file.")
+                popup.exec_()
+                return
+
+            if not os.path.exists(ui.lineEdit_4.text()) or not ui.lineEdit_4.text().endswith(".txt"):
+                popup = QtWidgets.QMessageBox()
+                popup.setWindowTitle("Error:")
+                popup.setText("Please enter a valid path to the macro_script file.")
+                popup.exec_()
+                return
+
             settingsPath = ui.lineEdit_3.text()
             macroPath = ui.lineEdit_4.text()
 
             self.currentWindow.close()
             self.currentWindow = None
 
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
-            settingsPath = '/nethome/jgm019/testcases/settings.info'
-            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_12/macro_script.txt'
+            #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
+            #settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             def solutionBrowser():
                 self.currentWindow.close()
@@ -256,22 +269,22 @@ class GUI():
             ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
 
         def createLayout():
-            '''
-            if not os.path.exists(ui.lineEdit_layer.text()) or ".csv" not in ui.lineEdit_layer.text():
+            
+            if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layer_stack file.")
                 popup.exec_()
                 return
 
-            if not os.path.exists(ui.lineEdit_layout.text()) or ".txt" not in ui.lineEdit_layout.text():
+            if not os.path.exists(ui.lineEdit_layout.text()) or not ui.lineEdit_layout.text().endswith(".txt"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layout_script file.")
                 popup.exec_()
                 return
 
-            if not os.path.exists(ui.lineEdit_bondwire.text()) or ".txt" not in ui.lineEdit_bondwire.text():
+            if not os.path.exists(ui.lineEdit_bondwire.text()) or not ui.lineEdit_bondwire.text().endswith(".txt"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the bondwire_setup file.")
@@ -285,7 +298,8 @@ class GUI():
 
             self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.
+            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
+
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 
             newPath = self.pathToLayoutScript.split("/")
@@ -585,7 +599,7 @@ class GUI():
         macroPath = "/".join(macroPath) + "/macro_script.txt"
 
 
-        # Currently provide path hardcoded -- Is it supposed to be always necessary?
+        # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
         self.pathToParasiticModel = '/nethome/jgm019/TEST/ARL_module.rsmdl'
 
 
@@ -594,7 +608,6 @@ class GUI():
             createMacro(file, self)
 
         settingsPath = '/nethome/jgm019/testcases/settings.info'
-        # macroPath = '/nethome/jgm019/TEST/macro_script.txt'
 
         self.cmd = Cmd_Handler(debug=False)
 
@@ -612,7 +625,7 @@ class GUI():
         self.setWindow(solutionBrowser)
 
         pix = QPixmap(self.pathToFigs + "initial_layout_I1.png")
-        #pix = pix.scaledToWidth(550)
+        pix = pix.scaledToWidth(500)
         item = QtWidgets.QGraphicsPixmapItem(pix)
         scene = QtWidgets.QGraphicsScene()
         scene.addItem(item)
@@ -620,14 +633,21 @@ class GUI():
 
         # Solutions Graph
         axes = self.cmd.solutionsFigure.gca()
+        axes.set_title("Solution Space")
 
         data_x=[]
         data_y=[]
         perf_metrices=[]
         if self.option:
+            axes.set_xlabel("Inductance")
+            axes.set_ylabel("Max_Temp")
             for sol in self.cmd.structure_3D.solutions:
                 for key in sol.parameters:
                     perf_metrices.append(key)
+        else:
+            axes.set_xlabel("Solution Index")
+            axes.set_ylabel("Solution Index")
+
         for sol in self.cmd.structure_3D.solutions:
             if self.option == 0:
                 data_x.append(sol.solution_id)
@@ -639,12 +659,23 @@ class GUI():
                 else:
                     data_y.append(sol.solution_id)
 
+        def on_pick(event):
+            pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I1.png")
+            pix = pix.scaledToWidth(500)
+            item = QtWidgets.QGraphicsPixmapItem(pix)
+            scene = QtWidgets.QGraphicsScene()
+            scene.addItem(item)
+            ui.grview_layout_sols.setScene(scene)
+
         axes.scatter(data_x, data_y, picker=True)
         canvas = FigureCanvas(self.cmd.solutionsFigure)
+        canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
         scene2 = QtWidgets.QGraphicsScene()
         scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
+
+        ui.pushButton.pressed.connect(solutionBrowser.close)
 
         solutionBrowser.show()
 

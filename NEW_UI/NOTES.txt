@@ -10,10 +10,5 @@ Run PowerSynth.
 
 TODO:
 
-Solution browser -- Monday
-Visualize layout -- Monday
-Inspect MDKEditor -- Tuesday
-
-
 Hierarchy Representation - work on after flow
 ASEE Conference?

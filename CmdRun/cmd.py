@@ -982,8 +982,8 @@ class Cmd_Handler:
                 x_label = perf_names[0]
                 y_label = perf_names[1]
 
-                plt.xlim(min(data_x) - 2, max(data_x) + 2)
-                plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
+                #plt.xlim(min(data_x) - 2, max(data_x) + 2)
+                #plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
                 # naming the x axis
                 plt.xlabel(x_label)
                 # naming the y axis
@@ -1034,8 +1034,8 @@ class Cmd_Handler:
             y_label=labels[1]
         
         if plot:
-            plt.xlim(min(data_x)-2, max(data_x)+2)
-            plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
+            #plt.xlim(min(data_x)-2, max(data_x)+2)
+            #plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
             #plt.xlabel(x_label)
             # naming the y axis
