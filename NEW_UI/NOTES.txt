@@ -10,5 +10,8 @@ Run PowerSynth.
 
 TODO:
 
-Hierarchy Representation - work on after flow
-ASEE Conference?
+Create Comprehensive Video Demo on Flow (Generate ~100 Solutions for Each)
+Write Documentation on Flow
+Hierarchy Representation (Create Tree from Layout Script)
+Poster -- Due Next Wednesday
+ASEE Conference Paper

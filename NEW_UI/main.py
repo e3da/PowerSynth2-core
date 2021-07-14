@@ -108,7 +108,7 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
 
         def runPowerSynth():
-            if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
+            '''if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the settings.info file.")
@@ -121,15 +121,15 @@ class GUI():
                 popup.setText("Please enter a valid path to the macro_script file.")
                 popup.exec_()
                 return
-
+'''
             settingsPath = ui.lineEdit_3.text()
             macroPath = ui.lineEdit_4.text()
 
             self.currentWindow.close()
             self.currentWindow = None
 
-            #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
-            #settingsPath = '/nethome/jgm019/testcases/settings.info'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             def solutionBrowser():
                 self.currentWindow.close()
@@ -632,12 +632,25 @@ class GUI():
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
-        pix = QPixmap(self.pathToFigs + "initial_layout_I1.png")
-        pix = pix.scaledToWidth(500)
-        item = QtWidgets.QGraphicsPixmapItem(pix)
-        scene = QtWidgets.QGraphicsScene()
-        scene.addItem(item)
-        ui.grview_init_layout.setScene(scene)
+        i = 1
+        while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
+            graphics = QtWidgets.QGraphicsView()
+            pix = QPixmap(self.pathToFigs + f"initial_layout_I{i}.png")
+            pix = pix.scaledToWidth(500)
+            item = QtWidgets.QGraphicsPixmapItem(pix)
+            scene = QtWidgets.QGraphicsScene()
+            scene.addItem(item)
+            graphics.setScene(scene)
+
+            ui.tabWidget_2.insertTab(i-1, graphics, f"Layer {i}")
+            i += 1
+
+        i = 1
+        while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
+            graphics = QtWidgets.QGraphicsView()
+
+            ui.tabWidget.insertTab(i-1, graphics, f"Layer {i}")
+            i += 1
 
         # Solutions Graph
         axes = self.cmd.solutionsFigure.gca()
@@ -668,12 +681,15 @@ class GUI():
                     data_y.append(sol.solution_id)
 
         def on_pick(event):
-            pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I1.png")
-            pix = pix.scaledToWidth(500)
-            item = QtWidgets.QGraphicsPixmapItem(pix)
-            scene = QtWidgets.QGraphicsScene()
-            scene.addItem(item)
-            ui.grview_layout_sols.setScene(scene)
+            i = 1
+            while os.path.exists(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png"):
+                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png")
+                pix = pix.scaledToWidth(450)
+                item = QtWidgets.QGraphicsPixmapItem(pix)
+                scene = QtWidgets.QGraphicsScene()
+                scene.addItem(item)
+                ui.tabWidget.widget(i-1).setScene(scene)
+                i += 1
 
         axes.scatter(data_x, data_y, picker=True)
         canvas = FigureCanvas(self.cmd.solutionsFigure)
