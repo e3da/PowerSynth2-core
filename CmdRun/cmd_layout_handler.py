@@ -544,7 +544,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
-            #plot_solution_structure(sol)  # EGG
+            #plot_solution_structure(sol)
             #for f in sol.features_list:
                 #f.printFeature()
             PS_solutions.append(sol)
@@ -1162,7 +1162,9 @@ def get_min_size_sol_info(structure=None, dbunit=1000):
                 sub_root[0].ZDL.sort()
                 sub_root[1].ZDL=list(set(sub_root[1].ZDL))
                 sub_root[1].ZDL.sort()
-                
+                #sub_root[0].printNode()
+                #sub_root[1].printNode()
+                #input()
                 structure.create_interfacing_layer_forward_cg(sub_root) 
                 
             #print(len(sub_tree_root[0].vertices),len(sub_tree_root[0].ZDL),len(sub_tree_root[0].edges))
@@ -1684,10 +1686,11 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     if structure.via_connected_layer_info!=None:
         for child in structure.root_node_h.child:
             child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+            #print ("H",child.name,child.id,child.node_mode_2_locations)
         for child in structure.root_node_v.child:
             child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
-        #print ("H",child.name,child.id,child.node_mode_2_locations)
-        #print ("V",child.name,child.id,child.node_mode_2_locations)
+        
+            #print ("V",child.name,child.id,child.node_mode_2_locations)
         #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             #print(via_name,sub_root_node_list )
@@ -1697,9 +1700,9 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                 node.vertices.sort(key= lambda x:x.index, reverse=False)
                 ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
                 node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
-        
+                #print(node.id,node.parent.id)
                 #print(node.node_mode_2_locations)
-        #nput()
+        #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
             
@@ -1717,7 +1720,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
                     
                     structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
-                    
+                    #print(structure.layers[i].mode_2_location_v)
+                    #input()
 
 
         """

@@ -563,30 +563,34 @@ class ConstraintGraph:
                     if coord_found==False:
                         vertex=Vertex(coordinate=coord)
                         vertex.propagated=propagated
+                        
                         if node_id in all_source_node_ids_h and node_id not in all_dest_node_ids_h and propagated==True:
                             vertex.propagated=False
-                            
+                         
                         #ind=coord_list.index(coord)
                         #vertex.index=ind
+                        
                         if vertex not in self.hcg_vertices[node_id]:
                             self.hcg_vertices[node_id].append(vertex)
 
                         if node_id in self.via_coordinates_h:
                             for coord_list in self.via_coordinates_h[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                     else:
+                        
                         for vertex in self.hcg_vertices[node_id]:
                             if vertex.coordinate == coord:
                                 if node_id in self.propagated_coordinates_h:
                                     if vertex.propagated==False and vertex.coordinate in  self.propagated_coordinates_h[node_id]:
 
                                         vertex.propagated=True
+                                 
                             if node_id in self.via_coordinates_h:
                                 for coord_list in self.via_coordinates_h[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
         
         for node_id,coord_list in self.y_coordinates.items():
@@ -613,8 +617,8 @@ class ConstraintGraph:
 
                         if node_id in self.via_coordinates_v:
                             for coord_list in self.via_coordinates_v[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                             
                     else:
@@ -626,8 +630,8 @@ class ConstraintGraph:
                                         vertex.propagated=True
                             if node_id in self.via_coordinates_v:
                                 for coord_list in self.via_coordinates_v[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
                                         
 
@@ -668,6 +672,7 @@ class ConstraintGraph:
 
         
         for source,ids in self.via_propagation_dict_h.items():
+            
             for id in ids:
                 if id in self.x_coordinates:
                     self.propagated_coordinates_h[id]=[]
@@ -2595,6 +2600,7 @@ class ConstraintGraph:
 
             
             for vertex in self.hcg_vertices[parentID]:
+                
                 if vertex.propagated==True and vertex.coordinate in self.x_coordinates[ID]:
                     parent_coord.append(vertex.coordinate)
                     
@@ -2650,7 +2656,8 @@ class ConstraintGraph:
        
         parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
         
-
+        #if ID==9:
+            #print(self.propagated_parent_coord_hcg[ID])
         
         for i in range(len(parent_coord)):
             for j in range(len(parent_coord)):
@@ -2671,6 +2678,10 @@ class ConstraintGraph:
                             if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
+                                '''if ID==9 and parentID==2:
+                                    e.printEdge()
+                                    print("ADDED")
+                                    input()'''
                                 
                                 added_constraint=edge.constraint
                                 

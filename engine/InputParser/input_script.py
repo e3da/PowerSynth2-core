@@ -1095,6 +1095,11 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             for element in island.elements: # removing elements other than traces
                 if element[5][0]!='T':
                     island.elements.remove(element)
+                    island.element_names.remove(element[5])
+                    
+                    #extra='_'+element[5]
+                    #island.name.replace(extra, '')
+                    #print(island.name)
     
     return all_layers, ScriptMethod.via_connected_layer_info,ScriptMethod.cs_type_map
     
