@@ -31,7 +31,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Data Input"))
+        Dialog.setWindowTitle(_translate("Dialog", "Edit Materials"))
         self.btn_default_materials.setText(_translate("Dialog", "Use Default Materials"))
         self.btn_edit_materials.setText(_translate("Dialog", "Edit Materials List"))
         self.label.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:10pt;\">Would you like to edit the materials list?</span></p></body></html>"))

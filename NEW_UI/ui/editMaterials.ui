@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Data Input</string>
+   <string>Edit Materials</string>
   </property>
   <widget class="QPushButton" name="btn_default_materials">
    <property name="geometry">
