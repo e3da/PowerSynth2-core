@@ -309,6 +309,9 @@ class Ui_Dialog(object):
         self.tableWidget_5.setItem(3, 3, item)
         self.gridLayout_5.addWidget(self.tableWidget_5, 0, 0, 1, 1)
         self.tabWidget.addTab(self.min_ver_spacing, "")
+        self.tab = QtWidgets.QWidget()
+        self.tab.setObjectName("tab")
+        self.tabWidget.addTab(self.tab, "")
         self.verticalLayout.addWidget(self.tabWidget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
@@ -587,6 +590,7 @@ class Ui_Dialog(object):
         item.setText(_translate("Dialog", "1"))
         self.tableWidget_5.setSortingEnabled(__sortingEnabled)
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.min_ver_spacing), _translate("Dialog", "MinVerSpacing"))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("Dialog", "Reliability Constraints"))
         self.btn_continue.setText(_translate("Dialog", "Continue"))
 
 

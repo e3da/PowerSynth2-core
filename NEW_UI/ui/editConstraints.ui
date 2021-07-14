@@ -681,6 +681,11 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Reliability Constraints</string>
+      </attribute>
+     </widget>
     </widget>
    </item>
    <item>

@@ -160,6 +160,11 @@ class GUI():
                         self.pathToFigs = line.split()[1] + "/"
                     if "Option: " in line:
                         self.option = int(line.split()[1])
+                    if "Reliability-awareness: " in line:
+                        self.reliabilityAwareness = int(line.split()[1])
+            
+            if int(self.reliabilityAwareness) == 0:
+                UI.tabWidget.removeTab(5)
 
             # Fill out the constraints from the given constraint file
             with open(self.pathToConstraints, 'r') as csvfile:
@@ -362,6 +367,9 @@ class GUI():
         ui = UI_edit_constraints()
         ui.setupUi(editConstraints)
         self.setWindow(editConstraints)
+
+        if int(self.reliabilityAwareness) == 0:
+            ui.tabWidget.removeTab(5)
 
         # Fill out the constraints from the given constraint file
         with open(self.pathToConstraints, 'r') as csvfile:
