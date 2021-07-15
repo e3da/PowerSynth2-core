@@ -132,7 +132,7 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
 
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/macro_script.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             def solutionBrowser():
@@ -708,7 +708,7 @@ class GUI():
         canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
         scene2 = QtWidgets.QGraphicsScene()
-        scene2.addWidget(canvas)
+        #scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
 
         ui.pushButton.pressed.connect(solutionBrowser.close)
