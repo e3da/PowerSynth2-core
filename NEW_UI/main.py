@@ -2,9 +2,8 @@ import sys
 import os
 import csv
 import webbrowser
-from PyQt5 import QtWidgets, QtOpenGL
-from PyQt5 import QtGui
-from PyQt5.QtGui import QPixmap, QImage
+from PySide2 import QtWidgets
+from PySide2.QtGui import QPixmap
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.CmdRun.cmd import Cmd_Handler
@@ -24,6 +23,7 @@ from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution
 from core.NEW_UI.createMacro import createMacro
 
 class GUI():
+    '''GUI Class -- Stores Important Information for the GUI'''
 
     def __init__(self):
         self.app = None
@@ -74,6 +74,7 @@ class GUI():
         self.currentWindow = newWindow
 
     def openingWindow(self):
+        '''Function to create the main opening window and start to GUI'''
         openingWindow = QtWidgets.QDialog()
         ui = UI_opening_window()
         ui.setupUi(openingWindow)
@@ -96,6 +97,9 @@ class GUI():
         openingWindow.show()
 
     def runMacro(self):
+        '''Opens Window to directly run PowerSynth
+           User must provide paths to settings.info/macro_script.txt
+        '''
         runMacro = QtWidgets.QDialog()
         ui = UI_run_macro()
         ui.setupUi(runMacro)
@@ -237,6 +241,7 @@ class GUI():
         runMacro.show()
 
     def editMaterials(self):
+        '''Window to edit Materials.  User is given option to open MDKEditor'''
         editMaterials = QtWidgets.QDialog()
         ui = UI_edit_materials()
         ui.setupUi(editMaterials)
@@ -259,6 +264,7 @@ class GUI():
         editMaterials.show()
 
     def editLayout(self):
+        '''User Enters the Paths to Layer Stack, Bondwire Setup, Layout Script with this window'''
         editLayout = QtWidgets.QDialog()
         ui = UI_edit_layout()
         ui.setupUi(editLayout)
@@ -274,7 +280,7 @@ class GUI():
             ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
 
         def createLayout():
-            
+            '''
             if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
@@ -303,7 +309,7 @@ class GUI():
 
             self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
+            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 
@@ -325,6 +331,7 @@ class GUI():
         editLayout.show()
     
     def displayLayerStack(self):
+        '''Opens the layer stack file editor.'''
         displayLayerStack = QtWidgets.QDialog()
         ui = UI_layer_stack()
         ui.setupUi(displayLayerStack)
@@ -363,6 +370,7 @@ class GUI():
         displayLayerStack.show()
 
     def editConstraints(self):
+        '''Opens the constraint file editor.'''
         editConstraints = QtWidgets.QDialog()
         ui = UI_edit_constraints()
         ui.setupUi(editConstraints)
@@ -435,6 +443,7 @@ class GUI():
         editConstraints.show()
 
     def runOptions(self):
+        '''Opens Window for Run Options.  User chooses Option = 0,1,2 based on provided buttons.'''
         runOptions = QtWidgets.QDialog()
         ui = UI_run_options()
         ui.setupUi(runOptions)
@@ -498,6 +507,7 @@ class GUI():
         optimizationSetup.show()
 
     def electricalSetup(self):
+        '''Creates window for the electrical setup'''
         electricalSetup = QtWidgets.QDialog(parent=self.currentWindow)
         ui = UI_electrical_setup()
         ui.setupUi(electricalSetup)
@@ -554,6 +564,7 @@ class GUI():
         electricalSetup.show()
 
     def thermalSetup(self):
+        '''Creates window for the thermal setup'''
         thermalSetup = QtWidgets.QDialog(parent=self.currentWindow)
         ui = UI_thermal_setup()
         ui.setupUi(thermalSetup)
@@ -627,6 +638,7 @@ class GUI():
 
 
     def showSolutionBrowser(self):
+        '''Function to Run the Solution Browser.  Final step of the main flow.'''
         solutionBrowser = QtWidgets.QDialog()
         ui = UI_solution_browser()
         ui.setupUi(solutionBrowser)

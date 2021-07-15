@@ -1,231 +1,280 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'NEW_UI/ui/optimizationSetup.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.4
-#
-# WARNING! All changes made in this file will be lost!
+################################################################################
+## Form generated from reading UI file 'optimizationSetup.ui'
+##
+## Created by: Qt User Interface Compiler version 5.15.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
+        if not Dialog.objectName():
+            Dialog.setObjectName(u"Dialog")
         Dialog.resize(400, 380)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(Dialog.sizePolicy().hasHeightForWidth())
         Dialog.setSizePolicy(sizePolicy)
-        self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
-        self.verticalLayout.setObjectName("verticalLayout")
-        self.layout_generation_setup_frame_2 = QtWidgets.QFrame(Dialog)
-        self.layout_generation_setup_frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.layout_generation_setup_frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.layout_generation_setup_frame_2.setObjectName("layout_generation_setup_frame_2")
-        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.layout_generation_setup_frame_2)
-        self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.label_17 = QtWidgets.QLabel(self.layout_generation_setup_frame_2)
-        self.label_17.setObjectName("label_17")
+        self.verticalLayout = QVBoxLayout(Dialog)
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.layout_generation_setup_frame_2 = QFrame(Dialog)
+        self.layout_generation_setup_frame_2.setObjectName(u"layout_generation_setup_frame_2")
+        self.layout_generation_setup_frame_2.setFrameShape(QFrame.StyledPanel)
+        self.layout_generation_setup_frame_2.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_3 = QVBoxLayout(self.layout_generation_setup_frame_2)
+        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
+        self.label_17 = QLabel(self.layout_generation_setup_frame_2)
+        self.label_17.setObjectName(u"label_17")
+
         self.verticalLayout_3.addWidget(self.label_17)
-        self.horizontalLayout_8 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_8.setObjectName("horizontalLayout_8")
-        self.label_12 = QtWidgets.QLabel(self.layout_generation_setup_frame_2)
-        self.label_12.setObjectName("label_12")
+
+        self.horizontalLayout_8 = QHBoxLayout()
+        self.horizontalLayout_8.setObjectName(u"horizontalLayout_8")
+        self.label_12 = QLabel(self.layout_generation_setup_frame_2)
+        self.label_12.setObjectName(u"label_12")
+
         self.horizontalLayout_8.addWidget(self.label_12)
-        self.floor_plan_x = QtWidgets.QSpinBox(self.layout_generation_setup_frame_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.floor_plan_x.sizePolicy().hasHeightForWidth())
-        self.floor_plan_x.setSizePolicy(sizePolicy)
-        self.floor_plan_x.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.floor_plan_x.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+
+        self.floor_plan_x = QSpinBox(self.layout_generation_setup_frame_2)
+        self.floor_plan_x.setObjectName(u"floor_plan_x")
+        sizePolicy1 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        sizePolicy1.setHorizontalStretch(0)
+        sizePolicy1.setVerticalStretch(0)
+        sizePolicy1.setHeightForWidth(self.floor_plan_x.sizePolicy().hasHeightForWidth())
+        self.floor_plan_x.setSizePolicy(sizePolicy1)
+        self.floor_plan_x.setMaximumSize(QSize(50, 16777215))
+        self.floor_plan_x.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.floor_plan_x.setMinimum(50)
         self.floor_plan_x.setMaximum(999)
-        self.floor_plan_x.setObjectName("floor_plan_x")
+
         self.horizontalLayout_8.addWidget(self.floor_plan_x)
-        self.label_13 = QtWidgets.QLabel(self.layout_generation_setup_frame_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
-        self.label_13.setSizePolicy(sizePolicy)
-        self.label_13.setMinimumSize(QtCore.QSize(10, 0))
-        self.label_13.setObjectName("label_13")
+
+        self.label_13 = QLabel(self.layout_generation_setup_frame_2)
+        self.label_13.setObjectName(u"label_13")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Preferred)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        sizePolicy2.setHeightForWidth(self.label_13.sizePolicy().hasHeightForWidth())
+        self.label_13.setSizePolicy(sizePolicy2)
+        self.label_13.setMinimumSize(QSize(10, 0))
+
         self.horizontalLayout_8.addWidget(self.label_13)
-        self.floor_plan_y = QtWidgets.QSpinBox(self.layout_generation_setup_frame_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.floor_plan_y.sizePolicy().hasHeightForWidth())
-        self.floor_plan_y.setSizePolicy(sizePolicy)
-        self.floor_plan_y.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.floor_plan_y.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+
+        self.floor_plan_y = QSpinBox(self.layout_generation_setup_frame_2)
+        self.floor_plan_y.setObjectName(u"floor_plan_y")
+        sizePolicy1.setHeightForWidth(self.floor_plan_y.sizePolicy().hasHeightForWidth())
+        self.floor_plan_y.setSizePolicy(sizePolicy1)
+        self.floor_plan_y.setMaximumSize(QSize(50, 16777215))
+        self.floor_plan_y.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.floor_plan_y.setMinimum(50)
         self.floor_plan_y.setMaximum(999)
-        self.floor_plan_y.setObjectName("floor_plan_y")
+
         self.horizontalLayout_8.addWidget(self.floor_plan_y)
+
+
         self.verticalLayout_3.addLayout(self.horizontalLayout_8)
-        self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_17.setObjectName("horizontalLayout_17")
-        self.label_24 = QtWidgets.QLabel(self.layout_generation_setup_frame_2)
-        self.label_24.setObjectName("label_24")
+
+        self.horizontalLayout_17 = QHBoxLayout()
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.label_24 = QLabel(self.layout_generation_setup_frame_2)
+        self.label_24.setObjectName(u"label_24")
+
         self.horizontalLayout_17.addWidget(self.label_24)
-        self.checkbox_plot_solutions = QtWidgets.QCheckBox(self.layout_generation_setup_frame_2)
-        self.checkbox_plot_solutions.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.checkbox_plot_solutions.setText("")
+
+        self.checkbox_plot_solutions = QCheckBox(self.layout_generation_setup_frame_2)
+        self.checkbox_plot_solutions.setObjectName(u"checkbox_plot_solutions")
+        self.checkbox_plot_solutions.setLayoutDirection(Qt.LeftToRight)
         self.checkbox_plot_solutions.setChecked(True)
-        self.checkbox_plot_solutions.setObjectName("checkbox_plot_solutions")
+
         self.horizontalLayout_17.addWidget(self.checkbox_plot_solutions)
+
+
         self.verticalLayout_3.addLayout(self.horizontalLayout_17)
+
+
         self.verticalLayout.addWidget(self.layout_generation_setup_frame_2)
-        self.layout_generation_setup_frame = QtWidgets.QFrame(Dialog)
-        self.layout_generation_setup_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.layout_generation_setup_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.layout_generation_setup_frame.setObjectName("layout_generation_setup_frame")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layout_generation_setup_frame)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label_10 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_10.setObjectName("label_10")
+
+        self.layout_generation_setup_frame = QFrame(Dialog)
+        self.layout_generation_setup_frame.setObjectName(u"layout_generation_setup_frame")
+        self.layout_generation_setup_frame.setFrameShape(QFrame.StyledPanel)
+        self.layout_generation_setup_frame.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_2 = QVBoxLayout(self.layout_generation_setup_frame)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.label_10 = QLabel(self.layout_generation_setup_frame)
+        self.label_10.setObjectName(u"label_10")
+
         self.verticalLayout_2.addWidget(self.label_10)
-        self.horizontalLayout_7 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_7.setObjectName("horizontalLayout_7")
-        self.label_11 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_11.setObjectName("label_11")
+
+        self.horizontalLayout_7 = QHBoxLayout()
+        self.horizontalLayout_7.setObjectName(u"horizontalLayout_7")
+        self.label_11 = QLabel(self.layout_generation_setup_frame)
+        self.label_11.setObjectName(u"label_11")
+
         self.horizontalLayout_7.addWidget(self.label_11)
-        self.combo_layout_mode = QtWidgets.QComboBox(self.layout_generation_setup_frame)
-        self.combo_layout_mode.setObjectName("combo_layout_mode")
+
+        self.combo_layout_mode = QComboBox(self.layout_generation_setup_frame)
         self.combo_layout_mode.addItem("")
         self.combo_layout_mode.addItem("")
         self.combo_layout_mode.addItem("")
+        self.combo_layout_mode.setObjectName(u"combo_layout_mode")
+
         self.horizontalLayout_7.addWidget(self.combo_layout_mode)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_7)
-        self.horizontalLayout_9 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_9.setObjectName("horizontalLayout_9")
-        self.label_14 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_14.setObjectName("label_14")
+
+        self.horizontalLayout_9 = QHBoxLayout()
+        self.horizontalLayout_9.setObjectName(u"horizontalLayout_9")
+        self.label_14 = QLabel(self.layout_generation_setup_frame)
+        self.label_14.setObjectName(u"label_14")
+
         self.horizontalLayout_9.addWidget(self.label_14)
-        self.num_layouts = QtWidgets.QSpinBox(self.layout_generation_setup_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.num_layouts.sizePolicy().hasHeightForWidth())
-        self.num_layouts.setSizePolicy(sizePolicy)
-        self.num_layouts.setMinimumSize(QtCore.QSize(15, 0))
-        self.num_layouts.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.num_layouts.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+
+        self.num_layouts = QSpinBox(self.layout_generation_setup_frame)
+        self.num_layouts.setObjectName(u"num_layouts")
+        sizePolicy1.setHeightForWidth(self.num_layouts.sizePolicy().hasHeightForWidth())
+        self.num_layouts.setSizePolicy(sizePolicy1)
+        self.num_layouts.setMinimumSize(QSize(15, 0))
+        self.num_layouts.setMaximumSize(QSize(50, 16777215))
+        self.num_layouts.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.num_layouts.setMaximum(9999)
-        self.num_layouts.setObjectName("num_layouts")
+
         self.horizontalLayout_9.addWidget(self.num_layouts)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_9)
-        self.horizontalLayout_10 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_10.setObjectName("horizontalLayout_10")
-        self.label_15 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_15.setObjectName("label_15")
+
+        self.horizontalLayout_10 = QHBoxLayout()
+        self.horizontalLayout_10.setObjectName(u"horizontalLayout_10")
+        self.label_15 = QLabel(self.layout_generation_setup_frame)
+        self.label_15.setObjectName(u"label_15")
+
         self.horizontalLayout_10.addWidget(self.label_15)
-        self.seed = QtWidgets.QSpinBox(self.layout_generation_setup_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.seed.sizePolicy().hasHeightForWidth())
-        self.seed.setSizePolicy(sizePolicy)
-        self.seed.setMinimumSize(QtCore.QSize(15, 0))
-        self.seed.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.seed.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+
+        self.seed = QSpinBox(self.layout_generation_setup_frame)
+        self.seed.setObjectName(u"seed")
+        sizePolicy1.setHeightForWidth(self.seed.sizePolicy().hasHeightForWidth())
+        self.seed.setSizePolicy(sizePolicy1)
+        self.seed.setMinimumSize(QSize(15, 0))
+        self.seed.setMaximumSize(QSize(50, 16777215))
+        self.seed.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.seed.setMaximum(999)
-        self.seed.setObjectName("seed")
+
         self.horizontalLayout_10.addWidget(self.seed)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_10)
-        self.horizontalLayout_11 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_11.setObjectName("horizontalLayout_11")
-        self.label_16 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_16.setObjectName("label_16")
+
+        self.horizontalLayout_11 = QHBoxLayout()
+        self.horizontalLayout_11.setObjectName(u"horizontalLayout_11")
+        self.label_16 = QLabel(self.layout_generation_setup_frame)
+        self.label_16.setObjectName(u"label_16")
+
         self.horizontalLayout_11.addWidget(self.label_16)
-        self.combo_optimization_algorithm = QtWidgets.QComboBox(self.layout_generation_setup_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.combo_optimization_algorithm.sizePolicy().hasHeightForWidth())
-        self.combo_optimization_algorithm.setSizePolicy(sizePolicy)
-        self.combo_optimization_algorithm.setMaximumSize(QtCore.QSize(110, 16777215))
-        self.combo_optimization_algorithm.setObjectName("combo_optimization_algorithm")
+
+        self.combo_optimization_algorithm = QComboBox(self.layout_generation_setup_frame)
         self.combo_optimization_algorithm.addItem("")
+        self.combo_optimization_algorithm.setObjectName(u"combo_optimization_algorithm")
+        sizePolicy1.setHeightForWidth(self.combo_optimization_algorithm.sizePolicy().hasHeightForWidth())
+        self.combo_optimization_algorithm.setSizePolicy(sizePolicy1)
+        self.combo_optimization_algorithm.setMaximumSize(QSize(110, 16777215))
+
         self.horizontalLayout_11.addWidget(self.combo_optimization_algorithm)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_11)
-        self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_13.setObjectName("horizontalLayout_13")
-        self.label_19 = QtWidgets.QLabel(self.layout_generation_setup_frame)
-        self.label_19.setObjectName("label_19")
+
+        self.horizontalLayout_13 = QHBoxLayout()
+        self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
+        self.label_19 = QLabel(self.layout_generation_setup_frame)
+        self.label_19.setObjectName(u"label_19")
+
         self.horizontalLayout_13.addWidget(self.label_19)
-        self.num_generations = QtWidgets.QSpinBox(self.layout_generation_setup_frame)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.num_generations.sizePolicy().hasHeightForWidth())
-        self.num_generations.setSizePolicy(sizePolicy)
-        self.num_generations.setMinimumSize(QtCore.QSize(15, 0))
-        self.num_generations.setMaximumSize(QtCore.QSize(50, 16777215))
-        self.num_generations.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+
+        self.num_generations = QSpinBox(self.layout_generation_setup_frame)
+        self.num_generations.setObjectName(u"num_generations")
+        sizePolicy1.setHeightForWidth(self.num_generations.sizePolicy().hasHeightForWidth())
+        self.num_generations.setSizePolicy(sizePolicy1)
+        self.num_generations.setMinimumSize(QSize(15, 0))
+        self.num_generations.setMaximumSize(QSize(50, 16777215))
+        self.num_generations.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.num_generations.setMaximum(999)
-        self.num_generations.setProperty("value", 100)
+        self.num_generations.setValue(100)
         self.num_generations.setDisplayIntegerBase(10)
-        self.num_generations.setObjectName("num_generations")
+
         self.horizontalLayout_13.addWidget(self.num_generations)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout_13)
+
+
         self.verticalLayout.addWidget(self.layout_generation_setup_frame)
-        self.electrical_thermal_frame = QtWidgets.QFrame(Dialog)
-        self.electrical_thermal_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.electrical_thermal_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.electrical_thermal_frame.setObjectName("electrical_thermal_frame")
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.electrical_thermal_frame)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.btn_electrical_setup = QtWidgets.QPushButton(self.electrical_thermal_frame)
-        self.btn_electrical_setup.setObjectName("btn_electrical_setup")
+
+        self.electrical_thermal_frame = QFrame(Dialog)
+        self.electrical_thermal_frame.setObjectName(u"electrical_thermal_frame")
+        self.electrical_thermal_frame.setFrameShape(QFrame.StyledPanel)
+        self.electrical_thermal_frame.setFrameShadow(QFrame.Raised)
+        self.horizontalLayout = QHBoxLayout(self.electrical_thermal_frame)
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.btn_electrical_setup = QPushButton(self.electrical_thermal_frame)
+        self.btn_electrical_setup.setObjectName(u"btn_electrical_setup")
+
         self.horizontalLayout.addWidget(self.btn_electrical_setup)
-        self.btn_thermal_setup = QtWidgets.QPushButton(self.electrical_thermal_frame)
-        self.btn_thermal_setup.setObjectName("btn_thermal_setup")
+
+        self.btn_thermal_setup = QPushButton(self.electrical_thermal_frame)
+        self.btn_thermal_setup.setObjectName(u"btn_thermal_setup")
+
         self.horizontalLayout.addWidget(self.btn_thermal_setup)
+
+
         self.verticalLayout.addWidget(self.electrical_thermal_frame)
-        self.btn_run_powersynth = QtWidgets.QPushButton(Dialog)
-        self.btn_run_powersynth.setDefault(True)
-        self.btn_run_powersynth.setObjectName("btn_run_powersynth")
+
+        self.btn_run_powersynth = QPushButton(Dialog)
+        self.btn_run_powersynth.setObjectName(u"btn_run_powersynth")
+
         self.verticalLayout.addWidget(self.btn_run_powersynth)
 
+
         self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        self.btn_run_powersynth.setDefault(True)
+
+
+        QMetaObject.connectSlotsByName(Dialog)
+    # setupUi
 
     def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Optimization Setup"))
-        self.label_17.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Macro Script Setup:</span></p></body></html>"))
-        self.label_12.setText(_translate("Dialog", "Floor Plan:"))
-        self.label_13.setText(_translate("Dialog", "by"))
-        self.label_24.setText(_translate("Dialog", "Plot Solution:"))
-        self.label_10.setText(_translate("Dialog", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Layout Generation Setup:</span></p></body></html>"))
-        self.label_11.setText(_translate("Dialog", "Layout_Mode:"))
-        self.combo_layout_mode.setItemText(0, _translate("Dialog", "minimum-sized solutions"))
-        self.combo_layout_mode.setItemText(1, _translate("Dialog", "variable-sized solutions"))
-        self.combo_layout_mode.setItemText(2, _translate("Dialog", "fixed-sized solutions"))
-        self.label_14.setText(_translate("Dialog", "Number of layouts:"))
-        self.num_layouts.setSpecialValueText(_translate("Dialog", "25"))
-        self.label_15.setText(_translate("Dialog", "Seed:"))
-        self.seed.setSpecialValueText(_translate("Dialog", "10"))
-        self.label_16.setText(_translate("Dialog", "Optimization Algorithm:"))
-        self.combo_optimization_algorithm.setItemText(0, _translate("Dialog", "NG-RANDOM"))
-        self.label_19.setText(_translate("Dialog", "Number of Generations:"))
-        self.num_generations.setSpecialValueText(_translate("Dialog", "10"))
-        self.btn_electrical_setup.setText(_translate("Dialog", "Open Electrical Setup"))
-        self.btn_thermal_setup.setText(_translate("Dialog", "Open Thermal Setup"))
-        self.btn_run_powersynth.setText(_translate("Dialog", "Run Powersynth"))
+        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Optimization Setup", None))
+        self.label_17.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Macro Script Setup:</span></p></body></html>", None))
+        self.label_12.setText(QCoreApplication.translate("Dialog", u"Floor Plan:", None))
+        self.label_13.setText(QCoreApplication.translate("Dialog", u"by", None))
+        self.label_24.setText(QCoreApplication.translate("Dialog", u"Plot Solution:", None))
+        self.checkbox_plot_solutions.setText("")
+        self.label_10.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Layout Generation Setup:</span></p></body></html>", None))
+        self.label_11.setText(QCoreApplication.translate("Dialog", u"Layout_Mode:", None))
+        self.combo_layout_mode.setItemText(0, QCoreApplication.translate("Dialog", u"minimum-sized solutions", None))
+        self.combo_layout_mode.setItemText(1, QCoreApplication.translate("Dialog", u"variable-sized solutions", None))
+        self.combo_layout_mode.setItemText(2, QCoreApplication.translate("Dialog", u"fixed-sized solutions", None))
 
+        self.label_14.setText(QCoreApplication.translate("Dialog", u"Number of layouts:", None))
+        self.num_layouts.setSpecialValueText(QCoreApplication.translate("Dialog", u"25", None))
+        self.label_15.setText(QCoreApplication.translate("Dialog", u"Seed:", None))
+        self.seed.setSpecialValueText(QCoreApplication.translate("Dialog", u"10", None))
+        self.label_16.setText(QCoreApplication.translate("Dialog", u"Optimization Algorithm:", None))
+        self.combo_optimization_algorithm.setItemText(0, QCoreApplication.translate("Dialog", u"NG-RANDOM", None))
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())
+        self.label_19.setText(QCoreApplication.translate("Dialog", u"Number of Generations:", None))
+        self.num_generations.setSpecialValueText(QCoreApplication.translate("Dialog", u"10", None))
+        self.btn_electrical_setup.setText(QCoreApplication.translate("Dialog", u"Open Electrical Setup", None))
+        self.btn_thermal_setup.setText(QCoreApplication.translate("Dialog", u"Open Thermal Setup", None))
+        self.btn_run_powersynth.setText(QCoreApplication.translate("Dialog", u"Run Powersynth", None))
+    # retranslateUi
 

@@ -3,13 +3,13 @@ This is the main code of PCM
 """
 
 import sys, csv
-from PyQt5.QtGui import *
-from PyQt5 import QtCore, QtGui
+from PySide2.QtGui import *
+from PySide2 import QtCore, QtGui
 from core.NEW_UI.MDKEditor.StructureCode import MaterialProperties
 from core.NEW_UI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
-from PyQt5.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
+from PySide2.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
 
 class EditLibrary(QMainWindow, Ui_MDKWindow):
     selected = []       #variable pass material information to PowerSynth

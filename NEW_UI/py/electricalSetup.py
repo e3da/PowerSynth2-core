@@ -1,223 +1,291 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'NEW_UI/ui/electricalSetup.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.4
-#
-# WARNING! All changes made in this file will be lost!
+################################################################################
+## Form generated from reading UI file 'electricalSetup.ui'
+##
+## Created by: Qt User Interface Compiler version 5.15.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
+        if not Dialog.objectName():
+            Dialog.setObjectName(u"Dialog")
         Dialog.resize(400, 500)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.electrical_setup_2 = QtWidgets.QFrame(Dialog)
-        self.electrical_setup_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.electrical_setup_2.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.electrical_setup_2.setObjectName("electrical_setup_2")
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.electrical_setup_2)
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label_17 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_17.setObjectName("label_17")
+        self.verticalLayout_2 = QVBoxLayout(Dialog)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.electrical_setup_2 = QFrame(Dialog)
+        self.electrical_setup_2.setObjectName(u"electrical_setup_2")
+        self.electrical_setup_2.setFrameShape(QFrame.StyledPanel)
+        self.electrical_setup_2.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_4 = QVBoxLayout(self.electrical_setup_2)
+        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.label_17 = QLabel(self.electrical_setup_2)
+        self.label_17.setObjectName(u"label_17")
+
         self.verticalLayout_4.addWidget(self.label_17)
-        self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_17.setObjectName("horizontalLayout_17")
-        self.label_24 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_24.setObjectName("label_24")
+
+        self.horizontalLayout_17 = QHBoxLayout()
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.label_24 = QLabel(self.electrical_setup_2)
+        self.label_24.setObjectName(u"label_24")
+
         self.horizontalLayout_17.addWidget(self.label_24)
-        self.combo_measure_type_2 = QtWidgets.QComboBox(self.electrical_setup_2)
-        self.combo_measure_type_2.setObjectName("combo_measure_type_2")
+
+        self.combo_measure_type_2 = QComboBox(self.electrical_setup_2)
         self.combo_measure_type_2.addItem("")
         self.combo_measure_type_2.addItem("")
         self.combo_measure_type_2.addItem("")
         self.combo_measure_type_2.addItem("")
+        self.combo_measure_type_2.setObjectName(u"combo_measure_type_2")
+
         self.horizontalLayout_17.addWidget(self.combo_measure_type_2)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_17)
-        self.horizontalLayout_12 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_12.setObjectName("horizontalLayout_12")
-        self.label_19 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_19.setObjectName("label_19")
+
+        self.horizontalLayout_12 = QHBoxLayout()
+        self.horizontalLayout_12.setObjectName(u"horizontalLayout_12")
+        self.label_19 = QLabel(self.electrical_setup_2)
+        self.label_19.setObjectName(u"label_19")
+
         self.horizontalLayout_12.addWidget(self.label_19)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_12.addItem(spacerItem)
-        self.lineedit_measure_name = QtWidgets.QLineEdit(self.electrical_setup_2)
-        self.lineedit_measure_name.setObjectName("lineedit_measure_name")
+
+        self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_12.addItem(self.horizontalSpacer_3)
+
+        self.lineedit_measure_name = QLineEdit(self.electrical_setup_2)
+        self.lineedit_measure_name.setObjectName(u"lineedit_measure_name")
+
         self.horizontalLayout_12.addWidget(self.lineedit_measure_name)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_12)
-        self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_13.setObjectName("horizontalLayout_13")
-        self.label_20 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_20.setObjectName("label_20")
+
+        self.horizontalLayout_13 = QHBoxLayout()
+        self.horizontalLayout_13.setObjectName(u"horizontalLayout_13")
+        self.label_20 = QLabel(self.electrical_setup_2)
+        self.label_20.setObjectName(u"label_20")
+
         self.horizontalLayout_13.addWidget(self.label_20)
-        self.combo_measure_type = QtWidgets.QComboBox(self.electrical_setup_2)
-        self.combo_measure_type.setObjectName("combo_measure_type")
+
+        self.combo_measure_type = QComboBox(self.electrical_setup_2)
         self.combo_measure_type.addItem("")
         self.combo_measure_type.addItem("")
+        self.combo_measure_type.setObjectName(u"combo_measure_type")
+
         self.horizontalLayout_13.addWidget(self.combo_measure_type)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_13)
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.tableWidget = QtWidgets.QTableWidget(self.electrical_setup_2)
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(2)
-        self.tableWidget.setRowCount(0)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, item)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.tableWidget = QTableWidget(self.electrical_setup_2)
+        if (self.tableWidget.columnCount() < 2):
+            self.tableWidget.setColumnCount(2)
+        __qtablewidgetitem = QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem1 = QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.tableWidget.setObjectName(u"tableWidget")
+
         self.horizontalLayout_3.addWidget(self.tableWidget)
-        spacerItem1 = QtWidgets.QSpacerItem(70, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem1)
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem2)
-        self.btn_add_device = QtWidgets.QPushButton(self.electrical_setup_2)
-        self.btn_add_device.setObjectName("btn_add_device")
+
+        self.horizontalSpacer_2 = QSpacerItem(70, 20, QSizePolicy.Maximum, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
+
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.verticalLayout.addItem(self.verticalSpacer)
+
+        self.btn_add_device = QPushButton(self.electrical_setup_2)
+        self.btn_add_device.setObjectName(u"btn_add_device")
+
         self.verticalLayout.addWidget(self.btn_add_device)
-        self.btn_remove_device = QtWidgets.QPushButton(self.electrical_setup_2)
-        self.btn_remove_device.setObjectName("btn_remove_device")
+
+        self.btn_remove_device = QPushButton(self.electrical_setup_2)
+        self.btn_remove_device.setObjectName(u"btn_remove_device")
+
         self.verticalLayout.addWidget(self.btn_remove_device)
+
+
         self.horizontalLayout_3.addLayout(self.verticalLayout)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
-        self.horizontalLayout_15 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_15.setObjectName("horizontalLayout_15")
-        self.label_21 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_21.setObjectName("label_21")
+
+        self.horizontalLayout_15 = QHBoxLayout()
+        self.horizontalLayout_15.setObjectName(u"horizontalLayout_15")
+        self.label_21 = QLabel(self.electrical_setup_2)
+        self.label_21.setObjectName(u"label_21")
+
         self.horizontalLayout_15.addWidget(self.label_21)
-        self.source_lineedit = QtWidgets.QLineEdit(self.electrical_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+
+        self.source_lineedit = QLineEdit(self.electrical_setup_2)
+        self.source_lineedit.setObjectName(u"source_lineedit")
+        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.source_lineedit.sizePolicy().hasHeightForWidth())
         self.source_lineedit.setSizePolicy(sizePolicy)
-        self.source_lineedit.setObjectName("source_lineedit")
+
         self.horizontalLayout_15.addWidget(self.source_lineedit)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_15)
-        self.horizontalLayout_16 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_16.setObjectName("horizontalLayout_16")
-        self.label_22 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_22.setObjectName("label_22")
+
+        self.horizontalLayout_16 = QHBoxLayout()
+        self.horizontalLayout_16.setObjectName(u"horizontalLayout_16")
+        self.label_22 = QLabel(self.electrical_setup_2)
+        self.label_22.setObjectName(u"label_22")
+
         self.horizontalLayout_16.addWidget(self.label_22)
-        self.sink_lineedit = QtWidgets.QLineEdit(self.electrical_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+
+        self.sink_lineedit = QLineEdit(self.electrical_setup_2)
+        self.sink_lineedit.setObjectName(u"sink_lineedit")
         sizePolicy.setHeightForWidth(self.sink_lineedit.sizePolicy().hasHeightForWidth())
         self.sink_lineedit.setSizePolicy(sizePolicy)
-        self.sink_lineedit.setObjectName("sink_lineedit")
+
         self.horizontalLayout_16.addWidget(self.sink_lineedit)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_16)
-        self.horizontalLayout_14 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_14.setObjectName("horizontalLayout_14")
-        self.label_23 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_23.setObjectName("label_23")
+
+        self.horizontalLayout_14 = QHBoxLayout()
+        self.horizontalLayout_14.setObjectName(u"horizontalLayout_14")
+        self.label_23 = QLabel(self.electrical_setup_2)
+        self.label_23.setObjectName(u"label_23")
+
         self.horizontalLayout_14.addWidget(self.label_23)
-        self.frequency = QtWidgets.QSpinBox(self.electrical_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+
+        self.frequency = QSpinBox(self.electrical_setup_2)
+        self.frequency.setObjectName(u"frequency")
         sizePolicy.setHeightForWidth(self.frequency.sizePolicy().hasHeightForWidth())
         self.frequency.setSizePolicy(sizePolicy)
-        self.frequency.setMinimumSize(QtCore.QSize(20, 0))
-        self.frequency.setMaximumSize(QtCore.QSize(70, 16777215))
-        self.frequency.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        self.frequency.setMinimumSize(QSize(20, 0))
+        self.frequency.setMaximumSize(QSize(70, 16777215))
+        self.frequency.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.frequency.setMaximum(1000000000)
-        self.frequency.setObjectName("frequency")
+
         self.horizontalLayout_14.addWidget(self.frequency)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_14)
-        self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.label_6 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_6.setObjectName("label_6")
+
+        self.horizontalLayout_5 = QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.label_6 = QLabel(self.electrical_setup_2)
+        self.label_6.setObjectName(u"label_6")
+
         self.horizontalLayout_5.addWidget(self.label_6)
-        self.parasitic_textedit = QtWidgets.QLineEdit(self.electrical_setup_2)
-        self.parasitic_textedit.setObjectName("parasitic_textedit")
+
+        self.parasitic_textedit = QLineEdit(self.electrical_setup_2)
+        self.parasitic_textedit.setObjectName(u"parasitic_textedit")
+
         self.horizontalLayout_5.addWidget(self.parasitic_textedit)
-        self.btn_open_parasitic = QtWidgets.QPushButton(self.electrical_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+
+        self.btn_open_parasitic = QPushButton(self.electrical_setup_2)
+        self.btn_open_parasitic.setObjectName(u"btn_open_parasitic")
         sizePolicy.setHeightForWidth(self.btn_open_parasitic.sizePolicy().hasHeightForWidth())
         self.btn_open_parasitic.setSizePolicy(sizePolicy)
-        self.btn_open_parasitic.setMinimumSize(QtCore.QSize(0, 0))
-        self.btn_open_parasitic.setMaximumSize(QtCore.QSize(85, 16777215))
-        self.btn_open_parasitic.setObjectName("btn_open_parasitic")
+        self.btn_open_parasitic.setMinimumSize(QSize(0, 0))
+        self.btn_open_parasitic.setMaximumSize(QSize(85, 16777215))
+
         self.horizontalLayout_5.addWidget(self.btn_open_parasitic)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_5)
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.label_5 = QtWidgets.QLabel(self.electrical_setup_2)
-        self.label_5.setObjectName("label_5")
+
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.label_5 = QLabel(self.electrical_setup_2)
+        self.label_5.setObjectName(u"label_5")
+
         self.horizontalLayout_4.addWidget(self.label_5)
-        self.trace_textedit = QtWidgets.QLineEdit(self.electrical_setup_2)
-        self.trace_textedit.setObjectName("trace_textedit")
+
+        self.trace_textedit = QLineEdit(self.electrical_setup_2)
+        self.trace_textedit.setObjectName(u"trace_textedit")
+
         self.horizontalLayout_4.addWidget(self.trace_textedit)
-        self.btn_open_trace = QtWidgets.QPushButton(self.electrical_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+
+        self.btn_open_trace = QPushButton(self.electrical_setup_2)
+        self.btn_open_trace.setObjectName(u"btn_open_trace")
         sizePolicy.setHeightForWidth(self.btn_open_trace.sizePolicy().hasHeightForWidth())
         self.btn_open_trace.setSizePolicy(sizePolicy)
-        self.btn_open_trace.setMinimumSize(QtCore.QSize(0, 0))
-        self.btn_open_trace.setMaximumSize(QtCore.QSize(85, 16777215))
-        self.btn_open_trace.setObjectName("btn_open_trace")
+        self.btn_open_trace.setMinimumSize(QSize(0, 0))
+        self.btn_open_trace.setMaximumSize(QSize(85, 16777215))
+
         self.horizontalLayout_4.addWidget(self.btn_open_trace)
+
+
         self.verticalLayout_4.addLayout(self.horizontalLayout_4)
+
+
         self.verticalLayout_2.addWidget(self.electrical_setup_2)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem3)
-        self.btn_continue = QtWidgets.QPushButton(Dialog)
-        self.btn_continue.setDefault(True)
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer)
+
+        self.btn_continue = QPushButton(Dialog)
+        self.btn_continue.setObjectName(u"btn_continue")
         self.btn_continue.setFlat(False)
-        self.btn_continue.setObjectName("btn_continue")
+
         self.horizontalLayout.addWidget(self.btn_continue)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout)
 
+
         self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        self.btn_continue.setDefault(True)
+
+
+        QMetaObject.connectSlotsByName(Dialog)
+    # setupUi
 
     def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Electrical Setup"))
-        self.label_17.setText(_translate("Dialog", "<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Electrical Setup</span></p></body></html>"))
-        self.label_24.setText(_translate("Dialog", "Model Type:"))
-        self.combo_measure_type_2.setItemText(0, _translate("Dialog", "Loop"))
-        self.combo_measure_type_2.setItemText(1, _translate("Dialog", "FastHenry"))
-        self.combo_measure_type_2.setItemText(2, _translate("Dialog", "PEEC"))
-        self.combo_measure_type_2.setItemText(3, _translate("Dialog", "Response Surface"))
-        self.label_19.setText(_translate("Dialog", "Measure Name:"))
-        self.label_20.setText(_translate("Dialog", "Measure Type:"))
-        self.combo_measure_type.setItemText(0, _translate("Dialog", "inductance"))
-        self.combo_measure_type.setItemText(1, _translate("Dialog", "resistance"))
-        item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("Dialog", "MOS"))
-        item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("Dialog", "Options"))
-        self.btn_add_device.setText(_translate("Dialog", "Add Device"))
-        self.btn_remove_device.setText(_translate("Dialog", "Remove Device"))
-        self.label_21.setText(_translate("Dialog", "Select a source:"))
-        self.label_22.setText(_translate("Dialog", "Select a sink:"))
-        self.label_23.setText(_translate("Dialog", "Frequency (kHz):"))
-        self.frequency.setSpecialValueText(_translate("Dialog", "100000"))
-        self.label_6.setText(_translate("Dialog", "Path to parasitic_model"))
-        self.btn_open_parasitic.setText(_translate("Dialog", "Open File"))
-        self.label_5.setText(_translate("Dialog", "Path to trace_orientation"))
-        self.btn_open_trace.setText(_translate("Dialog", "Open File"))
-        self.btn_continue.setText(_translate("Dialog", "Continue"))
+        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Electrical Setup", None))
+        self.label_17.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Electrical Setup</span></p></body></html>", None))
+        self.label_24.setText(QCoreApplication.translate("Dialog", u"Model Type:", None))
+        self.combo_measure_type_2.setItemText(0, QCoreApplication.translate("Dialog", u"Loop", None))
+        self.combo_measure_type_2.setItemText(1, QCoreApplication.translate("Dialog", u"FastHenry", None))
+        self.combo_measure_type_2.setItemText(2, QCoreApplication.translate("Dialog", u"PEEC", None))
+        self.combo_measure_type_2.setItemText(3, QCoreApplication.translate("Dialog", u"Response Surface", None))
 
+        self.label_19.setText(QCoreApplication.translate("Dialog", u"Measure Name:", None))
+        self.label_20.setText(QCoreApplication.translate("Dialog", u"Measure Type:", None))
+        self.combo_measure_type.setItemText(0, QCoreApplication.translate("Dialog", u"inductance", None))
+        self.combo_measure_type.setItemText(1, QCoreApplication.translate("Dialog", u"resistance", None))
 
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())
+        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"MOS", None));
+        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Options", None));
+        self.btn_add_device.setText(QCoreApplication.translate("Dialog", u"Add Device", None))
+        self.btn_remove_device.setText(QCoreApplication.translate("Dialog", u"Remove Device", None))
+        self.label_21.setText(QCoreApplication.translate("Dialog", u"Select a source:", None))
+        self.label_22.setText(QCoreApplication.translate("Dialog", u"Select a sink:", None))
+        self.label_23.setText(QCoreApplication.translate("Dialog", u"Frequency (kHz):", None))
+        self.frequency.setSpecialValueText(QCoreApplication.translate("Dialog", u"100000", None))
+        self.label_6.setText(QCoreApplication.translate("Dialog", u"Path to parasitic_model", None))
+        self.btn_open_parasitic.setText(QCoreApplication.translate("Dialog", u"Open File", None))
+        self.label_5.setText(QCoreApplication.translate("Dialog", u"Path to trace_orientation", None))
+        self.btn_open_trace.setText(QCoreApplication.translate("Dialog", u"Open File", None))
+        self.btn_continue.setText(QCoreApplication.translate("Dialog", u"Continue", None))
+    # retranslateUi
 

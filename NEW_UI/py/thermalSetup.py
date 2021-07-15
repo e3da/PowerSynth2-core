@@ -1,152 +1,198 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'NEW_UI/ui/thermalSetup.ui'
-#
-# Created by: PyQt5 UI code generator 5.15.4
-#
-# WARNING! All changes made in this file will be lost!
+################################################################################
+## Form generated from reading UI file 'thermalSetup.ui'
+##
+## Created by: Qt User Interface Compiler version 5.15.2
+##
+## WARNING! All changes made in this file will be lost when recompiling UI file!
+################################################################################
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PySide2.QtCore import *
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
-        Dialog.setObjectName("Dialog")
+        if not Dialog.objectName():
+            Dialog.setObjectName(u"Dialog")
         Dialog.resize(405, 370)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.thermal_setup_2 = QtWidgets.QFrame(Dialog)
-        self.thermal_setup_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        self.thermal_setup_2.setFrameShadow(QtWidgets.QFrame.Raised)
-        self.thermal_setup_2.setObjectName("thermal_setup_2")
-        self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.thermal_setup_2)
-        self.verticalLayout_8.setObjectName("verticalLayout_8")
-        self.label_24 = QtWidgets.QLabel(self.thermal_setup_2)
-        self.label_24.setObjectName("label_24")
+        self.verticalLayout_2 = QVBoxLayout(Dialog)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.thermal_setup_2 = QFrame(Dialog)
+        self.thermal_setup_2.setObjectName(u"thermal_setup_2")
+        self.thermal_setup_2.setFrameShape(QFrame.StyledPanel)
+        self.thermal_setup_2.setFrameShadow(QFrame.Raised)
+        self.verticalLayout_8 = QVBoxLayout(self.thermal_setup_2)
+        self.verticalLayout_8.setObjectName(u"verticalLayout_8")
+        self.label_24 = QLabel(self.thermal_setup_2)
+        self.label_24.setObjectName(u"label_24")
+
         self.verticalLayout_8.addWidget(self.label_24)
-        self.horizontalLayout_17 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_17.setObjectName("horizontalLayout_17")
-        self.label_25 = QtWidgets.QLabel(self.thermal_setup_2)
-        self.label_25.setObjectName("label_25")
+
+        self.horizontalLayout_17 = QHBoxLayout()
+        self.horizontalLayout_17.setObjectName(u"horizontalLayout_17")
+        self.label_25 = QLabel(self.thermal_setup_2)
+        self.label_25.setObjectName(u"label_25")
+
         self.horizontalLayout_17.addWidget(self.label_25)
-        self.combo_model_select = QtWidgets.QComboBox(self.thermal_setup_2)
-        self.combo_model_select.setObjectName("combo_model_select")
+
+        self.combo_model_select = QComboBox(self.thermal_setup_2)
         self.combo_model_select.addItem("")
         self.combo_model_select.addItem("")
         self.combo_model_select.addItem("")
+        self.combo_model_select.setObjectName(u"combo_model_select")
+
         self.horizontalLayout_17.addWidget(self.combo_model_select)
+
+
         self.verticalLayout_8.addLayout(self.horizontalLayout_17)
-        self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_18.setObjectName("horizontalLayout_18")
-        self.label_26 = QtWidgets.QLabel(self.thermal_setup_2)
-        self.label_26.setObjectName("label_26")
+
+        self.horizontalLayout_18 = QHBoxLayout()
+        self.horizontalLayout_18.setObjectName(u"horizontalLayout_18")
+        self.label_26 = QLabel(self.thermal_setup_2)
+        self.label_26.setObjectName(u"label_26")
+
         self.horizontalLayout_18.addWidget(self.label_26)
-        self.lineedit_measure_name = QtWidgets.QLineEdit(self.thermal_setup_2)
-        self.lineedit_measure_name.setObjectName("lineedit_measure_name")
+
+        self.lineedit_measure_name = QLineEdit(self.thermal_setup_2)
+        self.lineedit_measure_name.setObjectName(u"lineedit_measure_name")
+
         self.horizontalLayout_18.addWidget(self.lineedit_measure_name)
+
+
         self.verticalLayout_8.addLayout(self.horizontalLayout_18)
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.tableWidget = QtWidgets.QTableWidget(self.thermal_setup_2)
-        self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(2)
-        self.tableWidget.setRowCount(0)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, item)
+
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.tableWidget = QTableWidget(self.thermal_setup_2)
+        if (self.tableWidget.columnCount() < 2):
+            self.tableWidget.setColumnCount(2)
+        __qtablewidgetitem = QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, __qtablewidgetitem)
+        __qtablewidgetitem1 = QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, __qtablewidgetitem1)
+        self.tableWidget.setObjectName(u"tableWidget")
+
         self.horizontalLayout_3.addWidget(self.tableWidget)
-        spacerItem = QtWidgets.QSpacerItem(70, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout_3.addItem(spacerItem)
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.verticalLayout.setObjectName("verticalLayout")
-        spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-        self.verticalLayout.addItem(spacerItem1)
-        self.btn_add_device = QtWidgets.QPushButton(self.thermal_setup_2)
-        self.btn_add_device.setObjectName("btn_add_device")
+
+        self.horizontalSpacer_2 = QSpacerItem(70, 20, QSizePolicy.Maximum, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer_2)
+
+        self.verticalLayout = QVBoxLayout()
+        self.verticalLayout.setObjectName(u"verticalLayout")
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+
+        self.verticalLayout.addItem(self.verticalSpacer)
+
+        self.btn_add_device = QPushButton(self.thermal_setup_2)
+        self.btn_add_device.setObjectName(u"btn_add_device")
+
         self.verticalLayout.addWidget(self.btn_add_device)
-        self.btn_remove_device = QtWidgets.QPushButton(self.thermal_setup_2)
-        self.btn_remove_device.setObjectName("btn_remove_device")
+
+        self.btn_remove_device = QPushButton(self.thermal_setup_2)
+        self.btn_remove_device.setObjectName(u"btn_remove_device")
+
         self.verticalLayout.addWidget(self.btn_remove_device)
+
+
         self.horizontalLayout_3.addLayout(self.verticalLayout)
+
+
         self.verticalLayout_8.addLayout(self.horizontalLayout_3)
-        self.horizontalLayout_19 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_19.setObjectName("horizontalLayout_19")
-        self.label_27 = QtWidgets.QLabel(self.thermal_setup_2)
-        self.label_27.setObjectName("label_27")
+
+        self.horizontalLayout_19 = QHBoxLayout()
+        self.horizontalLayout_19.setObjectName(u"horizontalLayout_19")
+        self.label_27 = QLabel(self.thermal_setup_2)
+        self.label_27.setObjectName(u"label_27")
+
         self.horizontalLayout_19.addWidget(self.label_27)
-        self.heat_convection = QtWidgets.QSpinBox(self.thermal_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
+
+        self.heat_convection = QSpinBox(self.thermal_setup_2)
+        self.heat_convection.setObjectName(u"heat_convection")
+        sizePolicy = QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.heat_convection.sizePolicy().hasHeightForWidth())
         self.heat_convection.setSizePolicy(sizePolicy)
-        self.heat_convection.setMinimumSize(QtCore.QSize(15, 0))
-        self.heat_convection.setMaximumSize(QtCore.QSize(70, 16777215))
-        self.heat_convection.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        self.heat_convection.setMinimumSize(QSize(15, 0))
+        self.heat_convection.setMaximumSize(QSize(70, 16777215))
+        self.heat_convection.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.heat_convection.setMaximum(100000)
-        self.heat_convection.setObjectName("heat_convection")
+
         self.horizontalLayout_19.addWidget(self.heat_convection)
+
+
         self.verticalLayout_8.addLayout(self.horizontalLayout_19)
-        self.horizontalLayout_20 = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_20.setObjectName("horizontalLayout_20")
-        self.label_28 = QtWidgets.QLabel(self.thermal_setup_2)
-        self.label_28.setObjectName("label_28")
+
+        self.horizontalLayout_20 = QHBoxLayout()
+        self.horizontalLayout_20.setObjectName(u"horizontalLayout_20")
+        self.label_28 = QLabel(self.thermal_setup_2)
+        self.label_28.setObjectName(u"label_28")
+
         self.horizontalLayout_20.addWidget(self.label_28)
-        self.ambient_temperature = QtWidgets.QSpinBox(self.thermal_setup_2)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
+
+        self.ambient_temperature = QSpinBox(self.thermal_setup_2)
+        self.ambient_temperature.setObjectName(u"ambient_temperature")
         sizePolicy.setHeightForWidth(self.ambient_temperature.sizePolicy().hasHeightForWidth())
         self.ambient_temperature.setSizePolicy(sizePolicy)
-        self.ambient_temperature.setMinimumSize(QtCore.QSize(15, 0))
-        self.ambient_temperature.setMaximumSize(QtCore.QSize(70, 16777215))
-        self.ambient_temperature.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
+        self.ambient_temperature.setMinimumSize(QSize(15, 0))
+        self.ambient_temperature.setMaximumSize(QSize(70, 16777215))
+        self.ambient_temperature.setButtonSymbols(QAbstractSpinBox.NoButtons)
         self.ambient_temperature.setMaximum(100000)
-        self.ambient_temperature.setObjectName("ambient_temperature")
+
         self.horizontalLayout_20.addWidget(self.ambient_temperature)
+
+
         self.verticalLayout_8.addLayout(self.horizontalLayout_20)
+
+
         self.verticalLayout_2.addWidget(self.thermal_setup_2)
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem2)
-        self.btn_continue = QtWidgets.QPushButton(Dialog)
-        self.btn_continue.setDefault(True)
-        self.btn_continue.setObjectName("btn_continue")
+
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout.addItem(self.horizontalSpacer)
+
+        self.btn_continue = QPushButton(Dialog)
+        self.btn_continue.setObjectName(u"btn_continue")
+
         self.horizontalLayout.addWidget(self.btn_continue)
+
+
         self.verticalLayout_2.addLayout(self.horizontalLayout)
 
+
         self.retranslateUi(Dialog)
-        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+        self.btn_continue.setDefault(True)
+
+
+        QMetaObject.connectSlotsByName(Dialog)
+    # setupUi
 
     def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Thermal Setup"))
-        self.label_24.setText(_translate("Dialog", "<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Thermal Setup</span></p></body></html>"))
-        self.label_25.setText(_translate("Dialog", "Model Select:"))
-        self.combo_model_select.setItemText(0, _translate("Dialog", "TSFM"))
-        self.combo_model_select.setItemText(1, _translate("Dialog", "Analytical"))
-        self.combo_model_select.setItemText(2, _translate("Dialog", "ParaPower"))
-        self.label_26.setText(_translate("Dialog", "Measure Name:"))
-        item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("Dialog", "Device"))
-        item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("Dialog", "Power"))
-        self.btn_add_device.setText(_translate("Dialog", "Add Device"))
-        self.btn_remove_device.setText(_translate("Dialog", "Remove Device"))
-        self.label_27.setText(_translate("Dialog", "Heat Convection:"))
-        self.heat_convection.setSpecialValueText(_translate("Dialog", "1000"))
-        self.label_28.setText(_translate("Dialog", "Ambient Temperature:"))
-        self.ambient_temperature.setSpecialValueText(_translate("Dialog", "300"))
-        self.btn_continue.setText(_translate("Dialog", "Continue"))
+        Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Thermal Setup", None))
+        self.label_24.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Thermal Setup</span></p></body></html>", None))
+        self.label_25.setText(QCoreApplication.translate("Dialog", u"Model Select:", None))
+        self.combo_model_select.setItemText(0, QCoreApplication.translate("Dialog", u"TSFM", None))
+        self.combo_model_select.setItemText(1, QCoreApplication.translate("Dialog", u"Analytical", None))
+        self.combo_model_select.setItemText(2, QCoreApplication.translate("Dialog", u"ParaPower", None))
 
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())
+        self.label_26.setText(QCoreApplication.translate("Dialog", u"Measure Name:", None))
+        ___qtablewidgetitem = self.tableWidget.horizontalHeaderItem(0)
+        ___qtablewidgetitem.setText(QCoreApplication.translate("Dialog", u"Device", None));
+        ___qtablewidgetitem1 = self.tableWidget.horizontalHeaderItem(1)
+        ___qtablewidgetitem1.setText(QCoreApplication.translate("Dialog", u"Power", None));
+        self.btn_add_device.setText(QCoreApplication.translate("Dialog", u"Add Device", None))
+        self.btn_remove_device.setText(QCoreApplication.translate("Dialog", u"Remove Device", None))
+        self.label_27.setText(QCoreApplication.translate("Dialog", u"Heat Convection:", None))
+        self.heat_convection.setSpecialValueText(QCoreApplication.translate("Dialog", u"1000", None))
+        self.label_28.setText(QCoreApplication.translate("Dialog", u"Ambient Temperature:", None))
+        self.ambient_temperature.setSpecialValueText(QCoreApplication.translate("Dialog", u"300", None))
+        self.btn_continue.setText(QCoreApplication.translate("Dialog", u"Continue", None))
+    # retranslateUi
 
