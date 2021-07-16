@@ -10,8 +10,10 @@ Run PowerSynth.
 
 TODO:
 
-Create Comprehensive Video Demo on Flow (Generate ~100 Solutions for Each) -- Friday
-Write Documentation on Flow -- Friday
-Hierarchy Representation (Create Tree from Layout Script) -- Wednesday
+Create Comprehensive Video Demo on Flow (Generate ~100 Solutions for Each)
+Get Solution Browser Working
+Hierarchy Representation (Create Tree from Layout Script)
+
+
 Poster -- Wednesday
 ASEE Conference Paper -- Final Week
