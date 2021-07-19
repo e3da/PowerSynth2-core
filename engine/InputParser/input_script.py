@@ -1077,8 +1077,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             wire=bw_items[wire_id]
             if 'D' in wire['Source'] and ('B' in wire['source_pad'] or 'V' in wire['source_pad']) :
                 removed_child.append(wire['source_pad'])
-            if 'D' in wire['Destination'] and ('B' in wire['dest_pad'] or 'B' in wire['dest_pad']):
-                removed_child.append(wire['dest_pad'])
+            if 'D' in wire['Destination'] and ('B' in wire['destination_pad'] or 'B' in wire['destination_pad']):
+                removed_child.append(wire['destination_pad'])
         
         removed_child_list=[]
         for island in all_layers[i].islands:

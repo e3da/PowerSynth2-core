@@ -215,6 +215,7 @@ class CornerStitch():
 
         while (len(Input) > 0):
             inp = Input.pop(0)
+            
             if inp[1] == "." and inp[2] != ".":  ## determining hierarchy level (2nd level):Device insertion
                 start = inp[0]
                 x1 = int(inp[2]) # top-left corner x coordinate

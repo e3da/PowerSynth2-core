@@ -1076,7 +1076,8 @@ if __name__ == "__main__":
                     {imam_nethome1:'Case_8/macro_script.txt'},\
                     {imam_nethome1:'Case_10/macro_script.txt'},\
                     {imam_nethome1:'Case_9/macro_script.txt'},\
-                    {imam_nethome1:'ICCAD_Case_2/macro_script.txt'}   ]
+                    {imam_nethome1:'ICCAD_Case_2/macro_script.txt'} ,
+                    {imam_nethome1:'Case_27_FC_HB/macro_script.txt'}  ]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))

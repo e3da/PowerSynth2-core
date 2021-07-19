@@ -2674,7 +2674,7 @@ class ConstraintGraph:
                     for edge in graph.nx_graph_edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
-                            
+                            #print(ID,origin.coordinate,dest.coordinate)
                             if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
@@ -2722,7 +2722,7 @@ class ConstraintGraph:
                                         index= self.constraint_info.constraints.index(constraint)
                                 min_room=target.min_loc-src.min_loc 
                                 distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
-                                
+                                #print(src.coordinate,target.coordinate,ID)
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
