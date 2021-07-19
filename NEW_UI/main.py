@@ -110,7 +110,7 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
 
         def runPowerSynth():
-            '''if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
+            if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the settings.info file.")
@@ -123,15 +123,15 @@ class GUI():
                 popup.setText("Please enter a valid path to the macro_script file.")
                 popup.exec_()
                 return
-'''
+
             settingsPath = ui.lineEdit_3.text()
             macroPath = ui.lineEdit_4.text()
 
             self.currentWindow.close()
             self.currentWindow = None
 
-            macroPath = '/nethome/jgm019/TEST/macro_script.txt'
-            settingsPath = '/nethome/jgm019/testcases/settings.info'
+            #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
+            #settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             def solutionBrowser():
                 self.currentWindow.close()
@@ -278,7 +278,7 @@ class GUI():
             ui.lineEdit_bondwire.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open bondwire_script', os.getenv('HOME'))[0])
 
         def createLayout():
-            '''
+
             if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
@@ -307,7 +307,7 @@ class GUI():
 
             self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.
+            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 

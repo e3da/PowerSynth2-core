@@ -17,3 +17,11 @@ Hierarchy Representation (Create Tree from Layout Script)
 
 Poster -- Wednesday
 ASEE Conference Paper -- Final Week
+
+Methodology -- Future Work
+Flowchart in powerpoint about process
+
+Key Results -- Pictures of the GUI and what we can do with the tool
+
+First section -- PowerSynth 2 Architecture
+About PowerSynth
