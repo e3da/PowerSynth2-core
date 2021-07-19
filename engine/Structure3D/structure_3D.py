@@ -1113,10 +1113,10 @@ class Structure_3D():
                 input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary
                 cs_islands = self.layers[i].new_engine.init_data[2] #corner stitch islands
                 initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
-                print(self.layers[i].name)
+                #print(self.layers[i].name)
                 
                 self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
-                #"""
+                """
                 for tb_eval in self.layers[i].forward_cg.tb_eval_h:
                     print("ID",tb_eval.ID)
                     for edge in tb_eval.graph.edges:
@@ -1132,7 +1132,7 @@ class Structure_3D():
                     for vert in tb_eval.graph.vertices:
                         print(vert.coordinate, vert.min_loc)
                 input()
-                #"""
+                """
                
         #----------------------------------------for debugging-----------------------------------------#
         '''

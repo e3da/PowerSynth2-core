@@ -125,10 +125,11 @@ class new_engine_opt:
                     #input()
                     
                 print ("RL",R,L)
-                    
+                #"""   
                 #except:
                 #R=10000
                 #L=10000
+
                 
 
                 if type == 0:  # LOOP RESISTANCE

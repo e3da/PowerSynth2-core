@@ -770,8 +770,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             removable=False
                             
                             print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                            print("HERE2",ID)
-                            input()
+                            #print("HERE2",ID)
+                            #input()
                             if edge.comp_type=='Fixed':
                                 exit()
                         else:
@@ -784,8 +784,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 #print(ID,ref_vert.coordinate,in_src.coordinate,backward_weight,fixed_dim)
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
-                                print("HERE3",ID)
-                                input()
+                                #print("HERE3",ID)
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
                             else:
@@ -806,8 +806,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             if edge.constraint>fixed_dim+w1:
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                print("HERE10",ID)
-                                input()
+                                #print("HERE10",ID)
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
                             else:
@@ -849,18 +849,18 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                     
                         if is_connected(ref_vert.index,out_dest.index,adj_matrix_):
                             new_weight=edge.constraint+fixed_dim
-                            '''if new_weight<=0:
+                            if new_weight<=0:
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                print("HERE5",ID, ref_vert.coordinate,out_dest.coordinate,new_weight)
-                                edge.printEdge()
-                                input()
+                                #print("HERE5",ID, ref_vert.coordinate,out_dest.coordinate,new_weight)
+                                #edge.printEdge()
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
-                            else:'''
-                            removable_edges.append(edge)
-                            new_edge=Edge(source=ref_vert, dest=out_dest, constraint=new_weight, index=edge.index, type=edge.type, weight=2*new_weight,comp_type=edge.comp_type)
-                            new_edges.append(new_edge)
+                            else:
+                                removable_edges.append(edge)
+                                new_edge=Edge(source=ref_vert, dest=out_dest, constraint=new_weight, index=edge.index, type=edge.type, weight=2*new_weight,comp_type=edge.comp_type)
+                                new_edges.append(new_edge)
                                 
                         else:
                             
@@ -872,8 +872,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
                                 #print("NW",new_weight,edge.constraint,fixed_dim,edge.dest.coordinate,ref_vert.coordinate)
-                                print("HERE6",ID)
-                                input()
+                                #print("HERE6",ID)
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
                                 """elif new_weight==0:
@@ -891,8 +891,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                     elif w1>abs(w2):
                                         removable=False
                                         print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                        print("HERE7",ID)
-                                        input()
+                                        #print("HERE7",ID)
+                                        #input()
                                         if edge.comp_type=='Fixed':
                                             exit()
 
@@ -906,8 +906,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                     elif out_dest.index==ref_vert.index and abs(edge.constraint)<fixed_dim:
                                         removable=False
                                         print("ERROR:{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                        print("HERE7",ID)
-                                        input()
+                                        #print("HERE7",ID)
+                                        #input()
                                         if edge.comp_type=='Fixed':
                                             exit()
 

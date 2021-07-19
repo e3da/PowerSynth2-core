@@ -30,10 +30,11 @@ from core.model.thermal.cornerstitch_API import ThermalMeasure
 
 # --------------Plot function---------------------
 def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],layout_solutions=None,dbunit=1000):
-
-    parameters=solutions[0].parameters
-    performance_names=list(parameters.keys())
-    performance_names=['Inductance','Max_Temp']
+    try:
+        parameters=solutions[0].parameters
+        performance_names=list(parameters.keys())
+    except:
+        performance_names=['Inductance','Max_Temp']
     for i in range(len(solutions)):
         item='Solution_'+str(solutions[i].solution_id)
         #item = solutions[i].name
@@ -391,7 +392,6 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     :param num_gen int -- provide a number of generations used in NSGAII (macro mode)
     :param num_disc -- provide a number for intervals to create weights for objectives WS (macro mode)
     :param max_temp -- provide a max temp param for SA (macro mode)
-
     :return: list of CornerStitch Solution objects
     '''
     #plot = True
@@ -541,7 +541,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         for i in range(len(Solutions)):
             solution=Solutions[i]
-            sol=PSSolution(solution_id=solution.index)
+            sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         
             #plot_solution_structure(sol)
