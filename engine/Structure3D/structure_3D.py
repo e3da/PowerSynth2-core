@@ -1113,10 +1113,10 @@ class Structure_3D():
                 input_rect_to_cs_tiles = self.layers[i].new_engine.init_data[1] # input rectangle to cs tile list mapped dictionary
                 cs_islands = self.layers[i].new_engine.init_data[2] #corner stitch islands
                 initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
-                #print(self.layers[i].name)
+                print(self.layers[i].name)
                 
                 self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
-                """
+                #"""
                 for tb_eval in self.layers[i].forward_cg.tb_eval_h:
                     print("ID",tb_eval.ID)
                     for edge in tb_eval.graph.edges:
@@ -1132,7 +1132,7 @@ class Structure_3D():
                     for vert in tb_eval.graph.vertices:
                         print(vert.coordinate, vert.min_loc)
                 input()
-                """
+                #"""
                
         #----------------------------------------for debugging-----------------------------------------#
         '''
@@ -1351,7 +1351,8 @@ class Structure_3D():
                                     ver_node.edges.append(new_edge)
         
         
-        
+        #hor_node.add_forward_missing_edges(constraint_info='MinHorSpacing')
+        #ver_node.add_forward_missing_edges(constraint_info='MinVerSpacing')
         
         hor_node.create_forward_cg(constraint_info='MinHorSpacing')
         ver_node.create_forward_cg(constraint_info='MinVerSpacing')
@@ -1437,6 +1438,41 @@ class Node_3D(Node):
                 vert=Vertex(coordinate=coord,index=i)
                 self.vertices.append(vert)
         
+    
+    def add_forward_missing_edges(self,constraint_info):   
+        # adding missing edges in between two consecutive vertices to make sure that relative location is there
+        dictList=[]
+        for edge in self.edges:
+            dictList.append(edge.getEdgeDict())
+        d = defaultdict(list)
+        for i in dictList:
+            k, v = list(i.items())[0]
+            d[k].append(v)
+        #print(list(d.keys()))
+        #input()
+        
+        
+        index_h= constraint_name_list.index(constraint_info)
+        for i in range(len(self.vertices)-1):
+            origin=self.vertices[i]
+            dest=self.vertices[i+1]
+             
+            comp_type_='Flexible'
+            type='non-fixed'
+            value=100 # minimum constraint value (0.1mm)
+            weight= 2*value
+            #if (origin.propagated==False or dest.propagated==False) and (origin.index,dest.index) not in list(d.keys()):
+            if  (origin.index,dest.index) not in list(d.keys()):
+             
+                e = Edge(source=origin, dest=dest, constraint=value, index=index_h, type=type, weight=weight,comp_type=comp_type_)
+
+                self.edges.append(e)
+        
+        
+    
+    
+    
+    
     def create_forward_cg(self, constraint_info=None):
         '''
         creates forward cg and returns tb_val_graph for top-down location propagation.
@@ -1466,13 +1502,13 @@ class Node_3D(Node):
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
-        '''print("A")
+        """print("A")
         if self.id==-3:
             for vert in self.vertices:
                 print(vert.coordinate)
             for edge in graph.nx_graph_edges:
                 edge.printEdge()
-        input()'''
+        input()"""
         if len(graph.nx_graph_edges)>0:
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=self.id)
         
@@ -1541,12 +1577,12 @@ class Node_3D(Node):
         
         
 
-        """if self.id==-4:
+        '''if self.id==-3:
             for vert in self.vertices:
                 print(vert.coordinate)
             for edge in graph.nx_graph_edges:
                 edge.printEdge()
-        input()"""
+        input()'''
         
         self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
         

@@ -697,15 +697,13 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
 
     #makes sure each dependent vertex has a single reference vertex
     dependent_vertices,graph,fixed_edges=reference_edge_handling(graph_in=graph,ID=ID)        
-                     
-    '''
-    print(ID)
-    if ID==22:
+    
+    if ID==-3:
         for vert,edge_list in dependent_vertices.items():
             vert.printVertex()
             for edge in edge_list:
                 edge.printEdge()
-    '''
+        input()
     # topological sorting of vertices in dependent_vertices
     dep_vertices=list(dependent_vertices.keys())
     dep_vertices.sort(key=lambda x: x.index)
@@ -1034,6 +1032,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                             #print(edge.source.coordinate)
                             ref_vert=edge.source
                             fixed_dim=edge.constraint
+                    
 
             for i in range(len(dependent_vertices[vertex])): 
                 edge=dependent_vertices[vertex][i]
@@ -1101,6 +1100,9 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                         #if edge in graph.nx_graph_edges:
                             #graph.nx_graph_edges.remove(edge)
                 else:
+                    if ID==-3:
+                        edge.printEdge()
+                        input()
                     pot_fix_dim=None
                     if edge.comp_type=='Flexible': #bw vertex
                         for edge1 in graph.nx_graph_edges:
@@ -1114,6 +1116,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                         else:
                             potential_fixed_dim=fixed_dim-edge.constraint
                     else:
+                        #if edge.source.index<ref_vert.index:
                         potential_fixed_dim=fixed_dim-edge.constraint
 
                     #potential_fixed_dim=fixed_dim-edge.constraint
