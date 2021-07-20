@@ -16,7 +16,7 @@ import numpy as np
 import math
 from bisect import bisect_left
 from core.engine.ConstrGraph.CGStructures import Vertex, Edge, Graph, find_longest_path, Top_Bottom, fixed_edge_handling
-
+from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
 #from powercad.corner_stitch.constraint import constraint
 #########################################################################################################################
 
@@ -78,6 +78,9 @@ class ConstraintGraph:
         self.minLocationV={}
         self.minX={}
         self.minY={}
+        self.LocationH={}
+        self.LocationV={}
+
 
 
     def select_nodes_from_tree(self,h_nodelist=None, v_nodelist=None):
@@ -570,8 +573,8 @@ class ConstraintGraph:
 
                         if node_id in self.via_coordinates_h:
                             for coord_list in self.via_coordinates_h[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                     else:
                         for vertex in self.hcg_vertices[node_id]:
@@ -582,8 +585,8 @@ class ConstraintGraph:
                                         vertex.propagated=True
                             if node_id in self.via_coordinates_h:
                                 for coord_list in self.via_coordinates_h[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
         
         for node_id,coord_list in self.y_coordinates.items():
@@ -610,8 +613,8 @@ class ConstraintGraph:
 
                         if node_id in self.via_coordinates_v:
                             for coord_list in self.via_coordinates_v[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                             
                     else:
@@ -623,8 +626,8 @@ class ConstraintGraph:
                                         vertex.propagated=True
                             if node_id in self.via_coordinates_v:
                                 for coord_list in self.via_coordinates_v[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
                                         
 
@@ -2459,14 +2462,22 @@ class ConstraintGraph:
         graph.create_nx_graph()
         
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
-        '''if ID==1:
-            for vertex in vertices:
-                print(vertex.coordinate)
-            for edge in graph.nx_graph_edges:
-                edge.printEdge()'''
+
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
+            #if ID==1:
+                #edge.printEdge()
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+                '''if edge.constraint>0 and edge.type=='fixed':
+                    
+                    if edge.comp_type=='Fixed':
+                        edge.printEdge()
+                        print(find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])
+                        print("ERROR: Dimension cannot be fixed. Please update constraint table.")
+                        exit()
+                    else:
+                        edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
+                else:'''
                 redundant_edges.append(edge)
                 
         for edge in redundant_edges:
@@ -2549,6 +2560,7 @@ class ConstraintGraph:
         
         
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
+        graph_for_top_down_evaluation.create_nx_graph()
         mem = Top_Bottom(ID, parentID, graph_for_top_down_evaluation)  # top to bottom evaluation purpose
         self.tb_eval_h.append(mem)
         
@@ -2647,7 +2659,7 @@ class ConstraintGraph:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
@@ -2656,8 +2668,9 @@ class ConstraintGraph:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
@@ -2687,7 +2700,12 @@ class ConstraintGraph:
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
-                                   
+                                    #print("ADDED",e.printEdge())
+
+
+
+
+
             
             vertices_index=[i.index for i in self.hcg_vertices[parentID]]
             vertices_index.sort()
@@ -2721,6 +2739,15 @@ class ConstraintGraph:
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+                '''if edge.constraint>0 and edge.type=='fixed':
+                    if edge.comp_type=='Fixed':
+                        edge.printEdge()
+                        print(find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])
+                        print("ERROR: Dimension cannot be fixed. Please update constraint table.")
+                        exit()
+                    else:
+                        edge.constraint=find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2]
+                else:'''
                 redundant_edges.append(edge)
         for edge in redundant_edges:
             if edge.constraint>0:
@@ -2800,6 +2827,7 @@ class ConstraintGraph:
         
         self.removable_vertices_v[ID]=removable_vertex
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
+        graph_for_top_down_evaluation.create_nx_graph()
         mem = Top_Bottom(ID, parentID, graph_for_top_down_evaluation)  # top to bottom evaluation purpose
         self.tb_eval_v.append(mem)
         
@@ -2902,7 +2930,7 @@ class ConstraintGraph:
                     for edge in graph.nx_graph_edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed' and edge.comp_type=='Fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesv_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
@@ -2913,8 +2941,8 @@ class ConstraintGraph:
                                 
 
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
@@ -5737,831 +5765,84 @@ class ConstraintGraph:
         :return: evaluated HCG for N layouts
         """
         #"""
-        if level == 1:
-            #TBeval is Top_Bottom evaluation class object, where all constraint graphs with propagated room from child are stored
-            for element in reversed(self.Tbeval):
-                if element.parentID == None:
-                    G2 = element.graph # extracting graph for root node of the tree
-
-                    label4 = copy.deepcopy(element.labels)
-
-                    d3 = defaultdict(list)
-                    for i in label4:
-                        (k1), v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
-                        d3[(k1)].append(v)
-                    # print d3
-                    edgelabels = {}
-                    edge_label = {}
-                    edge_weight = {}
-                    for (k), v in list(d3.items()):
-                        values = []
-                        for j in range(len(v)):
-                            values.append(v[j][0])
-                        value = max(values)
-                        for j in range(len(v)):
-                            if v[j][0] == value:
-                                edgelabels[(k)] = v[j]
-                                edge_label[k] = value
-                                edge_weight[k] = v[j][3]
-
-                    td_eval_edges = {}
-                    for el in reversed(self.Tbeval):
-                        if el.parentID == element.ID and el.ID in self.top_down_eval_edges_h:
-                            for node, edge in list(self.top_down_eval_edges_h[el.ID].items()):
-                                for (src, dest), value in list(edge.items()):
-                                    if self.x_coordinates[el.ID][src] in self.x_coordinates[element.ID] and self.x_coordinates[el.ID][dest] in \
-                                            self.x_coordinates[element.ID]:
-                                        source = self.x_coordinates[element.ID].index(self.x_coordinates[el.ID][src])
-                                        destination = self.x_coordinates[element.ID].index(self.x_coordinates[el.ID][dest])
-                                        td_eval_edges[(source, destination)] = value
-
-                    d3 = defaultdict(list)
-                    for (k), v in list(edgelabels.items()):
-                        # print (k),v
-                        d3[k].append(v[0])
-                    # raw_input()
-                    X = {}
-                    V = []
-                    for k1, v1 in list(d3.items()):
-                        X[k1] = max(v1)
-                    for k, v in list(X.items()):
-                        V.append((k[0], k[1], v))
-                    G = nx.MultiDiGraph()
-                    n = list(element.graph.nodes())
-                    G.add_nodes_from(n)
-                    # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                    G.add_weighted_edges_from(V)
-                    A = nx.adjacency_matrix(G)
-                    B1 = A.toarray()
-                    n.sort()
-                    start = n[0]
-                    end = n[-1]
-                    PATH, Value, Sum = self.LONGEST_PATH(B1, start, end)
-                    edges_on_longest_path = {}
-                    for i in range(len(PATH) - 1):
-                        if (PATH[i], PATH[i + 1]) in list(X.keys()):
-                            edges_on_longest_path[(PATH[i], PATH[i + 1])] = Value[i]
-
-                    H_all=[]
-                    s = seed
-                    for i in range(N):
-                        seed = s + i * 1000
-                        count = 0
-                        H = []
-
-                        for (k), v in list(edgelabels.items()):
-                            count += 1
-                            if (k) in edges_on_longest_path:
-
-
-                                if v[-1] == 'Device':  # ledge width
-
-                                    val = v[0]
-                                elif (k[1],k[0]) in td_eval_edges:
-                                    random.seed(seed + count * 1000)
-                                    if (v[0]>abs(td_eval_edges[(k[1],k[0])])):
-                                        val=random.randrange(v[0],abs(td_eval_edges[(k[1],k[0])]))
-                                    else:
-                                        val=v[0]
-                                elif v[1]=='0':
-                                    val=v[0]
-                                #elif v[2]==1:
-                                    #val=v[0]
-
-                                elif v[0]>1000 and v[0]<=3000:
-
-                                    random.seed(seed + count * 1000)
-                                    #val = int(min(1000 * v[0], max(v[0], random.gauss(v[0], SD))))
-                                    #print (k),v
-                                    if N>5 and N<100:
-                                        val=random.randrange(v[0],int((N/5.0)*v[0]))
-                                    elif N>=100:
-                                        val = random.randrange(v[0], int((N / 300.0) * v[0]))
-                                    else:
-                                        val = random.randrange(v[0], N * v[0])
-                                elif v[0]>3000 :
-                                    random.seed(seed + count * 1000)
-                                    # val = int(min(1000 * v[0], max(v[0], random.gauss(v[0], SD))))
-                                    #print (k), v
-                                    if N>10.0 and N<100:
-                                        val = random.randrange(v[0], int((N/10.0)* v[0]))
-                                    elif N>=100:
-                                        val = random.randrange(v[0], int((N /300.0) * v[0]))
-                                    else:
-                                        val = random.randrange(v[0], N * v[0])
-                                else:
-                                    val=v[0]
-                            else:
-                                val=v[0]
-                            # print (k),v[0],val
-                            #print (k),v[0],val
-                            H.append((k[0], k[1], val))
-                        H_all.append(H)
-                    # print len(D_3), D_3
-                    #print H_all
-
-                    G_all = []
-                    for i in range(len(H_all)):
-                        G = nx.MultiDiGraph()
-                        n = list(G2.nodes())
-                        G.add_nodes_from(n)
-                        # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                        #print i,H_all[i]
-                        G.add_weighted_edges_from(H_all[i])
-                        G_all.append(G)
-                    # print G_all
-                    loct = []
-                    for i in range(len(G_all)):
-                        new_Xlocation = []
-                        A = nx.adjacency_matrix(G_all[i])
-                        B = A.toarray()
-                        source = n[0]
-                        target = n[-1]
-                        X = {}
-                        for i in range(len(B)):
-
-                            for j in range(len(B[i])):
-                                # print B[i][j]
-
-                                if B[i][j] != 0:
-                                    X[(i, j)] = B[i][j]
-
-                        Pred = {}  ## Saves all predecessors of each node{node1:[p1,p2],node2:[p1,p2..]}
-                        for i in range(source, target + 1):
-                            j = source
-                            while j != target:
-                                if B[j][i] != 0:
-                                    # print Matrix[j][i]
-                                    key = i
-                                    Pred.setdefault(key, [])
-                                    Pred[key].append(j)
-                                if i == source and j == source:
-                                    key = i
-                                    Pred.setdefault(key, [])
-                                    Pred[key].append(j)
-                                j += 1
-
-                        # print Pred
-                        n = list(Pred.keys())  ## list of all nodes
-                        # print n
-
-                        dist = {}  ## Saves each node's (cumulative maximum weight from source,predecessor) {node1:(cum weight,predecessor)}
-                        position = {}
-
-                        for j in range(source, target + 1):
-                            # print j
-
-                            node = j
-                            for i in range(len(Pred[node])):
-                                pred = Pred[node][i]
-
-                                # print node, pred
-
-                                if j == source:
-                                    dist[node] = (0, pred)
-                                    key = node
-                                    position.setdefault(key, [])
-                                    position[key].append(0)
-                                else:
-                                    pairs = (max(position[pred]) + (X[(pred, node)]), pred)
-
-                                    # if dist[node][0]<pairs[0]:
-                                    # print pairs[0]
-                                    f = 0
-                                    for x, v in list(dist.items()):
-                                        # print"x", x
-                                        if node == x:
-                                            if v[0] > pairs[0]:
-                                                # print "v", v[0]
-                                                f = 1
-                                    if f == 0:
-                                        dist[node] = pairs
-
-                                    # value_1.append(X[(pred, node)])
-                                    key = node
-                                    position.setdefault(key, [])
-                                    position[key].append(pairs[0])
-
-                        # print "dist=", dist, position
-                        loc_i = {}
-                        for key in position:
-                            loc_i[key] = max(position[key])
-                            # if key==n[-2]:
-                            # loc_i[key] = 19
-                            # elif key==n[-1]:
-                            # loc_i[key] = 20
-                            new_Xlocation.append(loc_i[key])
-                        loct.append(loc_i)
-                        #print"LOCT",loct
-                        # print new_Xlocation
-                        self.NEWXLOCATION.append(new_Xlocation)
-
-
-                    n = list(G2.nodes())
-                    Location = {}
-                    key = element.ID
-                    Location.setdefault(key, [])
-
-                    for i in range(len(self.NEWXLOCATION)):
-                        loct = {}
-                        for j in range(len(self.x_coordinates[element.ID])):
-                            loct[self.x_coordinates[element.ID][j]] = self.NEWXLOCATION[i][j]
-                        Location[element.ID].append(loct)
-                        # print Location
-                    self.LocationH = Location
-
-
-                    #
-                else:
-                    # continue
-                    if element.parentID in list(self.LocationH.keys()):
-
-                        # if element.parentID==1:
-                        for node in self.H_NODELIST:
-                            if node.id == element.parentID:
-                                PARENT = node
-                        ZDL_H = []
-                        for rect in PARENT.stitchList:
-                            if rect.nodeId == element.ID:
-                                if rect.cell.x not in ZDL_H:
-                                    ZDL_H.append(rect.cell.x)
-                                    ZDL_H.append(rect.EAST.cell.x)
-                                if rect.EAST.cell.x not in ZDL_H:
-                                    ZDL_H.append(rect.EAST.cell.x)
-                            # print ZDL_V
-
-                        for vertex in self.vertex_list_h[element.ID]:
-                            if vertex.init_coord in self.x_coordinates[element.parentID] and self.bw_type in vertex.associated_type:
-                                ZDL_H.append(vertex.init_coord)
-
-                        P = set(ZDL_H)
-                        ZDL_H = list(P)
-                        #print "P_CORD", ZDL_H
-
-                        V = self.LocationH[element.parentID]
-                        #print "V",V
-                        loct = []
-                        count=0
-                        for location in V:
-                            #print"layout",count
-                            #print "LOC",element.ID,location
-
-                            seed=seed + count * 1000
-                            count+=1
-                            self.Loc_X = {}
-
-                            for coordinate in self.x_coordinates[element.ID]:
-
-                                # if element.parentID==1:
-                                for k, v in list(location.items()):
-                                    if k == coordinate and k in ZDL_H:
-                                        self.Loc_X[self.x_coordinates[element.ID].index(coordinate)] = v
-                                        # print "v",self.Loc_X
-                                    else:
-                                        continue
-                                '''
-                                else:
-                                    for k, v in location.items():
-                                        if k==coordinate:
-                                            self.Loc_X[self.x_coordinates[element.ID].index(coordinate)]=v
-                                            #print "v",self.Loc_X
-                                        else:
-                                            continue
-                                '''
-
-                            #print"start",self.Loc_X
-                            d3 = defaultdict(list)
-                            W = defaultdict(list)
-                            d4 = defaultdict(list) # tracking fixed width components
-                            for i in element.labels:
-                                #print i
-                                k, v = list(i.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-
-                                W[k].append(v[3])
-
-                                if v[4]=="Device":
-                                    d4[k].append(v[0])
-
-                                '''
-                                if v[3]==None:
-                                    W[k].append(1)
-                                else:
-                                    W[k].append(v[3])
-                                '''
-
-                            X = {}
-
-                            Fix={}
-                            #Fixed=[]
-                            Weights = {}
-                            for i, j in list(d3.items()):
-                                X[i] = max(j)
-                            #print "XX",X
-                            #print"Before_h",element.ID,self.Loc_X
-
-                            if element.ID in list(self.removable_nodes_h.keys()):
-                                removable_nodes = self.removable_nodes_h[element.ID]
-                                td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                                for node in removable_nodes:
-                                    reference = self.reference_nodes_h[element.ID][node][0]
-                                    value = self.reference_nodes_h[element.ID][node][1]
-                                    for k, v in list(td_eval_edges.items()):
-                                        for (src, dest), weight in list(v.items()):
-                                            if dest != reference and node in self.Loc_X and reference not in self.Loc_X:
-                                                self.Loc_X[reference] = self.Loc_X[node] - value
-
-                            #if self.flexible==True:
-                            if element.ID in list(self.removable_nodes_h.keys()):
-                                removable_nodes = self.removable_nodes_h[element.ID]
-                                for node in removable_nodes:
-                                    reference = self.reference_nodes_h[element.ID][node][0]
-                                    value = self.reference_nodes_h[element.ID][node][1]
-                                    if reference in self.Loc_X:
-                                        self.Loc_X[node] = self.Loc_X[reference] + value
-
-                            if element.ID in list(self.top_down_eval_edges_h.keys()):
-                                td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                                for k, v in list(td_eval_edges.items()):
-                                    for (src, dest), weight in list(v.items()):
-                                        if src>dest:
-                                            for node in range(dest,src):
-                                                H = []
-                                                if node in self.Loc_X:
-                                                    for key, value in list(X.items()):
-                                                        H.append((key[0], key[1], value))
-                                                    G = nx.MultiDiGraph()
-                                                    n = list(element.graph.nodes())
-                                                    G.add_nodes_from(n)
-                                                    G.add_weighted_edges_from(H)
-                                                    A = nx.adjacency_matrix(G)
-                                                    B = A.toarray()
-                                                    path,Value,distance=self.LONGEST_PATH(B,node,src)
-                                                    if distance!=None:
-                                                        if weight<0 and distance<abs(weight):
-                                                            new_weight=weight+distance
-                                                            v[(node,dest)]=new_weight
-                                                            del v[(src,dest)]
-                                                            break
-                                                    else:
-                                                        continue
-                                #print self.top_down_eval_edges_h[element.ID]
-                            #print "step-1", self.Loc_X
-
-                            if element.ID in list(self.top_down_eval_edges_h.keys()):
-                                td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                                for k, v in list(td_eval_edges.items()):
-                                    #print k,v
-                                    for (src, dest), weight in list(v.items()):
-                                        if src in self.Loc_X:
-
-                                            val1 = self.Loc_X[src] + weight
-
-                                            if dest > src and (src,dest) in X:
-                                                val2 = self.Loc_X[src] + X[(src, dest)]
-                                            elif dest<src and (dest,src) in X:
-                                                val2 = self.Loc_X[src] - X[(dest, src)]
-
-                                            val3 = None
-                                            for pair,value in list(X.items()):
-                                                if pair[1]==dest and pair[0] in self.Loc_X:
-                                                    val3 = self.Loc_X[pair[0]] + X[(pair[0], dest)]
-                                                    break
-                                                # print src,dest,val1,val3
-                                            if val3!=None and dest not in self.Loc_X:
-                                                #print val1,val2,val3,dest
-                                                self.Loc_X[dest] = max(val1,val2,val3)
-                                                if element.ID in list(self.removable_nodes_h.keys()):
-                                                    removable_nodes = self.removable_nodes_h[element.ID]
-                                                    for node in removable_nodes:
-                                                        reference = self.reference_nodes_h[element.ID][node][0]
-                                                        value = self.reference_nodes_h[element.ID][node][1]
-                                                        if reference in self.Loc_X:
-                                                            self.Loc_X[node] = self.Loc_X[reference] + value
-
-                            #print "step-2",self.Loc_X
-                            H = []
-                            for i, j in list(d4.items()):
-                                Fix[i] = max(j)
-                            #for i, j in list(W.items()):
-                                #Weights[i] = max(j)
-                            #print"X", X,Fix
-                            for k, v in list(X.items()):
-                                H.append((k[0], k[1], v))
-                            #for k, v in Fix.items():
-                                #Fixed.append((k[0], k[1], v))
-                                #Fixed
-                            # print "H", H
-                            #print "Fix",Fix
-                            G = nx.MultiDiGraph()
-                            n = list(element.graph.nodes())
-                            G.add_nodes_from(n)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            G.add_weighted_edges_from(H)
-                            #self.drawGraph_h("new",G,None)
-                            self.FUNCTION(G,element.ID,Random,sid=seed)
-                            #print"FINX",self.Loc_X
-                            loct.append(self.Loc_X)
-                        #print "loct", loct
-                        xloc = []
-                        for k in range(len(loct)):
-                            loc = {}
-                            for k, v in list(loct[k].items()):
-                                loc[self.x_coordinates[element.ID][k]] = v
-                            xloc.append(loc)
-                        self.LocationH[element.ID] = xloc
-                        #print "N",self.LocationH
-        #"""
-        if level == 2 or level == 3 :#or level==1
-            for element in reversed(self.Tbeval):
-                s = seed
-                """
-                if element.parentID == None or element.parentID<0:
-
-                    loct = []
-                    s = seed
-                    for i in range(N):
-                        self.seed_h.append(s + i * 1000)
-
-                    td_eval_edges = {}
-                    for el in reversed(self.Tbeval):
-                        if el.parentID == element.ID and el.ID in self.top_down_eval_edges_h:
-                            for node, edge in list(self.top_down_eval_edges_h[el.ID].items()):
-                                for (src, dest), value in list(edge.items()):
-                                    if self.x_coordinates[el.ID][src] in self.x_coordinates[element.ID] and self.x_coordinates[el.ID][dest] in \
-                                            self.x_coordinates[element.ID]:
-                                        source = self.x_coordinates[element.ID].index(self.x_coordinates[el.ID][src])
-                                        destination = self.x_coordinates[element.ID].index(self.x_coordinates[el.ID][dest])
-                                        td_eval_edges[(source, destination)] = value
-
-
-
-                    
-                    if level!=1:
-                        for m in range(N):  ### No. of outputs
-
-                            d3 = defaultdict(list)
-                            W = defaultdict(list)
-                            for i in element.labels:
-                                k, v = list(i.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-                                W[k].append(v[3])
-                                '''
-                                if v[3]==None:
-                                    W[k].append(1)
-                                else:
-                                    W[k].append(v[3])
-                                '''
-                            # print "D3", d3,W
-                            X = {}
-                            H = []
-                            Weights = {}
-                            for i, j in list(d3.items()):
-                                X[i] = max(j)
-                            #for i, j in list(W.items()):
-                                #Weights[i] = max(j)
-                            # print"X",Weights
-                            for k, v in list(X.items()):
-                                H.append((k[0], k[1], v))
-                            # print "H", H
-                            G = nx.MultiDiGraph()
-                            n = list(element.graph.nodes())
-                            G.add_nodes_from(n)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            G.add_weighted_edges_from(H)
-                            if level == 2:
-                                self.Loc_X = {}
-                                for k, v in list(self.XLoc.items()):
-                                    if k in n:
-                                        self.Loc_X[k] = v
-                            elif level == 3:
-                                self.Loc_X = {}
-
-                                for i, j in list(self.XLoc.items()):
-                                    # print j
-                                    if i == 1:
-                                        for k, v in list(j.items()):
-                                            self.Loc_X[k] = v
-
-                                            # print v
-                            #print"XLoc_before", self.Loc_X
-
-                            self.FUNCTION(G, element.ID,Random,sid=self.seed_h[m])
-                            #print"FINX_after",self.Loc_X
-                            loct.append(self.Loc_X)
-                    else:
-
-                        loct=[]
-                        for id in range(len(self.XLoc)):
-                            d3 = defaultdict(list)
-                            W = defaultdict(list)
-                            for i in element.labels:
-                                k, v = list(i.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-                                W[k].append(v[3])
-                            X = {}
-                            H = []
-                            Weights = {}
-                            for i, j in list(d3.items()):
-                                X[i] = max(j)
-                            for i, j in list(W.items()):
-                                Weights[i] = max(j)
-                            # print"X",Weights
-                            for k, v in list(X.items()):
-                                H.append((k[0], k[1], v))
-                            # print "H", H
-                            G = nx.MultiDiGraph()
-                            n = list(element.graph.nodes())
-                            G.add_nodes_from(n)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            G.add_weighted_edges_from(H)
-                            self.Loc_X = {}
-                            for k, v in list(self.XLoc[id].items()):
-                                if k in n:
-                                    self.Loc_X[k] = v
-                            #print self.Loc_X
-                            self.FUNCTION(G, element.ID, Random, sid=self.seed_h[id])
-                            #print self.Loc_X
-                            loct.append(self.Loc_X)
-
-                    self.NEWXLOCATION = loct
-
-                    # print "N",self.x_coordinates[element.ID],self.NEWXLOCATION
-                    Location = {}
-                    key = element.ID
-                    Location.setdefault(key, [])
-
-                    for i in range(len(self.NEWXLOCATION)):
-                        loct = {}
-                        for j in range(len(self.x_coordinates[element.ID])):
-                            loct[self.x_coordinates[element.ID][j]] = self.NEWXLOCATION[i][j]
-                        Location[element.ID].append(loct)
-                        # print Location
-                    self.LocationH = Location
-                    #print"L", self.LocationH
-                    #
-                else:
-                    # continue
-                """
+        if level == 2:
+            for element in reversed(self.tb_eval_h):
                 if element.parentID in list(self.LocationH.keys()):
-
-                    # if element.parentID == 1:
-                    for node in self.H_NODELIST:
+                    for node in self.hcs_nodes:
                         if node.id == element.parentID:
-                            PARENT = node
-                    ZDL_H = []
-                    if element.parentID>0:
-                        for rect in PARENT.stitchList:
-                            if rect.nodeId == element.ID:
-                                if rect.cell.x not in ZDL_H:
-                                    ZDL_H.append(rect.cell.x)
-                                    ZDL_H.append(rect.EAST.cell.x)
-                                if rect.EAST.cell.x not in ZDL_H:
-                                    ZDL_H.append(rect.EAST.cell.x)
+                            parent=node
+                            break
 
-                        for vertex in self.vertex_list_h[element.ID]:
-                            if vertex.init_coord in self.x_coordinates[element.parentID] and self.bw_type in vertex.associated_type:
-                                ZDL_H.append(vertex.init_coord)
+                ZDL_H = []
+                if element.parentID>0:
+
+                    if element.ID in self.propagated_parent_coord_hcg:
+                        ZDL_H=self.propagated_parent_coord_hcg[element.ID]
                         
-                        for vertex in self.vertex_list_h[element.ID]:
-                            if vertex.init_coord in self.x_coordinates[element.parentID] and self.via_type in vertex.associated_type:
-                                ZDL_H.append(vertex.init_coord)
+
+                else:
+                    if element.parentID in self.propagated_parent_coord_hcg:
+                        ZDL_H=self.propagated_parent_coord_hcg[element.parentID]
                     else:
                         ZDL_H = self.x_coordinates[element.parentID]
+                    if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
+                        for vertex in self.hcg_vertices[element.ID]:
+                            ZDL_H.append(vertex.coordinate)
+                    else:
+                        #print(self.LocationH)
+                        if element.parentID in self.LocationH:
+                            parent_coords=list(self.LocationH[element.parentID][0].keys())
+                            for coord in parent_coords:
+                                if coord not in ZDL_H:
+                                    ZDL_H.append(coord)
+                #ZDL_H=parent_coordinates
 
+                # deleting multiple entries
+                P = set(ZDL_H)
+                ZDL_H = list(P)
+                ZDL_H.sort() # sorted list of HCG vertices which are propagated from parent
+                #print(element.ID,ZDL_H)
 
+                parent_locations=self.LocationH[element.parentID]
+                locations_=[]
+                count=0
+                for location in parent_locations:
+                    loc_x={}
+                    for vertex in element.graph.vertices:
+                        if vertex.coordinate in location and vertex.coordinate in ZDL_H:
+                            loc_x[vertex.coordinate]=location[vertex.coordinate]
+                        else:
+                            continue
 
-                    P = set(ZDL_H)
-                    ZDL_H = list(P)
-                    ZDL_H.sort()
-
-                    V = self.LocationH[element.parentID]
-                    #print ("V",element.parentID,V)
-            
-                    loct = []
-                    count=0
-                    for location in V:
-                        #print ("Node_H",element.ID,location)
-                        count+=1
-                        self.Loc_X = {}
-
-                        # print NLIST
-                        for coordinate in self.x_coordinates[element.ID]:
-
-                            # if element.parentID == 1:
-
-                            for k, v in list(location.items()):
-                                if k == coordinate and k in ZDL_H:
-                                    # if self.x_coordinates[element.ID].index(coordinate) not in self.Loc_X:
-                                    # if self.x_coordinates[element.ID].index(coordinate) not in NLIS
-                                    self.Loc_X[self.x_coordinates[element.ID].index(coordinate)] = v
-
-
-                                else:
-                                    continue
-                        if element.parentID<0:
-                            left=self.x_coordinates[element.ID][1]
-                            right=self.x_coordinates[element.ID][-2]                        
-                        
-                                            
+                    if element.parentID<0 and self.via_type==None:
+                        ledge_dims=self.constraint_info.get_ledgeWidth()
+                        left=self.x_coordinates[element.ID][1]
+                        right=self.x_coordinates[element.ID][-2]                        
+                    
                                         
                                     
+                                
 
-                            start=self.x_coordinates[element.ID][0]
-                            end=self.x_coordinates[element.ID][-1]
-                            l_w=self.get_ledgeWidth()
-                            self.Loc_X[self.x_coordinates[element.ID].index(left)]=self.Loc_X[self.x_coordinates[element.ID].index(start)]+l_w
-                            self.Loc_X[self.x_coordinates[element.ID].index(right)] = self.Loc_X[self.x_coordinates[element.ID].index(end)]-l_w
-
-                        NLIST = []
-                        for k, v in list(self.Loc_X.items()):
-                            NLIST.append(k)
-                        # NODES = reversed(NLIST)
-                        # print NODES
-                        if level == 3:
-                            for i, j in list(self.XLoc.items()):
-                                if i == element.ID:
-                                    for k, v in list(j.items()):
-                                        # self.Loc_X[k]=self.Loc_X[0]+v
-
-                                        for node in NLIST[::-1]:
-
-                                            if node >= k:
-                                                continue
-                                            else:
-                                                # print node, k, v, self.Loc_X[node]
-                                                p = self.Loc_X[node]
-                                                # print p + v
-                                                self.Loc_X[k] = p + v
-                                                break
-
-                        # print "v2", self.Loc_X
-                        d3 = defaultdict(list)
-                        d4 = defaultdict(list)
-                        W = defaultdict(list)
-                        for i in element.labels:
-                            k, v = list(i.items())[0]
-                            # print v[0]
-                            d3[k].append(v[0])
-                            W[k].append(v[3])
-                            #print k,v
-                            if v[4]=="Device":
-                                d4[k].append(v[0])
-                            '''
-                            if v[3]==None:
-                                W[k].append(1)
-                            else:
-                                W[k].append(v[3])
-                            '''
-                        # print "D3", d3,W
-                        X = {}
-                        H = []
-                        Fix={}
-                        Weights = {}
-
-                        for i, j in list(d3.items()):
-                            X[i] = max(j)
-                            if i[0] in list(self.Loc_X.keys()) and i[1] in list(self.Loc_X.keys()):
-                                # print self.Loc_Y[i[0]],self.Loc_Y[i[1]]
-                                if (self.Loc_X[i[1]] - self.Loc_X[i[0]]) < max(j):
-                                    print("ERROR", element.ID,i, max(j), self.Loc_X[i[1]] - self.Loc_X[i[0]])
-
-                                    # distance=max(j)-abs((self.Loc_X[i[1]]-self.Loc_X[i[0]]))
-                                    # self.Loc_X[i[1]]+=distance
-
-                                else:
-                                    continue
+                        start=self.x_coordinates[element.ID][0]
+                        end=self.x_coordinates[element.ID][-1]
+                                                    
+                        loc_x[left]=loc_x[start]+ledge_dims[0]
+                        loc_x[right]=loc_x[end]-ledge_dims[0]
                         
-                        #print "v3",element.ID, self.Loc_X
-                        for i, j in list(d3.items()):
-                            X[i] = max(j)
-                        for i, j in list(d4.items()):
-                            Fix[i] = max(j)
-                        #print Fix
-                        #for i, j in list(W.items()):
-                            #Weights[i] = max(j)
-                        # print"X",Weights
-                        for k, v in list(X.items()):
-                            H.append((k[0], k[1], v))
-                        #print "H", Fix
-                        G = nx.MultiDiGraph()
-                        n = list(element.graph.nodes())
-                        G.add_nodes_from(n)
-                        # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                        G.add_weighted_edges_from(H)
-                        seed = count * 1000
-                        #print("S",seed)
-                        #print(self.removable_nodes_h[element.ID],self.top_down_eval_edges_h[element.ID],self.reference_nodes_h[element.ID])
-                        if element.ID in list(self.removable_nodes_h.keys()):
-                            removable_nodes = self.removable_nodes_h[element.ID]
-                            if element.ID in list(self.top_down_eval_edges_h.keys()):
-                                td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                                for node in removable_nodes:
-                                    reference = self.reference_nodes_h[element.ID][node][0]
-                                    value = self.reference_nodes_h[element.ID][node][1]
-                                    for k, v in list(td_eval_edges.items()):
-                                        for (src, dest), weight in list(v.items()):
-                                            if dest != reference and node in self.Loc_X and reference not in self.Loc_X:
-                                                self.Loc_X[reference] = self.Loc_X[node] - value
-                        
-                        """# if any node is already fixed and in between top down edge source and destination
-                        if element.ID in list(self.top_down_eval_edges_h.keys()):
-                            td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                            for k, v in list(td_eval_edges.items()):
-                                for (src, dest), weight in list(v.items()):
-                                    if src>dest:
-                                        for node in range(dest,src+1):
-                                            A = nx.adjacency_matrix(G)
-                                            B = A.toarray()
-                                            path,Value,distance=self.LONGEST_PATH(B,node,src)
-                                            
-                                            if distance!=None:
-                                                if node in self.Loc_X:
-                                                    if weight<0 and distance<abs(weight):
-                                                        new_weight=weight+distance
-                                                        v[(node,dest)]=new_weight
-                                                        if (src,dest) in v:
-                                                            del v[(src,dest)]
-                                                            break
-                                                        
-                                                #else:
-                                                    elif weight<0 and distance==abs(weight): # if both forward and backward edge have same constraint, it becomes a fixed edge
-                                                        print(self.removable_nodes_h,self.reference_nodes_h)
-                                                        if element.ID in self.removable_nodes_h:
-                                                            self.removable_nodes_h[element.ID].append(src)
-                                                            self.reference_nodes_h[element.ID][src]=[dest,distance]
-                                                        else:
-                                                            self.removable_nodes_h[element.ID]=[src]
-                                                            self.reference_nodes_h[element.ID][src]=[dest,distance]
-                                                        if (src,dest) in v:
-                                                            del v[(src,dest)]
-                                                            break
+                    seed=seed+count*1000
+                    #for vert in element.graph.vertices:
+                        #print(vert.coordinate,vert.min_loc)
 
-                        
-                        
-                        
-                        
-                        """
-                        if element.ID in list(self.removable_nodes_h.keys()):
-                            removable_nodes = self.removable_nodes_h[element.ID]
-                            for node in removable_nodes:
-                                reference = self.reference_nodes_h[element.ID][node][0]
-                                value = self.reference_nodes_h[element.ID][node][1]
-                                if reference in self.Loc_X:
-                                    self.Loc_X[node] = self.Loc_X[reference] + value
 
-                        '''print ("Before1",element.ID,self.Loc_X)
-                        if element.ID in list(self.top_down_eval_edges_h.keys()):
-                            td_eval_edges = self.top_down_eval_edges_h[element.ID]
-                            print(td_eval_edges)
-                            for k, v in list(td_eval_edges.items()):
-                                for (src, dest), weight in list(v.items()):
-                                    if src in self.Loc_X:
+                    loc= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=Random, seed=seed)
+                    loc_items=loc.items()
 
-                                        val1 = self.Loc_X[src] + weight
-                                        if dest > src and (src,dest) in X:
-                                            val2 = self.Loc_X[src] + X[(src, dest)]
-                                        elif dest<src and (dest,src) in X:
-                                            val2 = self.Loc_X[src] - X[(dest, src)]
-                                        else:
-                                            val2=0
-                                        val3 = None
-                                        for pair, value in list(X.items()):
-                                            if pair[1] == dest  and pair[0] in self.Loc_X:
-                                                val3 = self.Loc_X[pair[0]] + X[(pair[0], dest)]
-                                                break
-                                        #print (src,dest,val1,val2,val3)
+                    #print("HERE",element.ID,sorted(loc_items))
+                    count+=1
+                    locations_.append(loc)
                                         
-                                        if val3 != None and dest not in self.Loc_X and val1<=0:
-                                            
+                self.LocationH[element.ID]=locations_
 
-                                            self.Loc_X[dest] = max(val1, val2, val3)
-                                            if element.ID in list(self.removable_nodes_h.keys()):
-                                                removable_nodes = self.removable_nodes_h[element.ID]
-                                                for node in removable_nodes:
-                                                    reference = self.reference_nodes_h[element.ID][node][0]
-                                                    value = self.reference_nodes_h[element.ID][node][1]
-                                                    if reference in self.Loc_X:
-                                                        self.Loc_X[node] = self.Loc_X[reference] + value'''
-                        #print ("Before",element.ID,self.Loc_X)
-                        #print(self.top_down_eval_edges_h[element.ID])
-                        #print(self.removable_nodes_h[element.ID])
-                        self.FUNCTION(G,element.ID, Random,sid=seed)
-                        #print("FINX",element.ID,self.Loc_X)
-                        #input()
-                        loct.append(self.Loc_X)
-                    #print "loct", loct
-                    xloc = []
-                    for k in range(len(loct)):
-                        loc = {}
-                        for k, v in list(loct[k].items()):
-                            loc[self.x_coordinates[element.ID][k]] = v
-                        xloc.append(loc)
-                    self.LocationH[element.ID] = xloc
-                #print"Final_H", self.LocationH
         return self.LocationH
 
 
@@ -7308,823 +6589,79 @@ class ConstraintGraph:
 
     def VcgEval(self, level,Random,seed, N):
 
-        # for i in reversed(Tbelement):
-        #"""
-        if level == 1:
-            for element in reversed(self.TbevalV):
-
-                if element.parentID == None:
-
-                    G2 = element.graph
-                    # label=i.labels
-                    label3 = copy.deepcopy(element.labels)
-                    # print "l3",len(label4),label4
-                    d3 = defaultdict(list)
-                    for i in label3:
-                        (k1), v = list(i.items())[
-                            0]  # an alternative to the single-iterating inner loop from the previous solution
-                        d3[(k1)].append(v)
-                    # print "D3", d3
-                    edgelabels = {}
-                    for (k), v in list(d3.items()):
-                        values = []
-                        for j in range(len(v)):
-                            values.append(v[j][0])
-                        value = max(values)
-                        for j in range(len(v)):
-                            if v[j][0] == value:
-                                edgelabels[(k)] = v[j]
-                    # print"VED", edgelabels
-                    td_eval_edges={}
-                    for el in reversed(self.TbevalV):
-                        if el.parentID==element.ID and el.ID in self.top_down_eval_edges_v:
-                            for node,edge in list(self.top_down_eval_edges_v[el.ID].items()):
-                                for (src,dest), value in list(edge.items()):
-                                    if self.y_coordinates[el.ID][src] in self.y_coordinates[element.ID] and self.y_coordinates[el.ID][dest] in self.y_coordinates[element.ID]:
-                                        source=self.y_coordinates[element.ID].index(self.y_coordinates[el.ID][src])
-                                        destination=self.y_coordinates[element.ID].index(self.y_coordinates[el.ID][dest])
-                                        td_eval_edges[(source,destination)]=value
-
-                    #print "TD",td_eval_edges
-
-
-
-                    d3 = defaultdict(list)
-                    for (k), v in list(edgelabels.items()):
-                        #print (k),v
-                        d3[k].append(v[0])
-                    #raw_input()
-                    Y = {}
-                    V=[]
-                    for k1, v1 in list(d3.items()):
-                        Y[k1] = max(v1)
-                    for k, v in list(Y.items()):
-                        V.append((k[0], k[1], v))
-                    GV = nx.MultiDiGraph()
-                    nV = list(element.graph.nodes())
-                    GV.add_nodes_from(nV)
-                    # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                    GV.add_weighted_edges_from(V)
-                    A = nx.adjacency_matrix(GV)
-                    B1 = A.toarray()
-                    nV.sort()
-                    start=nV[0]
-                    end=nV[-1]
-                    PATH,Value,Sum=self.LONGEST_PATH_V(B1,start,end)
-                    edges_on_longest_path={}
-                    for i in range(len(PATH) - 1):
-                        if (PATH[i], PATH[i + 1]) in list(Y.keys()):
-                            edges_on_longest_path[(PATH[i], PATH[i + 1])]=Value[i]
-
-                    #print"here", PATH,Value,Sum
-                    #print edges_on_longest_path
-
-                    #raw_input()
-
-
-                    H_all=[]
-                    s = seed
-                    for i in range(N):
-                        seed = s + i * 1000
-                        count = 0
-                        V = []
-
-                        for (k), v in list(edgelabels.items()):
-                            count += 1
-                            if (k) in edges_on_longest_path:
-
-                                if v[-1] == 'Device':  # ledge width
-
-                                    val = v[0]
-                                elif (k[1],k[0]) in td_eval_edges:
-                                    random.seed(seed + count * 1000)
-                                    if (v[0]>abs(td_eval_edges[(k[1],k[0])])):
-                                        val=random.randrange(v[0],abs(td_eval_edges[(k[1],k[0])]))
-                                    else:
-                                        val=v[0]
-                                elif v[1] == '0':
-                                    val = v[0]
-                                    # elif v[2]==1:
-                                    # val=v[0]
-
-                                elif v[0] > 1000 and v[0] <= 3000:
-
-                                    random.seed(seed + count * 1000)
-                                    # val = int(min(1000 * v[0], max(v[0], random.gauss(v[0], SD))))
-                                    # print (k),v
-                                    if N>5 and N<100:
-                                        val=random.randrange(v[0],int((N/5.0)*v[0]))
-                                    elif N>=100:
-                                        val = random.randrange(v[0], int((N / 300.0) * v[0]))
-                                    else:
-                                        val = random.randrange(v[0], N * v[0])
-                                elif v[0] > 3000:
-                                    random.seed(seed + count * 1000)
-                                    # val = int(min(1000 * v[0], max(v[0], random.gauss(v[0], SD))))
-                                    # print (k), v
-                                    if N>10 and N<100:
-                                        val=random.randrange(v[0],int((N/10.0)*v[0]))
-                                    elif N>=100:
-                                        val = random.randrange(v[0], int((N / 300.0) * v[0]))
-                                    else:
-                                        val = random.randrange(v[0], N * v[0])
-                                else:
-                                    val = v[0]
-                            else:
-                                val=v[0]
-                            # print (k),v[0],val
-                            #print (k),v[0],val
-                            V.append((k[0], k[1], val))
-                        H_all.append(V)
-
-                    #print H_all
-
-                    G_all = []
-                    for i in range(len(H_all)):
-                        G = nx.MultiDiGraph()
-                        n = list(G2.nodes())
-                        G.add_nodes_from(n)
-                        # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                        G.add_weighted_edges_from(H_all[i])
-                        G_all.append(G)
-
-                    loct = []
-                    for i in range(len(G_all)):
-                        new_Ylocation = []
-                        A = nx.adjacency_matrix(G_all[i])
-                        B = A.toarray()
-                        source = n[0]
-                        target = n[-1]
-                        X = {}
-                        for i in range(len(B)):
-
-                            for j in range(len(B[i])):
-                                # print B[i][j]
-
-                                if B[i][j] != 0:
-                                    X[(i, j)] = B[i][j]
-
-                        Pred = {}  ## Saves all predecessors of each node{node1:[p1,p2],node2:[p1,p2..]}
-                        for i in range(source, target + 1):
-                            j = source
-                            while j != target:
-                                if B[j][i] != 0:
-                                    # print Matrix[j][i]
-                                    key = i
-                                    Pred.setdefault(key, [])
-                                    Pred[key].append(j)
-                                if i == source and j == source:
-                                    key = i
-                                    Pred.setdefault(key, [])
-                                    Pred[key].append(j)
-                                j += 1
-
-                        # print Pred
-                        n = list(Pred.keys())  ## list of all nodes
-                        # print n
-
-                        dist = {}  ## Saves each node's (cumulative maximum weight from source,predecessor) {node1:(cum weight,predecessor)}
-                        position = {}
-
-                        for j in range(source, target + 1):
-                            # print j
-
-                            node = j
-                            for i in range(len(Pred[node])):
-                                pred = Pred[node][i]
-
-                                # print node, pred
-
-                                if j == source:
-                                    dist[node] = (0, pred)
-                                    key = node
-                                    position.setdefault(key, [])
-                                    position[key].append(0)
-                                else:
-                                    pairs = (max(position[pred]) + (X[(pred, node)]), pred)
-
-                                    # if dist[node][0]<pairs[0]:
-                                    # print pairs[0]
-                                    f = 0
-                                    for x, v in list(dist.items()):
-                                        # print"x", x
-                                        if node == x:
-                                            if v[0] > pairs[0]:
-                                                # print "v", v[0]
-                                                f = 1
-                                    if f == 0:
-                                        dist[node] = pairs
-
-                                    # value_1.append(X[(pred, node)])
-                                    key = node
-                                    position.setdefault(key, [])
-                                    position[key].append(pairs[0])
-
-                                # print "dist=", dist, position
-                        loc_i = {}
-                        for key in position:
-                            loc_i[key] = max(position[key])
-                            # if key==n[-2]:
-                            # loc_i[key] = 19
-                            # elif key==n[-1]:
-                            # loc_i[key] = 20
-                            new_Ylocation.append(loc_i[key])
-                        loct.append(loc_i)
-                        # print"LOCT",locta
-                        # print new_Xlocation
-                        self.NEWYLOCATION.append(new_Ylocation)
-
-                    n = list(G2.nodes())
-                    Location = {}
-                    key = element.ID
-                    Location.setdefault(key, [])
-
-                    for i in range(len(self.NEWYLOCATION)):
-                        loct = {}
-                        for j in range(len(self.y_coordinates[element.ID])):
-                            loct[self.y_coordinates[element.ID][j]] = self.NEWYLOCATION[i][j]
-                        Location[element.ID].append(loct)
-                        # print Location
-                    self.LocationV = Location
-                    #print"VCG",N,len(self.LocationV.values()),self.LocationV
-
-                        #
-                else:
-                    # continue
-                    if element.parentID in list(self.LocationV.keys()):
-
-                        # if element.parentID==1:
-                        for node in self.V_NODELIST:
-                            if node.id == element.parentID:
-                                PARENT = node
-
-                        ZDL_V = []
-                        for rect in PARENT.stitchList:
-                            if rect.nodeId == element.ID:
-                                if rect.cell.y not in ZDL_V:
-                                    ZDL_V.append(rect.cell.y)
-                                    ZDL_V.append(rect.NORTH.cell.y)
-                                if rect.NORTH.cell.y not in ZDL_V:
-                                    ZDL_V.append(rect.NORTH.cell.y)
-
-                        for vertex in self.vertex_list_v[element.ID]:
-                            if vertex.init_coord in self.y_coordinates[element.parentID] and self.bw_type in vertex.associated_type:
-                                ZDL_V.append(vertex.init_coord)
-
-
-
-                        P = set(ZDL_V)
-                        ZDL_V = list(P)
-                        ZDL_V.sort()
-                        #print"After", ZDL_V, element.ID
-
-                        V = self.LocationV[element.parentID]
-
-                        # print V
-                        loct = []
-                        count=0
-                        for location in V:
-                            #print "Layout",count
-                            #print "location",element.ID, location
-
-                            seed = s + count * 1000
-                            count+=1
-                            self.Loc_Y = {}
-                            for coordinate in self.y_coordinates[element.ID]:
-                                # if element.parentID == 1:
-                                for k, v in list(location.items()):
-                                    if k == coordinate and k in ZDL_V:
-                                        self.Loc_Y[self.y_coordinates[element.ID].index(coordinate)] = v
-                                        # print "v",self.Loc_X
-                                    else:
-                                        continue
-
-                            d3 = defaultdict(list)
-                            WV = defaultdict(list)
-                            d4 = defaultdict(list)
-                            for i in element.labels:
-                                k, v = list(i.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-                                WV[k].append(v[3])
-                                if v[4] == "Device":
-                                    d4[k].append(v[0])
-                                '''
-                                if v[3] == None:
-                                    W[k].append(1)
-                                else:
-                                    W[k].append(v[3])
-                                '''
-                            # print "D3", d3, W
-                            #print "Before_V",element.ID,self.Loc_Y
-                            Y = {}
-                            V = []
-                            Fix = {}
-                            Weights_V = {}
-                            for i, j in list(d3.items()):
-                                Y[i] = max(j)
-                            #print"Y",element.ID,Y
-                            #print "step-1",self.Loc_Y
-                            if element.ID in list(self.removable_nodes_v.keys()):
-                                removable_nodes = self.removable_nodes_v[element.ID]
-                                td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                                for node in removable_nodes:
-                                    reference = self.reference_nodes_v[element.ID][node][0]
-                                    value = self.reference_nodes_v[element.ID][node][1]
-                                    for k, v in list(td_eval_edges.items()):
-                                        for (src, dest), weight in list(v.items()):
-                                            if dest!=reference and node in self.Loc_Y and reference not in self.Loc_Y:
-                                                self.Loc_Y[reference] = self.Loc_Y[node] - value
-
-                            #'''
-                            if element.ID in list(self.removable_nodes_v.keys()):
-                                removable_nodes = self.removable_nodes_v[element.ID]
-                                for node in removable_nodes:
-                                    reference = self.reference_nodes_v[element.ID][node][0]
-                                    value = self.reference_nodes_v[element.ID][node][1]
-                                    if reference in self.Loc_Y:
-                                        self.Loc_Y[node] = self.Loc_Y[reference] + value
-
-
-                            if element.ID in list(self.top_down_eval_edges_v.keys()):
-                                td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                                for k, v in list(td_eval_edges.items()):
-                                    for (src, dest), weight in list(v.items()):
-                                        if src>dest:
-                                            for node in range(dest,src):
-                                                if node in self.Loc_Y:
-                                                    H=[]
-                                                    for key, value in list(Y.items()):
-                                                        H.append((key[0], key[1], value))
-                                                    G = nx.MultiDiGraph()
-                                                    n = list(element.graph.nodes())
-                                                    G.add_nodes_from(n)
-                                                    G.add_weighted_edges_from(H)
-                                                    A = nx.adjacency_matrix(G)
-                                                    B = A.toarray()
-                                                    path,Value,distance=self.LONGEST_PATH_V(B,node,src)
-                                                    if distance!=None:
-                                                        if weight<0 and distance<abs(weight):
-                                                            new_weight=weight+distance
-                                                            v[(node,dest)]=new_weight
-                                                            del v[(src,dest)]
-                                                            break
-                                                    else:
-                                                        continue
-
-                            #'''
-                            if element.ID in list(self.top_down_eval_edges_v.keys()):
-                                # print"TD", self.top_down_eval_edges_v[element.ID]
-                                td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                                for k, v in list(td_eval_edges.items()):
-                                    for (src, dest), weight in list(v.items()):
-                                        if src in self.Loc_Y:
-                                            val1 = self.Loc_Y[src] + weight
-
-                                            if dest > src and (src,dest) in Y:
-                                                val2 = self.Loc_Y[src] + Y[(src, dest)]
-                                            elif dest<src and (dest,src) in Y:
-                                                val2 = self.Loc_Y[src] - Y[(dest, src)]
-                                            else:
-                                                val2=0
-
-                                            val3 = None
-                                            for pair, value in list(Y.items()):
-                                                if pair[1] == dest  and pair[0] in self.Loc_Y:
-                                                    val3 = self.Loc_Y[pair[0]] + Y[(pair[0], dest)]
-                                                    break
-                                                # print src,dest,val1,val3
-                                            if val3 != None and dest not in self.Loc_Y:
-                                                self.Loc_Y[dest] = max(val1, val2, val3)
-                                                if element.ID in list(self.removable_nodes_v.keys()):
-                                                    removable_nodes = self.removable_nodes_v[element.ID]
-                                                    for node in removable_nodes:
-                                                        reference = self.reference_nodes_v[element.ID][node][0]
-                                                        value = self.reference_nodes_v[element.ID][node][1]
-                                                        if reference in self.Loc_Y:
-                                                            self.Loc_Y[node] = self.Loc_Y[reference] + value
-                                            '''
-
-                                            for pair,value in Y.items():
-                                                if pair[1]==dest and pair[0] in self.Loc_Y:
-                                                    val3 = self.Loc_Y[pair[0]] + Y[(pair[0], dest)]
-                                                    # print src,dest,val1,val3
-                                                    self.Loc_Y[dest] = max(val1, val2,val3)
-                                                    if element.ID in self.removable_nodes_v.keys():
-                                                        removable_nodes = self.removable_nodes_v[element.ID]
-                                                        for node in removable_nodes:
-                                                            reference = self.reference_nodes_v[element.ID][node][0]
-                                                            value = self.reference_nodes_v[element.ID][node][1]
-                                                            if reference ==dest:
-                                                                self.Loc_Y[node] = self.Loc_Y[reference] + value
-                                            '''
-
-
-                            #print"step-2",self.Loc_Y
-                            for i, j in list(d4.items()):
-                                Fix[i] = max(j)
-                            # print"X", X
-                            #for i, j in list(WV.items()):
-                                #Weights_V[i] = max(j)
-                            # print Y,Weights
-                            for k, v in list(Y.items()):
-                                V.append((k[0], k[1], v))
-                            # print "H", Fix
-                            GV = nx.MultiDiGraph()
-                            nV = list(element.graph.nodes())
-                            GV.add_nodes_from(n)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            GV.add_weighted_edges_from(V)
-                            self.FUNCTION_V(GV, element.ID, Random,sid=seed)
-                            #print"FINY",self.Loc_Y
-                            loct.append(self.Loc_Y)
-                        # print loct
-                        yloc = []
-                        for k in range(len(loct)):
-                            loc = {}
-                            for k, v in list(loct[k].items()):
-                                loc[self.y_coordinates[element.ID][k]] = v
-                            yloc.append(loc)
-                        self.LocationV[element.ID] = yloc
-                    #print "VLOC",self.LocationV
-        #"""
-        if level == 2 or level == 3 :#or level==1
-            for element in reversed(self.TbevalV):
-                s = seed
-                # print element.ID,element.parentID
-                """
-                if element.parentID == None or element.parentID<0:
-                    loct = []
-                    s = seed
-                    for i in range(N):
-                        self.seed_v.append(s + i * 1000)
-
-                    td_eval_edges = {}
-                    for el in reversed(self.TbevalV):
-                        if el.parentID == element.ID and el.ID in self.top_down_eval_edges_v:
-                            for node, edge in list(self.top_down_eval_edges_v[el.ID].items()):
-                                for (src, dest), value in list(edge.items()):
-                                    if self.y_coordinates[el.ID][src] in self.y_coordinates[element.ID] and self.y_coordinates[el.ID][dest] in \
-                                            self.y_coordinates[element.ID]:
-                                        source = self.y_coordinates[element.ID].index(self.y_coordinates[el.ID][src])
-                                        destination = self.y_coordinates[element.ID].index(self.y_coordinates[el.ID][dest])
-                                        td_eval_edges[(source, destination)] = value
-
-                    '''
-                    if len(td_eval_edges)>0:
-                        if element.ID in self.top_down_eval_edges_v:
-                            self.top_down_eval_edges_v[element.ID][len(self.y_coordinates[element.ID])-1]=td_eval_edges
-                    '''
-                    
-                    #print"TD", td_eval_edges
-                    if level!=1:
-                        for i in range(N):
-
-                            d3 = defaultdict(list)
-                            d4 = defaultdict(list)
-                            WV = defaultdict(list)
-                            for label in element.labels:
-                                k, v = list(label.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-                                WV[k].append(v[3])
-                                '''
-                                if v[3] == None:
-                                    W[k].append(1)
-                                else:
-                                    W[k].append(v[3])
-                                '''
-                            # print "D3", d3, W
-                            Y = {}
-                            V = []
-                            Weights_V = {}
-                            for k1, v1 in list(d3.items()):
-                                Y[k1] = max(v1)
-                            #print"X", Y
-                            #for k2, v2 in list(WV.items()):
-                                #Weights_V[k2] = max(v2)
-                            # print Y,Weights
-                            for k, v in list(Y.items()):
-                                V.append((k[0], k[1], v))
-                            # print "H", Fix
-                            GV = nx.MultiDiGraph()
-                            nV = list(element.graph.nodes())
-                            GV.add_nodes_from(nV)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            GV.add_weighted_edges_from(V)
-                            if level == 2:
-                                self.Loc_Y = {}
-                                for k, v in list(self.YLoc.items()):
-                                    if k in nV:
-                                        self.Loc_Y[k] = v
-                                # print "Y",self.Loc_Y
-                            elif level == 3:
-                                self.Loc_Y = {}
-
-                                for k3, v3 in list(self.YLoc.items()):
-                                    # print j
-                                    if k3 == 1:
-                                        for k, v in list(v3.items()):
-                                            self.Loc_Y[k] = v
-                            #print self.Loc_Y
-                            self.FUNCTION_V(GV, element.ID, Random,sid=self.seed_v[i])
-                            #print"FINX",self.Loc_Y
-                            loct.append(self.Loc_Y)
-                    else:
-                    
-
-                        loct=[]
-                        for id in range(N):
-                            d3 = defaultdict(list)
-                            d4 = defaultdict(list)
-                            WV = defaultdict(list)
-                            for label in element.labels:
-                                k, v = list(label.items())[0]
-                                # print v[0]
-                                d3[k].append(v[0])
-                                WV[k].append(v[3])
-
-                            Y = {}
-                            V = []
-                            Weights_V = {}
-                            for k1, v1 in list(d3.items()):
-                                Y[k1] = max(v1)
-                            # print"X", Y
-                            for k2, v2 in list(WV.items()):
-                                Weights_V[k2] = max(v2)
-                            # print Y,Weights
-                            for k, v in list(Y.items()):
-                                V.append((k[0], k[1], v))
-                            # print "H", Fix
-                            GV = nx.MultiDiGraph()
-                            nV = list(element.graph.nodes())
-                            GV.add_nodes_from(nV)
-                            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                            GV.add_weighted_edges_from(V)
-                            self.Loc_Y = {}
-                            for k, v in list(self.YLoc[id].items()):
-                                if k in nV:
-                                    self.Loc_Y[k] = v
-
-                            self.FUNCTION_V(GV, element.ID, Random, sid=self.seed_v[id])
-                            # print"FINX",self.Loc_Y
-                            loct.append(self.Loc_Y)
-
-
-                    self.NEWYLOCATION = loct
-
-                    n = list(GV.nodes())
-                    Location = {}
-                    key = element.ID
-                    Location.setdefault(key, [])
-
-                    for i in range(len(self.NEWYLOCATION)):
-                        loct = {}
-                        for j in range(len(self.y_coordinates[element.ID])):
-                            loct[self.y_coordinates[element.ID][j]] = self.NEWYLOCATION[i][j]
-                        Location[element.ID].append(loct)
-                        # print Location
-                    self.LocationV = Location
-                    # print "LV",self.LocationV
-                    #
-            else:
-                # continue
-            """
-
+        if level == 2:
+            for element in reversed(self.tb_eval_v):
                 if element.parentID in list(self.LocationV.keys()):
-                    for node in self.V_NODELIST:
+                    for node in self.vcs_nodes:
                         if node.id == element.parentID:
-                            PARENT = node
-                    loct = []
-                    ZDL_V = []
-                    if element.parentID>0:
-                        
-                        for rect in PARENT.stitchList:
-                            if rect.nodeId == element.ID:
-                                if rect.cell.y not in ZDL_V:
-                                    ZDL_V.append(rect.cell.y)
-                                    ZDL_V.append(rect.NORTH.cell.y)
-                                if rect.NORTH.cell.y not in ZDL_V:
-                                    ZDL_V.append(rect.NORTH.cell.y)
+                            parent=node
+                            break
 
-                        for vertex in self.vertex_list_v[element.ID]:
-                            if vertex.init_coord in self.y_coordinates[element.parentID] and self.bw_type in vertex.associated_type:
-                                ZDL_V.append(vertex.init_coord)
-                        for vertex in self.vertex_list_v[element.ID]:
-                            if vertex.init_coord in self.y_coordinates[element.parentID] and self.via_type in vertex.associated_type:
-                                ZDL_V.append(vertex.init_coord)
+                ZDL_V = []
+                if element.parentID>0:
+                        
+                    if element.ID in self.propagated_parent_coord_vcg:
+                        ZDL_V=self.propagated_parent_coord_vcg[element.ID]
+
+                else:
+                    if element.parentID in self.propagated_parent_coord_vcg:
+                        ZDL_V=self.propagated_parent_coord_vcg[element.parentID]
                     else:
                         ZDL_V = self.y_coordinates[element.parentID]
-                    #print("After", ZDL_V, element.ID)
-                    P = set(ZDL_V)
-                    ZDL_V = list(P)
-                    ZDL_V.sort()
+                    if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
+                        for vertex in self.vcg_vertices[element.ID]:
+                            ZDL_V.append(vertex.coordinate)
+                    else:
+                        #print(self.LocationH)
+                        if element.parentID in self.LocationV:
+                            parent_coords=list(self.LocationV[element.parentID][0].keys())
+                            for coord in parent_coords:
+                                if coord not in ZDL_V:
+                                    ZDL_V.append(coord)
+                #ZDL_H=parent_coordinates
 
-                    V = self.LocationV[element.parentID]
+                # deleting multiple entries
+                P = set(ZDL_V)
+                ZDL_V = list(P)
+                ZDL_V.sort() # sorted list of HCG vertices which are propagated from parent
+                #print("V",element.ID,element.parentID,ZDL_V)
 
-                    # print V
-                    count=0
-                    for location in V:
-                        #print ("loc",element.ID,location)
-                        self.Loc_Y = {}
-                        count+=1
+                parent_locations=self.LocationV[element.parentID]
+                locations_=[]
+                count=0
+                for location in parent_locations:
 
-                        for coordinate in self.y_coordinates[element.ID]:
-                            # if element.parentID == 1:
+                    loc_y={}
+                    for vertex in element.graph.vertices:
 
-                            for k, v in list(location.items()):
-                                if k == coordinate and k in ZDL_V:
-                                    # if self.y_coordinates[element.ID].index(coordinate) not in self.Loc_Y:
-                                    # if self.y_coordinates[element.ID].index(coordinate) not in NLIST:
-                                    self.Loc_Y[self.y_coordinates[element.ID].index(coordinate)] = v
+                        if vertex.coordinate in location and vertex.coordinate in ZDL_V:
+                            loc_y[vertex.coordinate]=location[vertex.coordinate]
+                        else:
+                            continue
 
-                                else:
-                                    continue
+                    if element.parentID<0 and self.via_type==None:
+                        ledge_dims=self.constraint_info.get_ledgeWidth()
+                        left = self.y_coordinates[element.ID][1]
+                        right = self.y_coordinates[element.ID][-2]
+                        start = self.y_coordinates[element.ID][0]
+                        end = self.y_coordinates[element.ID][-1]
 
-                            '''
-                            else:
-                                for k, v in location.items():
-                                    if k==coordinate:
-                                        #if self.y_coordinates[element.ID].index(coordinate) not in NLIST:
-                                        self.Loc_Y[self.y_coordinates[element.ID].index(coordinate)]=v
-                                        #print "v",self.Loc_X
-                                    else:
-                                        continue
-                            '''
-                        if element.parentID<0:
-                            left = self.y_coordinates[element.ID][1]
-                            right = self.y_coordinates[element.ID][-2]
-                            start = self.y_coordinates[element.ID][0]
-                            end = self.y_coordinates[element.ID][-1]
-                            self.Loc_Y[self.y_coordinates[element.ID].index(left)]=self.Loc_Y[self.y_coordinates[element.ID].index(start)]+self.get_ledgeWidth()
-                            self.Loc_Y[self.y_coordinates[element.ID].index(right)] = self.Loc_Y[self.y_coordinates[element.ID].index(end)] - self.get_ledgeWidth()
-                        #print ("Y",element.ID,self.Loc_Y)
-                        # print"LOC", self.Loc_Y
-                        d3 = defaultdict(list)
-                        d4 = defaultdict(list)
-                        WV = defaultdict(list)
-                        for i in element.labels:
-                            k, v = list(i.items())[0]
-                            # print v[0]
-                            d3[k].append(v[0])
-                            WV[k].append(v[3])
-                            if v[4] == "Device":
-                                d4[k].append(v[0])
-
-                        NLIST = []
-                        for k, v in list(self.Loc_Y.items()):
-                            NLIST.append(k)
-                        # NODES=reversed(NLIST)
-                        # print NODES
-                        if level == 3:
-                            for i, j in list(self.YLoc.items()):
-                                if i == element.ID:
-                                    for k, v in list(j.items()):
-                                        # self.Loc_Y[k]=self.Loc_Y[0]+v
-
-                                        for node in NLIST[::-1]:
-
-                                            if node >= k:
-                                                continue
-                                            else:
-
-                                                p = self.Loc_Y[node]
-                                                # print p+v
-                                                self.Loc_Y[k] = p + v
-                                                break
-
-                        # print "Y2", element.ID, self.Loc_Y
-
-                        # print "D3", d3
-                        Y = {}
-                        V = []
-                        Weights_V = {}
-                        Fix = {}
-
-
-                        for i, j in list(d3.items()):
-                            Y[i] = max(j)
-                            if i[0] in list(self.Loc_Y.keys()) and i[1] in list(self.Loc_Y.keys()):
-                                # print self.Loc_Y[i[0]],self.Loc_Y[i[1]]
-                                if (self.Loc_Y[i[1]] - self.Loc_Y[i[0]]) < max(j):
-                                    print("v_ERROR", i,element.ID, max(j), self.Loc_Y[i[1]] - self.Loc_Y[i[0]])
-
-                                    # distance=max(j)-abs((self.Loc_X[i[1]]-self.Loc_X[i[0]]))
-                                    # self.Loc_X[i[1]]+=distance
-
-                                else:
-                                    continue
-
-                        #print "start",element.ID, self.Loc_Y
-                        #print Y
-                        for i, j in list(d4.items()):
-                            Fix[i] = max(j)
-                        #for i, j in list(WV.items()):
-                            #Weights_V[i] = max(j)
-                        # print Y,Weights_V
-
-                        for k, v in list(Y.items()):
-                            V.append((k[0], k[1], v))
-                        # print "H", Fix
-                        GV = nx.MultiDiGraph()
-                        nV = list(element.graph.nodes())
-                        GV.add_nodes_from(nV)
-                        # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
-                        GV.add_weighted_edges_from(V)
-                        seed = s+count * 1000
-                        if element.ID in list(self.removable_nodes_v.keys()) and element.ID in self.top_down_eval_edges_v:
-                            removable_nodes = self.removable_nodes_v[element.ID]
-                            if element.ID in self.top_down_eval_edges_v:
-                                td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                            else:
-                                td_eval_edges={}
-                            for node in removable_nodes:
-                                reference = self.reference_nodes_v[element.ID][node][0]
-                                value = self.reference_nodes_v[element.ID][node][1]
-                                for k, v in list(td_eval_edges.items()):
-                                    for (src, dest), weight in list(v.items()):
-                                        if dest!=reference and node in self.Loc_Y and reference not in self.Loc_Y:
-                                            self.Loc_Y[reference] = self.Loc_Y[node] - value
+                        loc_y[left]=loc_y[start]+ledge_dims[1]
+                        loc_y[right]=loc_y[end]-ledge_dims[1]
 
 
 
-                        #print ("Y1",element.ID,self.Loc_Y)
-                        if element.ID in list(self.removable_nodes_v.keys()):
-                            removable_nodes = self.removable_nodes_v[element.ID]
-                            for node in removable_nodes:
-                                reference = self.reference_nodes_v[element.ID][node][0]
-                                value = self.reference_nodes_v[element.ID][node][1]
-                                if reference in self.Loc_Y:
-                                    self.Loc_Y[node] = self.Loc_Y[reference] + value
+                    seed=seed+count*1000
 
-                        '''
-                        if element.ID in list(self.top_down_eval_edges_v.keys()):
-                            td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                            for k, v in list(td_eval_edges.items()):
-                                for (src, dest), weight in list(v.items()):
-                                    if src>dest:
-                                        for node in range(dest,src):
-                                            if node in self.Loc_Y:
-                                                A = nx.adjacency_matrix(GV)
-                                                B = A.toarray()
-                                                path,Value,distance=self.LONGEST_PATH_V(B,node,src)
-                                                if distance!=None:
-                                                    if weight<0 and distance<abs(weight):
-                                                        new_weight=weight+distance
-                                                        v[(node,dest)]=new_weight
-                                                        del v[(src,dest)]
-                                                        break
-                                                else:
-                                                    continue
-                        '''
-                        #print ("Y2",element.ID,self.Loc_Y)
-                        """
-                        if element.ID in list(self.top_down_eval_edges_v.keys()):
-                            # print"TD", self.top_down_eval_edges_v[element.ID]
-                            td_eval_edges = self.top_down_eval_edges_v[element.ID]
-                            for k, v in list(td_eval_edges.items()):
-                                for (src, dest), weight in list(v.items()):
-                                    if src in self.Loc_Y:
-                                        val1 = self.Loc_Y[src] + weight
+                    locs= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=Random, seed=seed)
+                    #print("HEREV",element.ID,locs)
+                    count+=1
+                    locations_.append(locs)
+                #print(element.ID,locations_)
+                self.LocationV[element.ID]=locations_
 
-                                        if dest > src and (src, dest) in Y:
-                                            val2 = self.Loc_Y[src] + Y[(src, dest)]
-                                        elif dest < src and (dest, src) in Y:
-                                            val2 = self.Loc_Y[src] - Y[(dest, src)]
-                                        else:
-                                            val2=0
+        #print(self.LocationV)
 
-                                        val3 = None
-                                        for pair, value in list(Y.items()):
-                                            if pair[1] == dest  and pair[0] in self.Loc_Y:
-                                                val3 = self.Loc_Y[pair[0]] + Y[(pair[0], dest)]
-                                                break
-                                            # print src,dest,val1,val3
-                                        if val3 != None and dest not in self.Loc_Y :#and val1<=0:
-                                            self.Loc_Y[dest] = max(val1, val2, val3)
-                                            if element.ID in list(self.removable_nodes_v.keys()):
-                                                removable_nodes = self.removable_nodes_v[element.ID]
-                                                for node in removable_nodes:
-                                                    reference = self.reference_nodes_v[element.ID][node][0]
-                                                    value = self.reference_nodes_v[element.ID][node][1]
-                                                    if reference in self.Loc_Y:
-                                                        self.Loc_Y[node] = self.Loc_Y[reference] + value
-                        """
-                        #print "R_SEED",seed
-                        #print "Before",self.Loc_Y
-                        #print ("Y3",element.ID,self.Loc_Y)
-                        self.FUNCTION_V(GV, element.ID, Random,sid=seed)
-                        #print("FINX",self.y_coordinates[element.ID],self.Loc_Y)
-                        loct.append(self.Loc_Y)
-                    # print"L", loct
-                    yloc = []
-                    for k in range(len(loct)):
-                        loc = {}
-                        for k, v in list(loct[k].items()):
-                            loc[self.y_coordinates[element.ID][k]] = v
-                        yloc.append(loc)
-                    self.LocationV[element.ID] = yloc
-                # print "VLOC",self.LocationV
         return self.LocationV
 
 

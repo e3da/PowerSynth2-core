@@ -698,12 +698,14 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
     #makes sure each dependent vertex has a single reference vertex
     dependent_vertices,graph,fixed_edges=reference_edge_handling(graph_in=graph,ID=ID)        
     
-    if ID==-3:
+    '''
+    print(ID)
+    if ID==22:
         for vert,edge_list in dependent_vertices.items():
             vert.printVertex()
             for edge in edge_list:
                 edge.printEdge()
-        input()
+    '''
     # topological sorting of vertices in dependent_vertices
     dep_vertices=list(dependent_vertices.keys())
     dep_vertices.sort(key=lambda x: x.index)
