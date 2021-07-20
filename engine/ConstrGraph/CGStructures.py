@@ -1100,9 +1100,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                         #if edge in graph.nx_graph_edges:
                             #graph.nx_graph_edges.remove(edge)
                 else:
-                    if ID==-3:
-                        edge.printEdge()
-                        input()
+                    
                     pot_fix_dim=None
                     if edge.comp_type=='Flexible': #bw vertex
                         for edge1 in graph.nx_graph_edges:
