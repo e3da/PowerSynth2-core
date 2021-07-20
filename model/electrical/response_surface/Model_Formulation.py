@@ -10,20 +10,17 @@ from scipy.interpolate import interp1d
 import sys
 cur_path =sys.path[0] # get current path (meaning this file location)
 print (cur_path)
-cur_path = cur_path[0:-25] #exclude "powercad/response_surface"
+cur_path = cur_path[0:-len("core/model/electrical/response_surface")] #exclude "powercad/response_surface"
 print(cur_path)
 sys.path.append(cur_path)
-from powercad.general.data_struct.Unit import Unit
+from core.general.data_struct.Unit import Unit
 #from powercad.general.settings.Error_messages import InputError, Notifier
 from core.general.settings.save_and_load import save_file
-from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file,Init,GroundPlane,Element,Run
+from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file,Element,Run,Init
 from core.APIs.FastHenry.fh_layers import *
-from core.APIs.Q3D.Electrical import rect_q3d_box
-from core.APIs.Q3D.Ipy_script import Q3D_ipy_script
 from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
-from ore.MDK.LayerStack.layer_stack import LayerStack
+from core.MDK.LayerStack.layer_stack import LayerStack
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, load_mdl
-from core.model.electrical.response_surface.Layer_Stack import Layer_Stack
 from core.model.electrical.response_surface.Response_Surface import RS_model
 import csv
 from core.general.settings import settings
@@ -753,9 +750,9 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minL, maxL]])
     model_input.set_name(mdl_name)
-    #mesh_size=5
-    #model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
-    model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
+    mesh_size=5
+    model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
+    #model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
     model_input.generate_fname()
     fasthenry_env = env[0]
     read_output_env = env[1]
@@ -980,15 +977,17 @@ def build_and_run_trace_sim(**kwags):
         for i in layer_dict:
             info = layer_dict[i]
             [cond,width,length,thick,z_loc,nhinc,e_type] = info
+            nhinc = 20
             if e_type == 'G':
                 #continue # test trace only
-                script +=GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
+                script += GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
             elif e_type == 'S':
                 skindepth = math.sqrt(1 / (math.pi * fmax * u * cond * 1e6))
                 nwinc = int(math.ceil((math.log(w * 1e-3 / skindepth / 3) / math.log(2) * 2 + 3)/3))
                 nwinc =1
                 if nwinc <= 0:
                     nwinc = 1
+                nwinc = 20
                 script += Element.format(l / 2,z_loc,w,thick,cond,nwinc,nhinc)
                 #print("mesh", nwinc,nhinc)
 
@@ -997,11 +996,11 @@ def build_and_run_trace_sim(**kwags):
         #print script
     write_to_file(script=script, file_des=fname)
     ''' Run FastHenry'''
-    #print(fname)
+    print(fname)
     #if not(os.path.isfile(fname)):
     args = [fasthenry_env, fasthenry_option, fname]
     cmd = fasthenry_env + " " + fasthenry_option +" "+fname + ">out" + str(cpu) +" &"
-    #print(cmd)
+    print(cmd)
     os.system(cmd)
     #print(args)
     #p = subprocess.Popen(args, shell=False, stdout=subprocess.PIPE)

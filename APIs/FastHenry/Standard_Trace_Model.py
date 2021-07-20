@@ -4,17 +4,30 @@ def write_to_file(script,file_des):
     text_file.write(script)
     text_file.close()
 
-Element = '''
+Init = '''
 * This is a single element in FASTHENRY. 
 * This will be used to build adaptive mesh for internal and external models in PS 
 .units mm
 *////////////////////
+'''
+
+
+GroundPlane = '''
+g_M{0} x1=-{1} y1=-{2} z1={3} x2={1} y2=-{2} z2={3} x3={1} y3={2} z3={3}
++ thick={4}
++ seg1=20 seg2=2
++ sigma={5}
++ nhinc={6} 
+'''
+
+
+Element = '''
+
 * Plane A
 NA1s x=0 y=-{0} z={1}
 NA1e x=0 y={0} z={1}
 EA1 NA1s NA1e w={2} h={3} sigma={4}
 + nwinc={5} nhinc={6}
-*////////////////////
 '''
 
 
@@ -73,6 +86,9 @@ EA1 NA1s NA1e w={13} h={14} sigma={15}
 .freq fmin={18} fmax={19} ndec={20}
 .end
 '''
+
+
+
 
 Uniform_Trace= '''
 * This is not a generic code for now, just to test the standard PowerSynth topology

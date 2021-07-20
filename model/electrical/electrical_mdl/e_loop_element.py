@@ -12,7 +12,7 @@ print (sys.path[0])
 # get the 3 fold integral mutual equation.
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
-
+from core.model.electrical.visualization.view_matrix import matrix_view_autoscale
 import ctypes
 import numpy as np
 import os
@@ -110,6 +110,7 @@ class ETrace():
         self.elements = []
         self.type = 1
         self.m_id = 0 # mesh id
+        self.g_id = 1
         self.dir = 1
         self.total_I=0
         # connect to graph
@@ -383,11 +384,13 @@ class LoopEval():
         self.mutual_params = []
         self.mutual_map = {}
         self.mesh_id = 0
-        self.mesh_method = 'nonuniform'
+        self.ground_id = 1
+        self.mesh_method = 'uniform'
         self.view_en = 'False'
         self.mesh_id_dict={}
         self.open_loop = True
         self.tc_to_id = {}
+        self.traces = {}
     def update_P(self,freq=1e9):
         self.freq = freq
         dimension = (len(self.all_eles),len(self.all_eles))
@@ -412,6 +415,38 @@ class LoopEval():
         #plt.colorbar()
         figname = "M Matrix " + self.name
         plt.savefig(figname)
+
+    def export_loop(self,mode = 0):
+        text = "Writing bundle loop info to double-check. The layout script unit is in mm \n"
+        
+        max_id = max(self.traces.keys())
+        for t_k in self.traces:
+            trace = self.traces[t_k]
+            if trace.type == 1:
+                type = 'S'
+                name = "T{0}".format(t_k)
+            if trace.type == 0:
+                type = 'G'
+                name = "T{0}".format(max_id-t_k)
+            start_pt = [x*1000 for x in trace.start_pt]
+            start_txt = '({0},{1},{2})'.format(round(start_pt[0],4),round(start_pt[1],4),round(start_pt[2],4))
+            end_pt = [x*1000 for x in trace.end_pt]
+            
+            end_txt = '({0},{1},{2})'.format(round(end_pt[0],4),round(end_pt[1],4),round(end_pt[2],4))
+
+            
+            line = name+" "+ start_txt + " " + end_txt +" "+ type + " w="+str(round(trace.width*1000,4))+" "+"h="+str(round(trace.thick*1000,4))
+            line+= " nw="+str(trace.nwinc) +' ' + 'nh='+str(trace.nhinc)+"\n"
+            text+=line
+        
+        if mode ==0:
+            dir = "./" + self.name + '.txt'
+            with open(dir,'w') as f:
+                f.write(text)
+                f.close()
+        else:
+            return text
+        
 
     def form_partial_impedance_matrix(self):
         dimension = (len(self.all_eles),len(self.all_eles))
@@ -543,10 +578,12 @@ class LoopEval():
     def form_u_mat(self):
         u = np.ones((self.tot_els,1),dtype = np.complex64)
         for el in self.all_eles:
-            u[el.id] = 1#el.dir
+            u[el.id] = 1
         return u
 
     def solve_linear_systems(self):
+        #self.open_loop=False
+
         u = self.form_u_mat()
         #print ("impedance matrix (imag)")
         #print (self.P.imag)
@@ -554,7 +591,7 @@ class LoopEval():
         #t1 = time.time()
         #Lmat = cholesky(self.P,lower=True) # get the lower triangulariztion part
         #print ("lower triangular matrix")
-        #print (Lmat)
+        #print (Lmat)fbuhm 
         #print (Lmat.T)
         
         #a1 = solve_triangular(Lmat,u,lower=True) # get the unify vector a
@@ -572,22 +609,25 @@ class LoopEval():
         #t1 = time.time()
         #print("solve direct",a)
         x = solve(self.P,self.M)
+        #matrix_view_autoscale(self.P)
         #print (self.P)
         #print (self.M)
         #print (B.shape)
         #print ("time for direct mode",time.time() - t1)
         # compute the current matrix
         self.I  = np.ones((self.tot_els,self.num_loops),dtype= np.complex64)
-        #print (self.I.shape)
+        #print (self.open_loop)
         for j in range(self.num_loops):
             sum_mat = np.zeros((self.tot_els,1),dtype = np.complex64)
             if not(self.open_loop):
                 vout = sum(x[:,j]) / sum(y)
                 self.I[:,[j]] = x[:,[j]] - vout * y
+                print(vout)
+
             else: 
                 self.I[:,[j]] = x[:,[j]]
                 vout = 0
-            
+           
             #print("current matrix", j )
         #print(self.I.shape)
         #print  (sum(self.I))
@@ -600,6 +640,7 @@ class LoopEval():
         self.R_loop= R_mat # loop Res result
         self.L_loop= L_mat # loop Ind result
         #print ("impedance matrix")
+        #print("LOOP NAME:",self.name)
         #print ("R Matrix \n", R_mat)
         #print ("L Matrix \n", L_mat) 
         debug = False
@@ -722,7 +763,6 @@ class LoopEval():
             else:
                 el_current = np.absolute(np.sum(self.I[el.id,:]))
             el_js.append((el_current)/(el.width*el.thick))
-        print(el_js)
         norm = mpl.colors.Normalize(vmin=min(el_js), vmax=max(el_js))
         return norm,el_js        
 
@@ -752,7 +792,7 @@ class LoopEval():
             start_pt = [tc.left, tc.top ,tc.z]
             trace_mesh.width = tc.width*1e-6
             trace_mesh.ori = 1
-
+        print(start_pt,end_pt)
         trace_mesh.start_pt = [x*1e-6 for x in start_pt]
         trace_mesh.end_pt = [x*1e-6 for x in end_pt]
         trace_mesh.m_id = self.mesh_id
@@ -764,10 +804,14 @@ class LoopEval():
             self.num_loops+=1
             trace_mesh.type = 1
             self.tc_to_id[tc] = self.mesh_id # in cased of signal wire 
+            self.traces[self.mesh_id] = trace_mesh
+            self.mesh_id +=1
         else:
             self.tc_to_id[tc] = -1 # in cased of return wire
             self.open_loop = False
             trace_mesh.type = 0
+            self.traces[-self.ground_id]=trace_mesh
+            self.ground_id +=1 
         if self.mesh_method == 'uniform':
             start_id = self.tot_els
             end_id = trace_mesh.form_mesh_uniform(start_id=self.tot_els)
@@ -776,8 +820,7 @@ class LoopEval():
             self.tot_els = trace_mesh.form_mesh_frequency_dependent(start_id=self.tot_els)
         self.all_eles += trace_mesh.elements
         
-        if el_type == 'S':
-            self.mesh_id +=1
+        
         return trace_mesh
 
 def update_all_mutual_ele(loops):
@@ -826,6 +869,9 @@ def update_all_mutual_ele(loops):
                     M *= 1e-9
                     loop.L_Mat[i, k] = M
                 loop.L_Mat[k, i] = loop.L_Mat[i, k]
+
+
+
 
 def read_input(file):
     if os.path.isfile(file): 
@@ -944,7 +990,7 @@ def read_input(file):
     loop_evaluation.update_P(1e9)
     loop_evaluation.solve_linear_systems()
     #loop_evaluation.freq_sweep()
-    print (loop_evaluation.L_loop)
+    #print (loop_evaluation.L_loop)
     #print (loop_evaluation.L_Mat)
     #if view == 'True':
     #    loop_evaluation.view()
