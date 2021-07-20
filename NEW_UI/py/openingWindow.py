@@ -16,12 +16,12 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(403, 302)
+        Dialog.resize(420, 300)
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.label_2 = QLabel(Dialog)
         self.label_2.setObjectName(u"label_2")
-        self.label_2.setPixmap(QPixmap(u"./NEW_UI/pdfs/compressed.png"))
+        self.label_2.setPixmap(QPixmap("./NEW_UI/pdfs/compressed.png"))
         self.label_2.setAlignment(Qt.AlignCenter)
 
         self.verticalLayout.addWidget(self.label_2)

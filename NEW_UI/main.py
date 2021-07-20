@@ -591,7 +591,7 @@ class GUI():
             index = ui.tableWidget.rowCount()
             ui.tableWidget.insertRow(index)
             spinbox = QtWidgets.QSpinBox()
-            spinbox.setButtonSymbols(2) # Removes buttons
+            spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons) # Removes buttons
             spinbox.setValue(10)
             spinbox.setMaximum(10000)
             ui.tableWidget.setCellWidget(index, 1, spinbox)
@@ -617,14 +617,12 @@ class GUI():
 
 
         # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
-        self.pathToParasiticModel = '/nethome/jgm019/TEST/ARL_module.rsmdl'
-
-
+        if not self.pathToParasiticModel:
+            self.pathToParasiticModel = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/ARL_module.rsmdl'
+        settingsPath = '/nethome/jgm019/testcases/settings.info'
 
         with open(macroPath, "w") as file:
             createMacro(file, self)
-
-        settingsPath = '/nethome/jgm019/testcases/settings.info'
 
         self.cmd = Cmd_Handler(debug=False)
 

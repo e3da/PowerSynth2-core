@@ -52,7 +52,7 @@ class Ui_Dialog(object):
         self.floor_plan_x.setSizePolicy(sizePolicy1)
         self.floor_plan_x.setMaximumSize(QSize(50, 16777215))
         self.floor_plan_x.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.floor_plan_x.setMinimum(50)
+        self.floor_plan_x.setMinimum(1)
         self.floor_plan_x.setMaximum(999)
 
         self.horizontalLayout_8.addWidget(self.floor_plan_x)
@@ -74,7 +74,7 @@ class Ui_Dialog(object):
         self.floor_plan_y.setSizePolicy(sizePolicy1)
         self.floor_plan_y.setMaximumSize(QSize(50, 16777215))
         self.floor_plan_y.setButtonSymbols(QAbstractSpinBox.NoButtons)
-        self.floor_plan_y.setMinimum(50)
+        self.floor_plan_y.setMinimum(1)
         self.floor_plan_y.setMaximum(999)
 
         self.horizontalLayout_8.addWidget(self.floor_plan_y)
