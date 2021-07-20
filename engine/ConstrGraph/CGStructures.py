@@ -1122,7 +1122,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                     if potential_fixed_dim>0:
                         new_fixed_edge=Edge(source=ref_vert, dest=potential_fixed_vert, constraint=potential_fixed_dim, index=edge.index, type='fixed', weight=2*potential_fixed_dim,comp_type=edge.comp_type)
                         graph.nx_graph_edges.append(new_fixed_edge)
-                        graph.modified_edges.append(new_edge)
+                        graph.modified_edges.append(new_fixed_edge)
                         if potential_fixed_vert in fixed_edge_list_to_add:
                             fixed_edge_list_to_add[potential_fixed_vert].append(new_fixed_edge)
                         else:
