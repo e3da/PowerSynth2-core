@@ -308,9 +308,11 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
             else:
                 combined_sub_graphs.append(sub_graph)
 
-    #print("COM")
-    #if ID==-3:
-        #print(len(combined_sub_graphs))
+    '''print("COM")
+    if ID==-3:
+        print(len(combined_sub_graphs))
+        print(len(isolated_sub_graphs))
+        input()'''
 
     if len(combined_sub_graphs)>1:
         
@@ -406,6 +408,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                 connected=is_connected(adj_matrix=adj_matrix,src=source.index,dest=sub_graph[j].index)
                 if connected:
                     end=j
+                    break
                 else:
                     j=j-1
                 
@@ -418,14 +421,18 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
             sink=sub_graph[end]
         
         connected=is_connected(adj_matrix=adj_matrix,src=source.index,dest=sink.index)
-        #print("H",source.coordinate,sink.coordinate,connected)
+        #if ID==-3:
+            #print("H",source.coordinate,sink.coordinate,connected)
         start=0
         if connected==False:
             j=1
             while(connected==False) and j<end:
+                #if ID==-3:
+                    #print(sub_graph[j].coordinate,sink.index)
                 connected=is_connected(adj_matrix=adj_matrix,src=sub_graph[j].index,dest=sink.index)
                 if connected:
                     start=j
+                    break
                 else:
 
                     j+=1
@@ -438,8 +445,10 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                             sub_graph.remove(node)
 
         connected=is_connected(adj_matrix=adj_matrix,src=source.index,dest=sink.index)
-        #if ID==-3:
-            #print(source.coordinate,sink.coordinate,connected)
+        '''if ID==-3:
+            print(source.coordinate,sink.coordinate,connected)
+            print(sub_coords)
+            input()'''
         
         
         if (connected):
