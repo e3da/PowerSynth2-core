@@ -40,6 +40,7 @@ class GUI():
         self.setupsDone = [0, 0]
         self.device_dict = None
         self.lead_list = None
+        self.combo_list = []
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -112,7 +113,7 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
 
         def runPowerSynth():
-            if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
+            '''if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the settings.info file.")
@@ -127,13 +128,13 @@ class GUI():
                 return
 
             settingsPath = ui.lineEdit_3.text()
-            macroPath = ui.lineEdit_4.text()
+            macroPath = ui.lineEdit_4.text()'''
 
             self.currentWindow.close()
             self.currentWindow = None
 
-            #macroPath = '/nethome/jgm019/TEST/macro_script.txt'
-            #settingsPath = '/nethome/jgm019/testcases/settings.info'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             def solutionBrowser():
                 self.currentWindow.close()
@@ -520,7 +521,7 @@ class GUI():
 
         def continue_UI():
             # SAVE VALUES HERE
-            self.modelType = ui.combo_measure_type_2.currentText()
+            self.modelType = ui.combo_model_type.currentText()
             self.measureNameElectrical = ui.lineedit_measure_name.text()
             self.measureType = "0" if ui.combo_measure_type.currentText() == "inductance" else "1"
             
@@ -530,8 +531,8 @@ class GUI():
                 except AttributeError:
                     print("Error: Please specify a name for each device.")
             
-            self.source = ui.source_lineedit.text()
-            self.sink = ui.sink_lineedit.text()
+            self.source = ui.combo_source.currentText()
+            self.sink = ui.combo_sink.currentText()
             self.frequency = ui.frequency.text()
 
             self.pathToParasiticModel = ui.parasitic_textedit.text()
@@ -547,12 +548,25 @@ class GUI():
             index = ui.tableWidget.rowCount()
             ui.tableWidget.insertRow(index)
             combo = QtWidgets.QComboBox()
-            combo.addItem("Drain-to-Source")
-            combo.addItem("Drain-to-Gate")
-            combo.addItem("Gate-to-Source")
-            ui.tableWidget.setCellWidget(index, 1, combo)
+            self.combo_list.append(combo)
+            for device in self.device_dict.keys():
+                combo.addItem(str(device))
+            ui.tableWidget.setCellWidget(index, 0, combo)
+            combo2 = QtWidgets.QComboBox()
+            for path in self.device_dict[combo.currentText()]:
+                combo2.addItem(path[0] + " to " + path[1])
+            ui.tableWidget.setCellWidget(index, 1, combo2)
+
+            def adjustPaths():
+                combo2 = QtWidgets.QComboBox()
+                for path in self.device_dict[combo.currentText()]:
+                    combo2.addItem(path[0] + " to " + path[1])
+                ui.tableWidget.setCellWidget(index, 1, combo2)
+
+            combo.currentIndexChanged.connect(adjustPaths)
 
         def removeRow():
+            self.combo_list.pop()
             if ui.tableWidget.rowCount() > 0:
                 ui.tableWidget.removeRow(ui.tableWidget.rowCount() - 1)
 
@@ -563,9 +577,18 @@ class GUI():
         ui.btn_remove_device.pressed.connect(removeRow)
 
         def show_parasitic_path():
-            ui.parasitic_model_layout
-
+            if ui.combo_model_type.currentText() == "PEEC":
+                ui.parasitic_model_frame.show()
+            else:
+                ui.parasitic_model_frame.hide()
+        
+        ui.parasitic_model_frame.hide()
+        ui.parasitic_model_frame.setFrameStyle(0)
         ui.combo_model_type.currentIndexChanged.connect(show_parasitic_path)
+
+        for lead in self.lead_list:
+            ui.combo_source.addItem(lead)
+            ui.combo_sink.addItem(lead)
 
         electricalSetup.show()
 
@@ -598,6 +621,10 @@ class GUI():
         def addRow():
             index = ui.tableWidget.rowCount()
             ui.tableWidget.insertRow(index)
+            combo = QtWidgets.QComboBox()
+            for device in self.device_dict.keys():
+                combo.addItem(str(device))
+            ui.tableWidget.setCellWidget(index, 0, combo)
             spinbox = QtWidgets.QSpinBox()
             spinbox.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons) # Removes buttons
             spinbox.setValue(10)

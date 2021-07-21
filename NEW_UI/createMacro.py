@@ -47,10 +47,10 @@ def createMacro(file: TextIOWrapper, self):
         file.write("Measure_Type: " + self.measureType + "\n")
         file.write("# Device Connection Table\nDevice_Connection:\n")
         for k, v in self.deviceConnection.items():
-            if v == "Drain-to-Source":
+            if v == "Drain to Source":
                 s = "1,0,0"
             else:
-                s = "0,1,0" if v == "Drain-to-Gate" else "0,0,1"
+                s = "0,1,0" if v == "Drain to Gate" else "0,0,1"
             file.write(k + " " + s + "\n")
         file.write("End_Device_Connection.\n")
         file.write("Source: " + self.source + "\n")
