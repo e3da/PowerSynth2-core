@@ -38,6 +38,8 @@ class GUI():
         self.optimizationUI = None
         self.extraConstraints = []
         self.setupsDone = [0, 0]
+        self.device_dict = None
+        self.lead_list = None
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -279,7 +281,7 @@ class GUI():
 
         def createLayout():
 
-            if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
+            '''if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layer_stack file.")
@@ -305,9 +307,9 @@ class GUI():
             self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
             '''
 
-            self.pathToLayoutScript = "/nethome/jgm019/TEST/layout_geometry_script.txt"
-            self.pathToBondwireSetup = "/nethome/jgm019/TEST/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/jgm019/TEST/layer_stack.csv"  # Speeds up process.'''
+            self.pathToLayoutScript = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layout_geometry_script.txt"
+            self.pathToBondwireSetup = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/bond_wires_setup.txt"
+            self.pathToLayerStack = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layer_stack.csv"  # Speeds up process.
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 
@@ -317,7 +319,7 @@ class GUI():
             self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
             self.pathToFigs = self.pathToWorkFolder + "Figs/"
 
-            figure = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
+            self.device_dict, self.lead_list = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
 
             self.displayLayerStack()
 
@@ -559,6 +561,12 @@ class GUI():
         ui.btn_continue.pressed.connect(continue_UI)
         ui.btn_add_device.pressed.connect(addRow)
         ui.btn_remove_device.pressed.connect(removeRow)
+
+        def show_parasitic_path():
+            ui.parasitic_model_layout
+
+        ui.combo_model_type.currentIndexChanged.connect(show_parasitic_path)
+
         electricalSetup.show()
 
     def thermalSetup(self):

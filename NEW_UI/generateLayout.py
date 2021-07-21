@@ -28,8 +28,20 @@ def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_f
     structure_3D.update_constraint_table(rel_cons=i_v_constraint)
     structure_3D.read_constraint_table(rel_cons=i_v_constraint, mode=99, constraint_file=constraint_file)
 
+    device_dict = dict()
+    lead_list = []
 
-    return layer.plot_init_layout(UI=True) # plotting each layer initial layout
+    for comp in layer.all_components:
+        if comp.layout_component_id.startswith("D"):
+            connections = []
+            for key in comp.conn_dict.keys():
+                connections.append(key)
+            device_dict[comp.layout_component_id] = connections
+        if comp.layout_component_id.startswith("L"):
+            lead_list.append(comp.layout_component_id)
+
+
+    return [device_dict, lead_list]
 
     '''
     input_info = [layer.input_rects, layer.size, layer.origin]

@@ -38,14 +38,14 @@ class Ui_Dialog(object):
 
         self.horizontalLayout_17.addWidget(self.label_24)
 
-        self.combo_measure_type_2 = QComboBox(self.electrical_setup_2)
-        self.combo_measure_type_2.addItem("")
-        self.combo_measure_type_2.addItem("")
-        self.combo_measure_type_2.addItem("")
-        self.combo_measure_type_2.addItem("")
-        self.combo_measure_type_2.setObjectName(u"combo_measure_type_2")
+        self.combo_model_type = QComboBox(self.electrical_setup_2)
+        self.combo_model_type.addItem("")
+        self.combo_model_type.addItem("")
+        self.combo_model_type.addItem("")
+        self.combo_model_type.addItem("")
+        self.combo_model_type.setObjectName(u"combo_model_type")
 
-        self.horizontalLayout_17.addWidget(self.combo_measure_type_2)
+        self.horizontalLayout_17.addWidget(self.combo_model_type)
 
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_17)
@@ -183,17 +183,17 @@ class Ui_Dialog(object):
 
         self.verticalLayout_4.addLayout(self.horizontalLayout_14)
 
-        self.horizontalLayout_5 = QHBoxLayout()
-        self.horizontalLayout_5.setObjectName(u"horizontalLayout_5")
+        self.parasitic_model_layout = QHBoxLayout()
+        self.parasitic_model_layout.setObjectName(u"parasitic_model_layout")
         self.label_6 = QLabel(self.electrical_setup_2)
         self.label_6.setObjectName(u"label_6")
 
-        self.horizontalLayout_5.addWidget(self.label_6)
+        self.parasitic_model_layout.addWidget(self.label_6)
 
         self.parasitic_textedit = QLineEdit(self.electrical_setup_2)
         self.parasitic_textedit.setObjectName(u"parasitic_textedit")
 
-        self.horizontalLayout_5.addWidget(self.parasitic_textedit)
+        self.parasitic_model_layout.addWidget(self.parasitic_textedit)
 
         self.btn_open_parasitic = QPushButton(self.electrical_setup_2)
         self.btn_open_parasitic.setObjectName(u"btn_open_parasitic")
@@ -202,10 +202,10 @@ class Ui_Dialog(object):
         self.btn_open_parasitic.setMinimumSize(QSize(0, 0))
         self.btn_open_parasitic.setMaximumSize(QSize(85, 16777215))
 
-        self.horizontalLayout_5.addWidget(self.btn_open_parasitic)
+        self.parasitic_model_layout.addWidget(self.btn_open_parasitic)
 
 
-        self.verticalLayout_4.addLayout(self.horizontalLayout_5)
+        self.verticalLayout_4.addLayout(self.parasitic_model_layout)
 
         self.horizontalLayout_4 = QHBoxLayout()
         self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
@@ -262,10 +262,10 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"Electrical Setup", None))
         self.label_17.setText(QCoreApplication.translate("Dialog", u"<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Electrical Setup</span></p></body></html>", None))
         self.label_24.setText(QCoreApplication.translate("Dialog", u"Model Type:", None))
-        self.combo_measure_type_2.setItemText(0, QCoreApplication.translate("Dialog", u"Loop", None))
-        self.combo_measure_type_2.setItemText(1, QCoreApplication.translate("Dialog", u"FastHenry", None))
-        self.combo_measure_type_2.setItemText(2, QCoreApplication.translate("Dialog", u"PEEC", None))
-        self.combo_measure_type_2.setItemText(3, QCoreApplication.translate("Dialog", u"Response Surface", None))
+        self.combo_model_type.setItemText(0, QCoreApplication.translate("Dialog", u"Loop", None))
+        self.combo_model_type.setItemText(1, QCoreApplication.translate("Dialog", u"FastHenry", None))
+        self.combo_model_type.setItemText(2, QCoreApplication.translate("Dialog", u"PEEC", None))
+        self.combo_model_type.setItemText(3, QCoreApplication.translate("Dialog", u"Response Surface", None))
 
         self.label_19.setText(QCoreApplication.translate("Dialog", u"Measure Name:", None))
         self.label_20.setText(QCoreApplication.translate("Dialog", u"Measure Type:", None))

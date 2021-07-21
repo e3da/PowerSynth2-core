@@ -40,7 +40,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="combo_measure_type_2">
+         <widget class="QComboBox" name="combo_model_type">
           <item>
            <property name="text">
             <string>Loop</string>
@@ -267,7 +267,7 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <layout class="QHBoxLayout" name="parasitic_model_layout">
         <item>
          <widget class="QLabel" name="label_6">
           <property name="text">

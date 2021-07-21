@@ -1,9 +1,10 @@
 import os
+from PIL import Image
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
-
+from core.CmdRun.cmd_layout_handler import export_solution_layout_attributes
 
 ### NOTE: CURRENTLY USING PYQT5 FOR SOLUTION BROWSER ###
 
@@ -43,11 +44,11 @@ def showSolutionBrowser(self):
         data_y=[]
         perf_metrices=[]
         if self.option:
-            axes.set_xlabel("Inductance")
-            axes.set_ylabel("Max_Temp")
             for sol in self.cmd.structure_3D.solutions:
                 for key in sol.parameters:
                     perf_metrices.append(key)
+            axes.set_xlabel(perf_metrices[0])
+            axes.set_ylabel(perf_metrices[1])
         else:
             axes.set_xlabel("Solution Index")
             axes.set_ylabel("Solution Index")
@@ -74,6 +75,15 @@ def showSolutionBrowser(self):
                 ui.tabWidget.widget(i-1).setScene(scene)
                 i += 1
 
+        background = Image.open(self.pathToFigs + f"initial_layout_I1.png")
+        overlay = Image.open(self.pathToFigs + f"initial_layout_I2.png")
+
+        background = background.convert("RGBA")
+        overlay = overlay.convert("RGBA")
+
+        new_img = Image.blend(background, overlay, 0.5)
+        new_img.save(self.pathToFigs + "new.png","PNG")
+
         axes.scatter(data_x, data_y, picker=True)
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.callbacks.connect('pick_event', on_pick)
@@ -82,6 +92,9 @@ def showSolutionBrowser(self):
         scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
 
-        ui.pushButton.pressed.connect(solutionBrowser.close)
+        def export():
+            export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=None, size=[int(self.floorPlan[0]), int(self.floorPlan[1])], layout_solutions=None)
+
+        ui.pushButton.pressed.connect(export)
 
         solutionBrowser.show()

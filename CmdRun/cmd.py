@@ -578,7 +578,7 @@ class Cmd_Handler:
             layer.new_engine.rel_cons=self.i_v_constraint
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
-            layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout  # EGG
+            layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
             self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
