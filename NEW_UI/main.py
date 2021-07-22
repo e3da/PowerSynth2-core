@@ -40,7 +40,6 @@ class GUI():
         self.setupsDone = [0, 0]
         self.device_dict = None
         self.lead_list = None
-        self.combo_list = []
         self.solution_ind = None
 
         # Variables for Layout Generation Setup
@@ -96,6 +95,10 @@ class GUI():
         ui.start_project.pressed.connect(startProject)
         ui.runProject.pressed.connect(runProject)
 
+        ui.open_manual.setToolTip("Opens the user manual for PowerSynth in default browser.")
+        ui.start_project.setToolTip("Start a new project if you have a layout but no macro script.")
+        ui.runProject.setToolTip("Run a project if you already have a macro script to run.")
+
         openingWindow.show()
 
     def runMacro(self):
@@ -134,12 +137,12 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
             #Joshua paths
-            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
-            #settingsPath = '/nethome/jgm019/testcases/settings.info'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             #Imam paths
-            macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/macro_script.txt'
-            settingsPath='/nethome/ialrazi/PS_2_test_Cases/settings.info'
+            #macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/macro_script.txt'
+            #settingsPath='/nethome/ialrazi/PS_2_test_Cases/settings.info'
             def solutionBrowser():
                 self.currentWindow.close()
                 self.currentWindow = None
@@ -237,6 +240,7 @@ class GUI():
                 solutionBrowser()
 
             UI.btn_continue.pressed.connect(continue_UI)
+            UI.btn_continue.setToolTip("Click to run PowerSynth once you have edited the constraints.")
 
             editConstraints.show()
 
@@ -245,6 +249,11 @@ class GUI():
         ui.btn_cancel.pressed.connect(self.openingWindow)
         ui.btn_open_settings_2.pressed.connect(getSettingsInfo)
         ui.btn_open_macro.pressed.connect(getMacroScript)
+
+        ui.btn_cancel.setToolTip("Return to opening window.")
+        ui.btn_create_project.setToolTip("Click once you have entered correct paths.")
+        ui.btn_open_settings_2.setToolTip("Open file explorer for settings.info file.")
+        ui.btn_open_macro.setToolTip("Open file explorer for macro_script.txt file.")
 
         runMacro.show()
 
@@ -268,6 +277,9 @@ class GUI():
         
         ui.btn_edit_materials.pressed.connect(openMDK)
         ui.btn_default_materials.pressed.connect(continueProject)
+
+        ui.btn_edit_materials.setToolTip("Open MDKEditor to create custom list of materials.")
+        ui.btn_default_materials.setToolTip("Click to use the default materials list.")
 
         editMaterials.show()
 
@@ -316,16 +328,17 @@ class GUI():
             '''
 
 
-            '''
-            Joshua Paths
+            
+            #Joshua Paths
             self.pathToLayoutScript = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/bond_wires_setup.txt"
-            self.pathToLayerStack = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layer_stack.csv"  # Speeds up process.'''
+            self.pathToLayerStack = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layer_stack.csv"  # Speeds up process.
+            '''
 
             #Imam Paths
             self.pathToLayoutScript = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layout_geometry_script1.txt"
             self.pathToBondwireSetup = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layer_stack.csv"
+            self.pathToLayerStack = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layer_stack.csv"'''
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 
@@ -343,6 +356,11 @@ class GUI():
         ui.btn_open_layout.pressed.connect(getLayoutScript)
         ui.btn_open_bondwire.pressed.connect(getBondwire)
         ui.btn_create_project.pressed.connect(createLayout)
+
+        ui.btn_open_layer_stack.setToolTip("Open file explorer for layer_stack.csv file.")
+        ui.btn_open_bondwire.setToolTip("Open file explorer for bondwire_setup.txt file.")
+        ui.btn_open_layout.setToolTip("Open file explorer for layout_script.txt file.")
+        ui.btn_create_project.setToolTip("Click once you have entered correct paths.")
 
         editLayout.show()
     
@@ -382,6 +400,7 @@ class GUI():
             self.editConstraints()
 
         ui.btn_continue.pressed.connect(continue_UI)
+        ui.btn_continue.setToolTip("Click to continue once you have edited the layer_stack file.")
 
         displayLayerStack.show()
 
@@ -455,6 +474,7 @@ class GUI():
             self.runOptions()
 
         ui.btn_continue.pressed.connect(continue_UI)
+        ui.btn_continue.setToolTip("Click to continue once you have edited the constraints.")
 
         editConstraints.show()
 
@@ -479,7 +499,11 @@ class GUI():
 
         ui.pushButton.pressed.connect(option0)
         ui.pushButton_2.pressed.connect(option1)
-        ui.pushButton_3.pressed.connect(option2)        
+        ui.pushButton_3.pressed.connect(option2)
+
+        ui.pushButton.setToolTip("This option will bypass electrical/thermal evaluation.")
+        ui.pushButton_2.setToolTip("This option will bypass layout evaluation.")
+        ui.pushButton_3.setToolTip("This option will run both layout evaluation and electrical/thermal evaluation.")
 
         runOptions.show()
 
@@ -519,6 +543,10 @@ class GUI():
         ui.btn_electrical_setup.pressed.connect(self.electricalSetup)
         ui.btn_thermal_setup.pressed.connect(self.thermalSetup)
         ui.btn_run_powersynth.pressed.connect(run)
+
+        ui.btn_electrical_setup.setToolTip("Opens electrical setup in a separate window.")
+        ui.btn_thermal_setup.setToolTip("Opens thermal setup in a separate window.")
+        ui.btn_run_powersynth.setToolTip("Click to run PowerSynth once all setup options are entered correctly.")
 
         optimizationSetup.show()
 
@@ -563,7 +591,6 @@ class GUI():
             index = ui.tableWidget.rowCount()
             ui.tableWidget.insertRow(index)
             combo = QtWidgets.QComboBox()
-            self.combo_list.append(combo)
             for device in self.device_dict.keys():
                 combo.addItem(str(device))
             ui.tableWidget.setCellWidget(index, 0, combo)
@@ -581,7 +608,6 @@ class GUI():
             combo.currentIndexChanged.connect(adjustPaths)
 
         def removeRow():
-            self.combo_list.pop()
             if ui.tableWidget.rowCount() > 0:
                 ui.tableWidget.removeRow(ui.tableWidget.rowCount() - 1)
 
@@ -590,6 +616,12 @@ class GUI():
         ui.btn_continue.pressed.connect(continue_UI)
         ui.btn_add_device.pressed.connect(addRow)
         ui.btn_remove_device.pressed.connect(removeRow)
+
+        ui.btn_open_parasitic.setToolTip("Open file explorer for parasitic_model.rsmdl file.")
+        ui.btn_open_trace.setToolTip("Open file explorer for trace_ori.txt file.")
+        ui.btn_continue.setToolTip("Save values for electrical setup.  Only click once electrical setup is complete.")
+        ui.btn_add_device.setToolTip("Add a row to device connection table.")
+        ui.btn_remove_device.setToolTip("Remove the last row of the device connection table.")
 
         def show_parasitic_path():
             if ui.combo_model_type.currentText() == "PEEC":
@@ -653,6 +685,10 @@ class GUI():
         ui.btn_continue.pressed.connect(continue_UI)
         ui.btn_add_device.pressed.connect(addRow)
         ui.btn_remove_device.pressed.connect(removeRow)
+
+        ui.btn_continue.setToolTip("Save values for thermal setup.  Only click once thermal setup is complete.")
+        ui.btn_add_device.setToolTip("Add a row to device power table.")
+        ui.btn_remove_device.setToolTip("Remove the last row of the device power table.")
 
         thermalSetup.show()
     
