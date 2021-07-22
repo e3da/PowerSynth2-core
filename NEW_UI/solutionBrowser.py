@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
 from core.CmdRun.cmd_layout_handler import export_solution_layout_attributes
+import matplotlib.pyplot as plt
 
 ### NOTE: CURRENTLY USING PYQT5 FOR SOLUTION BROWSER ###
 
@@ -29,14 +30,29 @@ def showSolutionBrowser(self):
             ui.tabWidget_2.insertTab(i-1, graphics, f"Layer {i}")
             i += 1
 
+        if i > 2:  # Add the 'All Layers' Tab
+            graphics = QtWidgets.QGraphicsView()
+            pix = QPixmap(self.pathToFigs + f"initial_layout_I1.png")
+            pix = pix.scaledToWidth(500)
+            item = QtWidgets.QGraphicsPixmapItem(pix)
+            scene = QtWidgets.QGraphicsScene()
+            scene.addItem(item)
+            graphics.setScene(scene)
+            ui.tabWidget_2.insertTab(i-1, graphics, "All Layers")
+
         i = 1
         while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
             graphics = QtWidgets.QGraphicsView()
 
             ui.tabWidget.insertTab(i-1, graphics, f"Layer {i}")
             i += 1
+        
+        if i > 2:
+            graphics = QtWidgets.QGraphicsView()
+            ui.tabWidget.insertTab(i-1, graphics, "All Layers")
 
         # Solutions Graph
+        self.cmd.solutionsFigure.set_size_inches(7.875, 6.5)
         axes = self.cmd.solutionsFigure.gca()
         axes.set_title("Solution Space")
 
@@ -65,6 +81,8 @@ def showSolutionBrowser(self):
                     data_y.append(sol.solution_id)
 
         def on_pick(event):
+            self.solution_ind = event.ind[0]
+
             i = 1
             while os.path.exists(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png"):
                 pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png")
@@ -74,6 +92,17 @@ def showSolutionBrowser(self):
                 scene.addItem(item)
                 ui.tabWidget.widget(i-1).setScene(scene)
                 i += 1
+            if i > 2:
+                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I1.png")
+                pix = pix.scaledToWidth(450)
+                item = QtWidgets.QGraphicsPixmapItem(pix)
+                scene = QtWidgets.QGraphicsScene()
+                scene.addItem(item)
+                ui.tabWidget.widget(i-1).setScene(scene)
+
+            ui.lineEdit_size.setText("")
+            ui.lineEdit_x.setText(str(event.artist.get_offsets()[event.ind][0][0]))
+            ui.lineEdit_y.setText(str(event.artist.get_offsets()[event.ind][0][1]))
 
         background = Image.open(self.pathToFigs + f"initial_layout_I1.png")
         overlay = Image.open(self.pathToFigs + f"initial_layout_I2.png")
@@ -85,6 +114,7 @@ def showSolutionBrowser(self):
         new_img.save(self.pathToFigs + "new.png","PNG")
 
         axes.scatter(data_x, data_y, picker=True)
+
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
@@ -92,8 +122,26 @@ def showSolutionBrowser(self):
         scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
 
+        if self.option:
+            ui.x_label.setText(perf_metrices[0])
+            ui.y_label.setText(perf_metrices[1])
+        else:
+            ui.x_label.hide()
+            ui.lineEdit_x.hide()
+            ui.y_label.hide()
+            ui.lineEdit_y.hide()
+            ui.lineEdit_size.setMaximumWidth(100)
+
         def export():
-            export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=None, size=[int(self.floorPlan[0]), int(self.floorPlan[1])], layout_solutions=None)
+            if self.solution_ind == None:
+                print("Please select a solution.")
+                return
+            if self.cmd.structure_3D.solutions:
+                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+            elif self.cmd.solutions:
+                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])], layout_solutions=None)
+            else:
+                print("Error: Something went wrong.")
 
         ui.pushButton.pressed.connect(export)
 

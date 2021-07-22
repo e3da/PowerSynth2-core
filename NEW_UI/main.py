@@ -41,6 +41,7 @@ class GUI():
         self.device_dict = None
         self.lead_list = None
         self.combo_list = []
+        self.solution_ind = None
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
@@ -159,17 +160,20 @@ class GUI():
 
             with open(macroPath, 'r') as file:
                 for line in file:
-                    if "Constraint_file: " in line:
+                    if line.startswith("Constraint_file: "):
                         self.pathToConstraints = line.split()[1]
                         if self.pathToConstraints.startswith("./"):
                             self.pathToConstraints = self.pathToConstraints.replace("./", macroPath.rsplit("/", 1)[0] + "/")
-                    if "Fig_dir: " in line:
+                    if line.startswith("Fig_dir: "):
                         self.pathToWorkFolder = line.split()[1].rsplit('/', 1)[0] + "/"
                         self.pathToFigs = line.split()[1] + "/"
-                    if "Option: " in line:
+                    if line.startswith("Option: "):
                         self.option = int(line.split()[1])
-                    if "Reliability-awareness: " in line:
+                    if line.startswith("Reliability-awareness: "):
                         self.reliabilityAwareness = int(line.split()[1])
+                    if line.startswith("Floor_plan: "):
+                        self.floorPlan[0] = line.split()[1].split(",")[0]
+                        self.floorPlan[1] = line.split()[1].split(",")[1]
             
             if int(self.reliabilityAwareness) == 0:
                 UI.tabWidget.removeTab(5)

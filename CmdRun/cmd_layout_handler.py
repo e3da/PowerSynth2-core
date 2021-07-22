@@ -38,6 +38,7 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],la
         item='Solution_'+str(solutions[i].solution_id)
         #item = solutions[i].name
         file_name = sol_path + '/' + item + '.csv'
+        print(file_name)
         with open(file_name, 'w', newline='') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')
             if len (performance_names) >=2: # Multi (2) objectives optimization
