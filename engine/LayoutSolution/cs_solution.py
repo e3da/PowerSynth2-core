@@ -152,7 +152,20 @@ class CornerStitchSolution():
         
         conv_value= list(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
         return tuple([i/255 for i in conv_value])
+    
+    def plot_all_layers(self, all_patches= [],sol_ind=0, sol_path=None, ax_lim=[]):
         
+        ax2 = plt.subplots()[1]
+        for p in all_patches:
+            ax2.add_patch(p)
+        ax2.set_xlim(ax_lim[0])
+        ax2.set_ylim(ax_lim[1])
+    
+        ax2.set_aspect('equal')
+        #if self.fig_dir!=None:
+        plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png')
+        
+        plt.close()
 
     def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None):
         fig1, ax1 = plt.subplots()
