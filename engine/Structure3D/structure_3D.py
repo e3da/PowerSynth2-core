@@ -46,6 +46,7 @@ class Structure_3D():
         self.voltage_info=None # voltage information from the user for reliability awareness case
         self.current_info= None # current information from the user for reliability awareness case
         self.objects_3D =[] # duplicated 3D objects.
+        self.types_for_all_layers_plot=[] # to store cs types for plotting all layers in the same figure
         
         
     def create_module_data_info(self,layer_stack=None):
@@ -1191,6 +1192,7 @@ class Structure_3D():
         #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
         #type = ['EMPTY', 'Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
         type=list(self.all_components_cs_types.values())
+        
         n = len(type)
         for i in range(len(type)):
             t=type[i]
@@ -1261,17 +1263,33 @@ class Structure_3D():
                                 
                         if (w == None and h == None) :
                             if i[4]!=bw_type:
-                                R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None'] # i[-2]=zorder
+                                #R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None'] # i[-2]=zorder
+                                #print(i,self.types_for_all_layers_plot)
+                                if i[4] in self.types_for_all_layers_plot:
+                                    
+                                    R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None','True'] # i[-2]=zorder
+                                else:
+                                    R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None','False']
                             else:
-                                R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-1], 'None', 'None'] # i[-2]=zorder
+                                if i[4] in self.types_for_all_layers_plot:
+                                    
+                                    R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None','True'] # i[-2]=zorder
+                                else:
+                                    R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None','False']
                         else:
                             #print("i",i)
                             center_x = (i[0] + i[0] + i[2]) / float(2)
                             center_y = (i[1] + i[1] + i[3]) / float(2)
                             x = center_x - w / float(2)
                             y = center_y - h / float(2)
-                            R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', '#000000']
-                            R_in1 = [x, y, w, h, colour,i[4], i[-2], 'None', 'None']
+                            if i[4] in self.types_for_all_layers_plot:
+                                
+                                R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', '#000000', 'True']
+                                R_in1 = [x, y, w, h, colour,i[4], i[-2], 'None', 'None','True']
+                            else:
+                                R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', '#000000', 'False']
+                                R_in1 = [x, y, w, h, colour,i[4], i[-2], 'None', 'None','False']
+
                             #print(R_in1)
                             data.append(R_in1)
                     data.append(R_in)

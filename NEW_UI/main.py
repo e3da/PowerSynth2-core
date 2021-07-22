@@ -132,10 +132,13 @@ class GUI():
 
             self.currentWindow.close()
             self.currentWindow = None
+            #Joshua paths
+            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            #settingsPath = '/nethome/jgm019/testcases/settings.info'
 
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
-            settingsPath = '/nethome/jgm019/testcases/settings.info'
-
+            #Imam paths
+            macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/macro_script.txt'
+            settingsPath='/nethome/ialrazi/PS_2_test_Cases/settings.info'
             def solutionBrowser():
                 self.currentWindow.close()
                 self.currentWindow = None
@@ -308,9 +311,17 @@ class GUI():
             self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
             '''
 
+
+            '''
+            Joshua Paths
             self.pathToLayoutScript = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/bond_wires_setup.txt"
-            self.pathToLayerStack = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layer_stack.csv"  # Speeds up process.
+            self.pathToLayerStack = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layer_stack.csv"  # Speeds up process.'''
+
+            #Imam Paths
+            self.pathToLayoutScript = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layout_geometry_script1.txt"
+            self.pathToBondwireSetup = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/bond_wires_script.txt"
+            self.pathToLayerStack = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layer_stack.csv"
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 

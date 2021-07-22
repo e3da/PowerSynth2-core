@@ -154,7 +154,7 @@ class CornerStitchSolution():
         return tuple([i/255 for i in conv_value])
         
 
-    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None):
+    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None):
         fig1, ax1 = plt.subplots()
         if bw_type!=None:
             bondwire_type=" '{}'".format(bw_type)
@@ -166,6 +166,7 @@ class CornerStitchSolution():
 
         conn = create_connection(db)
         v1=[]
+        all_patches=[]
 
         with conn:
             # create a new project
@@ -315,6 +316,27 @@ class CornerStitchSolution():
                             )
                         v1.append(R1)
 
+                        if row[-1]==" 'True'" and all_layers== True:
+                            if a<0.9:
+                                linestyle='--'
+                                linewidth=2*0.5
+                            else:
+                                linestyle='-'
+                                linewidth=0.5
+                            P = matplotlib.patches.Rectangle(
+                            (x, y),  # (x,y)
+                            w,  # width
+                            h,  # height
+                            edgecolor=colour,
+                            facecolor="white",
+                            zorder=order,
+                            linewidth=linewidth,
+                            alpha=a,
+                            linestyle=linestyle
+                            )
+                            all_patches.append(P)
+
+
             for p in v1:
                 ax1.add_patch(p)
 
@@ -328,6 +350,12 @@ class CornerStitchSolution():
             plt.close()
 
         conn.close()
+        if len(all_patches)>0:
+            x_lim=(x0, k1[0])
+            y_lim=(y0, k1[1])
+            return all_patches, [x_lim,y_lim]
+        else:
+            return None
 
 if __name__ == '__main__':
 

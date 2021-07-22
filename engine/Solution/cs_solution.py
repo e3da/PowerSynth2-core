@@ -66,7 +66,7 @@ class CornerStitchSolution:
 
 
 
-    def layout_plot(self, layout_ind=0, db=None, fig_dir=None):
+    def layout_plot(self, layout_ind=0, db=None, fig_dir=None, all_layers=False, a= None):
         fig1, ax1 = plt.subplots()
 
         choice = 'Layout ' + str(layout_ind)
@@ -146,7 +146,7 @@ class CornerStitchSolution:
 
             colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
 
-
+            
             for row in all_lines:
                 #print("R", row)
                 if len(row) < 4:
@@ -209,6 +209,7 @@ class CornerStitchSolution:
                             )
                         v1.append(R1)
 
+            
             for p in v1:
                 ax1.add_patch(p)
 

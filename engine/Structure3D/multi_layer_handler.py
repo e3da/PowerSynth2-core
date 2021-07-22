@@ -539,7 +539,7 @@ class Layer():
         return input_rects, bondwire_landing_info
     
     #plots initial layout for each layer
-    def plot_init_layout(self,fig_dir=None,dbunit=1000,UI=False):
+    def plot_init_layout(self,fig_dir=None,dbunit=1000,UI=False,all_layers=False,a=None):
 
         #print(self.bondwire_landing_info)
         #print(self.bondwires)
@@ -574,6 +574,7 @@ class Layer():
         
 
         rectlist=[]
+        rect_list_all_layers=[]
         max_hier_level=0
         for rect in self.input_rects:
             #print (rect)
@@ -589,9 +590,13 @@ class Layer():
             if rect.hier_level>max_hier_level:
                 max_hier_level=rect.hier_level
             r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level]# x,y,w,h,cs_type,zorder
+            r2=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level,rect.name,rect.type]
+            rect_list_all_layers.append(r2)
             rectlist.append(r)
 
         Patches = []
+        Patches_all_layers=[]
+        types_for_all_layers_plot=[]
         
         if len(self.bondwires)>0:
             for wire in self.bondwires:
@@ -615,12 +620,35 @@ class Layer():
                 (r[0], r[1]),  # (x,y)
                 r[2],  # width
                 r[3],  # height
-                edgecolor=r[4],
-                facecolor="white",
+                facecolor=r[4],
                 zorder=r[-1],
                 linewidth=1,
             )
             Patches.append(P)
+        if all_layers==True:
+            if a<0.9:
+                linestyle='--'
+                linewidth=r[-3]
+            else:
+                linestyle='-'
+                linewidth=r[-3]
+            for r in rect_list_all_layers:
+                if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V':
+                    if r[-1] not in types_for_all_layers_plot:
+                        types_for_all_layers_plot.append(r[-1])
+                    P = patches.Rectangle(
+                        (r[0], r[1]),  # (x,y)
+                        r[2],  # width
+                        r[3],  # height
+                        edgecolor=r[4],
+                        facecolor="white",
+                        zorder=r[-3],
+                        linewidth=linewidth,
+                        alpha=a,
+                        linestyle=linestyle
+                    )
+                    Patches_all_layers.append(P)
+
 
         if UI:
             figure = Figure()
@@ -631,7 +659,18 @@ class Layer():
         for p in Patches:
             ax.add_patch(p)
 
+        """if len(Patches_all_layers)>0:
+            ax2=plt.subplots()[1]
+            for p in Patches_all_layers:
+                ax2.add_patch(p)
+            ax2.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
+            ax2.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         
+            ax2.set_aspect('equal')
+            if fig_dir!=None:
+                plt.savefig(fig_dir+'/initial_layout_all_layers'+self.name+'.png')
+            plt.close()"""
+
         ax.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
         ax.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         
@@ -643,6 +682,11 @@ class Layer():
                 return figure  # For the UI
             plt.show()
         plt.close()
+
+        if len(Patches_all_layers)>0:
+            x_lim=(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
+            y_lim=(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
+            return Patches_all_layers, [x_lim,y_lim], types_for_all_layers_plot
 
     def form_abs_obj_rect_dict(self, div=1000):
         '''
