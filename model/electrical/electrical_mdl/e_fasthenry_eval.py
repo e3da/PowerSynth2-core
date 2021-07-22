@@ -29,6 +29,8 @@ from datetime import datetime
 import sys
 import numpy as np
 from subprocess import Popen,PIPE, DEVNULL
+import multiprocessing
+from multiprocessing import Pool
 class FastHenryAPI(CornerStitch_Emodel_API):
     imam_fh = '/nethome/ialrazi/PS_2_test_Cases/fasthenry'
     qmle_fh = '/nethome/qmle/temp_fh'
@@ -45,6 +47,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.work_space = ws # a directory for script run/result read
         self.e_mdl = 'FastHenry'
         self.parent_trace_net = {} # a dictionary for parent trace to net connect
+        self.commands = []
+        self.solution_paths = []
     def set_fasthenry_env(self,dir=''):
         self.fh_env = dir   
              
@@ -466,6 +470,59 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     text += equiv.format('N'+e[0],'N'+e[1])
         return text
     
+    def generate_fasthenry_inputs(self,parent_id = 0):
+        script_name = 'eval{}.inp'.format(parent_id)
+        script_file = os.path.join(self.work_space+'/Solutions/s{}'.format(parent_id),script_name)
+        write_to_file(script=self.out_text,file_des=script_file)    
+        fasthenry_option= '-siterative -mmulti -pcube'
+        cmd = self.fh_env + " " + fasthenry_option +" "+script_file
+        self.commands.append(cmd)
+
+    def generate_fasthenry_solutions_dir(self,solution_id =0):
+        if not os.path.isdir(self.work_space+'/Solutions'):
+            os.mkdir(self.work_space+'/Solutions')
+        new_dir = self.work_space+'/Solutions/s{}'.format(solution_id)
+        self.solution_paths.append(new_dir)
+        try:
+            os.mkdir(new_dir)
+        except:
+            print("existed")
+    def run_fasthenry(self,id):
+        print("solving solution {}".format(id))
+        os.chdir(self.solution_paths[id])
+        os.system(self.commands[id])
+        curdir = os.getcwd()
+        outputfile = os.path.join(curdir,'Zc.mat')
+        f_list =[]
+        r_list = []
+        l_list = []
+        with open(outputfile,'r') as f:
+            for row in f:
+                row= row.strip(' ').split(' ')
+                row=[i for i in row if i!='']
+                if row[0]=='Impedance':
+                    f_list.append(float(row[5]))
+                elif row[0]!='Row':
+                    r_list.append(float(row[0]))            # resistance in ohm
+                    l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
+        # removee the Zc.mat file incase their is error
+        cmd = 'rm '+outputfile
+        print (cmd)
+        os.system(cmd)    
+        try:
+            r_list=np.array(r_list)*1e3 # convert to mOhm
+            l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
+        except:
+            print ("ERROR, it must be that FastHenry has crashed, no output file is found")
+        #print ('R',r_list,'L',l_list)
+        return r_list[0],l_list[0]
+
+    def parallel_run(self,solutions):
+        num_cpu = multiprocessing.cpu_count()
+        sol_ids = [sol.solution_id for sol in solutions ]
+        with Pool(num_cpu) as p:
+            results = p.map(self.run_fasthenry,sol_ids)
+        return results
     def run_fast_henry_script(self,parent_id = None):
         # this assumes the script is generated in Linux OS. Can be easily rewritten for Windows
         # first generate a temp folder

@@ -83,11 +83,10 @@ class new_engine_opt:
                 if self.e_api.e_mdl == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
-                    R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
-                    if solution.solution_id == id_select:
-                        print ("RL_FH",R,L)
-                        input()
-
+                    self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
+                    self.e_api.generate_fasthenry_inputs(solution.solution_id)
+                    R,L = [-1,-1]
+                    return [-1,-1]
                 if self.e_api.e_mdl == "Loop":
                     R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
                     if solution.solution_id == id_select:
@@ -135,7 +134,7 @@ class new_engine_opt:
                     result.append(R)  # resistance in mOhm
                 if type == 1:  # LOOP INDUCTANCE
                     result = [L_FH,L_loop]         
-
+                
                     #result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):

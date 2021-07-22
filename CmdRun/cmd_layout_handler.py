@@ -295,9 +295,9 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
     for i in range(len(solutions)):
 
         if opt_problem != None:  # Evaluatio mode
-
+                
             results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
-
+                
         else:
             results = perf_results[i]
 
@@ -305,6 +305,12 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
         solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
         print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
         #Solutions.append(solution)
+    if opt_problem.e_api.e_mdl == "FastHenry":
+        e_results = opt_problem.e_api.parallel_run(solutions)
+        for s in solutions:
+            print ("Solution {}".format(s.solution_id),e_results[solutions.index(s)])
+        print(e_results)   
+        input()
     print("Perf_eval_time",time.time()-start)
     return solutions
 
