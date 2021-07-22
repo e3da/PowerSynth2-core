@@ -93,7 +93,7 @@ class Layer():
         ax.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
         ax.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         ax.set_aspect('equal')
-        plt.savefig(fig_dir + '/_init_layout_w_names_' + name +'.png')
+        plt.savefig(fig_dir + '/_init_layout_w_names_' + name+'.png')
         plt.close()
 
 
@@ -615,8 +615,7 @@ class Layer():
                 (r[0], r[1]),  # (x,y)
                 r[2],  # width
                 r[3],  # height
-                edgecolor=r[4],
-                facecolor="white",
+                facecolor=r[4],
                 zorder=r[-1],
                 linewidth=1,
             )
