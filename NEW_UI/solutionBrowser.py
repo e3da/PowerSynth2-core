@@ -17,6 +17,10 @@ def showSolutionBrowser(self):
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
+        ui.lineEdit_size.setReadOnly(True)
+        ui.lineEdit_x.setReadOnly(True)
+        ui.lineEdit_y.setReadOnly(True)
+
         i = 1
         while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
             graphics = QtWidgets.QGraphicsView()
@@ -32,7 +36,7 @@ def showSolutionBrowser(self):
 
         if i > 2:  # Add the 'All Layers' Tab
             graphics = QtWidgets.QGraphicsView()
-            pix = QPixmap(self.pathToFigs + f"initial_layout_I1.png")
+            pix = QPixmap(self.pathToFigs + "initial_layout_all_layers.png")
             pix = pix.scaledToWidth(500)
             item = QtWidgets.QGraphicsPixmapItem(pix)
             scene = QtWidgets.QGraphicsScene()
@@ -93,14 +97,19 @@ def showSolutionBrowser(self):
                 ui.tabWidget.widget(i-1).setScene(scene)
                 i += 1
             if i > 2:
-                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I1.png")
+                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_all_layers_{event.ind[0]}.png")
                 pix = pix.scaledToWidth(450)
                 item = QtWidgets.QGraphicsPixmapItem(pix)
                 scene = QtWidgets.QGraphicsScene()
                 scene.addItem(item)
                 ui.tabWidget.widget(i-1).setScene(scene)
 
-            ui.lineEdit_size.setText("")
+            solution = self.cmd.structure_3D.solutions[self.solution_ind]
+            for feature in solution.features_list:
+                if 'Ceramic' in feature.name:
+                    ui.lineEdit_size.setText(f"{feature.width}, {feature.length}")
+                    break
+
             ui.lineEdit_x.setText(str(event.artist.get_offsets()[event.ind][0][0]))
             ui.lineEdit_y.setText(str(event.artist.get_offsets()[event.ind][0][1]))
 
@@ -133,6 +142,10 @@ def showSolutionBrowser(self):
             ui.lineEdit_size.setMaximumWidth(100)
 
         def export():
+            solutionBrowser.close()
+            return
+
+
             if self.solution_ind == None:
                 print("Please select a solution.")
                 return
