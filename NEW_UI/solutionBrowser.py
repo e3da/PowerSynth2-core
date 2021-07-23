@@ -24,29 +24,6 @@ def showSolutionBrowser(self):
         i = 1
         while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
             graphics = QtWidgets.QGraphicsView()
-            pix = QPixmap(self.pathToFigs + f"initial_layout_I{i}.png")
-            pix = pix.scaledToWidth(500)
-            item = QtWidgets.QGraphicsPixmapItem(pix)
-            scene = QtWidgets.QGraphicsScene()
-            scene.addItem(item)
-            graphics.setScene(scene)
-
-            ui.tabWidget_2.insertTab(i-1, graphics, f"Layer {i}")
-            i += 1
-
-        if i > 2:  # Add the 'All Layers' Tab
-            graphics = QtWidgets.QGraphicsView()
-            pix = QPixmap(self.pathToFigs + "initial_layout_all_layers.png")
-            pix = pix.scaledToWidth(500)
-            item = QtWidgets.QGraphicsPixmapItem(pix)
-            scene = QtWidgets.QGraphicsScene()
-            scene.addItem(item)
-            graphics.setScene(scene)
-            ui.tabWidget_2.insertTab(i-1, graphics, "All Layers")
-
-        i = 1
-        while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
-            graphics = QtWidgets.QGraphicsView()
 
             ui.tabWidget.insertTab(i-1, graphics, f"Layer {i}")
             i += 1
@@ -56,7 +33,7 @@ def showSolutionBrowser(self):
             ui.tabWidget.insertTab(i-1, graphics, "All Layers")
 
         # Solutions Graph
-        self.cmd.solutionsFigure.set_size_inches(7.875, 6.5)
+        self.cmd.solutionsFigure.set_size_inches(4.5, 4)
         axes = self.cmd.solutionsFigure.gca()
         axes.set_title("Solution Space")
 
@@ -90,7 +67,7 @@ def showSolutionBrowser(self):
             i = 1
             while os.path.exists(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png"):
                 pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png")
-                pix = pix.scaledToWidth(450)
+                #pix = pix.scaledToWidth(500)
                 item = QtWidgets.QGraphicsPixmapItem(pix)
                 scene = QtWidgets.QGraphicsScene()
                 scene.addItem(item)
@@ -98,7 +75,7 @@ def showSolutionBrowser(self):
                 i += 1
             if i > 2:
                 pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_all_layers_{event.ind[0]}.png")
-                pix = pix.scaledToWidth(450)
+                #pix = pix.scaledToWidth(500)
                 item = QtWidgets.QGraphicsPixmapItem(pix)
                 scene = QtWidgets.QGraphicsScene()
                 scene.addItem(item)
@@ -110,17 +87,28 @@ def showSolutionBrowser(self):
                     ui.lineEdit_size.setText(f"{feature.width}, {feature.length}")
                     break
 
-            ui.lineEdit_x.setText(str(event.artist.get_offsets()[event.ind][0][0]))
-            ui.lineEdit_y.setText(str(event.artist.get_offsets()[event.ind][0][1]))
+            ui.lineEdit_x.setText(str(round(float(event.artist.get_offsets()[event.ind][0][0]), 3)))
+            ui.lineEdit_y.setText(str(round(float(event.artist.get_offsets()[event.ind][0][1]), 3)))
 
-        background = Image.open(self.pathToFigs + f"initial_layout_I1.png")
-        overlay = Image.open(self.pathToFigs + f"initial_layout_I2.png")
 
-        background = background.convert("RGBA")
-        overlay = overlay.convert("RGBA")
+        def display_initial_layout():
+            i = 1
+            while os.path.exists(self.pathToFigs + f"initial_layout_I{i}.png"):
+                pix = QPixmap(self.pathToFigs + f"initial_layout_I{i}.png")
+                #pix = pix.scaledToWidth(575)
+                item = QtWidgets.QGraphicsPixmapItem(pix)
+                scene = QtWidgets.QGraphicsScene()
+                scene.addItem(item)
+                ui.tabWidget.widget(i-1).setScene(scene)
+                i += 1
+            if i > 2:
+                pix = QPixmap(self.pathToFigs + f"initial_layout_all_layers.png")
+                #pix = pix.scaledToWidth(650)
+                item = QtWidgets.QGraphicsPixmapItem(pix)
+                scene = QtWidgets.QGraphicsScene()
+                scene.addItem(item)
+                ui.tabWidget.widget(i-1).setScene(scene)
 
-        new_img = Image.blend(background, overlay, 0.5)
-        new_img.save(self.pathToFigs + "new.png","PNG")
 
         axes.scatter(data_x, data_y, picker=True)
 
@@ -134,17 +122,21 @@ def showSolutionBrowser(self):
         if self.option:
             ui.x_label.setText(perf_metrices[0])
             ui.y_label.setText(perf_metrices[1])
+
+            # FIXME Currently hardcoding the units.
+            ui.label_units1.setText("nH")
+            ui.label_units2.setText("K")
         else:
             ui.x_label.hide()
             ui.lineEdit_x.hide()
             ui.y_label.hide()
             ui.lineEdit_y.hide()
+            ui.label_units1.hide()
+            ui.label_units2.hide()
             ui.lineEdit_size.setMaximumWidth(100)
 
-        def export():
-            solutionBrowser.close()
+        def export_selected():
             return
-
 
             if self.solution_ind == None:
                 print("Please select a solution.")
@@ -155,7 +147,21 @@ def showSolutionBrowser(self):
                 export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])], layout_solutions=None)
             else:
                 print("Error: Something went wrong.")
+            
+        def export_all():
+            return
 
-        ui.pushButton.pressed.connect(export)
+        def close_GUI():
+            solutionBrowser.close()
+
+        ui.btn_export_selected.pressed.connect(export_selected)
+        ui.btn_export_all.pressed.connect(export_all)
+        ui.btn_exit.pressed.connect(close_GUI)
+        ui.btn_initial_layout.pressed.connect(display_initial_layout)
+
+        ui.btn_export_selected.setToolTip("Export solution selected in the above graph to a csv file in the Solutions folder.")
+        ui.btn_export_all.setToolTip("Export all solutions to a csv file in the Solutions folder.")
+        ui.btn_exit.setToolTip("Close and exit the GUI.")
+        ui.btn_initial_layout.setToolTip("Display initial layout.")
 
         solutionBrowser.show()

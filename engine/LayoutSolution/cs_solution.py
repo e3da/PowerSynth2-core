@@ -163,7 +163,7 @@ class CornerStitchSolution():
     
         ax2.set_aspect('equal')
         #if self.fig_dir!=None:
-        plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png')
+        plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
         
         plt.close()
 
@@ -356,7 +356,7 @@ class CornerStitchSolution():
             ax1.set_xlim(x0, k1[0])
             ax1.set_ylim(y0, k1[1])
             ax1.set_aspect('equal')
-            plt.savefig(fig_dir+'/layout_'+str(layout_ind)+'_'+layer_name+'.png')
+            plt.savefig(fig_dir+'/layout_'+str(layout_ind)+'_'+layer_name+'.png', bbox_inches = 'tight', pad_inches = 0)
             #plt.savefig((fig_dir + '/layout_' + str(layout_ind) + '.svg'),dpi=1200, bbox_inches = 'tight',pad_inches = 0)
             # Try to release memory
             fig1.clf()
