@@ -795,6 +795,8 @@ class Cmd_Handler:
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
+            if model_type==2:
+                self.t_api.init_matlab()
     def init_apis(self):
         '''
         initialize electrical and thermal APIs
@@ -1162,7 +1164,7 @@ if __name__ == "__main__":
                     {imam_nethome1:'Case_10/macro_script.txt'},\
                     {imam_nethome1:'Case_9/macro_script.txt'},\
                     {imam_nethome1:'ICCAD_Case_2/macro_script.txt'} ,
-                    {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'},
+                    {imam_nethome1:'Imam_Journal_Case_1/macro_script.txt'},
                     {imam_nethome1:'Imam_Journal_3D_2/macro_script.txt'}  ]
 
 
