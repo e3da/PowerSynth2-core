@@ -93,7 +93,7 @@ class Layer():
         ax.set_xlim(self.origin[0]/dbunit, (self.origin[0]+self.size[0])/dbunit)
         ax.set_ylim(self.origin[1]/dbunit, (self.origin[1]+self.size[1])/dbunit)
         ax.set_aspect('equal')
-        plt.savefig(fig_dir + '/_init_layout_w_names_' + name+'.png')
+        plt.savefig(fig_dir + '/_init_layout_w_names_' + name+'.png', pad_inches = 0, bbox_inches = 'tight')
         plt.close()
 
 
@@ -676,7 +676,7 @@ class Layer():
         
         ax.set_aspect('equal')
         if fig_dir!=None:
-            plt.savefig(fig_dir+'/initial_layout_'+self.name+'.png')
+            plt.savefig(fig_dir+'/initial_layout_'+self.name+'.png', pad_inches = 0, bbox_inches = 'tight')
         else:
             if UI:
                 return figure  # For the UI

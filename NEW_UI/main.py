@@ -137,7 +137,7 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
             #Joshua paths
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/macro_script.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             #Imam paths
@@ -570,7 +570,7 @@ class GUI():
             
             for i in range(ui.tableWidget.rowCount()):
                 try:
-                    self.deviceConnection[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).currentText()
+                    self.deviceConnection[ui.tableWidget.cellWidget(i, 0).currentText()] = ui.tableWidget.cellWidget(i, 1).currentText()
                 except AttributeError:
                     print("Error: Please specify a name for each device.")
             
@@ -652,7 +652,7 @@ class GUI():
 
             for i in range(ui.tableWidget.rowCount()):
                 try:
-                    self.devicePower[ui.tableWidget.item(i, 0).text()] = ui.tableWidget.cellWidget(i, 1).text()
+                    self.devicePower[ui.tableWidget.cellWidget(i, 0).currentText()] = ui.tableWidget.cellWidget(i, 1).text()
                 except AttributeError:
                     print("Error: Please specify a name for each device.")
 
@@ -704,7 +704,7 @@ class GUI():
 
         # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
         if not self.pathToParasiticModel:
-            self.pathToParasiticModel = '/nethome/jgm019/testcases/Unit_Test_Cases/Case_0_0/ARL_module.rsmdl'
+            self.pathToParasiticModel = '/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/mutual_impact.rsmdl'
         settingsPath = '/nethome/jgm019/testcases/settings.info'
 
         with open(macroPath, "w") as file:
