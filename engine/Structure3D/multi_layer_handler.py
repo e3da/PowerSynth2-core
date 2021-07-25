@@ -539,7 +539,7 @@ class Layer():
         return input_rects, bondwire_landing_info
     
     #plots initial layout for each layer
-    def plot_init_layout(self,fig_dir=None,dbunit=1000,UI=False,all_layers=False,a=None):
+    def plot_init_layout(self,fig_dir=None,dbunit=1000,UI=False,all_layers=False,a=None,c=None):
 
         #print(self.bondwire_landing_info)
         #print(self.bondwires)
@@ -632,7 +632,12 @@ class Layer():
             else:
                 linestyle='-'
                 linewidth=r[-3]
-            for r in rect_list_all_layers:
+            for j in range(len(rect_list_all_layers)):
+                r= rect_list_all_layers[j]
+                if j==0:
+                    label='Layer '+self.name.strip('I')
+                else:
+                    label=None
                 if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V':
                     if r[-1] not in types_for_all_layers_plot:
                         types_for_all_layers_plot.append(r[-1])
@@ -640,12 +645,12 @@ class Layer():
                         (r[0], r[1]),  # (x,y)
                         r[2],  # width
                         r[3],  # height
-                        edgecolor=r[4],
-                        facecolor="white",
+                        edgecolor=c,
+                        facecolor='white',
                         zorder=r[-3],
                         linewidth=linewidth,
                         alpha=a,
-                        linestyle=linestyle
+                        linestyle=linestyle, label= label
                     )
                     Patches_all_layers.append(P)
 
