@@ -164,8 +164,8 @@ class new_engine_opt:
                     if f.name ==dev:
                         f.power=heat_gen
             
-                    if f.z==0.0:
-                        f.h_val=h_conv
+                    '''if f.z==0.0:
+                        f.h_val=h_conv[0]'''
         return solution       
     
 

@@ -4,7 +4,7 @@ import sys, os
 # Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-print(cur_path)
+#print(cur_path)
 sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
@@ -1163,9 +1163,9 @@ if __name__ == "__main__":
                     {imam_nethome1:'Case_8/macro_script.txt'},\
                     {imam_nethome1:'Case_10/macro_script.txt'},\
                     {imam_nethome1:'Case_9/macro_script.txt'},\
-                    {imam_nethome1:'ICCAD_Case_2/macro_script.txt'} ,
-                    {imam_nethome1:'Imam_Journal_Case_1/macro_script.txt'},
-                    {imam_nethome1:'Imam_Journal_3D_2/macro_script.txt'}  ]
+                    {imam_nethome1:'ICCAD_Case_2/macro_script.txt'} ,\
+                    {imam_nethome1:'Imam_Journal_Case_1/macro_script.txt'},\
+                    {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'}  ]
 
 
         for tc in tc_list:
