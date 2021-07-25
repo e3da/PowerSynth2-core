@@ -141,7 +141,7 @@ class GUI():
             settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             #Imam paths
-            #macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/macro_script.txt'
+            #macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_3D_2/macro_script.txt'
             #settingsPath='/nethome/ialrazi/PS_2_test_Cases/settings.info'
             def solutionBrowser():
                 self.currentWindow.close()
