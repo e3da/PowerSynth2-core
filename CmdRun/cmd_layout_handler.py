@@ -817,7 +817,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
         else:
             for solution in PS_solutions:
-                solution.params={'Perf_1':None,'Perf_2':None}
+                solution.parameters={'Perf_1':None,'Perf_2':None}
 
         return PS_solutions
 
@@ -1093,7 +1093,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 print("Gen",gen_time)
         else:
             for solution in PS_solutions:
-                solution.params={'Perf_1':None,'Perf_2':None}
+                solution.parameters={'Perf_1':None,'Perf_2':None}
         #if plot and optimization==True:
             #export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
         return PS_solutions
