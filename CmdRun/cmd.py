@@ -586,14 +586,20 @@ class Cmd_Handler:
         if len(self.structure_3D.layers)>1:
             all_patches=[]
             all_colors=['blue','red','green','yellow','pink','violet']
+            hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
             for i in range(len(self.structure_3D.layers)):
                 '''alpha=(i)*1/len(self.structure_3D.layers)
                 print(0.9-alpha)
                 if alpha==0:
                     alpha=0.5'''
-                alpha=0.3
+                if i==0:
+                    alpha = 0.9
+                    #pattern=None
+                else:
+                    alpha = (i)*1/len(self.structure_3D.layers)
+                pattern = None
                 layer=self.structure_3D.layers[i]
-                patches,ax_lim,types_for_all_layers_plot=layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit,all_layers=True,a=alpha,c=all_colors[i])
+                patches,ax_lim,types_for_all_layers_plot=layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit,all_layers=True,a=alpha,c=all_colors[i],pattern=pattern)
                 all_patches+=patches
 
             self.structure_3D.types_for_all_layers_plot=types_for_all_layers_plot
@@ -607,7 +613,7 @@ class Cmd_Handler:
         
             ax2.set_aspect('equal')
             if self.fig_dir!=None:
-                plt.legend()
+                plt.legend(bbox_to_anchor = (0.8, 1.005))
                 plt.savefig(self.fig_dir+'/initial_layout_all_layers.png')
             plt.close()
 
