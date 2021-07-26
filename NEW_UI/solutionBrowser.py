@@ -136,20 +136,22 @@ def showSolutionBrowser(self):
             ui.lineEdit_size.setMaximumWidth(100)
 
         def export_selected():
-            return
+            #return
 
             if self.solution_ind == None:
                 print("Please select a solution.")
                 return
             if self.cmd.structure_3D.solutions:
                 export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
-            elif self.cmd.solutions:
-                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])], layout_solutions=None)
+            #elif self.cmd.solutions:
+                #export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             else:
                 print("Error: Something went wrong.")
             
         def export_all():
-            return
+            if self.cmd.structure_3D.solutions:
+                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.structure_3D.solutions, size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+            
 
         def close_GUI():
             solutionBrowser.close()

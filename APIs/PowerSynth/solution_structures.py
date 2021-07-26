@@ -69,6 +69,7 @@ class PSSolution(object):
         self.features_list = features_list
         self.parameters= parameters
         self.boundary_conditions = boundary_conditions
+        self.cs_solution=None # to store info from layout engine
 
     def add_feature(self, name, x, y, z, width, lenght, height, material_name, power=0, h_val=0):
         if self.features_list is None:

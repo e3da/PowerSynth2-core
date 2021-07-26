@@ -29,11 +29,16 @@ from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeas
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 
 # --------------Plot function---------------------
-def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],layout_solutions=None,dbunit=1000):
+def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],dbunit=1000):
 
     parameters=solutions[0].parameters
     performance_names=list(parameters.keys())
-    performance_names=['Inductance','Max_Temp']
+    for i in range(len(performance_names)):
+        if 'Perf_1' in performance_names[i]:
+            performance_names[i]= 'Solution Index'
+    #performance_names=['Inductance','Max_Temp']
+    #print(performance_names)
+    #input()
     for i in range(len(solutions)):
         item='Solution_'+str(solutions[i].solution_id)
         #item = solutions[i].name
@@ -552,7 +557,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             solution=Solutions[i]
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
-        
+            sol.cs_solution=solution
             #plot_solution_structure(sol)
             #for f in sol.features_list:
                 #f.printFeature()
@@ -576,8 +581,10 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             for solution in PS_solutions:
                 solution.parameters={'Perf_1': None, 'Perf_2': None}
         
-        if plot:
-            export_solution_layout_attributes(sol_dir,PS_solutions,size,Solutions,dbunit)
+
+
+        #if plot:
+            #export_solution_layout_attributes(sol_dir,PS_solutions,size,Solutions,dbunit)
         
 
         return PS_solutions
@@ -1074,8 +1081,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         else:
             for solution in PS_solutions:
                 solution.params={'Perf_1':None,'Perf_2':None}
-        if plot and optimization==True:
-            export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
+        #if plot and optimization==True:
+            #export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
         return PS_solutions
 
            
