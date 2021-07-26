@@ -34,6 +34,7 @@ class GUI():
         self.pathToParasiticModel = ""
         self.pathToTraceOri = ""
         self.pathToFigs = ""
+        self.pathToSolutions = ""
         self.option = None
         self.optimizationUI = None
         self.extraConstraints = []
@@ -170,6 +171,8 @@ class GUI():
                     if line.startswith("Fig_dir: "):
                         self.pathToWorkFolder = line.split()[1].rsplit('/', 1)[0] + "/"
                         self.pathToFigs = line.split()[1] + "/"
+                    if line.startswith("Solution_dir: "):
+                        self.pathToSolutions = line.split()[1] + "/"
                     if line.startswith("Option: "):
                         self.option = int(line.split()[1])
                     if line.startswith("Reliability-awareness: "):
@@ -347,6 +350,7 @@ class GUI():
             self.pathToWorkFolder = "/".join(newPath) + "/"
             self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
             self.pathToFigs = self.pathToWorkFolder + "Figs/"
+            self.pathToSolutions = self.pathToWorkFolder + "Solutions/"
 
             self.device_dict, self.lead_list = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
 

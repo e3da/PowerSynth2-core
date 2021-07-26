@@ -31,6 +31,9 @@ from core.model.thermal.cornerstitch_API import ThermalMeasure
 # --------------Plot function---------------------
 def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],dbunit=1000):
 
+    layout_solutions = []
+    for solution in solutions:
+        layout_solutions.append(solution.cs_solution)
     parameters=solutions[0].parameters
     performance_names=list(parameters.keys())
     for i in range(len(performance_names)):
@@ -42,8 +45,8 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
     for i in range(len(solutions)):
         item='Solution_'+str(solutions[i].solution_id)
         #item = solutions[i].name
-        file_name = sol_path + '/' + item + '.csv'
-        print(file_name)
+        file_name = sol_path + item + '.csv'
+        #print(file_name)
         with open(file_name, 'w', newline='') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')
             if len (performance_names) >=2: # Multi (2) objectives optimization
@@ -806,6 +809,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         for i in range(len(Solutions)):
             solution=Solutions[i]
             sol=PSSolution(solution_id=solution.index)
+            sol.cs_solution=solution
             #print("Here")
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             #plot_solution_structure(sol)
@@ -1083,6 +1087,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index)
             #print("Here")
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
+            sol.cs_solution=solution
             #plot_solution_structure(sol)
             PS_solutions.append(sol)
 
