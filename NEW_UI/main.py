@@ -137,7 +137,7 @@ class GUI():
             self.currentWindow.close()
             self.currentWindow = None
             #Joshua paths
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/macro_script.txt'
+            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             #Imam paths
