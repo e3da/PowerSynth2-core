@@ -163,11 +163,12 @@ class CornerStitchSolution():
     
         ax2.set_aspect('equal')
         #if self.fig_dir!=None:
+        plt.legend(bbox_to_anchor = (0.8, 1.005))
         plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
         
         plt.close()
 
-    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None):
+    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None, c= None,lab=None):
         fig1, ax1 = plt.subplots()
         if bw_type!=None:
             bondwire_type=" '{}'".format(bw_type)
@@ -255,7 +256,10 @@ class CornerStitchSolution():
             #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple','pink','magenta','orange','violet','black']
 
             #colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
-            
+            all_layers_plot_rows=[]
+            for row in all_lines:
+                if row[-1]==" 'True'" and all_layers== True and len(row)>4 and row[5] != bondwire_type:
+                    all_layers_plot_rows.append(row)
 
             for row in all_lines:
                 #print("R", row)
@@ -330,22 +334,31 @@ class CornerStitchSolution():
                         v1.append(R1)
 
                         if row[-1]==" 'True'" and all_layers== True:
+                            if row==all_layers_plot_rows[-1]:
+                                label=lab
+                                
+                            else:
+                                label=None
                             if a<0.9:
                                 linestyle='--'
-                                linewidth=2*0.5
+                                linewidth=order
                             else:
                                 linestyle='-'
-                                linewidth=0.5
+                                linewidth=order
+                            
+                            
                             P = matplotlib.patches.Rectangle(
                             (x, y),  # (x,y)
                             w,  # width
                             h,  # height
-                            edgecolor=colour,
+                            edgecolor=c,
                             facecolor="white",
                             zorder=order,
                             linewidth=linewidth,
                             alpha=a,
-                            linestyle=linestyle
+                            fill=False,
+                            linestyle=linestyle,
+                            label=label
                             )
                             all_patches.append(P)
 
