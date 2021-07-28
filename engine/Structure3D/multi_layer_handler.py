@@ -628,10 +628,10 @@ class Layer():
         if all_layers==True:
             if a<0.9:
                 linestyle='--'
-                linewidth=r[-3]
+                linewidth=0.5
             else:
                 linestyle='-'
-                linewidth=r[-3]
+                linewidth=0.5
             for j in range(len(rect_list_all_layers)):
                 r= rect_list_all_layers[j]
                 if pattern==None:

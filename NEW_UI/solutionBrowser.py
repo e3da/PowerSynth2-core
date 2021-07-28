@@ -1,11 +1,9 @@
 import os
-from PIL import Image
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
 from core.CmdRun.cmd_layout_handler import export_solution_layout_attributes
-import matplotlib.pyplot as plt
 
 ### NOTE: CURRENTLY USING PYQT5 FOR SOLUTION BROWSER ###
 
@@ -17,7 +15,8 @@ def showSolutionBrowser(self):
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
-        ui.lineEdit_size.setReadOnly(True)
+        ui.lineEdit_size_w.setReadOnly(True)
+        ui.lineEdit_size_h.setReadOnly(True)
         ui.lineEdit_x.setReadOnly(True)
         ui.lineEdit_y.setReadOnly(True)
 
@@ -84,7 +83,8 @@ def showSolutionBrowser(self):
             solution = self.cmd.structure_3D.solutions[self.solution_ind]
             for feature in solution.features_list:
                 if 'Ceramic' in feature.name:
-                    ui.lineEdit_size.setText(f"{feature.width}, {feature.length}")
+                    ui.lineEdit_size_w.setText(str(feature.width))
+                    ui.lineEdit_size_h.setText(str(feature.length))
                     break
 
             ui.lineEdit_x.setText(str(round(float(event.artist.get_offsets()[event.ind][0][0]), 3)))
@@ -115,9 +115,9 @@ def showSolutionBrowser(self):
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
-        scene2 = QtWidgets.QGraphicsScene()
+        scene2 = QtWidgets.QHBoxLayout()
         scene2.addWidget(canvas)
-        ui.grview_sols_browser.setScene(scene2)
+        ui.grview_sols_browser.setLayout(scene2)
 
         if self.option:
             ui.x_label.setText(perf_metrices[0])
@@ -133,7 +133,8 @@ def showSolutionBrowser(self):
             ui.lineEdit_y.hide()
             ui.label_units1.hide()
             ui.label_units2.hide()
-            ui.lineEdit_size.setMaximumWidth(100)
+            ui.lineEdit_size_w.setMaximumWidth(50)
+            ui.lineEdit_size_h.setMaximumWidth(50)
 
         def export_selected():
             #return

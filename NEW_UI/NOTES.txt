@@ -13,4 +13,3 @@ setenv QT_SCALE_FACTOR 2, setenv QT_AUTO_SCREEN_SCALE_FACTOR 1
 TODO:
 
 ASEE Conference Paper -- Final Week
-Add units to solution browser  (size: __ mm X __ mm)
