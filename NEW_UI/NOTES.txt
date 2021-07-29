@@ -13,3 +13,9 @@ setenv QT_SCALE_FACTOR 2, setenv QT_AUTO_SCREEN_SCALE_FACTOR 1
 TODO:
 
 ASEE Conference Paper -- Final Week
+
+Thorough literature review of PowerSynth (10 citations, 5 on power module design (talk about how they are set up), 5 on PowerSynth)
+Short paragraph on how to use PowerSynth without GUI before discussing UI flow
+Paragraph on how my experience relates to the conference as a whole
+Add subsections to Design Flow section
+Add more figures (Architecture, design flow)

@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_CornerStitch_Dialog(object):
     def setupUi(self, CornerStitch_Dialog):
         CornerStitch_Dialog.setObjectName("CornerStitch_Dialog")
-        CornerStitch_Dialog.resize(1154, 618)
+        CornerStitch_Dialog.resize(1244, 712)
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(CornerStitch_Dialog)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.grbox_view = QtWidgets.QGroupBox(CornerStitch_Dialog)
@@ -145,6 +145,8 @@ class Ui_CornerStitch_Dialog(object):
         sizePolicy.setHeightForWidth(self.grview_sols_browser.sizePolicy().hasHeightForWidth())
         self.grview_sols_browser.setSizePolicy(sizePolicy)
         self.grview_sols_browser.setMaximumSize(QtCore.QSize(2000, 16777215))
+        self.grview_sols_browser.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.grview_sols_browser.setAlignment(QtCore.Qt.AlignCenter)
         self.grview_sols_browser.setObjectName("grview_sols_browser")
         self.gridLayout.addWidget(self.grview_sols_browser, 1, 0, 1, 1)
         spacerItem4 = QtWidgets.QSpacerItem(20, 80, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)

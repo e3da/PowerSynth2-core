@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1154</width>
-    <height>618</height>
+    <width>1244</width>
+    <height>712</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -337,6 +337,12 @@
           <width>2000</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>

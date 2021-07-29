@@ -1,9 +1,12 @@
 import os
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
 from core.CmdRun.cmd_layout_handler import export_solution_layout_attributes
+import matplotlib.pyplot as plt
 
 ### NOTE: CURRENTLY USING PYQT5 FOR SOLUTION BROWSER ###
 
@@ -32,7 +35,7 @@ def showSolutionBrowser(self):
             ui.tabWidget.insertTab(i-1, graphics, "All Layers")
 
         # Solutions Graph
-        self.cmd.solutionsFigure.set_size_inches(4.5, 4)
+        #self.cmd.solutionsFigure.set_size_inches(5, 4)
         axes = self.cmd.solutionsFigure.gca()
         axes.set_title("Solution Space")
 
@@ -115,9 +118,9 @@ def showSolutionBrowser(self):
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
-        scene2 = QtWidgets.QHBoxLayout()
+        scene2 = QtWidgets.QGraphicsScene()
         scene2.addWidget(canvas)
-        ui.grview_sols_browser.setLayout(scene2)
+        ui.grview_sols_browser.setScene(scene2)
 
         if self.option:
             ui.x_label.setText(perf_metrices[0])
