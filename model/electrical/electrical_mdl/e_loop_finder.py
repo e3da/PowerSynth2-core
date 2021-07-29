@@ -8,7 +8,7 @@ import networkx as nx
 import sys, os
 import dill
 from networkx.readwrite import edgelist
-
+import pandas as pd
 from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
 from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
@@ -855,7 +855,7 @@ class LayoutLoopInterface():
             for trace in self.x_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
-            #loop_model.update_mutual_mat()
+            loop_model.update_mutual_mat()
             
 
             x_loops.append(loop_model)
@@ -876,6 +876,8 @@ class LayoutLoopInterface():
             for trace in self.y_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
+
             y_loops.append(loop_model)
         bundle_id = 0
         
@@ -888,6 +890,7 @@ class LayoutLoopInterface():
             for trace in self.x_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
             x_loops.append(loop_model)
         bundle_id = 0
         
@@ -900,12 +903,14 @@ class LayoutLoopInterface():
             for trace in self.y_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
+
             y_loops.append(loop_model)
         
 
         all_loops = x_loops+y_loops
         
-        update_all_mutual_ele(all_loops)
+        #update_all_mutual_ele(all_loops)
 
 
         # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
@@ -922,10 +927,12 @@ class LayoutLoopInterface():
             self.doc_report.add_paragraph("Total number of vertical bundles: {}".format(len(y_loops)))
         for loop_model in all_loops:
             loop_model.form_mesh_matrix()
-            loop_model.update_P(1e8)
+            loop_model.update_P(1e9)
             loop_model.solve_linear_systems()
             if self.debug:
                 self.doc_export_report_for_each_loop(loop_model)
+                P_df = pd.DataFrame(data=loop_model.P)
+                P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
             self.rebuild_graph(loop_model)
             
 
