@@ -180,6 +180,8 @@ class GUI():
                     if line.startswith("Floor_plan: "):
                         self.floorPlan[0] = line.split()[1].split(",")[0]
                         self.floorPlan[1] = line.split()[1].split(",")[1]
+                    if line.startswith("Layout_Mode: "):
+                        self.layoutMode = line.split()[1]
             
             if int(self.reliabilityAwareness) == 0:
                 UI.tabWidget.removeTab(5)

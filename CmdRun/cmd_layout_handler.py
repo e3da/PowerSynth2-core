@@ -775,7 +775,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 
         if plot:
-            sol_path = fig_dir + '/Mode_1_gen_only'
+            sol_path = fig_dir + '/Mode_1'
             if not os.path.exists(sol_path):
                 os.makedirs(sol_path)
             for solution in Solutions:
@@ -836,7 +836,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 Solutions.append(solution)
 
                 if plot:
-                    sol_path = fig_dir + '/Mode_1_gen_only'
+                    sol_path = fig_dir + '/Mode_1'
                     if not os.path.exists(sol_path):
                         os.makedirs(sol_path)
                     solution.layout_plot(layout_ind=i, db=db_file, fig_dir=sol_path)
@@ -1025,7 +1025,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             
             
         if plot:
-            sol_path = fig_dir + '/Mode_2_gen_only'
+            sol_path = fig_dir + '/Mode_2'
             if not os.path.exists(sol_path):
                 os.makedirs(sol_path)
             for solution in Solutions:
