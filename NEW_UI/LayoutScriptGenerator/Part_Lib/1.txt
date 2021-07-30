@@ -1,0 +1,18 @@
+# Definition
+MOSFET C:/Users/qmle/Desktop/LayoutScriptGenerator/Part_Lib/MOSFET_Hao.part
+# Layout Information
+I1 Z+
++ T1 power 1.0 1.0 20.0 5.0
+- T2 power 1.0 6.0 5.0 30.0
+- T3 power 1.0 36.0 20.0 5.0
+	+ D1 MOSFET 10.0 2.0
+		+ B13 power 10.0 4.0 1 1
+		+ B14 power 12.0 4.0 1 1
+	+ B13 power 10.0 4.0 1 1
+	+ B14 power 12.0 4.0 1 1
+	+ D2 MOSFET 10.0 37.0
+		+ B15 power 10.0 39.0 1 1
+		+ B16 power 12.0 39.0 1 1
+	+ B15 power 10.0 39.0 1 1
+	+ B16 power 12.0 39.0 1 1
++ T4 power 7.0 7.0 14.0 28.0
