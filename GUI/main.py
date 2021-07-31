@@ -5,20 +5,20 @@ import webbrowser
 from PySide2 import QtWidgets
 from matplotlib.figure import Figure
 from core.CmdRun.cmd import Cmd_Handler
-from core.NEW_UI.py.openingWindow import Ui_Dialog as UI_opening_window
-from core.NEW_UI.py.runMacro import Ui_Dialog as UI_run_macro
-from core.NEW_UI.py.editMaterials import Ui_Dialog as UI_edit_materials
-from core.NEW_UI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
-from core.NEW_UI.py.layerStack import Ui_Dialog as UI_layer_stack
-from core.NEW_UI.py.editConstraints import Ui_Dialog as UI_edit_constraints
-from core.NEW_UI.MDKEditor.MainCode import EditLibrary
-from core.NEW_UI.generateLayout import generateLayout
-from core.NEW_UI.py.optimizationSetup import Ui_Dialog as UI_optimization_setup
-from core.NEW_UI.py.electricalSetup import Ui_Dialog as UI_electrical_setup
-from core.NEW_UI.py.thermalSetup import Ui_Dialog as UI_thermal_setup
-from core.NEW_UI.py.runOptions import Ui_Dialog as UI_run_options
-from core.NEW_UI.solutionBrowser import showSolutionBrowser
-from core.NEW_UI.createMacro import createMacro
+from core.GUI.py.openingWindow import Ui_Dialog as UI_opening_window
+from core.GUI.py.runMacro import Ui_Dialog as UI_run_macro
+from core.GUI.py.editMaterials import Ui_Dialog as UI_edit_materials
+from core.GUI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
+from core.GUI.py.layerStack import Ui_Dialog as UI_layer_stack
+from core.GUI.py.editConstraints import Ui_Dialog as UI_edit_constraints
+from core.GUI.MDKEditor.MainCode import EditLibrary
+from core.GUI.generateLayout import generateLayout
+from core.GUI.py.optimizationSetup import Ui_Dialog as UI_optimization_setup
+from core.GUI.py.electricalSetup import Ui_Dialog as UI_electrical_setup
+from core.GUI.py.thermalSetup import Ui_Dialog as UI_thermal_setup
+from core.GUI.py.runOptions import Ui_Dialog as UI_run_options
+from core.GUI.solutionBrowser import showSolutionBrowser
+from core.GUI.createMacro import createMacro
 
 class GUI():
     '''GUI Class -- Stores Important Information for the GUI'''
@@ -83,7 +83,7 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
-            webbrowser.open_new("./NEW_UI/pdfs/PowerSynth_v1.9.pdf")  
+            webbrowser.open_new("./GUI/pdfs/PowerSynth_v1.9.pdf")  
             # webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
         
         def startProject():

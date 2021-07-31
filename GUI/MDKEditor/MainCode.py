@@ -5,8 +5,8 @@ This is the main code of PCM
 import sys, csv
 from PySide2.QtGui import *
 from PySide2 import QtCore, QtGui
-from core.NEW_UI.MDKEditor.StructureCode import MaterialProperties
-from core.NEW_UI.MDKEditor.Edit_Library import *
+from core.GUI.MDKEditor.StructureCode import MaterialProperties
+from core.GUI.MDKEditor.Edit_Library import *
 from operator import itemgetter
 from copy import deepcopy
 from PySide2.QtWidgets import QMainWindow, QTableWidgetItem, QMessageBox, QApplication, QComboBox, QFileDialog
