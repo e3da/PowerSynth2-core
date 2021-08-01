@@ -1,9 +1,10 @@
 import os
-from PIL import Image
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from core.NEW_UI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
+from core.GUI.py.solutionBrowser import Ui_CornerStitch_Dialog as UI_solution_browser
 from core.CmdRun.cmd_layout_handler import export_solution_layout_attributes
 import matplotlib.pyplot as plt
 
@@ -17,7 +18,8 @@ def showSolutionBrowser(self):
         ui.setupUi(solutionBrowser)
         self.setWindow(solutionBrowser)
 
-        ui.lineEdit_size.setReadOnly(True)
+        ui.lineEdit_size_w.setReadOnly(True)
+        ui.lineEdit_size_h.setReadOnly(True)
         ui.lineEdit_x.setReadOnly(True)
         ui.lineEdit_y.setReadOnly(True)
 
@@ -33,7 +35,7 @@ def showSolutionBrowser(self):
             ui.tabWidget.insertTab(i-1, graphics, "All Layers")
 
         # Solutions Graph
-        self.cmd.solutionsFigure.set_size_inches(4.5, 4)
+        #self.cmd.solutionsFigure.set_size_inches(5, 4)
         axes = self.cmd.solutionsFigure.gca()
         axes.set_title("Solution Space")
 
@@ -65,8 +67,8 @@ def showSolutionBrowser(self):
             self.solution_ind = event.ind[0]
 
             i = 1
-            while os.path.exists(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png"):
-                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_{event.ind[0]}_I{i}.png")
+            while os.path.exists(self.pathToFigs + f"Mode_{self.layoutMode}/layout_{event.ind[0]}_I{i}.png"):
+                pix = QPixmap(self.pathToFigs + f"Mode_{self.layoutMode}/layout_{event.ind[0]}_I{i}.png")
                 #pix = pix.scaledToWidth(500)
                 item = QtWidgets.QGraphicsPixmapItem(pix)
                 scene = QtWidgets.QGraphicsScene()
@@ -74,7 +76,7 @@ def showSolutionBrowser(self):
                 ui.tabWidget.widget(i-1).setScene(scene)
                 i += 1
             if i > 2:
-                pix = QPixmap(self.pathToFigs + f"Mode_2_gen_only/layout_all_layers_{event.ind[0]}.png")
+                pix = QPixmap(self.pathToFigs + f"Mode_{self.layoutMode}/layout_all_layers_{event.ind[0]}.png")
                 #pix = pix.scaledToWidth(500)
                 item = QtWidgets.QGraphicsPixmapItem(pix)
                 scene = QtWidgets.QGraphicsScene()
@@ -84,7 +86,8 @@ def showSolutionBrowser(self):
             solution = self.cmd.structure_3D.solutions[self.solution_ind]
             for feature in solution.features_list:
                 if 'Ceramic' in feature.name:
-                    ui.lineEdit_size.setText(f"{feature.width}, {feature.length}")
+                    ui.lineEdit_size_w.setText(str(feature.width))
+                    ui.lineEdit_size_h.setText(str(feature.length))
                     break
 
             ui.lineEdit_x.setText(str(round(float(event.artist.get_offsets()[event.ind][0][0]), 3)))
@@ -133,7 +136,8 @@ def showSolutionBrowser(self):
             ui.lineEdit_y.hide()
             ui.label_units1.hide()
             ui.label_units2.hide()
-            ui.lineEdit_size.setMaximumWidth(100)
+            ui.lineEdit_size_w.setMaximumWidth(50)
+            ui.lineEdit_size_h.setMaximumWidth(50)
 
         def export_selected():
             #return
@@ -142,7 +146,7 @@ def showSolutionBrowser(self):
                 print("Please select a solution.")
                 return
             if self.cmd.structure_3D.solutions:
-                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             #elif self.cmd.solutions:
                 #export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             else:
@@ -150,7 +154,7 @@ def showSolutionBrowser(self):
             
         def export_all():
             if self.cmd.structure_3D.solutions:
-                export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.structure_3D.solutions, size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=self.cmd.structure_3D.solutions, size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             
 
         def close_GUI():

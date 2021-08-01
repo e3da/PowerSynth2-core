@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1126</width>
-    <height>618</height>
+    <width>1244</width>
+    <height>712</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -142,7 +142,7 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>70</width>
             <height>16777215</height>
            </size>
           </property>
@@ -154,6 +154,19 @@
            <string>units1</string>
           </property>
          </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
         <item>
          <widget class="QLabel" name="y_label">
@@ -172,7 +185,7 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>70</width>
             <height>16777215</height>
            </size>
           </property>
@@ -186,6 +199,19 @@
          </widget>
         </item>
         <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
          <widget class="QLabel" name="label_4">
           <property name="text">
            <string>size:</string>
@@ -193,7 +219,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLineEdit" name="lineEdit_size">
+         <widget class="QLineEdit" name="lineEdit_size_w">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
@@ -202,7 +228,30 @@
           </property>
           <property name="maximumSize">
            <size>
-            <width>100</width>
+            <width>50</width>
+            <height>16777215</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>X</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit_size_h">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>50</width>
             <height>16777215</height>
            </size>
           </property>
@@ -288,6 +337,12 @@
           <width>2000</width>
           <height>16777215</height>
          </size>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </item>
