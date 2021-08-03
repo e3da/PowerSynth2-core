@@ -1008,7 +1008,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                     if layer.name == name:
                         # bond wires population (wire dictionary)
                         layer_wise_table[name].append(table_info[i])
-                    
+                   
     all_layers_combined_geometry_info=[]
     for i in range(len(all_layers)):
         all_layers_combined_geometry_info+=all_layers[i].input_geometry
@@ -1024,6 +1024,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         
         # finding islands for a given layout
         all_layers[i].islands = all_layers[i].form_initial_islands() # list of island objects
+        for island in all_layers[i].islands:
+            island.direction=all_layers[i].direction
         # finding child of each island
         all_layers[i].islands = all_layers[i].populate_child(all_layers[i].islands)
         # updating the order of the rectangles in cs_info for corner stitch
