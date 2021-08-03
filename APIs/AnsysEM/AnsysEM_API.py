@@ -121,19 +121,20 @@ class AnsysEM_API():
             nw = New_wire.format(x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
             self.output_script += nw
             w_id+=1
-        
+        self.form_T_Vias()
     
     def form_T_Vias(self):
         for v in self.e_api.vias:
-            start = v.start
-            stop = v.stop
+            start = v.sheet[0]
+            stop = v.sheet[1]
             x = start.x
             y = start.y
-            dx = start.width
-            dy = start.height
+            dx = start.rect.width
+            dy = start.rect.height
             # find dz and z based on via info
-            id = start.name
+            id = start.net
             id = id.split('.')[0]
+            name = "T_" + id
             type = "Tvia"
             if type == "Tvia":
                 dz = stop.z - start.z
