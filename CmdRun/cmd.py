@@ -670,13 +670,20 @@ class Cmd_Handler:
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
-                
+
         if len(via_type_assignment)>0:
             for comp_name, component in self.comp_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:
                     comp.via_type=via_type_assignment[comp_name.split('.')[0]]
 
-       
+        for comp in self.comp_dict:
+            print(comp)
+            try:
+                print(self.comp_dict[comp].via_type)
+            except:
+                print("None")
+        input()
+
         #No need to handle inter-layer constraints for now
         """
         # taking info for inter-layer constraints
