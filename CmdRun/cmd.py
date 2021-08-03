@@ -644,6 +644,13 @@ class Cmd_Handler:
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
+            via_type_assignment={}
+            for via_name,layers in via_connecting_layers.items():
+                if 'Through' in layers:
+                    via_type_assignment[via_name]='Through'
+                else:
+                    via_type_assignment[via_name]=None
+
         
         
 
@@ -663,6 +670,12 @@ class Cmd_Handler:
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
+                
+        if len(via_type_assignment)>0:
+            for comp_name, component in self.comp_dict.items():
+                if comp_name.split('.')[0] in via_type_assignment:
+                    comp.via_type=via_type_assignment[comp_name.split('.')[0]]
+
        
         #No need to handle inter-layer constraints for now
         """
