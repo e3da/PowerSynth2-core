@@ -674,15 +674,9 @@ class Cmd_Handler:
         if len(via_type_assignment)>0:
             for comp_name, component in self.comp_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:
-                    comp.via_type=via_type_assignment[comp_name.split('.')[0]]
+                    component.via_type=via_type_assignment[comp_name.split('.')[0]]
 
-        for comp in self.comp_dict:
-            print(comp)
-            try:
-                print(self.comp_dict[comp].via_type)
-            except:
-                print("None")
-        input()
+        
 
         #No need to handle inter-layer constraints for now
         """
