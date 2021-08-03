@@ -416,7 +416,11 @@ class Cmd_Handler:
             e_measure_type = self.electrical_models_info['measure_type']
             source = self.electrical_models_info['source']
             sink = self.electrical_models_info['sink']
-            dev_conn = self.electrical_models_info['device_connections']
+            try:
+                dev_conn = self.electrical_models_info['device_connections']
+            except:
+                print("No device found")
+                dev_conn = None
             frequency = self.electrical_models_info['frequency']
             e_mdl_type = self.electrical_models_info['model_type']
         else:
@@ -1165,7 +1169,8 @@ if __name__ == "__main__":
                     {imam_nethome1:'Case_9/macro_script.txt'},\
                     {imam_nethome1:'ICCAD_Case_2/macro_script.txt'} ,\
                     {imam_nethome1:'Case_29_FC_3D/macro_script.txt'},\
-                    {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'}  ]
+                    {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'},\
+                    {imam_nethome1:'Via_Case_3/macro_script.txt'} ]
 
 
         for tc in tc_list:

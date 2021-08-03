@@ -447,7 +447,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                        
 
                         structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
-        
+                        #print(structure.layers[i].name,structure.layers[i].min_location_h)
+                        #print(structure.layers[i].name,structure.layers[i].min_location_v)
+                        #input()
                 
         else: # handling 2D layer only (no via case)
             sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree

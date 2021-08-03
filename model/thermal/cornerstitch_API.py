@@ -195,8 +195,8 @@ class CornerStitch_Tmodel_API:
             for f in removable_features:
                 solution.features_list.remove(f)
 
-            for f in solution.features_list:
-                f.printFeature()
+            #for f in solution.features_list:
+                #f.printFeature()
             if self.matlab_engine == None:
                 #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()
