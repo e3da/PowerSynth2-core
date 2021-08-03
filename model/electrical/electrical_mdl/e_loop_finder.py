@@ -8,7 +8,7 @@ import networkx as nx
 import sys, os
 #import dill
 from networkx.readwrite import edgelist
-
+import pandas as pd
 from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
 from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
@@ -19,7 +19,11 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 import pickle
 from mpl_toolkits import mplot3d
-
+from docx import Document
+from docx.shared import Inches
+from datetime import date
+from multiprocessing import Pool,cpu_count
+import io
 class EdgeData():
     def __init__(self):
         self.parent = None # parent trace cell
@@ -66,12 +70,17 @@ class LayoutLoopInterface():
         self.new_id_locs = {} # map node id to its location
         self.locs_new_id = {} # map location to its id
         self.z_list =[]
+
+        self.doc_report = None
+        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
         return layer.thick
 
     def form_graph(self):
+        self.doc_start_a_report()
+
         if self.ori_map == {}:
             self.find_ori = True
         else:
@@ -96,7 +105,11 @@ class LayoutLoopInterface():
                     pos[n] = self.graph.nodes[n]['locs'][0:2]
                 else:
                     new_graph.remove_node(n)
-            #self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph)
+            if self.debug:
+                memfile = io.BytesIO()
+                name = "digraph for island -- " + g.name
+                self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph,save=True,mem_file = memfile)
+                self.doc_handle_figure(memfile,name)
         self.ele_lst = list(set(self.ele_lst))
         for n in self.graph.nodes:
             self.pos[n] = self.graph.nodes[n]['locs'][0:2] # for 2D plotting purpose
@@ -552,7 +565,7 @@ class LayoutLoopInterface():
             for tx in traces:
 
                 if tx.dir <0 :
-                    wire_type[tx] = 'G' # 'G" set all to signal
+                    wire_type[tx] = 'G' # 'S" set all to signal
                     gr_w.append(tx)
                 else:
                     wire_type[tx] = 'S'
@@ -658,6 +671,8 @@ class LayoutLoopInterface():
     def rebuild_graph(self,loop_obj,mode = ""):
         m_dict = {}
         rem_dict = {} # to make sure there is no overlapping in mutual pair
+        rebuild_graph_info = {} # for debugging purpose and back-annotation of net-graph figure.
+        
         if mode == "all-signal":
             for tc in loop_obj.tc_to_id:
                 id1 = loop_obj.tc_to_id[tc]
@@ -666,6 +681,8 @@ class LayoutLoopInterface():
                 # ADD self RL values
                 
                 n1,n2 = self.rebuild_graph_add_edge(tc,0,0,R1,L1,etype = 'fw')
+                rebuild_graph_info[(n1,n2)]="type:{} R: {} L:{} ".format('fw',R1,L1)
+
                 m_dict[tc] = (n1,n2)
         else:
 
@@ -673,11 +690,13 @@ class LayoutLoopInterface():
                 id1 = loop_obj.tc_to_id[tc]
                 if id1!= -1:
                     # find n1 n2 based on old locs
-                    R1 = loop_obj.R_loop[id1,id1]
-                    L1 = loop_obj.L_loop[id1,id1]
+                    R1 = abs(loop_obj.R_loop[id1,id1])
+                    L1 = abs(loop_obj.L_loop[id1,id1])
                     # ADD self RL values
                     
                     n1,n2 = self.rebuild_graph_add_edge(tc,0,0,R1,L1,etype = 'fw')
+                    rebuild_graph_info[(n1,n2)]="type:{} R: {} L:{} ".format('fw',R1,L1)
+
                     m_dict[tc] = (n1,n2)
                 else:
                     new_n2 = False
@@ -703,7 +722,8 @@ class LayoutLoopInterface():
                         else:
                             n2 = self.new_nodes_id
                     n1,n2 = self.rebuild_graph_add_edge(tc,n1,n2,1e-12,1e-12,etype='return')
-        print ('num_loops',loop_obj.num_loops)
+                    rebuild_graph_info[(n1,n2)]="type:{} R: {} L:{} ".format('return',1e-12,1e-12)
+
         if loop_obj.num_loops > 1: # ADD mutual value
             for tc1 in loop_obj.tc_to_id:
                 id1 = loop_obj.tc_to_id[tc1]
@@ -726,6 +746,10 @@ class LayoutLoopInterface():
                             m_dict[e2] = e1
 
                         #self.rebuild_graph_add_edge(tc1,n3,n4,R2,L2) # add the self value for this trace cell
+        if self.debug:
+            self.doc_report.add_paragraph("Rebuild graph info:")
+            self.doc_handle_rebuild_graph_info(rebuild_graph_info)
+    
     def handle_contracted_edge(self):
         con_edge = []
         for e in self.contracted_edges: # store location of each node
@@ -818,8 +842,7 @@ class LayoutLoopInterface():
         # UPDATE WITH MULTI PROCESSING ***
         # FOR ECCE simply rebuild the graph, but once we need to reverse this algorithm to make it more efficient 
         # SOLVE X BUNDLES
-        print(self.nodes_dict_3d)
-        print(self.comp_net_id)
+        
         self.new_nodes_id = max(self.graph.nodes) +1 # start from the max value of sefl.graph.nodes
         bundle_id = 0
         x_loops = []
@@ -833,7 +856,7 @@ class LayoutLoopInterface():
             for trace in self.x_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
-            #loop_model.update_mutual_mat()
+            loop_model.update_mutual_mat()
             
 
             x_loops.append(loop_model)
@@ -854,6 +877,8 @@ class LayoutLoopInterface():
             for trace in self.y_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
+
             y_loops.append(loop_model)
         bundle_id = 0
         
@@ -866,6 +891,7 @@ class LayoutLoopInterface():
             for trace in self.x_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
             x_loops.append(loop_model)
         bundle_id = 0
         
@@ -878,23 +904,41 @@ class LayoutLoopInterface():
             for trace in self.y_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
+
             y_loops.append(loop_model)
-        print ('num x bundles', len(x_loops))
-        print ('num y bundles', len(y_loops))
+        
 
         all_loops = x_loops+y_loops
-        
-        update_all_mutual_ele(all_loops)
-
+        #update_all_mutual_ele(all_loops)
+        self.all_loops= all_loops
 
         # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
-
-        for loop_model in all_loops:
+        if self.debug:
+            self.doc_report.add_heading("Checking for nets and nodes:",1)
+            self.doc_report.add_heading("node dictionary",2)
+            for n in self.nodes_dict_3d:
+                self.doc_report.add_paragraph("Node 3D location: {} --- Node ID: {}".format(n,self.nodes_dict_3d[n]))
+            self.doc_report.add_heading("component to node dictionary",2)
+            for c in self.comp_net_id:
+                self.doc_report.add_paragraph("Component name: {} --- Component Node id: {}".format(c,self.comp_net_id[c]))
+            self.doc_report.add_heading("Checking bundle creation and evaluation result",1)
+            self.doc_report.add_paragraph("Total number of horizontal bundles: {} ".format(len(x_loops)))
+            self.doc_report.add_paragraph("Total number of vertical bundles: {}".format(len(y_loops)))
+        
+        #self.all_loops=solve_loop_models_parallel(self.all_loops)
+        
+        for loop_model in self.all_loops:
             loop_model.form_mesh_matrix()
-            loop_model.update_P(1e8)
+            loop_model.update_P(self.freq)
             loop_model.solve_linear_systems()
-            #loop_model.view()
+            
+            if self.debug:
+                self.doc_export_report_for_each_loop(loop_model)
+            #    P_df = pd.DataFrame(data=loop_model.P)
+            #    P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
             self.rebuild_graph(loop_model)
+            
 
 
         #print (self.mutual_pair)
@@ -914,14 +958,74 @@ class LayoutLoopInterface():
                 edge_list.append((e[0],e[1]))
                 selected_node.append(e[0])
                 selected_node.append(e[1])
-
-        #self.plot(mode=4,save=False)
+        
+        
+        
         # TEST new graph
         #print ("check path")
         #paths = nx.all_simple_paths(self.net_graph,5,14)
         #for p in paths:
         #    print(p)
         #input()
+        if self.debug:
+            memfile = io.BytesIO()
+            self.plot(mode=4,save=True,mem_file=memfile)
+            self.doc_handle_figure(memfile=memfile,fig_heading = "Netlist Graph")
+            self.doc_save_a_report('./debug_report.docx')  
+    '''The below functions are used to format the report for debugging purpose'''
+    
+    
+    def doc_start_a_report(self):
+        # This is a debug report for this model. It would include init-layout, mesh structure
+        if self.debug:    
+            self.doc_report= Document()
+            self.doc_report.add_heading("Automated Report for Loop-Based Extraction",0)
+            today = date.today()
+            d_format = today.strftime("%m/%d/%y")
+            first_line= "This is an automated report for the current layout in debug mode. Report generated on {}".format(d_format)
+            self.doc_report.add_paragraph(first_line)  
+    def doc_export_report_for_each_loop(self,loop):
+        self.doc_report.add_heading("Analysis for loop: {} \n".format(loop.name),2)
+        text= loop.export_loop(mode = 1)
+        self.doc_report.add_paragraph(text)
+        self.doc_write_matrix_to_report(loop.R_loop,"R_Loop of "+ loop.name)
+        self.doc_write_matrix_to_report(loop.L_loop,"L_loop of "+ loop.name)
+        #self.doc_write_matrix_to_report(loop.I,"I_Matrix of "+loop.name)
+
+    def doc_save_a_report(self,file):
+        self.doc_report.save(file)
+
+    def doc_write_matrix_to_report(self,matrix,name):
+        nx,ny = list(matrix.shape)
+        self.doc_report.add_heading("Matrix " + name , 3)
+        text = "Matrix {} with {} rows and {} columns".format(name,nx,ny)
+        print(text)
+        self.doc_report.add_paragraph(text)
+        
+        table = self.doc_report.add_table(rows=1,cols = ny+1)
+        table.style ='Table Grid'
+
+        row = table.rows[0].cells
+        for iy in range(ny+1): # first row
+            if iy == 0:
+                continue
+            id = iy -1
+            row[iy].text = str(id)
+        for ix in range(nx):
+            row = table.add_row().cells
+            row[0].text = str(ix)
+            for iy in range(ny):
+                row[iy+1].text = str(matrix[ix,iy])
+    def doc_handle_rebuild_graph_info(self,loop_rebuild):
+        for k in loop_rebuild:
+            text = "{}---{}".format(k[0],k[1]) + " " + loop_rebuild[k]
+            self.doc_report.add_paragraph(text)
+    def doc_handle_figure(self,memfile,fig_heading='fig'):
+        # store the iostream figure to doc
+        self.doc_report.add_heading(fig_heading,2)
+        self.doc_report.add_picture(memfile,width = Inches(4),height=Inches(4))
+    '''The upper functions are used to format the report for debugging purpose'''
+
     def graph_to_circuit_transfomation(self):
         for e in self.contracted_edges:
             try:
@@ -1054,6 +1158,7 @@ class LayoutLoopInterface():
         form a simple wire frame from the iniital layout
         '''
         #print("elevation:",elv , "isl name", isl_name)
+        
         elements = island.elements
         el_names = island.element_names
         debug = False
@@ -1287,24 +1392,19 @@ class LayoutLoopInterface():
                     #print(ptrace.eval_length())
                     self.graph.add_edge(n1,r,e_type = 'trace',p_trace= ptrace,res_int=1)
                 
-    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=False):
+    def plot(self,option = "all", mode = 1, isl= "",pos = {},graph = None,save=False,mem_file=''):
+        '''In debug mode, a mem_file iostream will be used to store graph information and then save to word document'''
         if mode == 1: # save figure as file   
-            plt.figure("mesh")
-            nx.draw(self.graph,self.pos,with_labels=True)
-            plt.savefig('wire_mesh.png')
             plt.figure("digraph")
             nx.draw(self.digraph,self.pos,with_labels=True)
-            if save == True:
-                plt.savefig('digraph.png')
-            else:
-                plt.show()
+            
         elif mode == 2: #save figure as data to replot
             fig1 = plt.figure(isl)
             ax1 = fig1.add_subplot(111)
             ax1.set_title(isl)
             nx.draw(graph,pos,with_labels=True) # mesh graph
-            plt.show()
-            #m_name = './pickles/mesh' + isl + '.p'
+            
+            
 
         elif mode == 3:
             # plot by each elevation level.
@@ -1321,24 +1421,19 @@ class LayoutLoopInterface():
                 ax1 = fig1.add_subplot(111)
                 ax1.set_title("digraph on ele:" + str(ele))
                 nx.draw(n_graph,n_pos,with_labels=True) # mesh graph
-                m_name = './pickles/digraph_' + str(ele)+ '.p'
-            if save == True:
-                self.save_plot_pickle(ax1, m_name)
-            else:
-                plt.show()
+        
         elif mode ==4:
-            plt.figure("net_graph")
+            fig = plt.figure("net_graph")
+            ax1 = fig.add_subplot(111)
+            ax1.set_title('NET GRAPH')
             nx.draw_networkx(self.net_graph, pos=self.net_2d_pos,
-                             with_labels=True, node_size=50, font_size=10)
-            plt.title('NET GRAPH')
-            # plt.savefig('pickles/netgraph')
+                             with_labels=True, node_size=50, font_size=12)
+            
+            
+        if save == True:
+            plt.savefig(mem_file,format='png')
+        else:
             plt.show()
-            plt.figure("net_map")
-            if save == True:
-                plt.savefig('net_graph.png')
-            else:
-                plt.show()
-    
     def save_plot_pickle(self,ax,fname):
         pickle.dump(ax,open(fname,"wb"))
 
@@ -1364,7 +1459,10 @@ class LayoutLoopInterface():
         
         for k in self.contracted_nodes:
             self.digraph = nx.contracted_nodes(self.digraph,k,self.contracted_nodes[k],self_loops = False)
-        #self.plot(mode=3)
+        if self.debug:
+            memfile = io.BytesIO()
+            self.plot(mode=3,save=True,mem_file=memfile)
+            self.doc_handle_figure(memfile=memfile,fig_heading="Initial digraph")
         
         '''
         # modify to create more edges in x and y 
@@ -1403,6 +1501,17 @@ class LayoutLoopInterface():
         else:
             self.ori_map[el_data[5]] = 'P'
 
+def solve_loop_models_parallel(all_loops=None):
+    num = int(cpu_count()/2)
+    print(num)
+    with Pool(num) as p:
+        results = p.map(solve_single_loop,all_loops)
+    return results
+def solve_single_loop(loop_model):
+    loop_model.form_mesh_matrix()
+    loop_model.update_P(1e9)
+    loop_model.solve_linear_systems()
+    return loop_model
 def load_pickle_plot(fname):
     ax1 = pickle.load(open("mesh.p","rb"))
     ax2 = pickle.load(open("digraph.p","rb"))

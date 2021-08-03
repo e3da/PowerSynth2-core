@@ -69,19 +69,19 @@ class Layer:
             print("cannot add devices on passive layer")
 
 class LayerStack:
-    def __init__(self,debug=True):
+    def __init__(self,debug=True,material_path = None):
         self.debug=debug
         self.all_layers_info = OrderedDict()  # a table of layer with layer index
         self.current_id = 0  # to check the current layer id
         self.max_z = 0  # the z level of the highest layer
         self.material_lib = Material_lib()
+        if material_path == None:
+            if self.debug==True:
+                material_path = os.path.abspath(settings.MATERIAL_LIB_PATH)
+            else:
+                material_path = input("Put your hardcoded path to Material.csv file here:")
+                material_path = os.path.abspath(material_path)
         
-        if self.debug==True:
-            material_path = os.path.abspath(settings.MATERIAL_LIB_PATH)
-        else:
-            material_path = input("Put your hardcoded path to Material.csv file here:")
-            material_path = os.path.abspath(material_path)
-
 
         #material_path = MATERIAL_LIB_PATH
         self.material_lib.load_csv(material_path) # load the mat_lib from the default directory
