@@ -656,3 +656,17 @@ oModule.AddTraces("Data Table {0}", "Setup1 : {1}",
 '''
 Optim_family='''
         "{0}:="		, ["{1} {2}"], # 0: Name,  1: Value: 'All', 'Nominal' or 'Value+Unit' '''
+
+Create_T_Via = '''
+oEditor.Subtract(
+	[
+		"NAME:Selections",
+		"Blank Parts:="		, "{list_of_cut_parts}",
+		"Tool Parts:="		, "{Via_name}""
+	], 
+	[
+		"NAME:SubtractParameters",
+		"KeepOriginals:="	, False
+	])
+
+'''

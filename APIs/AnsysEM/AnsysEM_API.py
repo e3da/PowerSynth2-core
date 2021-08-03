@@ -7,7 +7,7 @@ print(cur_path)
 cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
 sys.path.append(cur_path)
 import math
-from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir
+from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir,Create_T_Via
 from core.APIs.AnsysEM.AnsysEM_structures import AnsysEM_Box
 class AnsysEM_API():
     def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None):
@@ -79,8 +79,8 @@ class AnsysEM_API():
                 box.set_color(self.devivce_color)
             if 'L' in PS_feature.name:
                 box.set_color(self.lead_color)
-            if 'V' in PS_feature.name:
-                box.set_color(self.via_color)
+            #if 'V' in PS_feature.name:
+            #    box.set_color(self.via_color)
             if 'T' in PS_feature.name:
                 box.set_color(self.trace_color)
             if 'Ceramic' in PS_feature.name:
@@ -100,7 +100,8 @@ class AnsysEM_API():
     def handle_3D_connectivity(self):
         # Handle wires and vias connections
         # get all layer IDs
-        self.e_api.setup_layout_objects(self.module_data)
+        if self.e_api.net_to_sheet == []:
+            self.e_api.setup_layout_objects(self.module_data)
         w_id = 0
         for w in self.e_api.wires:
             print (w)
@@ -120,8 +121,30 @@ class AnsysEM_API():
             nw = New_wire.format(x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
             self.output_script += nw
             w_id+=1
+        
+    
+    def form_T_Vias(self):
         for v in self.e_api.vias:
-            print (v)
+            start = v.start
+            stop = v.stop
+            x = start.x
+            y = start.y
+            dx = start.width
+            dy = start.height
+            # find dz and z based on via info
+            id = start.name
+            id = id.split('.')[0]
+            type = "Tvia"
+            if type == "Tvia":
+                dz = stop.z - start.z
+            Tbox = AnsysEM_Box(x=x,y=y,z=start.z,dx=dx,dy=dy,dz=dz,obj_id=id)
+            Tbox.make()
+            self.output_script+=Tbox.script
+
+
+    
+    
+    
     def write_script(self):
 
         py_file = self.exported_script_dir+'/'+self.design_name + '.py'

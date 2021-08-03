@@ -185,7 +185,6 @@ class CornerStitch_Emodel_API:
             
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
-                
                 if name[0] != 'C':
                     z_id = int(name.split(".")[1])
                     z = int(self.get_z_loc(z_id)*1000)
@@ -251,12 +250,13 @@ class CornerStitch_Emodel_API:
 
                     self.net_to_sheet[name] = pin
                 elif isinstance(obj, Part):
-                    
                     if obj.type == 0:  # If this is lead type:
                         
                         new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
                         if type == 'V': # Handling Vias type
+                            print(obj.via_type)
+                            
                             via_name = name.split(".")[0]
                             if not(via_name in self.via_dict): # if this group is not formed
                                 self.via_dict[via_name] = []
@@ -736,6 +736,10 @@ class CornerStitch_Emodel_API:
                 else: # NEED TO DEFINE A VIA OBJECT, THIS IS A BAD ASSUMTION
                     start = wire_data['Source']
                     stop = wire_data['Destination']
+
+                    print("add via",start,stop)
+                    input()
+                    
                     s1 = self.net_to_sheet[start]
                     s2 = self.net_to_sheet[stop]
                     via = EVia(start=s1,stop=s2)
