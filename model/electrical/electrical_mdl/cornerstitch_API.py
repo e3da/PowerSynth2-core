@@ -46,6 +46,9 @@ class ElectricalMeasure(object):
         self.measure = measure
         self.source = source
         self.sink = sink
+        self.src_dir = 'Z+'
+        self.sink_dir = 'Z+'
+
 
 
 class CornerStitch_Emodel_API:
@@ -180,8 +183,10 @@ class CornerStitch_Emodel_API:
         connections on each layer
         '''
         
+
         
         for isl in islands:
+            isl_dir = isl.direction
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
                 if name[0] != 'C':
@@ -250,7 +255,11 @@ class CornerStitch_Emodel_API:
                     self.net_to_sheet[name] = pin
                 elif isinstance(obj, Part):
                     if obj.type == 0:  # If this is lead type:
+                        if name in self.src_sink_dir:
+                            self.src_sink_dir[name] = isl_dir
+
                         
+
                         new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
                         if type == 'V': # Handling Vias type
@@ -295,6 +304,11 @@ class CornerStitch_Emodel_API:
 
                         self.e_comps.append(
                             EComp(sheet=dev_pins, conn=dev_conn_list, val=dev_para))  # Update the component
+        print(self.src_sink_dir)
+        for m in self.measure:
+            m.src_dir = self.src_sink_dir[m.source]
+            m.sink_dir = self.src_sink_dir[m.sink]
+            
 
     
     def setup_layout_objects(self,module_data = None):
@@ -317,9 +331,14 @@ class CornerStitch_Emodel_API:
         self.wires  = []
         self.vias =[]
         # convert the layout info to electrical objects per layer
-        
+        # get the measure name
+        self.src_sink_dir ={}
+        for m in self.measure:
+            self.src_sink_dir[m.source] = 'Z+'
+            self.src_sink_dir[m.sink] = 'Z+'
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
+            
             self.get_layer_data_to_electrical(islands=island_data,layer_id =l_key)
         # handle bondwire group 
         self.make_wire_and_via_table()
@@ -366,7 +385,11 @@ class CornerStitch_Emodel_API:
             #print("define current directions")
             self.emesh.form_graph()
             #print("find path")
-            self.emesh.find_all_paths(src='L1',sink = 'L2')
+            #TODO: for measure in self.mesures 
+            #Assume 1 measure now
+            src = self.measure[0].source
+            sink = self.measure[0].sink
+            self.emesh.find_all_paths(src=src,sink = sink)
             self.emesh.form_bundles()
             #self.emesh.plot()
             #print("define bundle")

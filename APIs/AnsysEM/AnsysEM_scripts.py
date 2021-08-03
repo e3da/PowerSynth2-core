@@ -105,7 +105,6 @@ oModule.InsertSetup("Matrix",
         "AdaptiveFreq:="    , "{0}Hz",   # default 100 kHz
         "SaveFields:="        , {1},      # default to be False 
         "Enabled:="        , True,
-        {8}
         [
             "NAME:AC",
             "MaxPass:="        , {2},
@@ -116,7 +115,7 @@ oModule.InsertSetup("Matrix",
         ]
 
     ])
-    {7}
+
 '''
 Add_DC='''
 [

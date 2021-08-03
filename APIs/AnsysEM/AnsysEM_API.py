@@ -8,7 +8,7 @@ cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
 sys.path.append(cur_path)
 import math
 from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir\
-                                                ,Create_T_Via,Source_Sink
+                                                ,Create_T_Via,Source_Sink,Auto_identify_nets,Analyze_all,Analysis_Setup
 from core.APIs.AnsysEM.AnsysEM_structures import AnsysEM_Box
 class AnsysEM_API():
     def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None):
@@ -100,16 +100,31 @@ class AnsysEM_API():
             self.output_script+= box.script
         self.handle_3D_connectivity()
         self.add_src_sink()
+        self.output_script+=Auto_identify_nets
+        #self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
+        #self.output_script+=Analyze_all
         self.save_project_as()
 
     def add_src_sink(self):
         measure = self.e_api.measure[0]
         src = measure.source
         sink = measure.sink
-        
+        src_dir = measure.src_dir
+        sink_dir = measure.sink_dir
 
-        print(self.face_id_dict[src])
-        print(self.face_id_dict[sink])
+        if src_dir == 'Z+':
+            f_src = self.face_id_dict[src][0]
+        else:
+            f_src = self.face_id_dict[src][1]
+
+        if sink_dir == 'Z+':
+            f_sink = self.face_id_dict[sink][0]
+        else:
+            f_sink = self.face_id_dict[sink][1]
+
+        src_sink_script = Source_Sink.format('Src_'+src,f_src,'Sink_'+sink,f_sink)
+        self.output_script+=src_sink_script
+       
 
     def save_project_as(self):
         self.output_script+=Save_project_as_current_dir.format(name=self.design_name)
