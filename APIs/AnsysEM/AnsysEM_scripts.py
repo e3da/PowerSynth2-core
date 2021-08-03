@@ -77,12 +77,12 @@ oModule = oDesign.GetModule("BoundarySetup")
 oModule.AssignSource(
     [
         "NAME:{0}",
-        "Faces:="        , [{1}]{4}
+        "Faces:="        , [{1}]
     ])
 oModule.AssignSink(
     [
         "NAME:{2}",
-        "Faces:="        , [{3}]{4}
+        "Faces:="        , [{3}]
     ])
 '''   
 Source_sink_parent='''
@@ -662,7 +662,7 @@ oEditor.Subtract(
 	[
 		"NAME:Selections",
 		"Blank Parts:="		, "{list_of_cut_parts}",
-		"Tool Parts:="		, "{Via_name}""
+		"Tool Parts:="		, "{Via_name}"
 	], 
 	[
 		"NAME:SubtractParameters",

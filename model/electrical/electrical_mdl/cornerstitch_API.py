@@ -50,7 +50,7 @@ class ElectricalMeasure(object):
 
 class CornerStitch_Emodel_API:
     # This is an API with NewLayout Engine
-    def __init__(self, comp_dict={}, wire_conn={},e_mdl = 'PowerSynthPEEC'):
+    def __init__(self, comp_dict={}, wire_conn={},e_mdl = None):
         '''
 
         :param comp_dict: list of all components and routing objects
@@ -182,7 +182,6 @@ class CornerStitch_Emodel_API:
         
         
         for isl in islands:
-            
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
                 if name[0] != 'C':
@@ -255,13 +254,13 @@ class CornerStitch_Emodel_API:
                         new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
                         if type == 'V': # Handling Vias type
-                            print(obj.via_type)
-                            
                             via_name = name.split(".")[0]
                             if not(via_name in self.via_dict): # if this group is not formed
                                 self.via_dict[via_name] = []
                             if len(self.via_dict[via_name]) < 2:# cannot find all connections
                                 self.via_dict[via_name].append(pin)
+                            pin.via_type = obj.via_type
+
                         self.net_to_sheet[name] = pin
                         self.e_sheets.append(pin)
                     elif obj.type == 1:  # If this is a component
@@ -709,11 +708,12 @@ class CornerStitch_Emodel_API:
             sheets = self.via_dict[V_key]
             if len(sheets)==2:
                 via = EVia(start = sheets[0], stop = sheets[1])
+                via.via_type = sheets[0].via_type
                 self.vias.append(via)
         
     def make_wire_and_via_table(self):
         #first form via connection for trace to trace case
-        self.form_t2t_via_connections()
+        #self.form_t2t_via_connections()
         
         for wire_table in list(self.wire_dict.values()):
             for obj in wire_table:
@@ -738,11 +738,12 @@ class CornerStitch_Emodel_API:
                     stop = wire_data['Destination']
 
                     print("add via",start,stop)
-                    input()
-                    
                     s1 = self.net_to_sheet[start]
+
                     s2 = self.net_to_sheet[stop]
                     via = EVia(start=s1,stop=s2)
+                    via.via_type = s1.via_type
+
                     self.vias.append(via)
                     
             #self.e_comps+=self.wires

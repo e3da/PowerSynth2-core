@@ -158,7 +158,7 @@ class EVia(EComp):
         '''
         EComp.__init__(self, sheet=[start, stop], conn=[[start.net, stop.net]], type="via")
         self.class_type ='via'
-    
+        self.via_type = 'f2f'
     def build_graph(self, mode =0):
         # perfect conductor. will add function for via evaluation later 
         R_val = 1e-6
