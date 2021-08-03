@@ -113,6 +113,7 @@ class new_engine_opt:
                     self.e_api_1.form_isl_script()    
                     self.e_api_1.add_source_sink(measure.source,measure.sink)
                     R_FH,L_FH = self.e_api_1.run_fast_henry_script(parent_id = solution.solution_id)
+                    print("RFH-RLoop",R_FH,R_loop)
                     # Temp to store result
                     R = L_FH
                     L = L_loop

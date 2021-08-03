@@ -246,7 +246,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         return text_out
 
-    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =7 ,nhinc =7,type = 0,eq_to_start=None,eq_to_end=None):
+    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =9 ,nhinc =9,type = 0,eq_to_start=None,eq_to_end=None):
         #print ("TRACE-FH:", 'Start:', start_loc, 'Stop', end_loc, 'Width:' , width)
         
         

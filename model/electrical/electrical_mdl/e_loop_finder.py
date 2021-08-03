@@ -22,6 +22,7 @@ from mpl_toolkits import mplot3d
 from docx import Document
 from docx.shared import Inches
 from datetime import date
+from multiprocessing import Pool,cpu_count
 import io
 class EdgeData():
     def __init__(self):
@@ -71,7 +72,7 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -909,9 +910,8 @@ class LayoutLoopInterface():
         
 
         all_loops = x_loops+y_loops
-        
         #update_all_mutual_ele(all_loops)
-
+        self.all_loops= all_loops
 
         # SOLVE EACH BUNDLE SEPARATEDLY, POSSIBLE FOR PARRALLEL RUN
         if self.debug:
@@ -925,14 +925,18 @@ class LayoutLoopInterface():
             self.doc_report.add_heading("Checking bundle creation and evaluation result",1)
             self.doc_report.add_paragraph("Total number of horizontal bundles: {} ".format(len(x_loops)))
             self.doc_report.add_paragraph("Total number of vertical bundles: {}".format(len(y_loops)))
-        for loop_model in all_loops:
+        
+        #self.all_loops=solve_loop_models_parallel(self.all_loops)
+        
+        for loop_model in self.all_loops:
             loop_model.form_mesh_matrix()
-            loop_model.update_P(1e9)
+            loop_model.update_P(self.freq)
             loop_model.solve_linear_systems()
+            
             if self.debug:
                 self.doc_export_report_for_each_loop(loop_model)
-                P_df = pd.DataFrame(data=loop_model.P)
-                P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
+            #    P_df = pd.DataFrame(data=loop_model.P)
+            #    P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
             self.rebuild_graph(loop_model)
             
 
@@ -969,6 +973,8 @@ class LayoutLoopInterface():
             self.doc_handle_figure(memfile=memfile,fig_heading = "Netlist Graph")
             self.doc_save_a_report('./debug_report.docx')  
     '''The below functions are used to format the report for debugging purpose'''
+    
+    
     def doc_start_a_report(self):
         # This is a debug report for this model. It would include init-layout, mesh structure
         if self.debug:    
@@ -1495,6 +1501,17 @@ class LayoutLoopInterface():
         else:
             self.ori_map[el_data[5]] = 'P'
 
+def solve_loop_models_parallel(all_loops=None):
+    num = int(cpu_count()/2)
+    print(num)
+    with Pool(num) as p:
+        results = p.map(solve_single_loop,all_loops)
+    return results
+def solve_single_loop(loop_model):
+    loop_model.form_mesh_matrix()
+    loop_model.update_P(1e9)
+    loop_model.solve_linear_systems()
+    return loop_model
 def load_pickle_plot(fname):
     ax1 = pickle.load(open("mesh.p","rb"))
     ax2 = pickle.load(open("digraph.p","rb"))

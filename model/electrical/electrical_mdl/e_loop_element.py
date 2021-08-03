@@ -60,6 +60,9 @@ def form_skd(width=2, N = 3):
     d_min = width / sum(d_mult)
     d_mult = np.array(d_mult)
     d = d_mult*d_min
+    d = [int(i) for i in d]
+    print("freq_dependent",d)
+
     return d
 '''Equation for different cases -- move these to a different location. '''  
 def CalVal2(k):
@@ -120,13 +123,15 @@ class ETrace():
         #
         self.struct = "trace" # trace, bw, via ... 
         
-    def form_mesh_uniform(self,start_id =0):
+    def form_mesh_uniform(self,start_id =0,eval_mode = 'trace'):
         id = start_id
-        dw = float(self.width)/self.nwinc
-        dh = float(self.thick)/self.nhinc 
+        dw = int((self.width)/self.nwinc)
+        dh = int((self.thick)/self.nhinc )
+
         for i in range(self.nwinc):
             for j in range(self.nhinc):
                 new_fil = EFilament()
+                new_fil.eval_mode = eval_mode # switch between trace and wire to use different equations
                 new_fil.ori = self.ori
                 new_fil.thick = dh
                 new_fil.width = dw
@@ -206,6 +211,7 @@ class EFilament():
         self.m_id =0
         self.dir = 1 # +x,+y,+z direction by default
         self.Ival = 0 # current value of this filament
+        self.eval_mode = None
         # use to store computed RL val
         self.R = 0 
         self.L = 0 
@@ -245,6 +251,7 @@ class EFilament():
         y1 = min(element.start_pt[1],element.end_pt[1])
         x0 = min(self.start_pt[0],self.end_pt[0])
         x1 = min(element.start_pt[0],element.end_pt[0])
+        
         if self.ori ==0 and element.ori ==0: # HORIZONTAL CASE PLANE YZ
             l3 = abs(x1-x0)
             E = abs(y1-y0)
@@ -255,7 +262,6 @@ class EFilament():
         p = abs(self.start_pt[2] - element.start_pt[2])
         params = [w1,l1,t1,w2,l2,t2,l3,p,E]
         #params =[int(p*1e6) for p in params] # convert to um
-
         return params # w1,l1,t1,w2,l2,t2,l3,p,E
     
     def eval_self(self):
@@ -268,11 +274,14 @@ class EFilament():
         self.length = len
         r = sqrt(self.width**2+self.thick**2)
         k = len/r
-        Lval = len*1e-6*CalVal2(k)
-        #Lval = self_ind_py(self.width,len,self.thick) *1e-3* 1e-9
+        if self.eval_mode == 'wire':
+            Lval = len*1e-6*CalVal2(k)
+        else:
+            Lval = self_ind_py(self.width,len,self.thick) *1e-3* 1e-9
+        
         #Lval = self_ind_c_type(self.width,len,self.thick) # input values in cm
-
-        Rval = copper_res*len/(self.width*self.thick)
+        
+        Rval = copper_res*len/(self.width*self.thick)*1e6
         #print ("lapprox-lreal",Lval1,Lval)
         self.R = Rval
         self.L = Lval
@@ -378,7 +387,7 @@ class LoopEval():
         self.P = None # partial impedance matrix
         self.G = None # ground matrix
         self.all_eles = []
-        self.freq = 1e6# default as 1MHz
+        self.freq = 1e9# default as 1MHz
         self.freq_min = 1e6
         self.freq_max = 1e9
         self.mutual_params = []
@@ -391,13 +400,13 @@ class LoopEval():
         self.open_loop = True
         self.tc_to_id = {}
         self.traces = {}
+    
     def update_P(self,freq=1e9):
         self.freq = freq
         dimension = (len(self.all_eles),len(self.all_eles))
         self.P= np.zeros(dimension,dtype= np.complex64)
         self.P = self.R_Mat + self.L_Mat*2*PI*freq*1j
-        #self.show_P()        
-        #self.is_P_pos_def()             
+                     
 
     def show_P(self):
         # show the color map to check for zero row and collumn
@@ -469,8 +478,6 @@ class LoopEval():
                 else:
                     if self.all_eles[i].ori == self.all_eles[k].ori:
                         w1,l1,t1,w2,l2,t2,l3,p,E = self.all_eles[i].get_mutual_params(self.all_eles[k])
-                        if i == 2 and k ==48:
-                            print(w1,l1,t1,w2,l2,t2,l3,p,E)
                     else:
                         continue
                     dis = sqrt(l3**2 + p**2 + E**2)
@@ -510,25 +517,23 @@ class LoopEval():
                     if np.isnan(M) or np.isinf(M):
                         print (key)
                         print ("cant calculate this value")
+                        input()
                     M*=1e-9
                     self.L_Mat[i,k] = M
-                    if (i ==0 and k == 48) :
-                        print('M',M)
+                    
                 self.L_Mat[k,i] = self.L_Mat[i,k]
-                if k ==48 and i ==0:
-                    print(self.L_Mat[k,i])
+               
     
     def form_mesh_matrix(self):
         # dummy version for filament input only, will update for mesh later
         dimension = (self.tot_els,self.num_loops)
         self.M = np.zeros(dimension,dtype= np.complex64)
-        for group in range(self.num_loops):
-            for el in self.all_eles:
-                if el.type == 1:
-                    self.M[el.id,el.m_id] = 1
-        if self.name == 'manual':
-            df = pd.DataFrame(self.M)
-            df.to_csv('manual.csv')
+        for el in self.all_eles:
+            if el.type == 1:
+                self.M[el.id,el.m_id] = 1
+        #if self.name == 'manual':
+        #    df = pd.DataFrame(self.M)
+        #    df.to_csv('manual.csv')
         #self.show_M()
         #print ("Mesh matrix")
         #print (self.M)
@@ -589,39 +594,14 @@ class LoopEval():
         return u
 
     def solve_linear_systems(self):
-        #self.open_loop=False
 
         u = self.form_u_mat()
-        #print ("impedance matrix (imag)")
-        #print (self.P.imag)
-        
-        #t1 = time.time()
-        #Lmat = cholesky(self.P,lower=True) # get the lower triangulariztion part
-        #print ("lower triangular matrix")
-        #print (Lmat)fbuhm 
-        #print (Lmat.T)
-        
-        #a1 = solve_triangular(Lmat,u,lower=True) # get the unify vector a
-        #a  = solve_triangular(Lmat.T,a1)
         
         if not(self.open_loop):
             y = solve(self.P,u) # direct solve
-        #print (self.P)
-        #print ('compare a')
-        #print (sum(a2 -a) ) 
-        #print("a", a)
-        #B1 = solve_triangular(Lmat,self.M,lower=True)
-        #B = solve(Lmat.T.conj(),B1)
-        #print ("time for acceleration mode",time.time() - t1)
-        #t1 = time.time()
-        #print("solve direct",a)
+
         x = solve(self.P,self.M)
-        #matrix_view_autoscale(self.P)
-        #print (self.P)
-        #print (self.M)
-        #print (B.shape)
-        #print ("time for direct mode",time.time() - t1)
-        # compute the current matrix
+        
         self.I  = np.ones((self.tot_els,self.num_loops),dtype= np.complex64)
         #print (self.open_loop)
         for j in range(self.num_loops):
@@ -633,15 +613,7 @@ class LoopEval():
             else: 
                 self.I[:,[j]] = x[:,[j]]
                 vout = 0
-            print(vout)
             
-            #print("current matrix", j )
-        #print(self.I.shape)
-        #print  (sum(self.I))
-        #print ('freq',self.freq)
-        if self.name == 'manual':
-            dfI=pd.DataFrame(self.I)
-            dfI.to_csv("I_mat_manual.csv")
         Z = np.zeros((self.num_loops,self.num_loops),dtype = np.complex64)
         temp = np.matmul(np.transpose(self.M),self.I)   
         Z = np.linalg.inv(temp)
@@ -653,9 +625,8 @@ class LoopEval():
         #print("LOOP NAME:",self.name)
         #print ("R Matrix \n", R_mat)
         #print ("L Matrix \n", L_mat) 
-        print (Z.imag/2/np.pi/self.freq) 
+        #print (Z.imag/2/np.pi/self.freq) 
         return Z
-        #print (Z[0][1].imag/2/np.pi/self.freq)  
         
         
     def view(self):
@@ -792,7 +763,6 @@ class LoopEval():
             start_pt = [tc.left, tc.top ,tc.z]
             trace_mesh.width = tc.width#*1e-6
             trace_mesh.ori = 1
-        print(start_pt,end_pt)
         trace_mesh.start_pt = [x for x in start_pt]#[x*1e-6 for x in start_pt]
         trace_mesh.end_pt = [x for x in end_pt]#[x*1e-6 for x in end_pt]
         trace_mesh.m_id = self.mesh_id
@@ -800,6 +770,10 @@ class LoopEval():
         trace_mesh.nwinc = int(nw)
         trace_mesh.nhinc = int(nh)
         self.mesh_method = 'uniform'
+        if 'wire' in self.name:
+            eval_mode = 'wire'
+        else:
+            eval_mode = 'trace'
         if el_type == 'S':
             self.num_loops+=1
             trace_mesh.type = 1
@@ -813,7 +787,8 @@ class LoopEval():
             self.traces[-self.ground_id]=trace_mesh
             self.ground_id +=1 
         if self.mesh_method == 'uniform':
-            end_id = trace_mesh.form_mesh_uniform(start_id=self.tot_els)
+            
+            end_id = trace_mesh.form_mesh_uniform(start_id=self.tot_els,eval_mode=eval_mode)
             self.tot_els=end_id
         elif self.mesh_method == 'nonuniform':
             self.tot_els = trace_mesh.form_mesh_frequency_dependent(start_id=self.tot_els)
@@ -862,9 +837,7 @@ def update_all_mutual_ele(loops):
                     except:
                         print(m_id)
                     M /= 1000
-                    if np.isnan(M) or np.isinf(M):
-                        print(key)
-                        print("cant calculate this value")
+                    
                     M *= 1e-9
                     loop.L_Mat[i, k] = M
                 loop.L_Mat[k, i] = loop.L_Mat[i, k]
