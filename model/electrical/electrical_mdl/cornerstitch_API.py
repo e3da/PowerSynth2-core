@@ -206,15 +206,17 @@ class CornerStitch_Emodel_API:
                 name = comp[5] # get the comp name from layout script
                 if name == 'D4':
                     print("check")
-                N_v = (0,0,1) # all up vectors
-                
+                if isl_dir == 'Z+':
+                    N_v = (0,0,1) 
+                elif isl_dir =='Z-':
+                    N_v = (0,0,-1)
+
                 obj = self.comp_dict[name] # Get object type based on the name
                 type = name[0]
                 z_id = obj.layer_id
               
                 if isinstance(z_id,str):
                     if "_" in z_id:
-                        N_v = (0,0,-1)
                         z_id = int(z_id[0:-1])
                     else:
                         z_id = int(z_id)
@@ -742,11 +744,15 @@ class CornerStitch_Emodel_API:
 
                     s1 = self.net_to_sheet[start]
                     s2 = self.net_to_sheet[stop]
+                    if sum(s1.n) == -1:
+                        wdir = 'Z-' 
+                    else:
+                        wdir = 'Z+'
                     spacing = float(wire_data['spacing'])
                     wire = EWires(wire_radius=wire_obj.radius, num_wires=num_wires, wire_dis=spacing, start=s1, stop=s2,
                                 wire_model=None,
                                 frequency=self.freq, circuit=RL_circuit())
-
+                    wire.wire_dir = wdir
                     self.wires.append(wire)
                 else: # NEED TO DEFINE A VIA OBJECT, THIS IS A BAD ASSUMTION
                     start = wire_data['Source']
@@ -763,7 +769,6 @@ class CornerStitch_Emodel_API:
                     
             #self.e_comps+=self.wires
         
-    
     
     def plot_3d(self):
         fig = plt.figure(1)

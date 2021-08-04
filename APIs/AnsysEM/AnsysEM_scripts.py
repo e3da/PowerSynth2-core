@@ -393,7 +393,45 @@ oEditor.ChangeProperty(
 
 
 '''
+U_wire = '''
+oEditor.CreateBondwire(
+	[
+		"NAME:BondwireParameters",
+		"WireType:="		, "LOW",
+		"WireDiameter:="	, "{diameter}mm",
+		"NumSides:="		, "6",
+		"XPadPos:="		, "{x}mm",
+		"YPadPos:="		, "{y}mm",
+		"ZPadPos:="		, "{z}mm",
+		"XDir:="		, "{dx}mm",
+		"YDir:="		, "{dy}mm",
+		"ZDir:="		, "0mm",
+		"Distance:="		, "{distance}mm",
+		"h1:="			, "{sign}0.2mm",
+		"h2:="			, "{sign}{dz}mm",
+		"alpha:="		, "90deg",
+		"beta:="		, "90deg",
+		"WhichAxis:="		, "Z",
+		"ReverseDirection:="	, False
+	], 
+	[
+		"NAME:Attributes",
+		"Name:="		, "{name}",
+		"Flags:="		, "",
+		"Color:="		, "(143 175 143)",
+		"Transparency:="	, 0,
+		"PartCoordinateSystem:=", "Global",
+		"UDMId:="		, "",
+		"MaterialValue:="	, "\\"{material}\\"",
+		"SurfaceMaterialValue:=",  "\\"Steel-oxidised-surface\\"",
+		"SolveInside:="		, False,
+		"IsMaterialEditable:="	, True,
+		"UseMaterialAppearance:=", False,
+		"IsLightweight:="	, False
+	])
 
+
+'''
 New_wire = '''
 oEditor.CreateBondwire(
 	[
