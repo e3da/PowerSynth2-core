@@ -178,6 +178,8 @@ class AnsysEM_API():
             elif v.via_type =='f2f':
                 dz = abs(stop.z-start.z)+180
                 dz/=1000
+                Tbox = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Tname) # use to create blank part
+                Tbox.make()
 
             self.output_script+=Tbox.script
             Vname = "V_"+ id
