@@ -168,45 +168,44 @@ class AnsysEM_API():
             dy = start.rect.height/1000
             # find dz and z based on via info
             id = start.net
-            print(id.split('.'))
             id = id.split('.')[0]
+
             Tname = "T_" + id
+            # create cut 
+            cut_string = ''
+            intersect_list = []
+            
             if v.via_type == "Through":
                 dz = (stop.z - start.z)/1000
+                for i in range(len(self.PS_features_list)):
+                    PS_feature =self.PS_features_list[i]
+                    if 'V' in PS_feature.name:
+                        continue
+                    intersect = PS_feature.itersect_3d(x,y,z,dx,dy,dz)
+                    if "." in PS_feature.name:
+                        name = PS_feature.name.replace('.','_')
+                    else:
+                        name = PS_feature.name
+                    if intersect:
+                        intersect_list.append(name)
                 Tbox = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Tname) # use to create blank part
                 Tbox.make()
+                self.output_script+=Tbox.script
+                for name in intersect_list:
+                    if intersect_list.index(name)!= len(intersect_list)-1:
+                        cut_string+=name+','
+                    else:
+                        cut_string+=name
+                cut_script = Create_T_Via.format(list_of_cut_parts=cut_string,Via_name=Tname)
+                self.output_script+=cut_script
             elif v.via_type =='f2f':
-                dz = abs(stop.z-start.z)+180
+                dz = stop.z-start.z
                 dz/=1000
-                Tbox = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Tname) # use to create blank part
-                Tbox.make()
-
-            self.output_script+=Tbox.script
+            print(v.via_type)
             Vname = "V_"+ id
             Via_box = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Vname)
             Via_box.make()
-            Via_box.set_color(self.lead_color)
-            intersect_list = []
-            for i in range(len(self.PS_features_list)):
-                PS_feature =self.PS_features_list[i]
-                if 'V' in PS_feature.name:
-                    continue
-                intersect = PS_feature.itersect_3d(x,y,z,dx,dy,dz)
-                if "." in PS_feature.name:
-                    name = PS_feature.name.replace('.','_')
-                else:
-                    name = PS_feature.name
-                if intersect:
-                    intersect_list.append(name)
-            # create cut 
-            cut_string = ''
-            for name in intersect_list:
-                if intersect_list.index(name)!= len(intersect_list)-1:
-                    cut_string+=name+','
-                else:
-                    cut_string+=name
-            cut_script = Create_T_Via.format(list_of_cut_parts=cut_string,Via_name=Tname)
-            self.output_script+=cut_script
+            Via_box.set_color(self.via_color)
             self.output_script+=Via_box.script
 
 

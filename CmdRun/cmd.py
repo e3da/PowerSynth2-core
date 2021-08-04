@@ -1162,8 +1162,9 @@ if __name__ == "__main__":
     imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test"
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
-        tc_list = [{qmle_nethome:'Unit_Test_Cases/with_vias/Case_0_2/macro_script.txt'},\
-        {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'}]
+        tc_list = [{qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_1/macro_script.txt'},\
+                   {imam_nethome1:'Imam_Journal_3D_1/macro_script.txt'},\
+                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'}]
 
 
         for tc in tc_list:

@@ -182,9 +182,6 @@ class CornerStitch_Emodel_API:
         For each layer, get the islands layout data and convert to electrical model objects. Layer_id can be used in case vias are use to distinguish 
         connections on each layer
         '''
-        
-
-        
         for isl in islands:
             isl_dir = isl.direction
             for trace in isl.elements: # get all trace in isl
@@ -207,31 +204,21 @@ class CornerStitch_Emodel_API:
             for comp in isl.child: # get all components in isl
                 x, y, w, h = comp[1:5]
                 name = comp[5] # get the comp name from layout script
-                
-
+                if name == 'D4':
+                    print("check")
                 N_v = (0,0,1) # all up vectors
+                
                 obj = self.comp_dict[name] # Get object type based on the name
                 type = name[0]
                 z_id = obj.layer_id
-                '''
-                # TODO: revmove when fixed
-                
-                if name == 'L3':
-                    z_id = '6_'
-                if name == 'L5':
-                    z_id = '10_'
-                '''
+              
                 if isinstance(z_id,str):
                     if "_" in z_id:
                         N_v = (0,0,-1)
                         z_id = int(z_id[0:-1])
                     else:
                         z_id = int(z_id)
-                '''
-                # TODO: revmove when fixed
-                if 'L' in name and name!='L3' and name!='L5':
-                    z_id +=1
-                '''   
+               
                 z=int(self.get_z_loc(z_id)*1000)
                 
                 if isinstance(obj, RoutingPath):  # If this is a routing object Trace or Bondwire "Pad"
@@ -258,8 +245,6 @@ class CornerStitch_Emodel_API:
                         if name in self.src_sink_dir:
                             self.src_sink_dir[name] = isl_dir
 
-                        
-
                         new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
                         if type == 'V': # Handling Vias type
@@ -282,15 +267,20 @@ class CornerStitch_Emodel_API:
                             locs = obj.pin_locs[pin_name]
                             px, py, pwidth, pheight, side = locs
                             if side == 'B':  # if the pin on the bottom side of the device
-                                z = int(self.get_z_loc(z_id)*1000)
-                            elif side == 'T':  # if the pin on the top side of the device
-                                z = int((self.get_z_loc(z_id) + obj.thickness)*1000)
+                                    z = int(self.get_z_loc(z_id)*1000)
+                            if isl_dir == 'Z+':
+                                if side == 'T':  # if the pin on the top side of the device
+                                    z = int((self.get_z_loc(z_id) + obj.thickness)*1000)
+                            elif isl_dir == 'Z-': 
+                                if side == 'T':  # if the pin on the bottom side of the device
+                                    z = int((self.get_z_loc(z_id) - obj.thickness)*1000)
+                                
                             top = y + int((py + pheight) * 1000)
                             bot = y + int(py *1000)
                             left = x + int(px *1000)
                             right = x + int((px + pwidth)*1000)
                             rect = Rect(top=top, bottom=bot, left=left, right=right)
-                            pin = Sheet(rect=rect, net_name=net_name, z=z)
+                            pin = Sheet(rect=rect, net_name=net_name, z=z,n=N_v)
                             self.net_to_sheet[net_name] = pin
                             dev_pins.append(pin)
                         # Todo: need to think of a way to do this only once
@@ -731,7 +721,9 @@ class CornerStitch_Emodel_API:
             sheets = self.via_dict[V_key]
             if len(sheets)==2:
                 via = EVia(start = sheets[0], stop = sheets[1])
-                via.via_type = sheets[0].via_type
+                if sheets[0].via_type != None:
+                    via.via_type = sheets[0].via_type
+                
                 self.vias.append(via)
         
     def make_wire_and_via_table(self):
@@ -765,8 +757,8 @@ class CornerStitch_Emodel_API:
 
                     s2 = self.net_to_sheet[stop]
                     via = EVia(start=s1,stop=s2)
-                    via.via_type = s1.via_type
-
+                    if s1.via_type != None:
+                        via.via_type = s1.via_type
                     self.vias.append(via)
                     
             #self.e_comps+=self.wires

@@ -55,6 +55,7 @@ class EHier():
             self.isl_group.append(isl_node)
             for trace in self.module.group[isl]:
                 trace_node_name = trace.name
+                    
                 trace_node = self.tree.get_node_by_name(trace_node_name)
                 # update trace node data, rank and name should be the same
                 trace_node.data = trace
@@ -96,6 +97,8 @@ class EHier():
                 trace.node = trace_node
                 self.traces.append(trace)
                 for sh in self.module.sheet:
+                    if trace.name =='T3.6':
+                        print("check device sheet")
                     if trace.include_sheet(sh):
                         sh_node = T_Node(name=sh.net, type='sheet', data=sh, tree=self.tree)
                         sh.node = sh_node
