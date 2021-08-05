@@ -8,7 +8,7 @@ cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
 sys.path.append(cur_path)
 import math
 from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir\
-                                                ,Create_T_Via,Source_Sink,Auto_identify_nets,Analyze_all,Analysis_Setup
+                                                ,Create_T_Via,Source_Sink,Auto_identify_nets,Analyze_all,Analysis_Setup,U_wire
 from core.APIs.AnsysEM.AnsysEM_structures import AnsysEM_Box
 class AnsysEM_API():
     def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None):
@@ -75,7 +75,6 @@ class AnsysEM_API():
         print("translate the solution into AnsysEM geometry info")
         for i in range(len(PS_solution_3d.features_list)): # convert PSfeature to AnsysBox scripts
             PS_feature =  PS_solution_3d.features_list[i]
-            print (PS_feature)
             #if 'V' in PS_feature.name: # ignore via
             #    continue
             box = AnsysEM_Box()
@@ -89,7 +88,6 @@ class AnsysEM_API():
                 box.set_color(self.trace_color)
             if 'Ceramic' in PS_feature.name:
                 box.set_color(self.iso_color)  
-                print ("set Ceramic")  
             if "." in PS_feature.name:
                 name = PS_feature.name.replace('.','_')
             else:
@@ -133,11 +131,9 @@ class AnsysEM_API():
         # Handle wires and vias connections
         # get all layer IDs
         if self.e_api.e_mdl == None:
-            print("init again")
             self.e_api.setup_layout_objects(self.module_data)
         w_id = 0
         for w in self.e_api.wires:
-            print (w)
             c_s = w.sheet[0].get_center()
             c_e = w.sheet[1].get_center()
             length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
@@ -149,15 +145,19 @@ class AnsysEM_API():
             z = w.sheet[0].z/1000
             dx = c_e[0]-x
             dy = c_e[1]-y
-            dz = w.sheet[1].z/1000-z
-
-            nw = New_wire.format(x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
+            dz = abs(w.sheet[1].z/1000-z)
+            if w.wire_dir == 'Z+':
+                sign = '+'
+            elif w.wire_dir == 'Z-':
+                sign = '-'
+                z+=0.105 # magic number in ANSYS 
+            print('wdir',w.wire_dir)
+            nw = U_wire.format(sign=sign,x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
             self.output_script += nw
             w_id+=1
         self.form_T_Vias()
     
     def form_T_Vias(self):
-        print (len(self.e_api.vias))
         for v in self.e_api.vias:
             start = v.sheet[0]
             stop = v.sheet[1]
@@ -201,7 +201,6 @@ class AnsysEM_API():
             elif v.via_type =='f2f':
                 dz = stop.z-start.z
                 dz/=1000
-            print(v.via_type)
             Vname = "V_"+ id
             Via_box = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Vname)
             Via_box.make()

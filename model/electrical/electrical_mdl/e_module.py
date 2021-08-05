@@ -190,7 +190,7 @@ class EWires(EComp):
         self.d = wire_dis
         self.circuit = circuit
         self.class_type ='wire'
-
+        self.wire_dir = 'Z+'
         if wire_model == None:
             self.mode = 'analytical'
         else:
