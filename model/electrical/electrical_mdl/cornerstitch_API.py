@@ -204,8 +204,7 @@ class CornerStitch_Emodel_API:
             for comp in isl.child: # get all components in isl
                 x, y, w, h = comp[1:5]
                 name = comp[5] # get the comp name from layout script
-                if name == 'D4':
-                    print("check")
+                
                 if isl_dir == 'Z+':
                     N_v = (0,0,1) 
                 elif isl_dir =='Z-':
@@ -296,7 +295,6 @@ class CornerStitch_Emodel_API:
 
                         self.e_comps.append(
                             EComp(sheet=dev_pins, conn=dev_conn_list, val=dev_para))  # Update the component
-        print(self.src_sink_dir)
         for m in self.measure:
             m.src_dir = self.src_sink_dir[m.source]
             m.sink_dir = self.src_sink_dir[m.sink]
@@ -757,10 +755,7 @@ class CornerStitch_Emodel_API:
                 else: # NEED TO DEFINE A VIA OBJECT, THIS IS A BAD ASSUMTION
                     start = wire_data['Source']
                     stop = wire_data['Destination']
-
-                    print("add via",start,stop)
                     s1 = self.net_to_sheet[start]
-
                     s2 = self.net_to_sheet[stop]
                     via = EVia(start=s1,stop=s2)
                     if s1.via_type != None:

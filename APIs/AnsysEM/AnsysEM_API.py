@@ -1,7 +1,9 @@
 # author: Quang Le
 # Handle ANSYS EM simulations automatically
 import sys
-import os 
+import os
+
+from numpy.lib.nanfunctions import _nanmedian_small 
 cur_path =sys.path[0] # get current path (meaning this file location)
 print(cur_path)
 cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
@@ -11,7 +13,7 @@ from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add
                                                 ,Create_T_Via,Source_Sink,Auto_identify_nets,Analyze_all,Analysis_Setup,U_wire
 from core.APIs.AnsysEM.AnsysEM_structures import AnsysEM_Box
 class AnsysEM_API():
-    def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None):
+    def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None,run_option=0):
         
         # This part is for initialization of the API engine
         self.os = 'Win' # Currently only works for windows version 
@@ -37,8 +39,9 @@ class AnsysEM_API():
             self.ipy64 =self.default_path+"/common/IronPython/ipy64.exe"
         elif self.os =='Linux':
             self.ipy64 = self.default_path + "/common/IronPython/ipython"
-        
+        self.export_all = False # export baseplate and layerstack and backside copper
         # default colors for objects
+        self.run_option = run_option
         self.devivce_color = (220,20,60) #D - crimson
         self.via_color = (255,255,0) #V - yellow
         self.lead_color = (115,147,179) # Blue Gray
@@ -46,6 +49,7 @@ class AnsysEM_API():
         self.iso_color = (255,250,250) # Snow white
         self.face_id_dict = {}
         self.max_f_id = 7
+        self.selected_PS_features =[]
     def __str__(self):
         info ='''
         {}
@@ -78,6 +82,14 @@ class AnsysEM_API():
             #if 'V' in PS_feature.name: # ignore via
             #    continue
             box = AnsysEM_Box()
+            names = ['D','L','T']
+
+            if not(self.export_all):
+                n0 = PS_feature.name[0]
+                if not n0 in names:
+                    continue
+                else:
+                    self.selected_PS_features.append(PS_feature)                
             if 'D' in PS_feature.name:
                 box.set_color(self.devivce_color)
             if 'L' in PS_feature.name:
@@ -99,8 +111,8 @@ class AnsysEM_API():
         self.handle_3D_connectivity()
         self.add_src_sink()
         self.output_script+=Auto_identify_nets
-        #self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
-        #self.output_script+=Analyze_all
+        self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
+        self.output_script+=Analyze_all
         self.save_project_as()
 
     def add_src_sink(self):
@@ -109,7 +121,7 @@ class AnsysEM_API():
         sink = measure.sink
         src_dir = measure.src_dir
         sink_dir = measure.sink_dir
-
+        
         if src_dir == 'Z+':
             f_src = self.face_id_dict[src][0]
         else:
@@ -130,7 +142,7 @@ class AnsysEM_API():
     def handle_3D_connectivity(self):
         # Handle wires and vias connections
         # get all layer IDs
-        if self.e_api.e_mdl == None:
+        if self.run_option == 0:
             self.e_api.setup_layout_objects(self.module_data)
         w_id = 0
         for w in self.e_api.wires:
@@ -151,7 +163,6 @@ class AnsysEM_API():
             elif w.wire_dir == 'Z-':
                 sign = '-'
                 z+=0.105 # magic number in ANSYS 
-            print('wdir',w.wire_dir)
             nw = U_wire.format(sign=sign,x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
             self.output_script += nw
             w_id+=1
@@ -177,8 +188,8 @@ class AnsysEM_API():
             
             if v.via_type == "Through":
                 dz = (stop.z - start.z)/1000
-                for i in range(len(self.PS_features_list)):
-                    PS_feature =self.PS_features_list[i]
+                for i in range(len(self.selected_PS_features)):
+                    PS_feature =self.selected_PS_features[i]
                     if 'V' in PS_feature.name:
                         continue
                     intersect = PS_feature.itersect_3d(x,y,z,dx,dy,dz)

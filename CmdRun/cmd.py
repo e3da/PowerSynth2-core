@@ -332,7 +332,7 @@ class Cmd_Handler:
             
             
             self.need_electrical_setup()
-            self.init_export_tasks()
+            self.init_export_tasks(run_option)
             if run_option == 0:
                 
                 '''Generate 3D layout strcutures'''
@@ -445,7 +445,7 @@ class Cmd_Handler:
                 print("Need Electrical Setup for bondwires connection in ANSYSEM")
                 print("The tool will attempt to extract Ansysem design without bondwires connection")
     # ------------------ Export Features ---------------------------------------------
-    def init_export_tasks(self):
+    def init_export_tasks(self,run_option=0):
         '''Start ANSYSEM, and others export features'''
         if self.export_ansys_em_info!={}:
             version = self.export_ansys_em_info['version']
@@ -455,7 +455,7 @@ class Cmd_Handler:
             else:
                 active_design = 'HFSS'
             workspace = self.db_dir+'/AnsysEM'
-            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api)
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=0)
             self.export_task.append(ansysem)
     def generate_export_files(self):
         '''Generate export files after the solution3D is generated'''
@@ -1202,7 +1202,7 @@ if __name__ == "__main__":
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_1/macro_script.txt'},\
-                {qmle_nethome:'Unit_Test_Cases/Imam_Journal_3D/macro_script.txt'},\
+                   {qmle_nethome:'Unit_Test_Cases/with_vias/Imam_journal_3D/macro_script.txt'},\
                    {imam_nethome1:'Imam_Journal_3D_1/macro_scripts_th/macro_script_32.5X32.5_ANSYS.txt'},\
                    {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'}]
 
