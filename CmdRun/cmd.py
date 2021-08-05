@@ -670,6 +670,14 @@ class Cmd_Handler:
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
+        
+        if len(via_type_assignment)>0:
+            for comp_name, component in self.comp_dict.items():
+                if comp_name.split('.')[0] in via_type_assignment:
+                    component.via_type=via_type_assignment[comp_name.split('.')[0]]
+
+        
+        
         if len(self.structure_3D.layers)>1:
             all_patches=[]
             all_colors=['blue','red','green','yellow','pink','violet']
