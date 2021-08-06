@@ -280,6 +280,7 @@ class CornerStitch_Emodel_API:
                             bot = y + int(py *1000)
                             left = x + int(px *1000)
                             right = x + int((px + pwidth)*1000)
+
                             rect = Rect(top=top, bottom=bot, left=left, right=right)
                             pin = Sheet(rect=rect, net_name=net_name, z=z,n=N_v)
                             self.net_to_sheet[net_name] = pin

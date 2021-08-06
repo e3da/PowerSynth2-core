@@ -1204,7 +1204,8 @@ if __name__ == "__main__":
         tc_list = [{qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_1/macro_script.txt'},\
                    {qmle_nethome:'Unit_Test_Cases/with_vias/Imam_journal_3D/macro_script.txt'},\
                    {imam_nethome1:'Imam_Journal_3D_1/macro_scripts_th/macro_script_32.5X32.5_ANSYS.txt'},\
-                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'}]
+                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'},\
+                   {qmle_nethome:"Unit_Test_Cases/with_vias/Via_Case_5/macro_script.txt"}]
 
 
         for tc in tc_list:
