@@ -1084,6 +1084,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             #print("Here")
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             #plot_solution_structure(sol)
+            for f in sol.features_list:
+                f.printFeature()
+            input()
             PS_solutions.append(sol)
 
         
