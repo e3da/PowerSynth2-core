@@ -50,6 +50,7 @@ class AnsysEM_API():
         self.face_id_dict = {}
         self.max_f_id = 7
         self.selected_PS_features =[]
+        self.sheet_ps_feature_via_table = {}
     def __str__(self):
         info ='''
         {}
@@ -82,7 +83,7 @@ class AnsysEM_API():
             #if 'V' in PS_feature.name: # ignore via
             #    continue
             box = AnsysEM_Box()
-            names = ['D','L','T']
+            names = ['D','L','T','V']
 
             if not(self.export_all):
                 n0 = PS_feature.name[0]
@@ -95,6 +96,7 @@ class AnsysEM_API():
             if 'L' in PS_feature.name:
                 box.set_color(self.lead_color)
             if 'V' in PS_feature.name:
+                self.sheet_ps_feature_via_table[PS_feature.name] = PS_feature
                 continue
             if 'T' in PS_feature.name:
                 box.set_color(self.trace_color)
@@ -112,7 +114,7 @@ class AnsysEM_API():
         self.add_src_sink()
         self.output_script+=Auto_identify_nets
         self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
-        self.output_script+=Analyze_all
+        #self.output_script+=Analyze_all
         self.save_project_as()
 
     def add_src_sink(self):
@@ -172,15 +174,22 @@ class AnsysEM_API():
         for v in self.e_api.vias:
             start = v.sheet[0]
             stop = v.sheet[1]
-            x = start.x/1000
-            y = start.y/1000
+            
             z = start.z/1000
-            dx = start.rect.width/1000
-            dy = start.rect.height/1000
+            
             # find dz and z based on via info
-            id = start.net
+            start_name = start.net
+            stop_name = stop.net
+            for name in [start_name,stop_name]:
+                if 'V' in name:
+                    id = name
+                    break
+            via_ps_feature = self.sheet_ps_feature_via_table[id]
+            x= via_ps_feature.x
+            y = via_ps_feature.y
+            dx = via_ps_feature.width
+            dy = via_ps_feature.length
             id = id.split('.')[0]
-
             Tname = "T_" + id
             # create cut 
             cut_string = ''

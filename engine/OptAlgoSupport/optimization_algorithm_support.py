@@ -47,7 +47,7 @@ class new_engine_opt:
         # List of measure object
         self.measures = measures
     
-    def eval_3D_layout(self,module_data=None,solution=None,init = False):
+    def eval_3D_layout(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 
         solution: single PS_Solution object for thermal evaluation (ParaPower API)
@@ -85,8 +85,12 @@ class new_engine_opt:
                     self.e_api.add_source_sink(measure.source,measure.sink)
                     self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
                     self.e_api.generate_fasthenry_inputs(solution.solution_id)
-                    R,L = [-1,-1]
-                    return [-1,-1]
+                    if sol_len==1:
+                        R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                    #if solution.solution_id == id_select:
+                        #print ("RL_FH",R,L)
+                        
+                    
                 if self.e_api.e_mdl == "Loop":
                     R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
                     if solution.solution_id == id_select:
@@ -143,8 +147,8 @@ class new_engine_opt:
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
                 #input()
-                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                max_t=300
+                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                #max_t=300
                 result.append(max_t)
         return result
     

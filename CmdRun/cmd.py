@@ -671,7 +671,7 @@ class Cmd_Handler:
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
         
-        if len(via_type_assignment)>0:
+        if len(via_connecting_layers)>0:
             for comp_name, component in self.comp_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:
                     component.via_type=via_type_assignment[comp_name.split('.')[0]]
@@ -1203,14 +1203,17 @@ if __name__ == "__main__":
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_1/macro_script.txt'},\
                    {qmle_nethome:'Unit_Test_Cases/with_vias/Imam_journal_3D/macro_script.txt'},\
-                   {imam_nethome1:'Imam_Journal_3D_2/macro_scripts/macro_script_32.5X32.5_ANSYS.txt'},\
-                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'}]
+                   {imam_nethome1:'Imam_Journal_3D_2/macro_scripts/macro_script_47.5X47.5_ANSYS.txt'},\
+                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'},\
+                   {qmle_nethome:"Unit_Test_Cases/with_vias/Via_Case_5/macro_script.txt"},\
+                   {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'}]
 
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]
             v = list(tc.values())[0]
+
             print("----Test case folder:",k)
             print("----Test case name:",v)
 
