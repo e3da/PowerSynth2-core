@@ -7,8 +7,8 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 from core.engine.Structure3D.structure_3D import Node_3D
 from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
-from core.model.electrical.electrical_mdl.e_mesh_direct import EMesh
-from core.model.electrical.electrical_mdl.e_mesh_corner_stitch import EMesh_CS
+from core.model.electrical.meshing.e_mesh_direct import EMesh
+from core.model.electrical.meshing.e_mesh_corner_stitch import EMesh_CS
 #from corner_stitch.input_script import *
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier

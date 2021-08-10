@@ -1,4 +1,5 @@
-from RectCell import RectCell
+from core.model.electrical.meshing.RectCell import RectCell
+
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,20 +16,28 @@ class MeshTable():
     '''This method is used to quickly setup mesh neighbors'''
 
     def __init__(self, Nx=0, Ny=0):
-        self.cell_table = {}  # cell ID - cell for general grid info
-        self.trace_table = {} # store "trace" cells
-        self.blank_table = {} # store "blank" cells after data sorting
         self.Nx = Nx  # number of X coordinates
         self.Ny = Ny  # number of Y coordinates
         self.mesh = []  # all possible mesh
+        # original inputs from layout
         self.components = []
         self.leads = []
+        self.pads = []
         self.traces = []
+        # table to keep track of net infomation
+        self.comp_to_rect_cell = {} # Because in the layout we dont have the True net name (D1 only vs D1_Drain)
+        self.lead_to_rect_cell = {}  
+        self.pad_to_rect_cell = {}  
+        # table for object management
+        self.cell_table = {}  # cell ID - cell for general grid info
+        self.trace_table = {} # store "trace" cells
+        self.blank_table = {} # store "blank" cells after data sorting
         self.corners_count={} # to count number of time a corner is added
         self.corners_type={} # update the type of these corners "cv" for convex "cc" for concave
         self.width = 0
         self.height = 0
-    
+        self.net_to_cells = {}
+
     def form_rect_unifom_mesh_and_index(self,parent_cell=None,cell_x = 1, cell_y=1):
         # this method is used to form the mesh inside each hanan mesh cell
         big_cell = parent_cell
@@ -159,15 +168,17 @@ class MeshTable():
                 continue
 
     def place_devices_and_components(self):
-        dev_and_comp = self.leads + self.components
-        for cell_id in self.trace_table:
-            trace_cell = self.trace_table[cell_id]
-            for dev in dev_and_comp:
-                if trace_cell.x == dev.x and trace_cell.y == dev.y: # This is the flat level representative of this cell
-                    trace_cell.type = 2
-
-
-
+        dev_and_comp = self.leads + self.components + self.pads
+        # Here we map the original layout RectCell to the splitted tracecell for nets management
+        for dev in dev_and_comp: 
+            self.net_to_cells[dev.net] = []
+            for cell_id in self.trace_table:
+                trace_cell = self.trace_table[cell_id]
+                x,y = trace_cell.center()
+                if dev.encloses(x,y): # This is the flat level representative of this cell
+                    trace_cell.type =2
+                    trace_cell.net = dev.net # dev is hidden when the mesh edges and mesh nodes are formed
+                    self.net_to_cells[dev.net].append(trace_cell) # handle  all 
 
     def form_trace_uniform_mesh(self):
         # Need a way to calculate this later
@@ -249,19 +260,20 @@ class MeshTable():
             paths += path_set
         self.mesh = list(set(paths))
 
-    def plot_lev_1_mesh_island(self,name):
-        fig, ax = plt.subplots()
-        arrow_len = 0.5
+    def plot_lev_1_mesh_island(self,name,ax = None):
+        if ax == None:
+            fig, ax = plt.subplots()
+        arrow_len = 500
         arrow_color = 'red'
         ec = 'black'
         for cell_id in self.cell_table:
             cell = self.cell_table[cell_id]
             if cell.type == 1:
-                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=True,ec=ec))  # Draw a grid first
+                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=True,ec=ec,fc ='blue',alpha = 0.5))  # Draw a grid first
             elif cell.type == 0:
-                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=False,ec=ec))  # Draw a grid first
+                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=False,ec=ec,alpha = 0.5))  # Draw a grid first
             elif cell.type ==2:
-                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=True,ec=ec,fc='red'))  # Draw a grid first
+                ax.add_patch(Rectangle((cell.x, cell.y), cell.W, cell.H, fill=True,ec=ec,fc='red',alpha = 0.5))  # Draw a grid first
         for cell_id in self.cell_table:
             cell = self.cell_table[cell_id]
             x, y = cell.center()
