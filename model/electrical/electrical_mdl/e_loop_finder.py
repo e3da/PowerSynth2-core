@@ -72,7 +72,7 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -877,7 +877,10 @@ class LayoutLoopInterface():
             for trace in self.y_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
             loop_model.form_partial_impedance_matrix()
-            loop_model.update_mutual_mat()
+            try:
+                loop_model.update_mutual_mat()
+            except:
+                print(bundle)
 
             y_loops.append(loop_model)
         bundle_id = 0

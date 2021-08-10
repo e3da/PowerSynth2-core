@@ -1108,12 +1108,12 @@ class EMesh():
                 if add:
                     bound_lines += [l1]
 
-            # plt.figure(10)
-            # for l in bound_lines:
-            #    plt.plot([l.pt1[0], l.pt2[0]], [l.pt1[1], l.pt2[1]], color='red', linewidth=3)
-            # for p in points:
-            #   plt.scatter([p[0]],[p[1]],color='black')
-            # plt.show()
+            plt.figure(10)
+            for l in bound_lines:
+                plt.plot([l.pt1[0], l.pt2[0]], [l.pt1[1], l.pt2[1]], color='red', linewidth=3)
+            for p in points:
+               plt.scatter([p[0]],[p[1]],color='black')
+            plt.show()
 
             # Finding mesh nodes for group
             self.mesh_nodes(points=points, corners_trace_dict=self.corners_trace_dict, boundary_line=bound_lines,
@@ -1122,20 +1122,20 @@ class EMesh():
             self.mesh_edges(thick)
             # self.update_trace_RL_val()
             # self.mesh_edges2(thick)
-            # fig,ax = plt.subplots()
-            # draw_rect_list(all_rect,ax,'blue',None)
+            fig,ax = plt.subplots()
+            #draw_rect_list(all_rect,ax,'blue',None)
             # Once we have all the nodes and edges for the trace group, we need to save hier node info
             self.hier_group_dict = {}
-            # fig = plt.figure(1)
-            # ax = Axes3D(fig)
-            # ax.set_xlim3d(0, 60)
-            # ax.set_ylim3d(0, 60)
-            # ax.set_zlim3d(0, 2)
-            # print node_name
-            # self.plot_3d(fig=fig, ax=ax, show_labels=True)
-            # fig.set_size_inches(18.5, 10.5)
-            # plt.show()
-            self.handle_hier_node(points, g)
+            fig = plt.figure(1)
+            ax = Axes3D(fig)
+            ax.set_xlim3d(0, 60)
+            ax.set_ylim3d(0, 60)
+            ax.set_zlim3d(0, 2)
+            #print node_name
+            self.plot_3d(fig=fig, ax=ax, show_labels=True)
+            fig.set_size_inches(18.5, 10.5)
+            #plt.savefig('3d.png')
+            #self.handle_hier_node(points, g)
 
     def handle_hier_node(self, points, key):
         '''

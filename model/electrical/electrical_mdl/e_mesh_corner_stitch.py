@@ -114,8 +114,8 @@ class EMesh_CS(EMesh):
         method = "skin_depth"
         #method = "uniform"
         print("accelerate the mesh generation")
-        isl_dict = {isl.name: isl for isl in self.islands}
         fig, ax = plt.subplots()
+        isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
         for g in self.hier_E.isl_group:
             
@@ -663,9 +663,10 @@ class EMesh_CS(EMesh):
         else:
             mesh_nodes = isl.mesh_nodes  # get all mesh nodes object from the trace island
             isl_name = isl.name
-            
+        print (isl)
         # for each island set the
         # print "num nodes",len(mesh_nodes)
+        print(mesh_nodes)
         for node in mesh_nodes:
             node.pos[0] = node.pos[0] 
             node.pos[1] = node.pos[1] 
@@ -688,8 +689,9 @@ class EMesh_CS(EMesh):
         ys = list(set(ys))
         xs.sort()
         ys.sort()
-        #self.plot_points(plot=True, points=points)
-        #plt.show()
+        fig,ax = plt.subplots()
+        self.plot_points(ax= ax,plot=True, points=points)
+        plt.show()
         self.set_nodes_neigbours_planar(points=points, locs_map=locs_to_node, xs=xs, ys=ys)
         # setup hierarchical node
 
