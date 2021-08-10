@@ -171,7 +171,7 @@ class ParaPowerInterface(object):
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
+        self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/ARL_ParaPower/')
 
         
 
@@ -205,7 +205,9 @@ class ParaPowerInterface(object):
         # temperature = matlab_engine.PowerSynthImport_V2(md_json)
         temperature = 5
         results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+        #results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
         results = json.loads(results)
+        #print(results)
         temperature = results['temperature'][-1]
         # self.eng.workspace['test_md'] = self.eng.ImportPSModuleDesign(json.dumps(self.to_dict()), nargout=1)
         # self.eng.save('test_md_file.mat', 'test_md')

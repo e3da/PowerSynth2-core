@@ -97,7 +97,7 @@ class PSSolution(object):
         self.module_data=module_data
         features=[]
         for id, layer_object in module_data.layer_stack.all_layers_info.items():
-            print (id)
+            #print (id)
             if (layer_object.e_type=='C' or layer_object.e_type=='S') : # from layer stack all layers with electrical components are excluded here
                 continue
             else:
@@ -217,9 +217,15 @@ class PSSolution(object):
                 if '_Metal' in f.name:
                     f.width=min_width # dynamically changing dimension to support variable sized solution
                     f.length=min_length # dynamically changing dimension to support variable sized solution
-                if 'Baseplate' in f.name:
+                if 'Baseplate' in f.name and f.material_name!='Air':
                     f.width=min_width+10 # dynamically changing dimension to support variable sized solution
                     f.length=min_length+10 # dynamically changing dimension to support variable sized solution
+                elif 'Baseplate' in f.name and f.material_name=='Air':
+                    f.width=min_width
+                    f.length=min_length
+                    f.z=0.0
+                    
+
                 '''if f.name=='Bottom_Metal':
                     f.width=min_width # dynamically changing dimension to support variable sized solution
                     f.length=min_length # dynamically changing dimension to support variable sized solution

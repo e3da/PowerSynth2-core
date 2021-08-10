@@ -215,6 +215,8 @@ class CornerStitch():
 
         while (len(Input) > 0):
             inp = Input.pop(0)
+            #print(inp)
+            
             if inp[1] == "." and inp[2] != ".":  ## determining hierarchy level (2nd level):Device insertion
                 start = inp[0]
                 x1 = int(inp[2]) # top-left corner x coordinate
@@ -277,7 +279,7 @@ class CornerStitch():
                 y2 = int(inp[2])
                 
                 
-                print(x1,y1,x2,y2,inp[5])
+                #print(x1,y1,x2,y2,inp[5])
                 Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
 
                 ParentH = Htree.hNodeList[0]

@@ -4,7 +4,7 @@ import sys, os
 # Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-print(cur_path)
+#print(cur_path)
 sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
@@ -416,7 +416,11 @@ class Cmd_Handler:
             e_measure_type = self.electrical_models_info['measure_type']
             source = self.electrical_models_info['source']
             sink = self.electrical_models_info['sink']
-            dev_conn = self.electrical_models_info['device_connections']
+            try:
+                dev_conn = self.electrical_models_info['device_connections']
+            except:
+                print("No device found")
+                dev_conn = None
             frequency = self.electrical_models_info['frequency']
             e_mdl_type = self.electrical_models_info['model_type']
         else:
@@ -795,6 +799,8 @@ class Cmd_Handler:
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
+            if model_type==2:
+                self.t_api.init_matlab()
     def init_apis(self):
         '''
         initialize electrical and thermal APIs
@@ -1157,12 +1163,14 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        setting_dir = os.path.join(k,"settings.info")
+        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings.info"#os.path.join(k,"settings.info")
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
         args = ['python','cmd.py','-m',macro_dir,'-settings',setting_dir]
         cmd.cmd_handler_flow(arguments= args)
+           
+
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 

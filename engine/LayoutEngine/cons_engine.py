@@ -284,6 +284,7 @@ class New_layout_engine():
             if isinstance(comp, parts.Part):
                 type=comp.cs_type
                 footprint=comp.footprint
+                parent_type='Type_1'
                 for island in self.init_data[2]:
                     
                     if comp.layout_component_id in island.child_names:

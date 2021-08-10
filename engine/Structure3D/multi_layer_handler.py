@@ -252,7 +252,7 @@ class Layer():
         for i in range(len(self.cs_info)):
             rect=self.cs_info[i]
             #print("RECT",rect)
-            if rect[5][0]=='T' or rect[-2]==0: #hier_level==0
+            if rect[5][0]=='T' or rect[-2]==0: #(only traces are allowed)or rect[-2]==0: #hier_level==0
                 rectangle = Rectangle(x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid)
                 all_rects.append(rectangle)
                 netid+=1

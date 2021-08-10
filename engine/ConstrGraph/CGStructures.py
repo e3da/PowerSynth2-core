@@ -697,7 +697,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
 
     #makes sure each dependent vertex has a single reference vertex
     dependent_vertices,graph,fixed_edges=reference_edge_handling(graph_in=graph,ID=ID)        
-                     
+    
     '''
     print(ID)
     if ID==22:
@@ -786,8 +786,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 #print(ID,ref_vert.coordinate,in_src.coordinate,backward_weight,fixed_dim)
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
-                                print("HERE3",ID)
-                                input()
+                                #print("HERE3",ID)
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
                             else:
@@ -854,7 +854,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             if new_weight<=0:
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                #print("HERE5",ID)
+                                #print("HERE5",ID, ref_vert.coordinate,out_dest.coordinate,new_weight)
+                                #edge.printEdge()
                                 #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
@@ -1033,6 +1034,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                             #print(edge.source.coordinate)
                             ref_vert=edge.source
                             fixed_dim=edge.constraint
+                    
 
             for i in range(len(dependent_vertices[vertex])): 
                 edge=dependent_vertices[vertex][i]
@@ -1100,6 +1102,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                         #if edge in graph.nx_graph_edges:
                             #graph.nx_graph_edges.remove(edge)
                 else:
+                    
                     pot_fix_dim=None
                     if edge.comp_type=='Flexible': #bw vertex
                         for edge1 in graph.nx_graph_edges:
@@ -1113,6 +1116,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                         else:
                             potential_fixed_dim=fixed_dim-edge.constraint
                     else:
+                        #if edge.source.index<ref_vert.index:
                         potential_fixed_dim=fixed_dim-edge.constraint
 
                     #potential_fixed_dim=fixed_dim-edge.constraint
@@ -1120,7 +1124,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                     if potential_fixed_dim>0:
                         new_fixed_edge=Edge(source=ref_vert, dest=potential_fixed_vert, constraint=potential_fixed_dim, index=edge.index, type='fixed', weight=2*potential_fixed_dim,comp_type=edge.comp_type)
                         graph.nx_graph_edges.append(new_fixed_edge)
-                        graph.modified_edges.append(new_edge)
+                        graph.modified_edges.append(new_fixed_edge)
                         if potential_fixed_vert in fixed_edge_list_to_add:
                             fixed_edge_list_to_add[potential_fixed_vert].append(new_fixed_edge)
                         else:

@@ -389,7 +389,8 @@ class CS_to_CG():
 
         layout_rects = []
         cs_sym_info = {}
-        #print(min(miny[1].values()))
+        #print(minx)
+        
         sub_x=min(minx[1].values())
         sub_y=min(miny[1].values())
         sub_width = max(minx[1].values())

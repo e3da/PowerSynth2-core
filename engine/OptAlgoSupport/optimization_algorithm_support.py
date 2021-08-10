@@ -125,25 +125,26 @@ class new_engine_opt:
                     #input()
                     
                 print ("RL",R,L)
-                    
+                #"""   
                 #except:
                 #R=10000
                 #L=10000
+
                 
 
                 if type == 0:  # LOOP RESISTANCE
                     result.append(R)  # resistance in mOhm
                 if type == 1:  # LOOP INDUCTANCE
-                    result = [L_FH,L_loop]         
-                
-                    #result.append(L)  # resistance in mOhm
+                    #result = [L_FH,L_loop]         
+
+                    result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
-                continue  # ignore thermal for now
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                
-                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution) # TEMP NEED TO FIX
-                max_t = 300
+                #print(self.t_api.matlab_engine)
+                #input()
+                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                #max_t=300
                 result.append(max_t)
         return result
     
@@ -163,8 +164,8 @@ class new_engine_opt:
                     if f.name ==dev:
                         f.power=heat_gen
             
-                    if f.z==0.0:
-                        f.h_val=h_conv
+                    '''if f.z==0.0:
+                        f.h_val=h_conv[0]'''
         return solution       
     
 

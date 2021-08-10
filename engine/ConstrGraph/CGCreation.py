@@ -80,8 +80,8 @@ class ConstraintGraph:
         self.minY={}
         self.LocationH={}
         self.LocationV={}
-    
-    
+
+
 
     def select_nodes_from_tree(self,h_nodelist=None, v_nodelist=None):
 
@@ -573,8 +573,8 @@ class ConstraintGraph:
 
                         if node_id in self.via_coordinates_h:
                             for coord_list in self.via_coordinates_h[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                     else:
                         for vertex in self.hcg_vertices[node_id]:
@@ -585,8 +585,8 @@ class ConstraintGraph:
                                         vertex.propagated=True
                             if node_id in self.via_coordinates_h:
                                 for coord_list in self.via_coordinates_h[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
         
         for node_id,coord_list in self.y_coordinates.items():
@@ -613,8 +613,8 @@ class ConstraintGraph:
 
                         if node_id in self.via_coordinates_v:
                             for coord_list in self.via_coordinates_v[node_id]:
-                                for coord in coord_list:
-                                    if vertex.coordinate==coord:
+                                for coord1 in coord_list:
+                                    if vertex.coordinate==coord1:
                                         vertex.associated_type.append(self.via_type)
                             
                     else:
@@ -626,8 +626,8 @@ class ConstraintGraph:
                                         vertex.propagated=True
                             if node_id in self.via_coordinates_v:
                                 for coord_list in self.via_coordinates_v[node_id]:
-                                    for coord in coord_list:
-                                        if vertex.coordinate==coord:
+                                    for coord2 in coord_list:
+                                        if vertex.coordinate==coord2:
                                             vertex.associated_type.append(self.via_type)
                                         
 
@@ -920,7 +920,11 @@ class ConstraintGraph:
 
                 type_=rect.cell.type
                 
+                
                 value1 = self.constraint_info.getConstraintVal(type_=type_,cons_name=cons_name) # initial width/length constraint value for the tile
+            
+                #print(self.constraint_info.constraints)
+                
                 if rect.current!=None: #applying reliability constraints
                     if rect.current['AC']!=0 or rect.current['DC']!=0:
                         current_rating=rect.current['AC']+rect.current['DC']
@@ -1027,7 +1031,6 @@ class ConstraintGraph:
                 if ((rect.NORTH.nodeId != ID  and rect.SOUTH.nodeId != ID) or (rect.cell.type=="EMPTY" and rect.nodeId==ID)) and rect.NORTH in cornerStitch_v.stitchList and rect.SOUTH in cornerStitch_v.stitchList:
                     dest_type = Types.index(rect.NORTH.cell.type) # bottom-to-top spacing
                     source_type = Types.index(rect.SOUTH.cell.type) #bottom-to-top spacing
-                    
                     cons_name= 'MinVerSpacing'
                     for constraint in self.constraint_info.constraints:
                         if constraint.name==cons_name:
@@ -1035,7 +1038,6 @@ class ConstraintGraph:
 
                     type_=rect.cell.type
                     value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
-                    
                     """
                     if rect.cell.type in self.constraint_info.comp_type['Fixed']:
                         comp_type_='Fixed'
@@ -1092,8 +1094,7 @@ class ConstraintGraph:
 
                     weight= 2*value
                     e = Edge(source=origin, dest=dest, constraint=value, index=index, type=type, weight=weight,comp_type=comp_type_)
-                    
-                    
+
                     self.edgesv_forward[ID].append(e) 
 
                 # checking for minimum enclosure constraint: if current tile is bottom tile its north tile should be foreground tile and south tile should be boundary tile and not in stitchlist
@@ -2455,15 +2456,13 @@ class ConstraintGraph:
 
         
 
-
         
         graph=Graph(vertices=vertices_index,edges=edgeh)
         
         graph.create_nx_graph()
         
-        
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
-        
+
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             #if ID==1:
@@ -2481,22 +2480,20 @@ class ConstraintGraph:
                 else:'''
                 redundant_edges.append(edge)
                 
-                
         for edge in redundant_edges:
-            if edge.constraint>0 :
+            if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
-            
-
         
         
         
+       
 
         if len(graph.nx_graph_edges)>0:
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=ID)
         
-        #print(removable_vertex_dict)
-        #input()
+       
+        
         for vert in removable_vertex_dict:
             #removable_vertex_dict[vert]=list(set(removable_vertex_dict[vert]))
             edge_list=removable_vertex_dict[vert]
@@ -2516,7 +2513,7 @@ class ConstraintGraph:
                 removable_vertex[vert.coordinate]=[edge.source.coordinate,edge.constraint]
 
         self.removable_vertices_h[ID]=removable_vertex
-        #print(ID,removable_vertex)
+        
         
         removable_vertices=list(removable_vertex_dict.keys())
         for vert in removable_vertices:
@@ -2560,12 +2557,7 @@ class ConstraintGraph:
                 vertex.min_loc=0
 
         
-        '''
-        if ID==1:
-            print("A")
-            for edge in graph.nx_graph_edges:
-                edge.printEdge()
-        '''
+        
         
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
         graph_for_top_down_evaluation.create_nx_graph()
@@ -2627,7 +2619,6 @@ class ConstraintGraph:
         
         self.propagated_parent_coord_hcg[ID]=parent_coord # updating dictionary to be used later in top down evaluation
         
-        #print(self.propagated_parent_coord_hcg)                      
         # propagating necessary vertices to the parent node
         for coord in parent_coord:
             coord_found=False
@@ -2673,17 +2664,13 @@ class ConstraintGraph:
                                 self.edgesh_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
                                 
-                                
-                                
-                                
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
-                                
-                                
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
@@ -2713,11 +2700,12 @@ class ConstraintGraph:
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
-                                    
-                                    
-                                    
-                                    
-                                   
+                                    #print("ADDED",e.printEdge())
+
+
+
+
+
             
             vertices_index=[i.index for i in self.hcg_vertices[parentID]]
             vertices_index.sort()
@@ -2953,8 +2941,8 @@ class ConstraintGraph:
                                 
 
 
-                    if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
-                        continue
+                    #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
+                        #continue
                     removable_coord_list=list(removable_coords.keys())
                     if coord2>coord1 :
                         if (coord2 in removable_coord_list or coord1  in removable_coord_list):#and coord1 not in removable_coords and coord2 not in removable_coords:
@@ -3283,8 +3271,7 @@ class ConstraintGraph:
                     
                 
                 self.set_minY(node)
-            #print(self.minY) 
-            #print(self.minX)
+            
             return self.minX, self.minY
         else:
             XLOCATIONS = []
@@ -3300,7 +3287,6 @@ class ConstraintGraph:
                 xloc = {}
                 for i in range(len(Value)):
                     xloc[Key[i]] = Value[i][k]
-                
                 XLOCATIONS.append(xloc)
                
             YLOCATIONS = []
@@ -3430,7 +3416,7 @@ class ConstraintGraph:
                 if k not in final:
                     final[k]=max(v)
             self.minX[node.id] = final
-        #print(self.minX)
+            
             
 
             
@@ -3535,7 +3521,7 @@ class ConstraintGraph:
                 if k not in final:
                     final[k]=max(v)
             self.minY[node.id] = final
-          
+            
 
 
     def dimListFromLayer(self, cornerStitch_h, cornerStitch_v):
@@ -5783,22 +5769,22 @@ class ConstraintGraph:
             for element in reversed(self.tb_eval_h):
                 if element.parentID in list(self.LocationH.keys()):
                     for node in self.hcs_nodes:
-                        if node.id==element.parentID:
+                        if node.id == element.parentID:
                             parent=node
                             break
-            
-                ZDL_H=[]
+
+                ZDL_H = []
                 if element.parentID>0:
-                
+
                     if element.ID in self.propagated_parent_coord_hcg:
                         ZDL_H=self.propagated_parent_coord_hcg[element.ID]
                         
-                
+
                 else:
                     if element.parentID in self.propagated_parent_coord_hcg:
                         ZDL_H=self.propagated_parent_coord_hcg[element.parentID]
                     else:
-                        ZDL_H=self.x_coordinates[element.parentID]
+                        ZDL_H = self.x_coordinates[element.parentID]
                     if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
                         for vertex in self.hcg_vertices[element.ID]:
                             ZDL_H.append(vertex.coordinate)
@@ -5810,7 +5796,7 @@ class ConstraintGraph:
                                 if coord not in ZDL_H:
                                     ZDL_H.append(coord)
                 #ZDL_H=parent_coordinates
-                
+
                 # deleting multiple entries
                 P = set(ZDL_H)
                 ZDL_H = list(P)
@@ -5827,31 +5813,36 @@ class ConstraintGraph:
                             loc_x[vertex.coordinate]=location[vertex.coordinate]
                         else:
                             continue
-                    
+
                     if element.parentID<0 and self.via_type==None:
                         ledge_dims=self.constraint_info.get_ledgeWidth()
                         left=self.x_coordinates[element.ID][1]
                         right=self.x_coordinates[element.ID][-2]                        
+                    
+                                        
+                                    
+                                
+
                         start=self.x_coordinates[element.ID][0]
                         end=self.x_coordinates[element.ID][-1]
-
+                                                    
                         loc_x[left]=loc_x[start]+ledge_dims[0]
                         loc_x[right]=loc_x[end]-ledge_dims[0]
-                    
+                        
                     seed=seed+count*1000
                     #for vert in element.graph.vertices:
                         #print(vert.coordinate,vert.min_loc)
-                    
-                    
+
+
                     loc= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=Random, seed=seed)
                     loc_items=loc.items()
-                    
+
                     #print("HERE",element.ID,sorted(loc_items))
                     count+=1
-                    locations_.append(loc)  
-
+                    locations_.append(loc)
+                                        
                 self.LocationH[element.ID]=locations_
-                                 
+
         return self.LocationH
 
 
@@ -6602,21 +6593,21 @@ class ConstraintGraph:
             for element in reversed(self.tb_eval_v):
                 if element.parentID in list(self.LocationV.keys()):
                     for node in self.vcs_nodes:
-                        if node.id==element.parentID:
+                        if node.id == element.parentID:
                             parent=node
                             break
-            
-                ZDL_V=[]
+
+                ZDL_V = []
                 if element.parentID>0:
-                
+                        
                     if element.ID in self.propagated_parent_coord_vcg:
                         ZDL_V=self.propagated_parent_coord_vcg[element.ID]
-                
+
                 else:
                     if element.parentID in self.propagated_parent_coord_vcg:
                         ZDL_V=self.propagated_parent_coord_vcg[element.parentID]
                     else:
-                        ZDL_V=self.y_coordinates[element.parentID]
+                        ZDL_V = self.y_coordinates[element.parentID]
                     if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
                         for vertex in self.vcg_vertices[element.ID]:
                             ZDL_V.append(vertex.coordinate)
@@ -6628,7 +6619,7 @@ class ConstraintGraph:
                                 if coord not in ZDL_V:
                                     ZDL_V.append(coord)
                 #ZDL_H=parent_coordinates
-                
+
                 # deleting multiple entries
                 P = set(ZDL_V)
                 ZDL_V = list(P)
@@ -6639,38 +6630,38 @@ class ConstraintGraph:
                 locations_=[]
                 count=0
                 for location in parent_locations:
-                    
+
                     loc_y={}
                     for vertex in element.graph.vertices:
-                        
+
                         if vertex.coordinate in location and vertex.coordinate in ZDL_V:
                             loc_y[vertex.coordinate]=location[vertex.coordinate]
                         else:
                             continue
-                    
+
                     if element.parentID<0 and self.via_type==None:
                         ledge_dims=self.constraint_info.get_ledgeWidth()
-                        left=self.y_coordinates[element.ID][1]
-                        right=self.y_coordinates[element.ID][-2]                        
-                        start=self.y_coordinates[element.ID][0]
-                        end=self.y_coordinates[element.ID][-1]
+                        left = self.y_coordinates[element.ID][1]
+                        right = self.y_coordinates[element.ID][-2]
+                        start = self.y_coordinates[element.ID][0]
+                        end = self.y_coordinates[element.ID][-1]
 
                         loc_y[left]=loc_y[start]+ledge_dims[1]
                         loc_y[right]=loc_y[end]-ledge_dims[1]
-                    
 
-                    
+
+
                     seed=seed+count*1000
-                    
+
                     locs= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=Random, seed=seed)
                     #print("HEREV",element.ID,locs)
                     count+=1
-                    locations_.append(locs)  
+                    locations_.append(locs)
                 #print(element.ID,locations_)
                 self.LocationV[element.ID]=locations_
-                                 
+
         #print(self.LocationV)
-        
+
         return self.LocationV
 
 

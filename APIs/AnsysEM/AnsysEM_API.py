@@ -72,8 +72,8 @@ class AnsysEM_API():
         for i in range(len(PS_solution_3d.features_list)): # convert PSfeature to AnsysBox scripts
             PS_feature =  PS_solution_3d.features_list[i]
             print (PS_feature)
-            if 'V' in PS_feature.name: # ignore via
-                continue
+            #if 'V' in PS_feature.name: # ignore via
+            #    continue
             box = AnsysEM_Box()
             if 'D' in PS_feature.name:
                 box.set_color(self.devivce_color)

@@ -458,6 +458,7 @@ class EMesh_CS(EMesh):
         '''
         elements = island.elements
         el_names = island.element_names
+        
         debug = False
         pairs = {}
         if len(elements) == 1:
