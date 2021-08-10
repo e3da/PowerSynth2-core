@@ -153,8 +153,22 @@ class CornerStitchSolution():
         conv_value= list(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
         return tuple([i/255 for i in conv_value])
         
+    def plot_all_layers(self, all_patches= [],sol_ind=0, sol_path=None, ax_lim=[]):
 
-    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None):
+        ax2 = plt.subplots()[1]
+        for p in all_patches:
+            ax2.add_patch(p)
+        ax2.set_xlim(ax_lim[0])
+        ax2.set_ylim(ax_lim[1])
+
+        ax2.set_aspect('equal')
+        #if self.fig_dir!=None:
+        plt.legend(bbox_to_anchor = (0.8, 1.005))
+        plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
+
+        plt.close()
+
+    def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None, c= None,lab=None):
         fig1, ax1 = plt.subplots()
         if bw_type!=None:
             bondwire_type=" '{}'".format(bw_type)
@@ -166,6 +180,7 @@ class CornerStitchSolution():
 
         conn = create_connection(db)
         v1=[]
+        all_patches=[]
 
         with conn:
             # create a new project
@@ -241,7 +256,10 @@ class CornerStitchSolution():
             #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple','pink','magenta','orange','violet','black']
 
             #colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
-            
+            all_layers_plot_rows=[]
+            for row in all_lines:
+                if row[-1]==" 'True'" and all_layers== True and len(row)>4 and row[5] != bondwire_type:
+                    all_layers_plot_rows.append(row)
 
             for row in all_lines:
                 #print("R", row)
@@ -315,6 +333,36 @@ class CornerStitchSolution():
                             )
                         v1.append(R1)
 
+                        if row[-1]==" 'True'" and all_layers== True:
+                            if row==all_layers_plot_rows[-1]:
+                                label=lab
+
+                            else:
+                                label=None
+                            if a<0.9:
+                                linestyle='--'
+                                linewidth=order
+                            else:
+                                linestyle='-'
+                                linewidth=order
+
+
+                            P = matplotlib.patches.Rectangle(
+                            (x, y),  # (x,y)
+                            w,  # width
+                            h,  # height
+                            edgecolor=c,
+                            facecolor="white",
+                            zorder=order,
+                            linewidth=linewidth,
+                            alpha=a,
+                            fill=False,
+                            linestyle=linestyle,
+                            label=label
+                            )
+                            all_patches.append(P)
+
+
             for p in v1:
                 ax1.add_patch(p)
 
@@ -328,6 +376,12 @@ class CornerStitchSolution():
             plt.close()
 
         conn.close()
+        if len(all_patches)>0:
+            x_lim=(x0, k1[0])
+            y_lim=(y0, k1[1])
+            return all_patches, [x_lim,y_lim]
+        else:
+            return None
 
 if __name__ == '__main__':
 

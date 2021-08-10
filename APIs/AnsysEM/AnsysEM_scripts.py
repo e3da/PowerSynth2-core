@@ -77,12 +77,12 @@ oModule = oDesign.GetModule("BoundarySetup")
 oModule.AssignSource(
     [
         "NAME:{0}",
-        "Faces:="        , [{1}]{4}
+        "Faces:="        , [{1}]
     ])
 oModule.AssignSink(
     [
         "NAME:{2}",
-        "Faces:="        , [{3}]{4}
+        "Faces:="        , [{3}]
     ])
 '''   
 Source_sink_parent='''
@@ -105,7 +105,6 @@ oModule.InsertSetup("Matrix",
         "AdaptiveFreq:="    , "{0}Hz",   # default 100 kHz
         "SaveFields:="        , {1},      # default to be False 
         "Enabled:="        , True,
-        {8}
         [
             "NAME:AC",
             "MaxPass:="        , {2},
@@ -116,7 +115,7 @@ oModule.InsertSetup("Matrix",
         ]
 
     ])
-    {7}
+
 '''
 Add_DC='''
 [
@@ -394,7 +393,45 @@ oEditor.ChangeProperty(
 
 
 '''
+U_wire = '''
+oEditor.CreateBondwire(
+	[
+		"NAME:BondwireParameters",
+		"WireType:="		, "LOW",
+		"WireDiameter:="	, "{diameter}mm",
+		"NumSides:="		, "6",
+		"XPadPos:="		, "{x}mm",
+		"YPadPos:="		, "{y}mm",
+		"ZPadPos:="		, "{z}mm",
+		"XDir:="		, "{dx}mm",
+		"YDir:="		, "{dy}mm",
+		"ZDir:="		, "0mm",
+		"Distance:="		, "{distance}mm",
+		"h1:="			, "{sign}0.2mm",
+		"h2:="			, "{sign}{dz}mm",
+		"alpha:="		, "90deg",
+		"beta:="		, "90deg",
+		"WhichAxis:="		, "Z",
+		"ReverseDirection:="	, False
+	], 
+	[
+		"NAME:Attributes",
+		"Name:="		, "{name}",
+		"Flags:="		, "",
+		"Color:="		, "(143 175 143)",
+		"Transparency:="	, 0,
+		"PartCoordinateSystem:=", "Global",
+		"UDMId:="		, "",
+		"MaterialValue:="	, "\\"{material}\\"",
+		"SurfaceMaterialValue:=",  "\\"Steel-oxidised-surface\\"",
+		"SolveInside:="		, False,
+		"IsMaterialEditable:="	, True,
+		"UseMaterialAppearance:=", False,
+		"IsLightweight:="	, False
+	])
 
+
+'''
 New_wire = '''
 oEditor.CreateBondwire(
 	[
@@ -656,3 +693,17 @@ oModule.AddTraces("Data Table {0}", "Setup1 : {1}",
 '''
 Optim_family='''
         "{0}:="		, ["{1} {2}"], # 0: Name,  1: Value: 'All', 'Nominal' or 'Value+Unit' '''
+
+Create_T_Via = '''
+oEditor.Subtract(
+	[
+		"NAME:Selections",
+		"Blank Parts:="		, "{list_of_cut_parts}",
+		"Tool Parts:="		, "{Via_name}"
+	], 
+	[
+		"NAME:SubtractParameters",
+		"KeepOriginals:="	, False
+	])
+
+'''

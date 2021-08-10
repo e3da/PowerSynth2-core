@@ -103,6 +103,7 @@ class Sheet(E_plate):
         self.net_type=net_type
         self.component=None
         self.node = None  # node reference to Tree
+        self.via_type = None
     def get_center(self):
         return self.rect.center()
 

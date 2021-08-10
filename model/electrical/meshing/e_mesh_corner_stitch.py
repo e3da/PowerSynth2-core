@@ -141,7 +141,7 @@ class EMesh_CS(EMesh):
             else: # handle planar type using cornerstitch adaptive mode
                 mesh_table = self.generate_planar_mesh_cells(island = isl,z = z)
                 self.mesh_nodes_planar_upgraded(mesh_table=mesh_table,island = isl,z =z)
-                self.handle_components_net_connection_planar(mesh_table = mesh_table, island=isl)
+                self.handle_components_net_connection_planar(mesh_table = mesh_table, island=isl,dz = dz)
                 #points = self.mesh_nodes_planar(isl=isl,z = z)
 
                 #self._handle_pins_connections(island_name = g.name)
@@ -655,10 +655,14 @@ class EMesh_CS(EMesh):
         #self.plot_isl_mesh(plot=True, mode ='matplotlib')
     
     
-    def handle_components_net_connection_planar(self,island=None,mesh_table=None):
+    def handle_components_net_connection_planar(self,island=None,mesh_table=None,dz=0):
         # this is the upgraded version of the e_mesh_direct.handle_pin_connections. e_mesh_direct will be removed later
         # First search through all sheet (device pins) and add their edges, nodes to the mesh
         isl_name = island.name
+        isl_dir = island.direction
+        dz = dz
+        if isl_dir == 'Z-':
+            dz = -dz
         for sh in self.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
@@ -676,7 +680,7 @@ class EMesh_CS(EMesh):
                     sheet_name = sheet_data.net.split('_')[0]
                     comp_rect_cell = mesh_table.comp_to_rect_cell[sheet_name]
                     print(sheet_name,comp_rect_cell.z,z)
-                    if comp_rect_cell.z == z:
+                    if comp_rect_cell.z + dz == z:
                         cp = (x,y,z)
                         cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
                         self.comp_net_id[sheet_data.net] = self.node_count

@@ -1,16 +1,19 @@
 # author: Quang Le
 # Handle ANSYS EM simulations automatically
 import sys
-import os 
+import os
+
+from numpy.lib.nanfunctions import _nanmedian_small 
 cur_path =sys.path[0] # get current path (meaning this file location)
 print(cur_path)
 cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
 sys.path.append(cur_path)
 import math
-from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir
+from core.APIs.AnsysEM.AnsysEM_scripts import Start_ansys_desktop_script_env,Add_design, Run_in_IronPython_Windows,New_wire,Save_project_as_current_dir\
+                                                ,Create_T_Via,Source_Sink,Auto_identify_nets,Analyze_all,Analysis_Setup,U_wire
 from core.APIs.AnsysEM.AnsysEM_structures import AnsysEM_Box
 class AnsysEM_API():
-    def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None):
+    def __init__(self, version = '19.4',layer_stack='',active_design ='Q3D Extractor', design_name = 'default',solution_type = '',workspace = '',e_api =None,run_option=0):
         
         # This part is for initialization of the API engine
         self.os = 'Win' # Currently only works for windows version 
@@ -36,13 +39,18 @@ class AnsysEM_API():
             self.ipy64 =self.default_path+"/common/IronPython/ipy64.exe"
         elif self.os =='Linux':
             self.ipy64 = self.default_path + "/common/IronPython/ipython"
-        
+        self.export_all = False # export baseplate and layerstack and backside copper
         # default colors for objects
+        self.run_option = run_option
         self.devivce_color = (220,20,60) #D - crimson
         self.via_color = (255,255,0) #V - yellow
         self.lead_color = (115,147,179) # Blue Gray
         self.trace_color = (171,173,174) # Al
         self.iso_color = (255,250,250) # Snow white
+        self.face_id_dict = {}
+        self.max_f_id = 7
+        self.selected_PS_features =[]
+        self.sheet_ps_feature_via_table = {}
     def __str__(self):
         info ='''
         {}
@@ -68,42 +76,78 @@ class AnsysEM_API():
     def translate_powersynth_solution_to_ansysem(self,PS_solution_3d):
         self.module_data = PS_solution_3d.module_data
         self.init_script_and_add_design()
+        self.PS_features_list = PS_solution_3d.features_list
         print("translate the solution into AnsysEM geometry info")
         for i in range(len(PS_solution_3d.features_list)): # convert PSfeature to AnsysBox scripts
             PS_feature =  PS_solution_3d.features_list[i]
-            print (PS_feature)
             #if 'V' in PS_feature.name: # ignore via
             #    continue
             box = AnsysEM_Box()
+            names = ['D','L','T','V']
+
+            if not(self.export_all):
+                n0 = PS_feature.name[0]
+                if not n0 in names:
+                    continue
+                else:
+                    self.selected_PS_features.append(PS_feature)                
             if 'D' in PS_feature.name:
                 box.set_color(self.devivce_color)
             if 'L' in PS_feature.name:
                 box.set_color(self.lead_color)
             if 'V' in PS_feature.name:
-                box.set_color(self.via_color)
+                self.sheet_ps_feature_via_table[PS_feature.name] = PS_feature
+                continue
             if 'T' in PS_feature.name:
                 box.set_color(self.trace_color)
             if 'Ceramic' in PS_feature.name:
                 box.set_color(self.iso_color)  
-                print ("set Ceramic")  
             if "." in PS_feature.name:
                 name = PS_feature.name.replace('.','_')
             else:
                 name = PS_feature.name
+            self.face_id_dict[name]=[self.max_f_id+i for i in range(6)]
+            self.max_f_id+=28
             box.read_ps_feature(PS_feature,name)
             self.output_script+= box.script
         self.handle_3D_connectivity()
+        self.add_src_sink()
+        self.output_script+=Auto_identify_nets
+        self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
+        #self.output_script+=Analyze_all
         self.save_project_as()
+
+    def add_src_sink(self):
+        measure = self.e_api.measure[0]
+        src = measure.source
+        sink = measure.sink
+        src_dir = measure.src_dir
+        sink_dir = measure.sink_dir
+        
+        if src_dir == 'Z+':
+            f_src = self.face_id_dict[src][0]
+        else:
+            f_src = self.face_id_dict[src][1]
+
+        if sink_dir == 'Z+':
+            f_sink = self.face_id_dict[sink][0]
+        else:
+            f_sink = self.face_id_dict[sink][1]
+
+        src_sink_script = Source_Sink.format('Src_'+src,f_src,'Sink_'+sink,f_sink)
+        self.output_script+=src_sink_script
+       
+
     def save_project_as(self):
         self.output_script+=Save_project_as_current_dir.format(name=self.design_name)
     
     def handle_3D_connectivity(self):
         # Handle wires and vias connections
         # get all layer IDs
-        self.e_api.setup_layout_objects(self.module_data)
+        if self.run_option == 0:
+            self.e_api.setup_layout_objects(self.module_data)
         w_id = 0
         for w in self.e_api.wires:
-            print (w)
             c_s = w.sheet[0].get_center()
             c_e = w.sheet[1].get_center()
             length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
@@ -115,13 +159,75 @@ class AnsysEM_API():
             z = w.sheet[0].z/1000
             dx = c_e[0]-x
             dy = c_e[1]-y
-            dz = w.sheet[1].z/1000-z
-
-            nw = New_wire.format(x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
+            dz = abs(w.sheet[1].z/1000-z)
+            if w.wire_dir == 'Z+':
+                sign = '+'
+            elif w.wire_dir == 'Z-':
+                sign = '-'
+                z+=0.105 # magic number in ANSYS 
+            nw = U_wire.format(sign=sign,x=x,y=y,z=z,dx= dx,dy=dy,dz=dz, diameter = w.d,distance =length,material = 'copper',name = "W{0}".format(w_id))
             self.output_script += nw
             w_id+=1
+        self.form_T_Vias()
+    
+    def form_T_Vias(self):
         for v in self.e_api.vias:
-            print (v)
+            start = v.sheet[0]
+            stop = v.sheet[1]
+            
+            z = start.z/1000
+            
+            # find dz and z based on via info
+            start_name = start.net
+            stop_name = stop.net
+            for name in [start_name,stop_name]:
+                if 'V' in name:
+                    id = name
+                    break
+            via_ps_feature = self.sheet_ps_feature_via_table[id]
+            x= via_ps_feature.x
+            y = via_ps_feature.y
+            dx = via_ps_feature.width
+            dy = via_ps_feature.length
+            id = id.split('.')[0]
+            Tname = "T_" + id
+            # create cut 
+            cut_string = ''
+            intersect_list = []
+            
+            if v.via_type == "Through":
+                dz = (stop.z - start.z)/1000
+                for i in range(len(self.selected_PS_features)):
+                    PS_feature =self.selected_PS_features[i]
+                    if 'V' in PS_feature.name:
+                        continue
+                    intersect = PS_feature.itersect_3d(x,y,z,dx,dy,dz)
+                    if "." in PS_feature.name:
+                        name = PS_feature.name.replace('.','_')
+                    else:
+                        name = PS_feature.name
+                    if intersect:
+                        intersect_list.append(name)
+                Tbox = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Tname) # use to create blank part
+                Tbox.make()
+                self.output_script+=Tbox.script
+                for name in intersect_list:
+                    if intersect_list.index(name)!= len(intersect_list)-1:
+                        cut_string+=name+','
+                    else:
+                        cut_string+=name
+                cut_script = Create_T_Via.format(list_of_cut_parts=cut_string,Via_name=Tname)
+                self.output_script+=cut_script
+            elif v.via_type =='f2f':
+                dz = stop.z-start.z
+                dz/=1000
+            Vname = "V_"+ id
+            Via_box = AnsysEM_Box(x=x,y=y,z=z,dx=dx,dy=dy,dz=dz,obj_id=Vname)
+            Via_box.make()
+            Via_box.set_color(self.via_color)
+            self.output_script+=Via_box.script
+
+
     def write_script(self):
 
         py_file = self.exported_script_dir+'/'+self.design_name + '.py'

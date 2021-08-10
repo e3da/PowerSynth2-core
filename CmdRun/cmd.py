@@ -332,7 +332,7 @@ class Cmd_Handler:
             
             
             self.need_electrical_setup()
-            self.init_export_tasks()
+            self.init_export_tasks(run_option)
             if run_option == 0:
                 
                 '''Generate 3D layout strcutures'''
@@ -445,7 +445,7 @@ class Cmd_Handler:
                 print("Need Electrical Setup for bondwires connection in ANSYSEM")
                 print("The tool will attempt to extract Ansysem design without bondwires connection")
     # ------------------ Export Features ---------------------------------------------
-    def init_export_tasks(self):
+    def init_export_tasks(self,run_option=0):
         '''Start ANSYSEM, and others export features'''
         if self.export_ansys_em_info!={}:
             version = self.export_ansys_em_info['version']
@@ -455,7 +455,7 @@ class Cmd_Handler:
             else:
                 active_design = 'HFSS'
             workspace = self.db_dir+'/AnsysEM'
-            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api)
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=0)
             self.export_task.append(ansysem)
     def generate_export_files(self):
         '''Generate export files after the solution3D is generated'''
@@ -644,6 +644,13 @@ class Cmd_Handler:
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
+            via_type_assignment={}
+            for via_name,layers in via_connecting_layers.items():
+                if 'Through' in layers:
+                    via_type_assignment[via_name]='Through'
+                else:
+                    via_type_assignment[via_name]=None
+
         
         
 
@@ -663,7 +670,49 @@ class Cmd_Handler:
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
-       
+        
+        if len(via_type_assignment)>0:
+            for comp_name, component in self.comp_dict.items():
+                if comp_name.split('.')[0] in via_type_assignment:
+                    component.via_type=via_type_assignment[comp_name.split('.')[0]]
+
+        
+        
+        if len(self.structure_3D.layers)>1:
+            all_patches=[]
+            all_colors=['blue','red','green','yellow','pink','violet']
+            hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
+            for i in range(len(self.structure_3D.layers)):
+                '''alpha=(i)*1/len(self.structure_3D.layers)
+                print(0.9-alpha)
+                if alpha==0:
+                    alpha=0.5'''
+                if i==0:
+                    alpha = 0.9
+                    #pattern=None
+                else:
+                    alpha = (i)*1/len(self.structure_3D.layers)
+                pattern = None
+                layer=self.structure_3D.layers[i]
+                patches,ax_lim,types_for_all_layers_plot=layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit,all_layers=True,a=alpha,c=all_colors[i],pattern=pattern)
+                all_patches+=patches
+
+            self.structure_3D.types_for_all_layers_plot=types_for_all_layers_plot
+            #print(self.structure_3D.types_for_all_layers_plot)
+            #input()
+            ax2=plt.subplots()[1]
+            for p in all_patches:
+                ax2.add_patch(p)
+            ax2.set_xlim(ax_lim[0])
+            ax2.set_ylim(ax_lim[1])
+
+            ax2.set_aspect('equal')
+            if self.fig_dir!=None:
+                plt.legend(bbox_to_anchor = (0.8, 1.005))
+                plt.savefig(self.fig_dir+'/initial_layout_all_layers.png')
+            plt.close()
+
+
         #No need to handle inter-layer constraints for now
         """
         # taking info for inter-layer constraints
@@ -734,7 +783,7 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='FastHenry'):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type =None):
         print("init api:", type)
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
@@ -1110,9 +1159,13 @@ class Cmd_Handler:
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
+            x_label=labels[0]
+            y_label=labels[1]
         else:
             x_label=labels[0]
             y_label=labels[1]
+        
+        
         
         if plot:
             plt.xlim(min(data_x)-2, max(data_x)+2)
