@@ -4,6 +4,7 @@ import time
 import scipy
 import warnings
 import sys
+#import sympy
 warnings.filterwarnings("ignore")
 
 # IN THIS VERSION OF MNA EVAL, R AND L ARE COMBINED INTO ONE SINGLE IMPEDANCE TO REDUCE THE NUMBER OF VOLTAGE UNKNOWNS
@@ -693,6 +694,9 @@ class RL_circuit():
         #print np.shape(self.A)
         #print "RESULTS",self.results
         if debug: # for debug and time analysis
+            #print('matrix rank')
+            #print (sympy.Matrix(A).rank())
+            print(A.shape)
             print(('RL', np.shape(A)))
             np.savetxt("M.csv", self.M_t, delimiter=",")
             np.savetxt("Mt.csv", self.M, delimiter=",")

@@ -4,7 +4,7 @@ import sys, os
 # Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-#print(cur_path)
+print(cur_path)
 sys.path.append(cur_path)
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 

@@ -143,9 +143,9 @@ class EMesh_CS(EMesh):
                 mesh_table = self.generate_planar_mesh_cells(island = isl,z = z)
                 self.mesh_nodes_planar_upgraded(mesh_table=mesh_table,island = isl,z =z)
                 self.handle_net_connection_planar(mesh_table = mesh_table, island=isl,dz = int(dz*1000))
-                self.mesh_edges(thick=dz,z_level=z)  # the thickness is fixed right now but need to be updated by MDK later
+                #self.mesh_edges(thick=dz,z_level=z)  # the thickness is fixed right now but need to be updated by MDK later
                 # TODO: Update the edges using mesh_edges_cell.
-                #self.mesh_edges_cell(thick = dz , z_level = z,mesh_table = mesh_table) # first handle the edges from this mesh table
+                self.mesh_edges_cell(thick = dz , z_level = z,mesh_table = mesh_table) # first handle the edges from this mesh table
                 # Once the edges are form, we combine the nodes using graph contraction
                 # Which ever edges that are connected to the original mesh_node must be connected to the anchor_node
                 self.handle_node_contraction()
@@ -153,7 +153,10 @@ class EMesh_CS(EMesh):
                 
     
         self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
-
+        # Remove all isolated node (such as not connected gate pins) so that PEEC wont have all 0 row
+        isolates = list(nx.isolates(self.graph))
+        print(isolates)
+        self.graph.remove_nodes_from(isolates)
         self.plot_isl_mesh(True,mode = "matplotlib")
 
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
@@ -689,8 +692,7 @@ class EMesh_CS(EMesh):
         for sh in self.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
-            if sheet_data.net == 'B3':
-                print('check')
+            
             if isl_name == group.name:  # means if this sheet is in this island
                 if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
                     self.comp_nodes[group] = []
@@ -1391,7 +1393,7 @@ class EMesh_CS(EMesh):
             ax.set_xlim3d(0, 50000)
             ax.set_ylim3d(0, 50000)
             ax.set_zlim3d(200, 2000)
-            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[],mode = mode)
+            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[81,85],mode = mode)
             plt.savefig("island_mesh.png")
     def test_plot_neightbors(self, mesh_tbl):
         node_map = mesh_tbl.nodes

@@ -1653,7 +1653,7 @@ class EMesh():
             if node1.North == None:
                 node1.North = North
             if North != None:
-                North.South = node1
+                North.South = node1 
             if node1.South == None:
                 node1.South = South
             if South != None:

@@ -129,6 +129,7 @@ def network_plot_3D(G, ax, cmap_node={}, cmap_edge={},show_labels = False,highli
                 j= [e[0],e[1]]
                 type = e[2]['data'].type
                 name = e[2]['data'].name
+               
                 x = np.array((pos[j[0]][0], pos[j[1]][0]))
                 y = np.array((pos[j[0]][1], pos[j[1]][1]))
                 z = np.array((pos[j[0]][2], pos[j[1]][2]))

@@ -86,16 +86,16 @@ class RectCell(Rect):
         #print(self.center_node.node_id)
         b_type = self.get_cell_boundary_type()
         self.center_node.b_type = b_type
-        if self.North!=None:
+        if self.North!=None and self.North.type!=0:
             self.center_node.North =  self.North.center_node
             self.North.center_node.South = self.center_node
-        if self.South!=None:
+        if self.South!=None and self.South.type!=0:
             self.center_node.South =  self.South.center_node
             self.South.center_node.North = self.center_node
-        if self.East!=None:
+        if self.East!=None and self.East.type!=0:
             self.center_node.East =  self.East.center_node
             self.East.center_node.West = self.center_node
-        if self.West!=None:
+        if self.West!=None and self.West.type!=0:
             self.center_node.West =  self.West.center_node
             self.West.center_node.East = self.center_node
         #print(self.center_node)
@@ -108,16 +108,15 @@ class RectCell(Rect):
             edge_name = 'V_Edge_'+str(self.center_node.node_id) + '_' + str(self.center_node.North.node_id) 
             trace_width = int(self.width/3) # 1/3 of the trace cell width
             x_loc = int(self.center_node.pos[0]-trace_width/2)
-            if self.center_node.North.type=='boundary' or node_type == 'boundary':
+            if self.center_node.North.type=='boundary' and node_type == 'boundary':
                 trace_type = 'boundary'
             else:
                 trace_type = 'internal'
-                
             if (self.type ==2 and self.North.type == 1) or (self.North.type ==2 and self.type ==1): # if this is a device type, we connect to the edge region of the device
                 dev_size = self.height if self.type ==2 else self.North.height
                 y_loc = int(self.center_node.pos[1] + dev_size/2) if self.type == 2 else self.center_node.pos[1]
                 trace_length = int(abs(abs(self.center_node.pos[1] - self.center_node.North.pos[1]) - dev_size/2))
-            if (self.type ==1 and self.North.type ==1):
+            if (self.type ==1 and self.North.type ==1 or self.type ==2 and self.North.type ==2):
                 trace_length = int(abs(self.center_node.pos[1] - self.center_node.North.pos[1]))
                 y_loc = int(self.center_node.pos[1])
             xy = (x_loc,y_loc)
@@ -128,8 +127,33 @@ class RectCell(Rect):
             # Update node's neighbour edges
             self.center_node.N_edge = edge_data
             self.center_node.North.S_edge = edge_data
-            edge = (self.center_node,self.center_node.North,edge_data)
+            edge = (self.center_node.node_id,self.center_node.North.node_id,edge_data)
             edges.append(edge)
-
+            
+        if self.center_node.East!=None and self.center_node.E_edge == None:
+            edge_name = 'H_Edge_'+str(self.center_node.node_id) + '_' + str(self.center_node.East.node_id) 
+            trace_width = int(self.height/3) # 1/3 of the trace cell height
+            y_loc = int(self.center_node.pos[1]-trace_width/2)
+            if self.center_node.East.type=='boundary' and node_type == 'boundary':
+                trace_type = 'boundary'
+            else:
+                trace_type = 'internal'
+            if (self.type ==2 and self.East.type == 1) or (self.East.type ==2 and self.type ==1): # if this is a device type, we connect to the edge region of the device
+                dev_size = self.width if self.type ==2 else self.East.width
+                x_loc = int(self.center_node.pos[0] + dev_size/2) if self.type == 2 else self.center_node.pos[0]
+                trace_length = int(abs(abs(self.center_node.pos[0] - self.center_node.East.pos[0]) - dev_size/2))
+            if (self.type ==1 and self.East.type ==1 or self.type ==2 and self.East.type ==2):
+                trace_length = int(abs(self.center_node.pos[0] - self.center_node.East.pos[0]))
+                x_loc = int(self.center_node.pos[0])
+            xy = (x_loc,y_loc)
+            rect = Rect(top=xy[1] + trace_length, bottom=xy[1], left=xy[0], right=xy[0] + trace_width)
+            data = {'type': 'trace', 'w': trace_width, 'l': trace_length, 'name': edge_name, 'rect': rect, 'ori': 'h'}
+            edge_data = MeshEdge(m_type=trace_type, nodeA=self.center_node, nodeB=self.center_node.East, data=data, length=trace_length, z=z_level,
+                                             thick=thick)            
+            # Update node's neighbour edges
+            self.center_node.E_edge = edge_data
+            self.center_node.East.W_edge = edge_data
+            edge = (self.center_node.node_id,self.center_node.East.node_id,edge_data)
+            edges.append(edge)
         return edges
             
