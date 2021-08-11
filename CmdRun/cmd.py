@@ -671,7 +671,7 @@ class Cmd_Handler:
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
         
-        if len(via_type_assignment)>0:
+        if len(via_connecting_layers)>0:
             for comp_name, component in self.comp_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:
                     component.via_type=via_type_assignment[comp_name.split('.')[0]]
@@ -1201,12 +1201,14 @@ if __name__ == "__main__":
     imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test"
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
-        tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}]
+        tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
+                , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'}]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]
             v = list(tc.values())[0]
+
             print("----Test case folder:",k)
             print("----Test case name:",v)
 

@@ -148,6 +148,9 @@ class MeshNode:
         self.isl_area=0
         self.parent_isl = None
         self.z_id = -1 # zid is the id on layer_stack, used to find find the correct dielectric material Note, we use this because the z location is float and can lead to numerical issue
+    def __str__(self):
+        info = "ID:{}, TYPE:{}, BTYPE:{}".format(self.node_id,self.type,self.b_type)
+        return info
 class MeshEdge:
     def __init__(self, m_type=None, nodeA=None, nodeB=None, data={}, width=1, length=1, z=0, thick=0.2, ori=None,
                  side=None,eval = True):
@@ -462,6 +465,10 @@ class EMesh():
                 for i in range(len(self.all_W)):
                     n1 = self.all_n1[i]
                     n2 = self.all_n2[i]
+                    if n1 in self.contracted_map:
+                        n1 = self.contracted_map[n1]
+                    if n2 in self.contracted_map:
+                        n2 = self.contracted_map[n2]
                     # print 'bf',self.graph[n1][n2].values()[0]
                     if not ([n1, n2] in self.rm_edges):
                         edge_data = list(self.graph[n1][n2].values())[0]['data']
@@ -1212,7 +1219,6 @@ class EMesh():
                 if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
                     self.comp_nodes[group] = []
             
-
                 comp = sh.data.component  # Get the component of a sheet.
                 # print "C_DICT",len(self.comp_dict),self.comp_dict
                 if comp != None and not (comp in self.comp_dict):
@@ -1259,7 +1265,7 @@ class EMesh():
                         self.comp_nodes[group].append(cp_node)
 
                 #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
-
+    
     def mesh_edges(self, thick=None, cond=5.96e7, z_level = 0):
         '''
         thick: thickness of layer

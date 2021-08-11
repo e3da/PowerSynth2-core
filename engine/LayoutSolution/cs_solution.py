@@ -381,7 +381,7 @@ class CornerStitchSolution():
             y_lim=(y0, k1[1])
             return all_patches, [x_lim,y_lim]
         else:
-            return None
+            return [None,None]
 
 if __name__ == '__main__':
 

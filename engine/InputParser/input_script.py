@@ -953,7 +953,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
 
     geometry_info=ScriptMethod.layout_info #the complete geometry info
     
-
+    #print(geometry_info)
     for i in range(len(geometry_info)):
         if geometry_info[i][0][0]=='I':
             for layer in all_layers:

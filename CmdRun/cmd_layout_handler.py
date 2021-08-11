@@ -296,21 +296,31 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
 
         if opt_problem != None:  # Evaluatio mode
                 
-            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions))
                 
         else:
             results = perf_results[i]
 
-
+        
         solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
-        print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+        if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
+            print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
         #Solutions.append(solution)
-    if opt_problem.e_api.e_mdl == "FastHenry":
+    if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
         e_results = opt_problem.e_api.parallel_run(solutions)
-        for s in solutions:
-            print ("Solution {}".format(s.solution_id),e_results[solutions.index(s)])
-        print(e_results)   
-        input()
+        type_= opt_problem.e_api.measure[0].measure
+
+        for i in range(len(solutions)):
+            s=solutions[i]
+            #print ("Solution {}".format(s.solution_id),e_results[i])
+            value=e_results[i][type_]
+
+            for m_name,value_ in s.parameters.items():
+                if value_==-1:
+                    s.parameters[m_name]=value
+
+            print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+        
     print("Perf_eval_time",time.time()-start)
     return solutions
 
@@ -542,19 +552,21 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
                     solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
 
-            for solution in Solutions:
-                all_patches=[]
-                all_colors=['blue','red','green','yellow','pink','violet']
-                for i in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                    alpha=(i)*1/len(solution.layer_solutions)
-                    color=all_colors[i]
-                    label='Layer '+str(i+1)
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-                    patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    patches[0].label=label
-                    all_patches+=patches
-                solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
+            if len((solution.layer_solutions))>1:
+                for solution in Solutions:
+                    all_patches=[]
+                    all_colors=['blue','red','green','yellow','pink','violet']
+                    for i in range(len(solution.layer_solutions)):
+                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                        alpha=(i)*1/len(solution.layer_solutions)
+                        color=all_colors[i]
+                        label='Layer '+str(i+1)
+                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
+                        
+                        patches[0].label=label
+                        all_patches+=patches
+                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
         
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
@@ -1038,40 +1050,40 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             #fig.subplots_adjust(hspace = .5, wspace=.001)
 
 
+            if len(solution.layer_solutions)>1:
+                for solution in Solutions:
+                    all_patches=[]
+                    all_colors=['blue','red','green','yellow','pink','violet']
+                    for i in range(len(solution.layer_solutions)):
+                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                        alpha=(i)*1/len(solution.layer_solutions)
+                        color=all_colors[i]
+                        label='Layer '+str(i+1)
 
-            for solution in Solutions:
-                all_patches=[]
-                all_colors=['blue','red','green','yellow','pink','violet']
-                for i in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                    alpha=(i)*1/len(solution.layer_solutions)
-                    color=all_colors[i]
-                    label='Layer '+str(i+1)
-
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-
-
-                    # FIXME: solution.layout_plot not returning any values
-                    patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    #patches[0].label=label
-                    #print(patches[0].label)
-                    #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
-                    all_patches+=patches
+                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
 
 
-                    #print(patch.Rectangle.label)
-                solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
-                '''for p in all_patches:
-                    ax2[solution.index].add_patch(p)
-                ax2[solution.index].set_xlim(ax_lim[0])
-                ax2[solution.index].set_ylim(ax_lim[1])
-            
-                ax2[solution.index].set_aspect('equal')
-                #if self.fig_dir!=None:
-                plt.savefig(sol_path+'/layout_all_layers_'+str(solution.index)+'.png')
+                        # FIXME: solution.layout_plot not returning any values
+                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
+                        #patches[0].label=label
+                        #print(patches[0].label)
+                        #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
+                        all_patches+=patches
+
+
+                        #print(patch.Rectangle.label)
+                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
+                    '''for p in all_patches:
+                        ax2[solution.index].add_patch(p)
+                    ax2[solution.index].set_xlim(ax_lim[0])
+                    ax2[solution.index].set_ylim(ax_lim[1])
                 
-                
-                plt.close()'''
+                    ax2[solution.index].set_aspect('equal')
+                    #if self.fig_dir!=None:
+                    plt.savefig(sol_path+'/layout_all_layers_'+str(solution.index)+'.png')
+                    
+                    
+                    plt.close()'''
 
 
 
@@ -1084,6 +1096,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             #print("Here")
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             #plot_solution_structure(sol)
+            
             PS_solutions.append(sol)
 
         

@@ -78,6 +78,7 @@ class EMesh_CS(EMesh):
         self.layer_stack = layer_stack
         self.corner_tc_dict= {} # save all nodes in the same corner piece
         self.contracted_node_dict = {} # node to contract to: [list of nodes on trace cell]
+        self.contracted_map = {} # map of contracted node to anchor node
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -125,7 +126,7 @@ class EMesh_CS(EMesh):
             
             z = self.hier_E.z_dict[g.z_id]
             dz = self.get_thick(g.z_id)
-            print ('z_level',z,'z_id',g.z_id)
+            print ('z_level',z,'z_id',g.z_id,dz)
             isl = isl_dict[g.name]
             planar_flag,trace_cells = self.handle_trace_trace_connections(island=isl)
             if not(planar_flag): # A layout with all horizontal and vertical elements
@@ -141,18 +142,46 @@ class EMesh_CS(EMesh):
             else: # handle planar type using cornerstitch adaptive mode
                 mesh_table = self.generate_planar_mesh_cells(island = isl,z = z)
                 self.mesh_nodes_planar_upgraded(mesh_table=mesh_table,island = isl,z =z)
-                self.handle_components_net_connection_planar(mesh_table = mesh_table, island=isl,dz = dz)
-                #points = self.mesh_nodes_planar(isl=isl,z = z)
-
-                #self._handle_pins_connections(island_name = g.name)
-                #self.handle_hier_node(points, g)
+                self.handle_net_connection_planar(mesh_table = mesh_table, island=isl,dz = int(dz*1000))
                 self.mesh_edges(thick=dz,z_level=z)  # the thickness is fixed right now but need to be updated by MDK later
-
+                # TODO: Update the edges using mesh_edges_cell.
+                #self.mesh_edges_cell(thick = dz , z_level = z,mesh_table = mesh_table) # first handle the edges from this mesh table
+                # Once the edges are form, we combine the nodes using graph contraction
+                # Which ever edges that are connected to the original mesh_node must be connected to the anchor_node
+                self.handle_node_contraction()
+                
+                
+    
         self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
+
+        self.plot_isl_mesh(True,mode = "matplotlib")
+
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
-        #self.plot_isl_mesh(True,mode = "matplotlib")
+    def handle_node_contraction(self):
+        # go through each node in the contracted node table and connect their edges to the anchor node
 
-
+        for anchor_node_id in self.contracted_node_dict:
+            anchor_node = self.graph.nodes[anchor_node_id]['node'] # get the anchor node object
+            
+            for mesh_node_id in self.contracted_node_dict[anchor_node_id]:
+                try:
+                    self.graph =  nx.contracted_nodes(self.graph,anchor_node_id,mesh_node_id)
+                    # modify the n1 n2 list so that we can find correct net for netlist
+                    self.contracted_map[mesh_node_id] = anchor_node_id
+                              
+                except:
+                    continue # node is contracted already
+    def mesh_edges_cell(self,thick=None, cond=5.96e7, z_level = 0,mesh_table = None):
+        # Use to mesh cell type
+        print("To be implemented")
+        store_edge = self.store_edge_info
+        # Should not search all nodes like the old mesh_edges implementation, but search through all mesh_cell.
+        for cell_id in mesh_table.trace_table:
+            trace_cell = mesh_table.trace_table[cell_id]
+            edges = trace_cell.explore_and_connect_trace_edges(z_level,cond,thick,self.graph) # max of 2 edges
+            for e in edges:
+                store_edge(e[0], e[1], e[2])
+        
     def mesh_nodes_trace_cells(self, trace_cells=None, Nw=3, method="uniform", ax=None, z_pos = 0, isl = None, z_id =0):
         '''
         Given a list of splitted trace cells, this function will form a list of mesh nodes based of the trace cell orientations,
@@ -387,7 +416,6 @@ class EMesh_CS(EMesh):
                 self._save_hier_node_data(hier_nodes=node_group, parent_data=parent_data)
 
     def handle_pins_connect_trace_cells(self, trace_cells=None, island_name=None):
-        #print(("len", len(trace_cells)))
         debug = False
         for sh in self.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
@@ -395,7 +423,6 @@ class EMesh_CS(EMesh):
             if island_name == group.name:  # means if this sheet is in this island
                 if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
                     self.comp_nodes[group] = []
-
                 comp = sh.data.component  # Get the component data from sheet.
                 # print "C_DICT",len(self.comp_dict),self.comp_dict
                 if comp != None and not (comp in self.comp_dict):  # In case this is an component with multiple pins
@@ -420,18 +447,14 @@ class EMesh_CS(EMesh):
                             x, y = sheet_data.rect.center()
                             z = sheet_data.z
                             cp = [x , y , z ]
-                            # print "CP",cp
                             if not (sheet_data.net in self.comp_net_id):
                                 cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
                                 # print self.node_count
                                 self.comp_net_id[sheet_data.net] = self.node_count
                                 self.add_node(cp_node)
                                 self.comp_dict[comp] = 1
-
                 else:  # In case this is simply a lead connection
-
                     if not (sheet_data.net in self.comp_net_id):
-
                         type = "hier"
                         # Get x,y,z positions
                         x, y = sheet_data.rect.center()
@@ -655,7 +678,7 @@ class EMesh_CS(EMesh):
         #self.plot_isl_mesh(plot=True, mode ='matplotlib')
     
     
-    def handle_components_net_connection_planar(self,island=None,mesh_table=None,dz=0):
+    def handle_net_connection_planar(self,island=None,mesh_table=None,dz=0):
         # this is the upgraded version of the e_mesh_direct.handle_pin_connections. e_mesh_direct will be removed later
         # First search through all sheet (device pins) and add their edges, nodes to the mesh
         isl_name = island.name
@@ -666,46 +689,75 @@ class EMesh_CS(EMesh):
         for sh in self.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
+            if sheet_data.net == 'B3':
+                print('check')
             if isl_name == group.name:  # means if this sheet is in this island
                 if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
                     self.comp_nodes[group] = []
                 comp = sh.data.component  # Get the component of a sheet.
+                # now we use z to check the pad location, need to have a smarter way later --- right now this only works for vertical devices such as SiC
+                sheet_name = sheet_data.net.split('_')[0] if 'D' in sheet_data.net else sheet_data.net
+                # Get x,y,z positions
                 if comp != None and not (comp in self.comp_dict): # Check if whether we have handled this component already
                     comp.build_graph()
-                    conn_type = "hier"
-                    # Get x,y,z positions
                     x, y = sheet_data.rect.center()
                     z = sheet_data.z
-                    # now we use z to check the pad location, need to have a smarter way later --- right now this only works for vertical devices such as SiC
-                    sheet_name = sheet_data.net.split('_')[0]
-                    comp_rect_cell = mesh_table.comp_to_rect_cell[sheet_name]
-                    print(sheet_name,comp_rect_cell.z,z)
-                    if comp_rect_cell.z + dz == z:
-                        cp = (x,y,z)
+                    cp = (x,y,z)
+                    conn_type = "hier"
+                    if not  (sheet_data.net in self.comp_net_id):
                         cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
                         self.comp_net_id[sheet_data.net] = self.node_count
                         self.add_node(cp_node)
                         self.comp_nodes[group].append(cp_node)
                         self.comp_dict[comp] = 1 # flagged that we have handled this component
+                        if 'D' in sheet_name: # Case  device-drain
+                            comp_rect_cell = mesh_table.comp_to_rect_cell[sheet_name]
+                            if comp_rect_cell.z + dz == z:
+                                trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
+                                self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
+                        elif 'B' in sheet_name:
+                            trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
+                            self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
+                    for n in comp.net_graph.nodes(data=True):  # node without parents
+                        sheet_data = n[1]['node']
+                        x, y = sheet_data.rect.center()
+                        z = sheet_data.z
+                        cp = (x,y,z)
+                        conn_type = "hier"
+                        if sheet_data.node == None:  # device's net (not on trace)
+                            print('node wo parent',sheet_data.net)
+
+                            if not (sheet_data.net in self.comp_net_id):
+                                cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                                self.comp_net_id[sheet_data.net] = self.node_count
+                                self.add_node(cp_node)
+                                self.comp_dict[comp] = 1  
+                else: # This is ensured to be same with shet_data.net # we rarely have big pads
+                    x, y = sheet_data.rect.center()
+                    z = sheet_data.z
+                    cp = (x,y,z)
+                    conn_type = "hier"
+                    if not (sheet_data.net in self.comp_net_id):
+                        cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                        self.comp_net_id[sheet_data.net] = cp_node.node_id
+                        self.add_node(cp_node)
+                        self.comp_nodes[group].append(cp_node)
+                        # just in case the pad is very long (we have a lot bondwires in parallel)
                         trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
                         self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
-                        print(self.contracted_node_dict[cp_node.node_id])
-                    input() 
-
+                        print(sheet_data.net,self.contracted_node_dict)
+        print(self.comp_net_id)
+        print(mesh_table.net_to_cells)
     def generate_planar_mesh_cells(self,island=None,z = 0):
         mesh_table = MeshTable()
         
         for element in island.elements:
-            print("add traces to island, {}".format(island.name))
-            print (element)
             el_type,x,y,w,h,name,id = element
             trace_cell = RectCell(x,y,w,h)
             mesh_table.traces.append(trace_cell)
             trace_cell.z = z
             
         for child in island.child:
-            print(child)
-            print("add components to island, {}".format(island.name))
             el_type,x,y,w,h,name,id = child
             if 'B' in name: # need to change size with the number of bondwires
                 w*=1000
@@ -720,11 +772,11 @@ class EMesh_CS(EMesh):
                 mesh_table.comp_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
             if 'L'  in name:
                 mesh_table.leads.append(trace_cell)
-                mesh_table.lead_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
+                #mesh_table.lead_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
 
             if 'B'  in name:
                 mesh_table.pads.append(trace_cell)
-                mesh_table.pad_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
+                #mesh_table.pad_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
 
 
 
@@ -751,7 +803,7 @@ class EMesh_CS(EMesh):
             z_tc = z 
             p = (x_tc,y_tc,z_tc)
             b_type = trace_cell.get_cell_boundary_type() # which is same as the type of its internal node
-            node_type = 'internal' if b_type == []  else 'boundary'
+            node_type = 'internal' if len(b_type) == 0  else 'boundary'
             node_id = self.node_count
             node = MeshNode(pos=p, type=node_type, node_id=node_id, group_id=isl_name)
             trace_cell.center_node = node
@@ -784,10 +836,8 @@ class EMesh_CS(EMesh):
         else:
             mesh_nodes = isl.mesh_nodes  # get all mesh nodes object from the trace island
             isl_name = isl.name
-        print (isl)
         # for each island set the
         # print "num nodes",len(mesh_nodes)
-        print(mesh_nodes)
         for node in mesh_nodes:
             node.pos[0] = node.pos[0] 
             node.pos[1] = node.pos[1] 
@@ -1341,9 +1391,8 @@ class EMesh_CS(EMesh):
             ax.set_xlim3d(0, 50000)
             ax.set_ylim3d(0, 50000)
             ax.set_zlim3d(200, 2000)
-            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[52,54,124,161],mode = mode)
-            if plot and mode =='matplotlib':
-                plt.show()
+            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[],mode = mode)
+            plt.savefig("island_mesh.png")
     def test_plot_neightbors(self, mesh_tbl):
         node_map = mesh_tbl.nodes
         xs = [loc[0] for loc in node_map]
