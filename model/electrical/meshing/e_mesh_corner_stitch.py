@@ -122,11 +122,17 @@ class EMesh_CS(EMesh):
         fig, ax = plt.subplots()
         isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
+        ignore_trace = ['9.3','10.3']
         for g in self.hier_E.isl_group:
-            
+            skip = False
+            for name in ignore_trace:
+                if name in g.name:
+                    skip = True # ignore this mesh
+            if skip:
+                continue
             z = self.hier_E.z_dict[g.z_id]
             dz = self.get_thick(g.z_id)
-            print ('z_level',z,'z_id',g.z_id,dz)
+            #print ('z_level',z,'z_id',g.z_id,dz)
             isl = isl_dict[g.name]
             planar_flag,trace_cells = self.handle_trace_trace_connections(island=isl)
             if not(planar_flag): # A layout with all horizontal and vertical elements

@@ -105,7 +105,8 @@ class RectCell(Rect):
         edges = [] # a list of edges info to update in the graph
         # for each cell, we only need to check the North and East neighbor, then South and West will be updated themselves
         if self.center_node.North!=None and self.center_node.N_edge == None: # Connect all North_edge
-            edge_name = 'V_Edge_'+str(self.center_node.node_id) + '_' + str(self.center_node.North.node_id) 
+            edge_name = str(self.center_node.node_id) + '_' + str(self.center_node.North.node_id) 
+            #print('V',edge_name)
             trace_width = int(self.width/3) # 1/3 of the trace cell width
             x_loc = int(self.center_node.pos[0]-trace_width/2)
             if self.center_node.North.type=='boundary' and node_type == 'boundary':
@@ -131,7 +132,9 @@ class RectCell(Rect):
             edges.append(edge)
             
         if self.center_node.East!=None and self.center_node.E_edge == None:
-            edge_name = 'H_Edge_'+str(self.center_node.node_id) + '_' + str(self.center_node.East.node_id) 
+            edge_name = str(self.center_node.node_id) + '_' + str(self.center_node.East.node_id) 
+            #print('H',edge_name)
+
             trace_width = int(self.height/3) # 1/3 of the trace cell height
             y_loc = int(self.center_node.pos[1]-trace_width/2)
             if self.center_node.East.type=='boundary' and node_type == 'boundary':

@@ -695,8 +695,8 @@ class RL_circuit():
         #print "RESULTS",self.results
         if debug: # for debug and time analysis
             print('matrix rank')
-            print (Matrix(A).rank())
-            print(A.shape)
+            #print (Matrix(A).rank())
+            #print(A.shape)
             print(('RL', np.shape(A)))
             np.savetxt("M.csv", self.M_t, delimiter=",")
             np.savetxt("Mt.csv", self.M, delimiter=",")
