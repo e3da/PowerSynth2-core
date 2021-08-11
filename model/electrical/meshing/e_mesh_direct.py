@@ -465,6 +465,7 @@ class EMesh():
                 for i in range(len(self.all_W)):
                     n1 = self.all_n1[i]
                     n2 = self.all_n2[i]
+
                     if n1 in self.contracted_map:
                         n1 = self.contracted_map[n1]
                     if n2 in self.contracted_map:

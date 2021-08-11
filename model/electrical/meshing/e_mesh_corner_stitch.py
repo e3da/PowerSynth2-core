@@ -64,7 +64,7 @@ class Mesh_Node_Tbl():
 
 
 class EMesh_CS(EMesh):
-    def __init__(self, hier_E=None, islands=[], freq=1000, mdl='', layer_stack=None, mdl_type = 0):
+    def __init__(self, hier_E=None, islands=[], freq=1000, mdl='', layer_stack=None, mdl_type = 0,measure = None):
         '''
 
         Args:
@@ -79,11 +79,12 @@ class EMesh_CS(EMesh):
         self.corner_tc_dict= {} # save all nodes in the same corner piece
         self.contracted_node_dict = {} # node to contract to: [list of nodes on trace cell]
         self.contracted_map = {} # map of contracted node to anchor node
+        self.measure = measure # use to get the src sink nets and contracted them
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
         return layer.thick
-
+    
     def mesh_update(self, mode=1):
         '''
         Update the mesh with and without trace orientation information
@@ -160,11 +161,7 @@ class EMesh_CS(EMesh):
     
         self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
         # Remove all isolated node (such as not connected gate pins) so that PEEC wont have all 0 row
-        isolates = list(nx.isolates(self.graph))
-        print(isolates)
-        self.graph.remove_nodes_from(isolates)
         self.plot_isl_mesh(True,mode = "matplotlib")
-
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
     def handle_node_contraction(self):
         # go through each node in the contracted node table and connect their edges to the anchor node

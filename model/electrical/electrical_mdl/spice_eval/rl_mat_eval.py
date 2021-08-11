@@ -407,7 +407,8 @@ class RL_circuit():
                 if x =='B':
                     self.L_id[el]=i
 
-
+    def equiv(self,net1,net2,name = ''):
+        self._graph_add_comp(pnode= net1, nnode = net2,val=1e-12,name = name)
 
 
     def _remove_comp(self,name=None):
@@ -625,7 +626,7 @@ class RL_circuit():
         self.net_map[0] = 0 # save a value for ground
         for net_id in range(1,self.num_nodes+1):
             self.net_map[all_net[net_id-1]] = net_id # map a net in the netlist with an integer in the matrix
-    
+
     def matrix_init(self):
         # initialize some symbolic matrix with zeros
         # A is formed by [[G, M] [M_t, D]]

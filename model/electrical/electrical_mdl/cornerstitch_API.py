@@ -361,7 +361,7 @@ class CornerStitch_Emodel_API:
         for isl_group in list(module_data.islands.values()):
             islands.extend(isl_group)
         if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
-            self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack)
+            self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
 
         #self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type)
             self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
@@ -826,36 +826,47 @@ class CornerStitch_Emodel_API:
         :param sink:
         :return:
         '''
-        pt1 = self.emesh.comp_net_id[src]
-        pt2 = self.emesh.comp_net_id[sink]
-        
+        print(src,sink)
+        if ',' in src:
+            sources = src.split(',')
+        else:
+            sources = [src]
+        if ',' in sink:
+            sinks = sink.split(',')
+        else:
+            sinks = [sink]
+
+        src_pt = self.emesh.comp_net_id[sources[0]] 
+        sort_name = 'B_sorted{}'
+        count = 1    
         self.circuit = RL_circuit()
         self.circuit._graph_read(self.emesh.graph)
         # CHECK IF A PATH EXIST
         #print (pt1,pt2)
 
-        if not(networkx.has_path(self.emesh.graph,pt1,pt2)):
-            print (pt1,pt2)
-            eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
-        else:
-            pass
-            #print "PATH EXISTS"
+        #if not(networkx.has_path(self.emesh.graph,pt1,pt2)):
+        #    print (pt1,pt2)
+        #    eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
+        #else:
+        #    pass
+        #    #print "PATH EXISTS"
+        for src in sources[1:]:
+            self.circuit.equiv(src_pt,self.emesh.comp_net_id[src],name = sort_name.format(count))
+            count+=1
+        for sink in sinks:
+            self.circuit._add_termial(sink)
         self.circuit.m_graph_read(self.emesh.m_graph)
         self.circuit.assign_freq(self.freq*1000)
         self.circuit.graph_to_circuit_minimization()
-
-        self.circuit.indep_current_source(pt1, 0, 1)
-
-        # print "src",pt1,"sink",pt2
-        self.circuit._add_termial(pt2)
+        self.circuit.indep_current_source(src_pt, 0, 1)
         self.circuit.build_current_info()
         stime=time.time()
         self.circuit.solve_iv()
         print("PEEC circuit eval time",time.time()-stime)
-        vname1 = 'v' + str(pt1)
-        vname2 = 'v' + str(pt2)
+        vname1 = 'v' + str(src_pt)
+        #vname2 = 'v' + str(sink_pts[0])
         #vname = vname.encode() # for python3 
-        imp = self.circuit.results[vname1]/1
+        imp = self.circuit.results[vname1]
         print (imp)
         R = abs(np.real(imp) * 1e3)
         L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
