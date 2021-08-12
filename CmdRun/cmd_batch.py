@@ -12,7 +12,7 @@ import fileinput
 if __name__ == "__main__":
     # print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
-    path = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Rana_Case_Opt'
+    path = '/nethome/qmle/testcases/Meshing/Planar/Rayna_case_updated'
     macro_files=[]
     #macro_files =glob.glob("D:\Demo\\New_Flow_w_Hierarchy\Imam_journal\Cmd_flow_case\Imam_journal\Batch\macro_?.txt")
     #macro_files = [f for f in os.listdir(path) if f.endswith('.txt')]

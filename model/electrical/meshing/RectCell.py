@@ -101,13 +101,14 @@ class RectCell(Rect):
         #print(self.center_node)
     def explore_and_connect_trace_edges(self,z_level,cond,thick,graph):
         b_type = self.center_node.b_type
+        min_width = 10 
         node_type = self.center_node.type
         edges = [] # a list of edges info to update in the graph
         # for each cell, we only need to check the North and East neighbor, then South and West will be updated themselves
         if self.center_node.North!=None and self.center_node.N_edge == None: # Connect all North_edge
             edge_name = str(self.center_node.node_id) + '_' + str(self.center_node.North.node_id) 
             #print('V',edge_name)
-            trace_width = int(self.width/3) # 1/2 of the trace cell width
+            trace_width = int(self.width/2) # 1/2 of the trace cell width
             x_loc = int(self.center_node.pos[0]-trace_width/2)
             if self.center_node.North.type=='boundary' and node_type == 'boundary':
                 trace_type = 'boundary'
@@ -121,11 +122,13 @@ class RectCell(Rect):
                 trace_length = int(abs(self.center_node.pos[1] - self.center_node.North.pos[1]))
                 y_loc = int(self.center_node.pos[1])
             xy = (x_loc,y_loc)
+            if trace_width<= min_width:
+                trace_width = min_width
             rect = Rect(top=xy[1] + trace_length, bottom=xy[1], left=xy[0], right=xy[0] + trace_width)
             data = {'type': 'trace', 'w': trace_width, 'l': trace_length, 'name': edge_name, 'rect': rect, 'ori': 'v'}
             edge_data = MeshEdge(m_type=trace_type, nodeA=self.center_node, nodeB=self.center_node.North, data=data, length=trace_length, z=z_level,
                                              thick=thick)            
-            # Update node's neighbour edges
+            
             self.center_node.N_edge = edge_data
             self.center_node.North.S_edge = edge_data
             edge = (self.center_node.node_id,self.center_node.North.node_id,edge_data)
@@ -149,11 +152,16 @@ class RectCell(Rect):
                 trace_length = int(abs(self.center_node.pos[0] - self.center_node.East.pos[0]))
                 x_loc = int(self.center_node.pos[0])
             xy = (x_loc,y_loc)
+            if trace_width<= min_width:
+                trace_width = min_width
             rect = Rect(top=xy[1] + trace_length, bottom=xy[1], left=xy[0], right=xy[0] + trace_width)
             data = {'type': 'trace', 'w': trace_width, 'l': trace_length, 'name': edge_name, 'rect': rect, 'ori': 'h'}
             edge_data = MeshEdge(m_type=trace_type, nodeA=self.center_node, nodeB=self.center_node.East, data=data, length=trace_length, z=z_level,
                                              thick=thick)            
             # Update node's neighbour edges
+            if trace_width ==0:
+                print ("Wrong case H")
+                input()
             self.center_node.E_edge = edge_data
             self.center_node.East.W_edge = edge_data
             edge = (self.center_node.node_id,self.center_node.East.node_id,edge_data)

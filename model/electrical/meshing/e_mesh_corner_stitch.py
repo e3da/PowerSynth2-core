@@ -815,6 +815,7 @@ class EMesh_CS(EMesh):
             fig, ax = plt.subplots()
             ax.scatter(xs,ys,c='black',s=20)
             mesh_table.plot_lev_1_mesh_island("layout_isl_{}".format(island.name),ax=ax)
+            plt.close()
         # set node neighbors:
         for trace_cell_id in mesh_table.trace_table:
             trace_cell = mesh_table.trace_table[trace_cell_id]

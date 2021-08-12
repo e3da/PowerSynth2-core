@@ -691,7 +691,6 @@ class RL_circuit():
             self.results = np.linalg.inv(A)*Z
             self.results=np.squeeze(np.asarray(self.results))
         #print(("solve", time.time() - t, "s"))
-        print(len(self.element))
         #print np.shape(self.A)
         #print "RESULTS",self.results
         if debug: # for debug and time analysis
