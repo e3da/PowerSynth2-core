@@ -144,11 +144,11 @@ class new_engine_opt:
                     result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
-                solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
+                #solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
                 #input()
-                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                #max_t=300
+                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
+                max_t=300
                 result.append(max_t)
         return result
     

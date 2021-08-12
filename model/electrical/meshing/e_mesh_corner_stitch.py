@@ -124,8 +124,8 @@ class EMesh_CS(EMesh):
         ax = None
         isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
-        #ignore_trace = ['9.3','10.3']
-        ignore_trace=[]
+        ignore_trace = ['9.3','10.3','11.3']
+        #ignore_trace=[]
         for g in self.hier_E.isl_group:
             skip = False
             for name in ignore_trace:
