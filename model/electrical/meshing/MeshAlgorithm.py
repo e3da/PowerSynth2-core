@@ -61,9 +61,9 @@ class MeshTable():
         y_id_stop = y_id_start+len(ys)
         xids = list(range(x_id_start,x_id_stop,1))
         yids = list(range(y_id_start,y_id_stop,1))
-        print(x_id_start,x_id_stop,y_id_start,y_id_stop)
-        print(xs,ys)
-        print(xids,yids)
+        #print(x_id_start,x_id_stop,y_id_start,y_id_stop)
+        #print(xs,ys)
+        #print(xids,yids)
         xxid, yyid = np.meshgrid(xids,yids)
         XID = xxid.flatten()
         YID = yyid.flatten()
@@ -197,7 +197,7 @@ class MeshTable():
             parent_cell = self.trace_table[cell_id] # The big cell created by Hanan grid
             cell_table = self.form_rect_unifom_mesh_and_index(parent_cell = parent_cell,cell_x=cell_x,cell_y=cell_y)
             grid_cell_table = {**grid_cell_table,**cell_table}
-        print(len(grid_cell_table))
+        #print(len(grid_cell_table))
         #for key in grid_cell_table:
         #    print(key,grid_cell_table[key])
         trace_cell_mesh.cell_table = grid_cell_table
@@ -348,7 +348,6 @@ def Hanan_grid(rect_cell_lists=[]):
     # create a mesh grid from these locations
     xs.sort()
     ys.sort()
-    print(xs, ys)
 
     # now we loop through all xy to form the cells
     hanan_grid = MeshTable()

@@ -120,7 +120,8 @@ class EMesh_CS(EMesh):
         method = "skin_depth"
         #method = "uniform"
         print("accelerate the mesh generation")
-        fig, ax = plt.subplots()
+        #fig, ax = plt.subplots()
+        ax = None
         isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
         ignore_trace = ['9.3','10.3']
@@ -161,7 +162,7 @@ class EMesh_CS(EMesh):
     
         self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
         # Remove all isolated node (such as not connected gate pins) so that PEEC wont have all 0 row
-        self.plot_isl_mesh(True,mode = "matplotlib")
+        #self.plot_isl_mesh(True,mode = "matplotlib")
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
     def handle_node_contraction(self):
         # go through each node in the contracted node table and connect their edges to the anchor node
@@ -179,7 +180,6 @@ class EMesh_CS(EMesh):
                     continue # node is contracted already
     def mesh_edges_cell(self,thick=None, cond=5.96e7, z_level = 0,mesh_table = None):
         # Use to mesh cell type
-        print("To be implemented")
         store_edge = self.store_edge_info
         # Should not search all nodes like the old mesh_edges implementation, but search through all mesh_cell.
         for cell_id in mesh_table.trace_table:
@@ -730,7 +730,6 @@ class EMesh_CS(EMesh):
                         cp = (x,y,z)
                         conn_type = "hier"
                         if sheet_data.node == None:  # device's net (not on trace)
-                            print('node wo parent',sheet_data.net)
 
                             if not (sheet_data.net in self.comp_net_id):
                                 cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
@@ -750,9 +749,6 @@ class EMesh_CS(EMesh):
                         # just in case the pad is very long (we have a lot bondwires in parallel)
                         trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
                         self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
-                        print(sheet_data.net,self.contracted_node_dict)
-        print(self.comp_net_id)
-        print(mesh_table.net_to_cells)
     def generate_planar_mesh_cells(self,island=None,z = 0):
         mesh_table = MeshTable()
         
@@ -813,7 +809,7 @@ class EMesh_CS(EMesh):
             node = MeshNode(pos=p, type=node_type, node_id=node_id, group_id=isl_name)
             trace_cell.center_node = node
             add_node(node,node_type) # add to graph, need to double-check for edge widths formation
-        plot = True
+        plot = False
         if plot:
             fig, ax = plt.subplots()
             ax.scatter(xs,ys,c='black',s=20)
