@@ -5,14 +5,14 @@ cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
 #print(cur_path)
 sys.path.append(cur_path)
-from core.CmdRun.cmd import Cmd_Handler
+from core.CmdRun.cmd_interface import Cmd_Handler
 import os,glob
 import fileinput
 
 if __name__ == "__main__":
     # print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
-    path = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_3D_1/macro_scripts'
+    path = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Xiaoling_Case_Opt'
     macro_files=[]
     #macro_files =glob.glob("D:\Demo\\New_Flow_w_Hierarchy\Imam_journal\Cmd_flow_case\Imam_journal\Batch\macro_?.txt")
     #macro_files = [f for f in os.listdir(path) if f.endswith('.txt')]
@@ -35,7 +35,7 @@ if __name__ == "__main__":
             
             macro_files.append(file) 
     print(macro_files)
-
+    
     for file in macro_files:
         print (file)
         

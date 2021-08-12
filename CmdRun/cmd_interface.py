@@ -1108,7 +1108,7 @@ class Cmd_Handler:
                 #print data_y
                 plt.cla()
 
-                plt.scatter(data_x, data_y)
+                '''plt.scatter(data_x, data_y)
 
                 x_label = perf_names[0]
                 y_label = perf_names[1]
@@ -1125,7 +1125,7 @@ class Cmd_Handler:
 
                 # function to show the plot
                 # plt.show()
-                plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
+                plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')'''
 
     
 
@@ -1150,7 +1150,7 @@ class Cmd_Handler:
 
         plt.cla()
         
-        print (data_x,data_y)
+        '''print (data_x,data_y)
         plt.scatter(data_x, data_y)
         for solution in solutions:
             labels=list(solution.parameters.keys())
@@ -1180,7 +1180,7 @@ class Cmd_Handler:
 
         # function to show the plot
         #plt.show()
-        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')'''
 
         
 
@@ -1203,7 +1203,7 @@ if __name__ == "__main__":
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
                 , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
-                {imam_nethome1:'Xiaoling_Case_Opt/macro_script_36.5X28.txt'}]
+                {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'}]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
