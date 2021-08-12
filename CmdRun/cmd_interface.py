@@ -1150,7 +1150,7 @@ class Cmd_Handler:
 
         plt.cla()
         
-        #print (data_x,data_y)
+        print (data_x,data_y)
         plt.scatter(data_x, data_y)
         for solution in solutions:
             labels=list(solution.parameters.keys())
@@ -1202,7 +1202,8 @@ if __name__ == "__main__":
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
-                , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'}]
+                , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
+                {imam_nethome1:'Xiaoling_Case_Opt/macro_script_36.5X28.txt'}]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
