@@ -111,7 +111,7 @@ class AnsysEM_API():
             box.read_ps_feature(PS_feature,name)
             self.output_script+= box.script
         self.handle_3D_connectivity()
-        self.add_src_sink()
+        #self.add_src_sink()
         self.output_script+=Auto_identify_nets
         self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
         #self.output_script+=Analyze_all

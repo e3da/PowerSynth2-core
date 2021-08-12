@@ -285,7 +285,6 @@ class EWires(EComp):
                     imp =self.circuit.results['v1']
                     R = abs(np.real(imp))
                     L = abs(np.imag(imp) / (2 * np.pi * self.f))
-                    print ("wire group", R, L)
                 except:
                     #print "Error occur, fast estimation used"
                     debug = False

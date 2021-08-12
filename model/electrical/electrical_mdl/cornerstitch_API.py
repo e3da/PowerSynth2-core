@@ -826,7 +826,6 @@ class CornerStitch_Emodel_API:
         :param sink:
         :return:
         '''
-        print(src,sink)
         if ',' in src:
             sources = src.split(',')
         else:
@@ -867,7 +866,6 @@ class CornerStitch_Emodel_API:
         #vname2 = 'v' + str(sink_pts[0])
         #vname = vname.encode() # for python3 
         imp = self.circuit.results[vname1]
-        print (imp)
         R = abs(np.real(imp) * 1e3)
         L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
         #self.emesh.graph.clear()
