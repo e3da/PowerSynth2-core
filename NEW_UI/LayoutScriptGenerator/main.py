@@ -4,7 +4,7 @@ from PySide2.QtCore import *  # type: ignore
 from PySide2.QtGui import *  # type: ignore
 from PySide2.QtWidgets import *  # type: ignore
 import sys
-from LayoutPlotter import Ui_InitialLayoutPlotter
+from LayoutPlotter_up import Ui_InitialLayoutPlotter
 from Rect_obj import Rect
 from layerstack import LayerStack
 import networkx as nx
@@ -90,8 +90,10 @@ class LayoutPlotter(QDialog):
         self.ui.btn_generat_layout_script.pressed.connect(self.generate_layout_script)
         self.ui.btn_get_layer_stack.pressed.connect(self.get_layer_stack_info)
         self.ui.lineEdit_comp_alias.textChanged.connect(self.check_if_alias_blank)
+        self.ui.cmb_box_rout_dir.currentIndexChanged.connect(self.set_routing_layer_dir)
         self.ui.btn_rm_list_comp.pressed.connect(self.remove_comp_from_list)
         self.ui.btn_add_trace.pressed.connect(self.add_rect_trace)
+        self.ui.btn_add_via_connectivity.pressed.connect(self.add_via_connectivity)
         self.ui.btn_add_comp.pressed.connect(self.add_rect_comp)
         self.ui.btn_add_bw_pad.pressed.connect(self.add_rect_bondwire_pad)
         self.ui.btn_rm_obj.pressed.connect(self.remove_selected_item)
@@ -110,6 +112,9 @@ class LayoutPlotter(QDialog):
         self.layout_plot_pads = {}
         self.scene = QGraphicsScene()
         self.ui.LayoutView.setScene(self.scene)
+        self.multi_layer=False # flag to track via connectivity enabling
+        self.layer_pairs=[] # to display the pairs which are connected through vias
+        self.via_connectivity_info={} # to store the via connectivity info lines in the geometry script
         # for coordinates system and plotting
         self.screen_pixel_size = [900,900]
         self.x_gap = 20
@@ -131,12 +136,18 @@ class LayoutPlotter(QDialog):
             self.ui.grp_layout_edit.setEnabled(True)
             item = items[0]
             current_view = str(self.ui.cmb_box_select_layer_view.currentText())
-            if "T" in item.name:
+            if "T" == item.name[0]:
                 item_obj = self.layout_plot_traces[current_view][item.name]
-            elif 'D' in item.name:
+            elif 'D' == item.name[0]:
                 item_obj = self.layout_plot_components[current_view][item.name]
-            elif 'B' in item.name:
+            elif 'B' == item.name[0]:
                 item_obj = self.layout_plot_pads[current_view][item.name]
+            elif 'V' == item.name[0]:
+                item_obj = self.layout_plot_components[current_view][item.name]
+            elif 'C' == item.name[0]:
+                item_obj = self.layout_plot_components[current_view][item.name]
+            elif 'L' == item.name[0]:
+                item_obj = self.layout_plot_components[current_view][item.name]
             self.ui.lbl_currentxy.setText("Name: {}, x {} mm, y {} mm, width {} mm, height {} mm".format(item_obj.name,item_obj.x,item_obj.y,item_obj.width,item_obj.height))
             self.ui.lineEdit_update_X.setText(str(item_obj.x))
             self.ui.lineEdit_update_Y.setText(str(item_obj.y))
@@ -369,29 +380,40 @@ class LayoutPlotter(QDialog):
             print("NO LAYER STACK SELECTED")
         if current_layer != '' and self.ui.listWidget_comp_view.currentItem().text()!='':
             alias_info = (self.ui.listWidget_comp_view.currentItem().text())
-            alias = alias_info.split(" ")[3]
+            #print(alias_info)
+            list_of_infos=alias_info.split(",")
+            #print(list_of_infos)
+            alias = list_of_infos[0].split(" ")[1]
+            #print(alias)
             alias=alias.strip(",")
+            print(alias)
             cx = float(self.ui.lineEdit_comp_X.text())
             cy = float(self.ui.lineEdit_comp_Y.text())
             c_width = float(self.ui.lineEdit_comp_W.text())
             c_height = float(self.ui.lineEdit_comp_H.text())
             index = self.layout_plot_components[current_layer]['auto_id']
-            name = 'D{}'.format(index)
-
-            width = self.footprints[current_layer][0]
-            height = self.footprints[current_layer][1]
-
-            if c_width >= width or c_width<0:
-                print ("WIDTH VALUE: {} mm is OUT OF RANGE".format(c_width))
-            elif c_height >= height or c_height <=0:
-                print ("HEIGHT VALUE: {} mm is OUT OF RANGE".format(c_height))
+            name = self.ui.lineEdit_comp_name.text()#'D{}'.format(index)
+            
+            name_prefs= ['D','L','V','C'] # need to update later to handle all devices generically.
+            if name[0] not in name_prefs:
+                print("Component name must start with D/L/V/C")
             else:
-                comp = LayoutRect(x=cx, y=cy, W=c_width, H=c_height, name=name)
-                comp.type = 'comp'
-                self.layout_plot_components[current_layer]['auto_id'] = index + 1
-                self.layout_plot_components[current_layer][name] = comp
-                comp.alias = alias
-                self.update_current_plot()
+                width = self.footprints[current_layer][0]
+                height = self.footprints[current_layer][1]
+
+                if c_width >= width or c_width<0:
+                    print ("WIDTH VALUE: {} mm is OUT OF RANGE".format(c_width))
+                elif c_height >= height or c_height <=0:
+                    print ("HEIGHT VALUE: {} mm is OUT OF RANGE".format(c_height))
+                else:
+                    comp = LayoutRect(x=cx, y=cy, W=c_width, H=c_height, name=name)
+                    comp.type = 'comp'
+                    self.layout_plot_components[current_layer]['auto_id'] = index + 1
+                    self.layout_plot_components[current_layer][name] = comp
+                    if name[0]=='V':
+                        self.ui.cmb_box_select_via.addItem(name)
+                    comp.alias = alias
+                    self.update_current_plot()
         else:
             print("WARNING: NO LAYER STACK FILE")
 
@@ -429,6 +451,20 @@ class LayoutPlotter(QDialog):
         else:
             print("WARNING: NO LAYER STACK FILE")
 
+    def add_via_connectivity(self):
+        
+        via_name = str(self.ui.cmb_box_select_via.currentText())
+        if via_name == None:
+            print("NO VIA SELECTED")
+        pair = str(self.ui.cmb_box_select_layer_pair.currentText())
+        if pair == None:
+            print("NO LAYER PAIR IS SELECTED")
+        if via_name != '' and pair != '':
+            if self.ui.radio_btn_via_type.isChecked():
+                self.via_connectivity_info[pair]=[via_name, 'Through']
+            else:
+                self.via_connectivity_info[pair]=[via_name]
+
     def check_if_alias_blank(self):
         alias = self.ui.lineEdit_comp_alias.text()
 
@@ -443,11 +479,17 @@ class LayoutPlotter(QDialog):
         if filename=='':
             print ("NO FILE SELECTED")
             return
+        num_layers=0 # number of rotuing layers in the stack
+        layer_names=[] # to store layer names so that pairs can be displayed in the drop-down list while declaring via connectivity information
+        self.ui.cmb_box_rout_dir.addItem('Z+')
+        self.ui.cmb_box_rout_dir.addItem('Z-')
         self.layer_stack = LayerStack()
         self.layer_stack.import_layer_stack_from_csv(filename=filename)
         for i in self.layer_stack.all_layers_info:
             name = self.layer_stack.all_layers_info[i].name
             if 'I' in name:
+                num_layers+=1
+                layer_names.append(name)
                 self.ui.cmb_box_select_layer_view.addItem(name)
                 self.ui.cmb_box_select_layer_draw.addItem(name)
                 self.layout_tracker[name] = io.BytesIO()
@@ -465,10 +507,25 @@ class LayoutPlotter(QDialog):
                         break
                 self.footprints[name] = [width,height]
                 self.layer_island_dict[name] = {} # a dictionary for each layer to store the layout info
-                self.routing_layer_z_direction[name] = 'Z+' # TODO has the tool define which dirtion is z+ automatically
+                #self.routing_layer_z_direction[name] = 'Z+' # TODO has the tool define which direction is z+ automatically
+                self.routing_layer_z_direction[name] =str(self.ui.cmb_box_rout_dir.currentText())
+                
         current_view = str(self.ui.cmb_box_select_layer_view.currentText())
         layer_w, layer_h = self.footprints[current_view]
+        
         self.update_axes(layer_w,layer_h)
+        if num_layers>1:
+            self.multi_layer=True
+            self.ui.via_connectivity_info.setEnabled(True)
+            for i in range(len(layer_names)-1):
+                pair='{} {}'.format(layer_names[i],layer_names[i+1])
+                self.layer_pairs.append(pair)
+                self.ui.cmb_box_select_layer_pair.addItem(pair)
+            
+
+    def set_routing_layer_dir(self):
+        self.routing_layer_z_direction[self.ui.cmb_box_select_layer_draw.currentText()] =str(self.ui.cmb_box_rout_dir.currentText())
+        print(self.routing_layer_z_direction)
 
     def refresh_list_view_for_comp(self):
         for i in range(len(self.comp_alias_dict)):
@@ -486,8 +543,9 @@ class LayoutPlotter(QDialog):
             new_list_item = ComponentInfo()
             new_list_item.name = k
             new_list_item.directory = self.comp_alias_dict[k]
-            new_list_item.type = 'D' #TODO: NEED TO PASS THE PART TYPE HERE
-            new_list_item.setText("Type: {}, Alias: {}, Directory: {}".format(new_list_item.type,new_list_item.name,new_list_item.directory))
+            #new_list_item.type = 'D' #TODO: NEED TO PASS THE PART TYPE HERE
+            #new_list_item.setText("Type: {}, Alias: {}, Directory: {}".format(new_list_item.type,new_list_item.name,new_list_item.directory))
+            new_list_item.setText("Alias: {}, Directory: {}".format(new_list_item.name,new_list_item.directory))
             self.ui.listWidget_comp_view.addItem(new_list_item)
 
     def check_comp_select(self):
@@ -540,13 +598,13 @@ class LayoutPlotter(QDialog):
                 all_connected_trace = nx.dfs_preorder_nodes(isl_graph,source=trace)
                 isl_list = list(all_connected_trace)
                 isl_list.sort()
-                print(isl_list)
+                #print(isl_list)
                 isl_list = tuple(isl_list)
                 if not(isl_list in isl_trace_dict):
                     isl_trace_dict[isl_list] = [trace_obj]
                 else:
                     isl_trace_dict[isl_list].append(trace_obj)
-            print(isl_trace_dict)
+            #print(isl_trace_dict)
             self.layer_island_dict[current_layer]=isl_trace_dict
         return False
 
@@ -564,6 +622,15 @@ class LayoutPlotter(QDialog):
         for key in self.comp_alias_dict:
             line = "{} {}\n".format(key,self.comp_alias_dict[key])
             self.output_script += line
+        if self.multi_layer==True:
+            self.output_script+='# Via Connectivity Information\n'
+            for layer_pair, via_name in self.via_connectivity_info.items():
+                via = via_name[0]
+                if len(via_name)>1:
+                    info=via+' '+layer_pair+' '+via_name[1]+'\n'
+                else:
+                    info=via+' '+layer_pair+'\n'
+                self.output_script += info
         self.output_script += '# Layout Information\n'
         overlap_trace = self.update_layout_island()
         overlap_device = False
@@ -578,7 +645,7 @@ class LayoutPlotter(QDialog):
                 del pad_dict['auto_id']
                 del comp_dict['auto_id']
 
-                print(pad_dict,comp_dict)
+                #print(pad_dict,comp_dict)
                 # Form hierarchy of traces - devices - pads
                 for trace_isl in self.layer_island_dict[current_layer]:
                     isl_text_obj = HierarchyScript('')

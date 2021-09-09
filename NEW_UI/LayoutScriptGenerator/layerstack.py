@@ -149,10 +149,21 @@ class LayerStack:
                     layer_material = None # no material for this layer
                 layer=Layer(width=layer_width,length=layer_length,thick=layer_thickness,id=layer_id,type=layer_type
                             ,material=layer_material,name=layer_name,layer_z=self.max_z, e_type=layer_electrical_type, x=layer_x, y=layer_y)
+                
+                if layer_x!=None:
+                    layer.x=layer_x
+                else:
+                    layer.x=0
+                if layer_y!=None:
+                    layer.y=layer_y
+                else:
+                    layer.y=0
+                
                 self.all_layers_info[layer_id] = layer
                 self.current_id=layer_id
                 self.max_z += layer_thickness
                 self.max_z = round(self.max_z,3) #  Using 3 significant figures
+                
         self.foot_print=[max_width,max_length]
         if debug:
             self.plot_layer_2d(view=0)
