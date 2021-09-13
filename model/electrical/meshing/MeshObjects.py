@@ -6,7 +6,137 @@
 
 from numpy.core.fromnumeric import trace
 from core.general.data_struct.util import Rect
-from core.model.electrical.meshing.e_mesh_direct import MeshEdge,MeshNode
+
+class TraceCell(Rect):
+    def __init__(self, **kwargs):
+        if 'rect' in kwargs:  # init by keyword rect
+            rect = kwargs['rect']
+            Rect.__init__(self, left=rect.left, right=rect.right, top=rect.top, bottom=rect.bottom)
+        else:  # Init by left,right,top,bottom
+            left = kwargs['left']
+            right = kwargs['right']
+            bottom = kwargs['bottom']
+            top = kwargs['top']
+            Rect.__init__(self, left=left,right=right,top=top,bottom=bottom)
+
+        self.type = 0  # 0 : horizontal, 1: vertical, 2: corner, 3: super
+        # For corner piece only
+        self.has_bot = False
+        self.has_top = False
+        self.has_left = False
+        self.has_right = False
+        self.comp_locs = []
+        self.name =''
+        self.start_node = 0 # start anchor node
+        self.end_node = 0 # end anchor node
+        self.struct = 'trace'
+        self.thick = 0
+        self.z = 0
+        # this var shows the direction of the general current flow in this trace cell
+        self.dir= 0
+        # Special var to connect bondwires 
+        self.bwn1=0
+        self.bwn2=0
+        '''
+        where:
+        1: x+
+        -1: x-
+        2: y+
+        -2: y-
+        3 : z+
+        -3: z- 
+        '''
+
+    def find_corner_type(self):
+        # Define corner type based on the neighbour
+        print("type of corner")
+
+    def get_hash(self):
+        '''
+        Get hash id based on coordinates
+        :return:
+        '''
+        return hash((self.left, self.right, self.bottom, self.top))
+
+    def handle_component(self, loc):
+        '''
+        Given a component location, add this to the self.comp list
+        Special cases will be handle in this function in the future
+        Args:
+            loc: x,y location for component
+        '''
+        self.comp_locs.append(loc)
+
+    def split_trace_cells(self, cuts):
+        '''
+        Similar to split_rect from Rect
+        Returns: list of trace cells
+        '''
+        rects = self.split_rect(cuts=cuts, dir=self.type)
+        splitted_trace_cells = [TraceCell(rect=r) for r in rects]
+        return splitted_trace_cells
+
+    def get_locs(self):
+        '''
+        Returns: [left,right,bottom,top]
+        '''
+        return [self.left,self.right,self.bottom,self.top]
+
+    def preview_nodes(self, pts):
+        xs = []
+        ys = []
+        for pt in pts:
+            xs.append(pt[0])
+            ys.append(pt[1])
+        plt.scatter(xs, ys)
+        plt.show()
+
+    def eval_length(self):
+        if self.dir == 1:
+            return abs(self.left-self.right)
+        elif self.dir == 2:
+            return abs(self.top-self.bottom)
+
+class MeshNode:
+    def __init__(self, pos=[], type='', node_id=0, group_id=None, mode=1):
+        '''
+
+        Args:
+            pos: position, a tuple object of (x,y,z)
+            type: "boundary" or "internal"
+            node_id: an integer for node idexing
+            group_id: a group where this node belong to
+            mode: 1 --> corner stitch, use integer data
+                  0 --> noremal, use float data
+        '''
+
+        self.node_id = node_id
+        self.group_id = group_id  # Use to define if nodes  are on same trace_group
+        self.type = type  # Node type
+        self.b_type = []  # if type is boundary this will tell if it is N,S,E,W
+        self.pos = pos  # Node Position x , y ,z
+        self.C = 1
+
+        # For neighbours nodes of each point
+        self.West = None
+        self.East = None
+        self.North = None
+        self.South = None
+        # For evaluation
+        self.V = 0  # Updated node voltage later
+
+        # Neighbour Edges on same layer:
+        self.N_edge = None
+        self.S_edge = None
+        self.W_edge = None
+        self.E_edge = None
+        # isl area , and parent isl_name where the node is located
+        self.isl_area=0
+        self.parent_isl = None
+        self.z_id = -1 # zid is the id on layer_stack, used to find find the correct dielectric material Note, we use this because the z location is float and can lead to numerical issue
+    def __str__(self):
+        info = "ID:{}, TYPE:{}, BTYPE:{}".format(self.node_id,self.type,self.b_type)
+        return info
 
 class RectCell(Rect):
     def __init__(self,x,y,W,H):
@@ -167,4 +297,21 @@ class RectCell(Rect):
             edge = (self.center_node.node_id,self.center_node.East.node_id,edge_data)
             edges.append(edge)
         return edges
-            
+
+class MeshNodeTable():
+    def __init__(self, node_dict={}, xs=[], ys=[], z_pos = 0):
+        '''
+        A structure to store the generated mesh points for each island
+        Args:
+            node_dict: dictionary with node.location as a key and a pair of [mesh node,trace_cell] as value
+                     These mesh nodes are already added into the mesh graph and we need to connect the mesh edges to them.
+            xs: list of all x coordinates
+            ys: list of all y coordinates
+            z_pos: the z elevation of the nodes (based of MDK)
+        '''
+        self.nodes = node_dict
+        self.xs = xs
+        self.ys = ys
+        self.xs.sort()
+        self.ys.sort()
+        self.z_pos = z_pos

@@ -1,7 +1,6 @@
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
-from core.model.electrical.meshing.e_mesh_direct import EMesh
-from core.model.electrical.meshing.e_mesh_corner_stitch import EMesh_CS
+from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 #from corner_stitch.input_script import *
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
@@ -362,8 +361,6 @@ class CornerStitch_Emodel_API:
             islands.extend(isl_group)
         if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
             self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
-
-        #self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type)
             self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
             if self.trace_ori == {}:
                 self.emesh.mesh_init(mode =0)

@@ -3,11 +3,11 @@ author: Quang Le
 Getting mesh directly from CornerStitch points and islands data
 '''
 
-from core.model.electrical.meshing.e_mesh_direct import EMesh,MeshEdge,MeshNode,TraceCell
+from core.model.electrical.meshing.MeshStructure import EMesh
 from core.general.data_struct.util import Rect, draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import T_Node
 from core.model.electrical.meshing.MeshAlgorithm import MeshTable
-from core.model.electrical.meshing.RectCell import RectCell
+from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
 from core.general.data_struct.Tree import Tree
 import matplotlib.patches as patches
 from core.model.electrical.e_exceptions import *
@@ -44,23 +44,7 @@ def form_skindepth_distribution(start=0,stop=1,freq=1e6, cond=5.96*1e7, N = 11):
     #print (split_list[0])
     #print (np.linspace(start,stop,N))
     return split_list[0]
-class Mesh_Node_Tbl():
-    def __init__(self, node_dict={}, xs=[], ys=[], z_pos = 0):
-        '''
-        A structure to store the generated mesh points for each island
-        Args:
-            node_dict: dictionary with node.location as a key and a pair of [mesh node,trace_cell] as value
-                     These mesh nodes are already added into the mesh graph and we need to connect the mesh edges to them.
-            xs: list of all x coordinates
-            ys: list of all y coordinates
-            z_pos: the z elevation of the nodes (based of MDK)
-        '''
-        self.nodes = node_dict
-        self.xs = xs
-        self.ys = ys
-        self.xs.sort()
-        self.ys.sort()
-        self.z_pos = z_pos
+
 
 
 class EMesh_CS(EMesh):
@@ -352,9 +336,10 @@ class EMesh_CS(EMesh):
         # Take unique values only
         tbl_xs = list(set(tbl_xs))
         tbl_ys = list(set(tbl_ys))
-        mesh_node_tbl = Mesh_Node_Tbl(node_dict=mesh_nodes, xs=tbl_xs, ys=tbl_ys, z_pos=z_pos)
-        return mesh_node_tbl
+        MeshNodeTable = MeshNodeTable(node_dict=mesh_nodes, xs=tbl_xs, ys=tbl_ys, z_pos=z_pos)
+        return MeshNodeTable
 
+    '''
     def add_ground_uniform_mesh(self,t = 0.2, z = 0, width = 40 , length = 40, N = 10,z_id =0):
         # Default a 10x10 mesh
         # create a uniform mesh grid to get points
@@ -386,7 +371,7 @@ class EMesh_CS(EMesh):
             mesh_nodes.append(mesh_node)
         self.mesh_nodes_planar(mesh_nodes=mesh_nodes,z=z)
         self.mesh_edges(thick= t, z_level=z)                
-
+    '''
     def handle_hier_node_opt(self, mesh_tbl, key):
         '''
         For each island, iterate through each component connection and connect them to the grid.
@@ -686,7 +671,7 @@ class EMesh_CS(EMesh):
     
     
     def handle_net_connection_planar(self,island=None,mesh_table=None,dz=0):
-        # this is the upgraded version of the e_mesh_direct.handle_pin_connections. e_mesh_direct will be removed later
+        # this is the upgraded version of the e_mesh.handle_pin_connections. e_mesh will be removed later
         # First search through all sheet (device pins) and add their edges, nodes to the mesh
         isl_name = island.name
         isl_dir = island.direction
@@ -754,13 +739,14 @@ class EMesh_CS(EMesh):
         mesh_table = MeshTable()
         
         for element in island.elements:
-            el_type,x,y,w,h,name,id = element
+            print(element)
+            el_type,x,y,w,h,name= element[0:6]
             trace_cell = RectCell(x,y,w,h)
             mesh_table.traces.append(trace_cell)
             trace_cell.z = z
             
         for child in island.child:
-            el_type,x,y,w,h,name,id = child
+            el_type,x,y,w,h,name = child[0:6]
             if 'B' in name: # need to change size with the number of bondwires
                 w*=1000
                 h*=1000

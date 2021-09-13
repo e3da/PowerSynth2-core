@@ -1,4 +1,4 @@
-from core.model.electrical.meshing.RectCell import RectCell
+from core.model.electrical.meshing.MeshObjects import RectCell
 
 import networkx as nx
 import numpy as np
