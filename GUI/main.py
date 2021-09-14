@@ -306,7 +306,8 @@ class GUI():
 
         def createLayout():
 
-            '''if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
+            '''
+            if not os.path.exists(ui.lineEdit_layer.text()) or not ui.lineEdit_layer.text().endswith(".csv"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the layer_stack file.")
@@ -333,7 +334,7 @@ class GUI():
             '''
 
 
-            
+            '''
             #Joshua Paths
             self.pathToLayoutScript = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/bond_wires_setup.txt"
@@ -343,7 +344,7 @@ class GUI():
             #Imam Paths
             self.pathToLayoutScript = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layout_geometry_script1.txt"
             self.pathToBondwireSetup = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/bond_wires_script.txt"
-            self.pathToLayerStack = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layer_stack.csv"'''
+            self.pathToLayerStack = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_Case_2/layer_stack.csv"
 
             self.reliabilityAwareness = "0" if ui.combo_reliability_constraints.currentText() == "no constraints" else "1" if ui.combo_reliability_constraints.currentText() == "worst case consideration" else "2"
 

@@ -61,6 +61,7 @@ class LayoutRect(Rect):
         self.type = 'power'
         self.child_dict = {} # To store the child of this layout rect
         self.alias = None # for component type
+        self.rotation= None
     def __str__(self):
         return "x {} y {} W {} H {}".format(self.x, self.y, self.width, self.height)
 
@@ -166,6 +167,7 @@ class LayoutPlotter(QDialog):
         item = items[0]
         newx = float(self.ui.lineEdit_update_X.text())
         newy = float(self.ui.lineEdit_update_Y.text())
+
         new_width = float(self.ui.lineEdit_update_Width.text())
         new_height = float(self.ui.lineEdit_update_Height.text())
         current_view = str(self.ui.cmb_box_select_layer_view.currentText())
@@ -175,11 +177,23 @@ class LayoutPlotter(QDialog):
             item_obj = self.layout_plot_components[current_view][item.name]
         elif 'B' in item.name:
             item_obj = self.layout_plot_pads[current_view][item.name]
+        elif 'L' in item.name:
+            item_obj = self.layout_plot_components[current_view][item.name]
+        elif 'V' in item.name:
+            item_obj = self.layout_plot_components[current_view][item.name]
+        elif 'C' in item.name:
+            item_obj = self.layout_plot_components[current_view][item.name]
 
         item_obj.x = newx
         item_obj.y = newy
-        item_obj.width = new_width
-        item_obj.height = new_height
+        if item_obj.type=='comp':
+            if item_obj.rotation=='R90' or item_obj.rotation=='R270':
+                item_obj.width = new_height
+                item_obj.height =  new_width
+            
+        else:
+            item_obj.width = new_width
+            item_obj.height = new_height
         self.update_current_plot()
 
     def remove_selected_item(self):
@@ -187,9 +201,15 @@ class LayoutPlotter(QDialog):
         current_view = str(self.ui.cmb_box_select_layer_view.currentText())
         if items!=[]:
             for item in items:
-                if "T" in item.name:
+                if "T" == item.name[0]:
                     del self.layout_plot_traces[current_view][item.name]
-                elif 'D' in item.name:
+                elif 'D' == item.name [0]:
+                    del self.layout_plot_components[current_view][item.name]
+                elif 'L' == item.name [0]:
+                    del self.layout_plot_components[current_view][item.name]
+                elif 'V' == item.name [0]:
+                    del self.layout_plot_components[current_view][item.name]
+                elif 'C' == item.name [0]:
                     del self.layout_plot_components[current_view][item.name]
             self.update_current_plot()
         else:
@@ -291,6 +311,7 @@ class LayoutPlotter(QDialog):
                 y = self.ymax-comp_obj.y*rat_h
                 width = comp_obj.width * rat_w
                 height = comp_obj.height * rat_h
+                #print(width,height,comp_obj.width,comp_obj.height)
                 rect_item = QRectHolder(name=comp_name)
                 rect_item.set_rect(QRectF(x, y-height, width, height))
                 rect_item.layer_footprint = [layer_w,layer_h]
@@ -408,8 +429,22 @@ class LayoutPlotter(QDialog):
                 else:
                     comp = LayoutRect(x=cx, y=cy, W=c_width, H=c_height, name=name)
                     comp.type = 'comp'
+                    if self.ui.cmb_box_rotation.currentText() == '0 deg':
+                        comp.rotation=None
+                    elif self.ui.cmb_box_rotation.currentText() == '90 deg':
+                        comp.rotation= 'R90'
+                        comp.height=c_width
+                        comp.width=c_height
+                    elif self.ui.cmb_box_rotation.currentText() == '180 deg':
+                        comp.rotation= 'R180'
+                    elif self.ui.cmb_box_rotation.currentText() == '270 deg':
+                        comp.rotation= 'R270'
+                        comp.height=c_width
+                        comp.width=c_height
+                    
                     self.layout_plot_components[current_layer]['auto_id'] = index + 1
                     self.layout_plot_components[current_layer][name] = comp
+                    
                     if name[0]=='V':
                         self.ui.cmb_box_select_via.addItem(name)
                     comp.alias = alias
@@ -417,6 +452,11 @@ class LayoutPlotter(QDialog):
         else:
             print("WARNING: NO LAYER STACK FILE")
 
+    def add_rotation(self):
+        self.ui.cmb_box_rotation.addItem('0 deg')
+        self.ui.cmb_box_rotation.addItem('90 deg')
+        self.ui.cmb_box_rotation.addItem('180 deg')
+        self.ui.cmb_box_rotation.addItem('270 deg')
     def add_rect_trace(self):
         current_layer = str(self.ui.cmb_box_select_layer_draw.currentText())
         if current_layer != '':
@@ -539,6 +579,7 @@ class LayoutPlotter(QDialog):
         if alias in self.comp_alias_dict:
             print ("WARNING: THIS ALIAS ALREADY EXISTS, IT WILL BE OVERWRITTEN")
         self.comp_alias_dict[alias] = filename
+        self.add_rotation() # adding rotation content
         for k in self.comp_alias_dict:
             new_list_item = ComponentInfo()
             new_list_item.name = k
@@ -671,6 +712,9 @@ class LayoutPlotter(QDialog):
                             if trace_obj.encloses(c_x,c_y):
                                 alias = comp_rect_obj.alias
                                 line = "+ {0} {1} {2} {3}".format(device_name,alias,c_x,c_y)
+                                if comp_rect_obj.rotation!=None:
+                                    line+= " "+comp_rect_obj.rotation
+                                #print(comp_rect_obj.rotation)
                                 comp_line_obj = HierarchyScript(line+'\n')
                                 isl_text_obj.child.append(comp_line_obj)
                                 comp_line_obj.level=1

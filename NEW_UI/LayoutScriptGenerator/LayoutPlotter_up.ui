@@ -366,7 +366,7 @@
       </font>
      </property>
      <property name="title">
-      <string>Define Via Connectivity</string>
+      <string>Define Inter-Layer Connectivity</string>
      </property>
      <property name="flat">
       <bool>false</bool>
@@ -378,6 +378,26 @@
       <bool>false</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_8">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_21">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Select Layer Pair</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1">
        <widget class="QComboBox" name="cmb_box_select_layer_pair"/>
       </item>
@@ -404,7 +424,7 @@
       <item row="0" column="3">
        <widget class="QComboBox" name="cmb_box_select_via"/>
       </item>
-      <item row="0" column="4">
+      <item row="1" column="1">
        <widget class="QRadioButton" name="radio_btn_via_type">
         <property name="font">
          <font>
@@ -416,27 +436,19 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_21">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>20</height>
-         </size>
-        </property>
+      <item row="1" column="2">
+       <widget class="QRadioButton" name="radio_btn_via_type_2">
         <property name="font">
          <font>
           <pointsize>10</pointsize>
-          <weight>75</weight>
-          <bold>true</bold>
          </font>
         </property>
         <property name="text">
-         <string>Select Layer Pair</string>
+         <string>Port</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
+      <item row="1" column="3">
        <widget class="QPushButton" name="btn_add_via_connectivity">
         <property name="font">
          <font>
@@ -454,6 +466,7 @@
      <zorder>label_22</zorder>
      <zorder>cmb_box_select_via</zorder>
      <zorder>radio_btn_via_type</zorder>
+     <zorder>radio_btn_via_type_2</zorder>
      <zorder>btn_add_via_connectivity</zorder>
     </widget>
    </item>
@@ -533,25 +546,12 @@
          <string>Component Placement</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="0" column="4">
-          <widget class="QLineEdit" name="lineEdit_comp_X"/>
-         </item>
-         <item row="0" column="5">
-          <widget class="QLabel" name="label_8">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="lineEdit_comp_name">
            <property name="text">
-            <string>Y</string>
+            <string/>
            </property>
           </widget>
-         </item>
-         <item row="0" column="6">
-          <widget class="QLineEdit" name="lineEdit_comp_Y"/>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_23">
@@ -567,21 +567,8 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1" colspan="2">
-          <widget class="QLineEdit" name="lineEdit_comp_name">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="5" colspan="2">
-          <widget class="QLineEdit" name="lineEdit_comp_H"/>
-         </item>
-         <item row="1" column="2" colspan="2">
-          <widget class="QLineEdit" name="lineEdit_comp_W"/>
-         </item>
-         <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="label_9">
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_7">
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -590,25 +577,11 @@
             </font>
            </property>
            <property name="text">
-            <string>Width</string>
+            <string>X</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="7" rowspan="2">
-          <widget class="QPushButton" name="btn_add_comp">
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-             <weight>75</weight>
-             <bold>true</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Add</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="4">
+         <item row="1" column="3">
           <widget class="QLabel" name="label_10">
            <property name="font">
             <font>
@@ -622,8 +595,8 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="3">
-          <widget class="QLabel" name="label_7">
+         <item row="0" column="4">
+          <widget class="QLabel" name="label_8">
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -632,9 +605,66 @@
             </font>
            </property>
            <property name="text">
-            <string>X</string>
+            <string>Y</string>
            </property>
           </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_9">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Width</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1" colspan="2">
+          <widget class="QLineEdit" name="lineEdit_comp_W"/>
+         </item>
+         <item row="1" column="5">
+          <widget class="QLabel" name="label_25">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Rotation</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="4">
+          <widget class="QLineEdit" name="lineEdit_comp_H"/>
+         </item>
+         <item row="1" column="6" colspan="2">
+          <widget class="QComboBox" name="cmb_box_rotation"/>
+         </item>
+         <item row="0" column="7">
+          <widget class="QPushButton" name="btn_add_comp">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Add</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLineEdit" name="lineEdit_comp_X"/>
+         </item>
+         <item row="0" column="5" colspan="2">
+          <widget class="QLineEdit" name="lineEdit_comp_Y"/>
          </item>
         </layout>
        </widget>
