@@ -6,8 +6,8 @@ from core.general.settings import settings
 
 
 def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_file, i_v_constraint):
-    settings.MATERIAL_LIB_PATH = "/nethome/jgm019/testcases/tech_lib/Material/Materials.csv"  # FIXME:  Path is hardcoded.
-
+    settings.MATERIAL_LIB_PATH = "/nethome/ialrazi/PS_2_test_Cases/tech_lib/Material/Materials.csv"  # FIXME:  Path is hardcoded.
+    
     layer_stack = LayerStack()
     layer_stack.import_layer_stack_from_csv(layer_stack_file)
 
