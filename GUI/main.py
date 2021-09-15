@@ -118,7 +118,8 @@ class GUI():
             ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
 
         def runPowerSynth():
-            '''if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
+            #'''
+            if not os.path.exists(ui.lineEdit_3.text()) or not ui.lineEdit_3.text().endswith(".info"):
                 popup = QtWidgets.QMessageBox()
                 popup.setWindowTitle("Error:")
                 popup.setText("Please enter a valid path to the settings.info file.")
@@ -133,10 +134,13 @@ class GUI():
                 return
 
             settingsPath = ui.lineEdit_3.text()
-            macroPath = ui.lineEdit_4.text()'''
+            macroPath = ui.lineEdit_4.text()
+            
+            #'''
 
             self.currentWindow.close()
             self.currentWindow = None
+            '''
             #Joshua paths
             macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
             settingsPath = '/nethome/jgm019/testcases/settings.info'
@@ -144,6 +148,7 @@ class GUI():
             #Imam paths
             #macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_3D_2/macro_script.txt'
             #settingsPath='/nethome/ialrazi/PS_2_test_Cases/settings.info'
+            '''
             def solutionBrowser():
                 self.currentWindow.close()
                 self.currentWindow = None

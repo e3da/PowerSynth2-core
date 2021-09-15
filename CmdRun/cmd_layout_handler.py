@@ -546,6 +546,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             for solution in Solutions:
                 all_patches=[]
                 all_colors=['blue','red','green','yellow','pink','violet']
+                
                 for i in range(len(solution.layer_solutions)):
                     size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
                     alpha=(i)*1/len(solution.layer_solutions)
