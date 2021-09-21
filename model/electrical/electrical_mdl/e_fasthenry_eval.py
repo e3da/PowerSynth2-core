@@ -44,6 +44,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.work_space = ws # a directory for script run/result read
         self.e_mdl = 'FastHenry'
         self.parent_trace_net = {} # a dictionary for parent trace to net connect
+        self.ws=ws # workstation directory for fasthenry
     def set_fasthenry_env(self,dir=''):
         self.fh_env = dir   
              
@@ -83,7 +84,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.out_text += '.end'
         
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open('/nethome/jgm019/testcases/fasthenry/temp2.inp', 'w') as f:
+        out_file=self.ws+'/eval.inp'
+        with open(out_file, 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             print(self.out_text)
             sys.stdout = original_stdout # Reset the standard output to its original value

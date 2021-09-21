@@ -70,6 +70,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.ANSYS_IPY64 = os.path.abspath(info[1])
                 if info[0] == "FASTHENRY_FOLDER:":
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
+                if info[0] == "PARAPOWER_FOLDER:":
+                    settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
@@ -706,7 +708,7 @@ class Cmd_Handler:
             else:
                 self.e_api.rs_model = None
         elif type == 'FastHenry':
-            self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
+            self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             self.e_api.rs_model = None
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
         elif type == 'LoopFHcompare':
@@ -747,6 +749,8 @@ class Cmd_Handler:
 
         '''
         self.t_api = CornerStitch_Tmodel_API(comp_dict=self.comp_dict)
+        if settings.PARAPOWER_FOLDER!='':
+            self.t_api.pp_json_path=settings.PARAPOWER_FOLDER
         self.t_api.layer_stack=self.layer_stack
         if mode == 'command':
             self.measures += self.t_api.measurement_setup()

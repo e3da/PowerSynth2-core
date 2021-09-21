@@ -7,6 +7,7 @@ from matplotlib.figure import Figure
 from core.CmdRun.cmd import Cmd_Handler
 from core.GUI.py.openingWindow import Ui_Dialog as UI_opening_window
 from core.GUI.py.runMacro import Ui_Dialog as UI_run_macro
+from core.GUI.py.settings_info import Ui_Settings_Info as UI_settings
 from core.GUI.py.editMaterials import Ui_Dialog as UI_edit_materials
 from core.GUI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 from core.GUI.py.layerStack import Ui_Dialog as UI_layer_stack
@@ -42,16 +43,18 @@ class GUI():
         self.device_dict = None
         self.lead_list = None
         self.solution_ind = None
+        self.macro_script_path = None
+        self.settingsPath=None
 
         # Variables for Layout Generation Setup
         self.reliabilityAwareness = ""
         self.plotSolution = ""
-        self.layoutMode = ""
+        self.layoutMode = "0"
         self.floorPlan = ["", ""]
-        self.numLayouts = ""
-        self.seed = ""
-        self.optimizationAlgorithm = ""
-        self.numGenerations = ""
+        self.numLayouts = "1"
+        self.seed = "10"
+        self.optimizationAlgorithm = "NG-RANDOM"
+        self.numGenerations = "10"
 
         # Variables for Electrical Setup
         self.modelType = ""
@@ -112,10 +115,18 @@ class GUI():
         self.setWindow(runMacro)
 
         def getSettingsInfo():
+            
             ui.lineEdit_3.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open settings.info', os.getenv('HOME'))[0])
+            
 
         def getMacroScript():
-            ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
+            if self.macro_script_path==None:
+                ui.lineEdit_4.setText(QtWidgets.QFileDialog.getOpenFileName(runMacro, 'Open macro_script.txt', os.getenv('HOME'))[0])
+            else:
+                ui.lineEdit_4.setText(self.macro_script_path)
+                self.settings_path=ui.lineEdit_3.text()
+                self.currentWindow.close()
+                return
 
         def runPowerSynth():
             #'''
@@ -133,8 +144,8 @@ class GUI():
                 popup.exec_()
                 return
 
-            settingsPath = ui.lineEdit_3.text()
-            macroPath = ui.lineEdit_4.text()
+            self.settingsPath = ui.lineEdit_3.text()
+            self.macro_script_path = ui.lineEdit_4.text()
             
             #'''
 
@@ -142,8 +153,8 @@ class GUI():
             self.currentWindow = None
             '''
             #Joshua paths
-            macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
-            settingsPath = '/nethome/jgm019/testcases/settings.info'
+            #macroPath = '/nethome/jgm019/testcases/Unit_Test_Cases/3D_Half_Bridge/macro_script1.txt'
+            #settingsPath = '/nethome/jgm019/testcases/settings.info'
 
             #Imam paths
             #macroPath= '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Imam_Journal_3D_2/macro_script.txt'
@@ -155,7 +166,7 @@ class GUI():
 
                 self.cmd = Cmd_Handler(debug=False)
 
-                args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+                args = ['python','cmd.py','-m',self.macro_script_path,'-settings',self.settingsPath]
 
                 self.cmd.cmd_handler_flow(arguments=args)
 
@@ -167,12 +178,12 @@ class GUI():
             UI.setupUi(editConstraints)
             self.setWindow(editConstraints)
 
-            with open(macroPath, 'r') as file:
+            with open(self.macro_script_path, 'r') as file:
                 for line in file:
                     if line.startswith("Constraint_file: "):
                         self.pathToConstraints = line.split()[1]
                         if self.pathToConstraints.startswith("./"):
-                            self.pathToConstraints = self.pathToConstraints.replace("./", macroPath.rsplit("/", 1)[0] + "/")
+                            self.pathToConstraints = self.pathToConstraints.replace("./", self.macro_script_path.rsplit("/", 1)[0] + "/")
                     if line.startswith("Fig_dir: "):
                         self.pathToWorkFolder = line.split()[1].rsplit('/', 1)[0] + "/"
                         self.pathToFigs = line.split()[1] + "/"
@@ -336,10 +347,10 @@ class GUI():
             self.pathToLayerStack = ui.lineEdit_layer.text()
             self.pathToLayoutScript = ui.lineEdit_layout.text()
             self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
+            #'''
+
+
             '''
-
-
-            
             #Joshua Paths
             self.pathToLayoutScript = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/layout_geometry_script.txt"
             self.pathToBondwireSetup = "/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/bond_wires_setup.txt"
@@ -398,6 +409,9 @@ class GUI():
                             textedit = QtWidgets.QTableWidgetItem()
                             textedit.setText(val)
                             ui.tableWidget.setItem(i-1, j-1, textedit)
+                            
+                            if row[1][0]=='I':
+                                self.floorPlan=[row[3],row[4]]
 
         def continue_UI():
             with open(self.pathToLayerStack, 'w') as csvfile:
@@ -512,8 +526,8 @@ class GUI():
             self.option = 2
             self.optimizationSetup()
 
-        ui.pushButton.pressed.connect(option0)
-        ui.pushButton_2.pressed.connect(option1)
+        ui.pushButton.pressed.connect(option1)
+        ui.pushButton_2.pressed.connect(option0)
         ui.pushButton_3.pressed.connect(option2)
 
         ui.pushButton.setToolTip("This option will bypass electrical/thermal evaluation.")
@@ -530,15 +544,24 @@ class GUI():
         self.setWindow(optimizationSetup)
         optimizationSetup.setFixedHeight(410)
         optimizationSetup.setFixedWidth(400)
-        ui.btn_run_powersynth.setDisabled(True)
+        ui.btn_run_powersynth.setEnabled(False)
 
-        if self.option == 0:
-            ui.btn_run_powersynth.setDisabled(False)
-            ui.electrical_thermal_frame.hide()
-            optimizationSetup.setFixedHeight(325)
-        elif self.option == 1:
-            optimizationSetup.setFixedHeight(205)
+        if self.option == 1:
+            #ui.btn_run_powersynth.setDisabled(True)
+            ui.electrical_thermal_frame.show()
             ui.layout_generation_setup_frame.hide()
+            optimizationSetup.setFixedHeight(205)
+            ui.floor_plan_x.setText(self.floorPlan[0])
+            ui.floor_plan_y.setText(self.floorPlan[1])
+            ui.floor_plan_x.setEnabled(False)
+            ui.floor_plan_y.setEnabled(False)
+            ui.btn_get_settings.pressed.connect(self.settings_info_pass)
+            if self.settingsPath!=None:
+                ui.btn_run_powersynth.setEnabled(True)
+        elif self.option == 0:
+            optimizationSetup.setFixedHeight(205)
+            ui.btn_run_powersynth.setEnabled(True)
+            
 
         def run():
             # SAVE VALUES HERE
@@ -546,13 +569,14 @@ class GUI():
             self.floorPlan[1] = ui.floor_plan_y.text()
             self.plotSolution = "1" if ui.checkbox_plot_solutions.isChecked() else "0"
 
-            if self.option != 1:
+            if self.option !=0:
                 self.layoutMode = "0" if ui.combo_layout_mode.currentText() == "minimum-sized solutions" else "1" if ui.combo_layout_mode.currentText() == "variable-sized solutions" else "2"
                 self.numLayouts = ui.num_layouts.text()
                 self.seed = ui.seed.text()
                 self.optimizationAlgorithm = ui.combo_optimization_algorithm.currentText()
-                self.numGenerations = ui.num_generations.text()
+                self.numGenerations = ui.num_layouts.text()
 
+            
             self.runPowerSynth()
 
         ui.btn_electrical_setup.pressed.connect(self.electricalSetup)
@@ -707,31 +731,62 @@ class GUI():
 
         thermalSetup.show()
     
+    def settings_info_pass(self):
+        settings = QtWidgets.QDialog(parent=self.currentWindow)
+        ui2 = UI_settings()
+        ui2.setupUi(settings)
+        #self.setWindow(settings)
+        
+        def getSettingsInfo2():
+            
+            ui2.lineEdit_3.setText(QtWidgets.QFileDialog.getOpenFileName(settings, 'Open settings.info', os.getenv('HOME'))[0])
+
+        def proceed():
+            self.settingsPath=ui2.lineEdit_3.text()
+            settings.close()
+            #self.currentWindow.close()
+            #self.currentWindow = None
+
+            
+
+        
+                
+        
+        ui2.btn_open_settings.pressed.connect(getSettingsInfo2)
+        ui2.btn_continue.pressed.connect(proceed)
+        settings.show()
+        #self.currentWindow.close()
+        #self.currentWindow = None
     def runPowerSynth(self):
 
         self.currentWindow.close()
         self.currentWindow = None
-
+        # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
+        if not self.pathToParasiticModel:
+            self.pathToParasiticModel = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_8/mutual_impact.rsmdl'
         macroPath = self.pathToLayoutScript.split("/")
         macroPath.pop(-1)
         macroPath = "/".join(macroPath) + "/macro_script.txt"
-
-
-        # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
-        if not self.pathToParasiticModel:
-            self.pathToParasiticModel = '/nethome/jgm019/testcases/Unit_Test_Cases/2D_Half_Bridge/mutual_impact.rsmdl'
-        settingsPath = '/nethome/jgm019/testcases/settings.info'
-
-        with open(macroPath, "w") as file:
+        self.macro_script_path = macroPath
+        with open(self.macro_script_path, "w") as file:
             createMacro(file, self)
 
+        
+        #settingsPath = '/nethome/jgm019/testcases/settings.info'
+        
+        
+        print("H",self.settingsPath)
+        
+        #'''
+        
         self.cmd = Cmd_Handler(debug=False)
 
-        args = ['python','cmd.py','-m',macroPath,'-settings',settingsPath]
+        args = ['python','cmd.py','-m',self.macro_script_path,'-settings',self.settingsPath]
 
         self.cmd.cmd_handler_flow(arguments=args)
 
         showSolutionBrowser(self)
+        #'''
 
 
     def run(self):

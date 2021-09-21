@@ -133,7 +133,7 @@ class ParaPowerInterface(object):
 
     """
     def __init__(self, external_conditions=ExternalConditions(), parameters=Params(), features=None,
-                 matlab_path=None, solution_name='PSData'):
+                 matlab_path=None, solution_name='PSData',pp_json_path='/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/'):
         self.ExternalConditions = external_conditions
         self.Params = parameters
         self.Features = features
@@ -142,7 +142,7 @@ class ParaPowerInterface(object):
         self.matlab_engine = None
         # self.path = matlab_path
         # TODO: Save location is hardcoded 
-        self.path = "/nethome/jgm019/"
+        self.path = pp_json_path
 		#self.path="/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
         #self.eng = self.init_matlab()
         self.solution_name = solution_name
@@ -248,10 +248,11 @@ class ParaPowerWrapper(object):
 
     """
 
-    def __init__(self, solution,t_amb=None,h_val=None):
+    def __init__(self, solution,t_amb=None,h_val=None,pp_json_path=None):
         self.c2k = 273.5
         self.solution = solution
         self.ref_locs = np.array([0,0,0])
+        self.pp_json_path=pp_json_path
         if t_amb==None:
             self.t_amb = 26.5
         else:
@@ -270,7 +271,7 @@ class ParaPowerWrapper(object):
 
         self.parapower = ParaPowerInterface(self.external_conditions.to_dict(),
                                             self.parameters.to_dict(),
-                                            self.features)
+                                            self.features,self.pp_json_path)
         # self.output = PPEncoder().encode(self.parapower)
         # self.write_md_output()
     def get_features(self):

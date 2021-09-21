@@ -555,12 +555,13 @@ class Node(CornerStitchAlgorithms):
     """
     Group of tiles. Part of hierarchical Tree
     """
-    def __init__(self, boundaries, stitchList, parent=None, id=None, ):
+    def __init__(self, boundaries, stitchList, parent=None, id=None ):
         self.parent = parent  # parent node
         self.child = []  # child node list
         self.stitchList = stitchList  # tile list in the node
         self.id = id  # node id
         self.boundaries = boundaries  # boundary tiles list
+        self.layout_script_elements=[] # to map input tree from the layout script
 
     def getParent(self):
         return self.parent
@@ -603,6 +604,7 @@ class Vnode(Node):
         self.child = []
         self.parent = parent
         self.id = id
+        self.layout_script_elements=[]
 
     # merge function to merge empty tiles(to maintain corner stitch property)
     def Final_Merge(self):
@@ -1327,6 +1329,7 @@ class Hnode(Node):
         self.child = []
         self.parent = parent
         self.id = id
+        self.layout_script_elements=[]
 
     # merge all possible tiles to maintain corner stitch property
     def Final_Merge(self):

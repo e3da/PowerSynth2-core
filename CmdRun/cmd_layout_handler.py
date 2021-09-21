@@ -543,20 +543,21 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
                     solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
             
-            for solution in Solutions:
-                all_patches=[]
-                all_colors=['blue','red','green','yellow','pink','violet']
-                
-                for i in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                    alpha=(i)*1/len(solution.layer_solutions)
-                    color=all_colors[i]
-                    label='Layer '+str(i+1)
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-                    patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    patches[0].label=label
-                    all_patches+=patches
-                solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
+            if len(solution.layer_solutions)>1:
+                for solution in Solutions:
+                    all_patches=[]
+                    all_colors=['blue','red','green','yellow','pink','violet']
+                    
+                    for i in range(len(solution.layer_solutions)):
+                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                        alpha=(i)*1/len(solution.layer_solutions)
+                        color=all_colors[i]
+                        label='Layer '+str(i+1)
+                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
+                        patches[0].label=label
+                        all_patches+=patches
+                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
         
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
@@ -1043,29 +1044,29 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             #fig.subplots_adjust(hspace = .5, wspace=.001)
 
             
+            if len(solution.layer_solutions)>1:
+                for solution in Solutions:
+                    all_patches=[]
+                    all_colors=['blue','red','green','yellow','pink','violet']
+                    for i in range(len(solution.layer_solutions)):
+                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                        alpha=(i)*1/len(solution.layer_solutions)
+                        color=all_colors[i]
+                        label='Layer '+str(i+1)
 
-            for solution in Solutions:
-                all_patches=[]
-                all_colors=['blue','red','green','yellow','pink','violet']
-                for i in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                    alpha=(i)*1/len(solution.layer_solutions)
-                    color=all_colors[i]
-                    label='Layer '+str(i+1)
+                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                        
 
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                        # FIXME: solution.layout_plot not returning any values
+                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
+                        #patches[0].label=label
+                        #print(patches[0].label)
+                        #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
+                        all_patches+=patches
                     
-
-                    # FIXME: solution.layout_plot not returning any values
-                    patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    #patches[0].label=label
-                    #print(patches[0].label)
-                    #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
-                    all_patches+=patches
-                
-                
-                    #print(patch.Rectangle.label)
-                solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
+                    
+                        #print(patch.Rectangle.label)
+                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
                 '''for p in all_patches:
                     ax2[solution.index].add_patch(p)
                 ax2[solution.index].set_xlim(ax_lim[0])
