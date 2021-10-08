@@ -545,6 +545,21 @@ class GUI():
         optimizationSetup.setFixedHeight(410)
         optimizationSetup.setFixedWidth(400)
         ui.btn_run_powersynth.setEnabled(False)
+        def floorplan_assignment():
+            if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
+                ui.floor_plan_x.setEnabled(False)
+                ui.floor_plan_y.setEnabled(False)
+                if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
+                    ui.num_layouts.setText("1")
+                    ui.num_layouts.setEnabled(False)
+                else:
+                    ui.num_layouts.setEnabled(True)
+        
+                
+            else:
+                ui.floor_plan_x.setEnabled(True)
+                ui.floor_plan_y.setEnabled(True)
+                ui.num_layouts.setEnabled(True)
 
         if self.option == 1:
             #ui.btn_run_powersynth.setDisabled(True)
@@ -559,18 +574,37 @@ class GUI():
             if self.settingsPath!=None:
                 ui.btn_run_powersynth.setEnabled(True)
         elif self.option == 0:
-            optimizationSetup.setFixedHeight(205)
+            optimizationSetup.setFixedHeight(350)
+            ui.btn_get_settings.pressed.connect(self.settings_info_pass)
+            ui.electrical_thermal_frame.hide()
+            if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
+                ui.floor_plan_x.setEnabled(False)
+                ui.floor_plan_y.setEnabled(False)
+                if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
+                    ui.num_layouts.setText("1")
+                    ui.num_layouts.setEnabled(False)
+                else:
+                    ui.num_layouts.setEnabled(True)
+            else:
+                ui.num_layouts.setEnabled(True)
+            ui.combo_layout_mode.currentIndexChanged.connect(floorplan_assignment)
             ui.btn_run_powersynth.setEnabled(True)
             
-
+        
         def run():
             # SAVE VALUES HERE
             self.floorPlan[0] = ui.floor_plan_x.text()
             self.floorPlan[1] = ui.floor_plan_y.text()
             self.plotSolution = "1" if ui.checkbox_plot_solutions.isChecked() else "0"
 
-            if self.option !=0:
-                self.layoutMode = "0" if ui.combo_layout_mode.currentText() == "minimum-sized solutions" else "1" if ui.combo_layout_mode.currentText() == "variable-sized solutions" else "2"
+            if self.option !=1:
+                if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
+                    self.layoutMode = "0" 
+                elif ui.combo_layout_mode.currentText() == "variable-sized solutions":
+                    self.layoutMode = "1" 
+                elif ui.combo_layout_mode.currentText() == "fixed-sized solutions":
+                    self.layoutMode = "2" 
+                
                 self.numLayouts = ui.num_layouts.text()
                 self.seed = ui.seed.text()
                 self.optimizationAlgorithm = ui.combo_optimization_algorithm.currentText()
@@ -588,6 +622,10 @@ class GUI():
         ui.btn_run_powersynth.setToolTip("Click to run PowerSynth once all setup options are entered correctly.")
 
         optimizationSetup.show()
+
+    
+
+
 
     def electricalSetup(self):
         '''Creates window for the electrical setup'''

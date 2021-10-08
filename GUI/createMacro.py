@@ -18,7 +18,8 @@ def createMacro(file: TextIOWrapper, self):
     file.write("Fig_dir: " + figDir + "\n")
     file.write("Solution_dir: " + solutionDir + "\n")
     file.write("Constraint_file: " + self.pathToConstraints + "\n")
-    file.write("Trace_Ori: " + self.pathToTraceOri + "\n")
+    if self.option!=0:
+        file.write("Trace_Ori: " + self.pathToTraceOri + "\n")
 
     file.write("\n")
 
@@ -31,7 +32,8 @@ def createMacro(file: TextIOWrapper, self):
 
     if self.option == 0 or self.option == 2:
         file.write("Layout_Mode: " + self.layoutMode + "\n")
-        file.write("Floor_plan: " + self.floorPlan[0] + "," + self.floorPlan[1] + "\n")
+        if self.layoutMode == "2":
+            file.write("Floor_plan: " + self.floorPlan[0] + "," + self.floorPlan[1] + "\n")
         file.write("Num_of_layouts: " + self.numLayouts + "\n")
         file.write("Seed: " + self.seed + "\n")
         file.write("Optimization_Algorithm: " + self.optimizationAlgorithm + "\n")

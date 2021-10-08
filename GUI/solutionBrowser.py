@@ -87,10 +87,13 @@ def showSolutionBrowser(self):
                     ui.tabWidget.widget(i-1).setScene(scene)
 
             solution = self.cmd.structure_3D.solutions[self.solution_ind]
+            
             for feature in solution.features_list:
                 if 'Ceramic' in feature.name:
                     ui.lineEdit_size_w.setText(str(feature.width))
+                    
                     ui.lineEdit_size_h.setText(str(feature.length))
+                    
                     break
 
             ui.lineEdit_x.setText(str(round(float(event.artist.get_offsets()[event.ind][0][0]), 3)))
@@ -148,6 +151,15 @@ def showSolutionBrowser(self):
             if self.solution_ind == None:
                 print("Please select a solution.")
                 return
+            
+            solution=self.cmd.structure_3D.solutions[self.solution_ind]
+            for feature in solution.features_list:
+                if 'Ceramic' in feature.name:
+                    self.floorPlan[0]=feature.width
+                    
+                    self.floorPlan[1]=feature.length
+                    
+                    break
             if self.cmd.structure_3D.solutions:
                 #print(self.solution_ind)
                 #print(self.cmd.structure_3D.solutions[self.solution_ind])

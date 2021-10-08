@@ -281,9 +281,7 @@ class CornerStitch():
         
         Htree = Tree(hNodeList=[Hnode0], vNodeList=None)
         Vtree = Tree(hNodeList=None, vNodeList=[Vnode0])
-        for inp in Input:
-            inp.printGroup()
-        input()
+        
         for i in range(len(Input)):
             line= Input[i]
             if line.hier_level==1:
@@ -341,7 +339,7 @@ class CornerStitch():
 
         Htree.setNodeId1(Htree.hNodeList)
         Vtree.setNodeId1(Vtree.vNodeList)
-        debug=True
+        debug=False
         if debug:
             print ("Horizontal NodeList")
 

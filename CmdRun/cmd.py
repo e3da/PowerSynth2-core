@@ -206,9 +206,12 @@ class Cmd_Handler:
                 if info[0] == "Layout_Mode:":  # engine option
                     layout_mode = int(info[1])
                 if info[0] == "Floor_plan:":
-                    floor_plan = info[1]
-                    floor_plan = floor_plan.split(",")
-                    floor_plan = [float(i) for i in floor_plan]
+                    try:
+                        floor_plan = info[1]
+                        floor_plan = floor_plan.split(",")
+                        floor_plan = [float(i) for i in floor_plan]
+                    except:
+                        floorplan= [1,1] # handle those cases when floorplan is not required.
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
                 if info[0]== 'Thermal_Setup:':

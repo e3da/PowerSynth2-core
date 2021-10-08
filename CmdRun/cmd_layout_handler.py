@@ -88,6 +88,7 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
                     csv_writer.writerow(layout_data)
         
         my_csv.close()
+        print("Export Complete")
 
 def plot_fig_data(Layout_Rects,level,bw_type=None,min_dimensions=None,Min_X_Loc=None,Min_Y_Loc=None):
     #global min_dimensions
