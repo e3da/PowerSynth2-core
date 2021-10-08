@@ -7,7 +7,7 @@ from matplotlib.figure import Figure
 from core.CmdRun.cmd import Cmd_Handler
 from core.GUI.py.openingWindow import Ui_Dialog as UI_opening_window
 from core.GUI.py.runMacro import Ui_Dialog as UI_run_macro
-from core.GUI.py.settings_info import Ui_Settings_Info as UI_settings
+from core.GUI.py.settings_info import Ui_Dialog as UI_settings
 from core.GUI.py.editMaterials import Ui_Dialog as UI_edit_materials
 from core.GUI.py.editLayout import Ui_Macro_Input_Paths as UI_edit_layout
 from core.GUI.py.layerStack import Ui_Dialog as UI_layer_stack
@@ -625,6 +625,7 @@ class GUI():
                 self.optimizationUI.btn_run_powersynth.setDisabled(False)
 
             electricalSetup.close()
+           
 
         def addRow():
             index = ui.tableWidget.rowCount()
@@ -763,7 +764,7 @@ class GUI():
         self.currentWindow = None
         # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
         if not self.pathToParasiticModel:
-            self.pathToParasiticModel = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_8/mutual_impact.rsmdl'
+            self.pathToParasiticModel = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_8/imam_journal.rsmdl'
         macroPath = self.pathToLayoutScript.split("/")
         macroPath.pop(-1)
         macroPath = "/".join(macroPath) + "/macro_script.txt"

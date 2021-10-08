@@ -342,7 +342,9 @@ class Cmd_Handler:
                     sol=PSSolution(solution_id=solution.index)
                     sol.make_solution(mode=-1,cs_solution=solution,module_data=solution.module_data)
                     #plot_solution_structure(sol)
+                    sol.cs_solution=solution
                     PS_solutions.append(sol)
+                    
                 measure_names=[None,None]
                 if len(self.measures)>0:
                     for m in self.measures:

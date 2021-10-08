@@ -73,7 +73,10 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
             
             for layer_sol in layout_solutions[i].layer_solutions:
                 #print(layer_sol.abstract_infos)
-                data=[layer_sol.name,size[0]/dbunit,size[1]/dbunit]
+                if size[0]>dbunit:
+                    data=[layer_sol.name,size[0]/dbunit,size[1]/dbunit]
+                else:
+                    data=[layer_sol.name,size[0],size[1]]
                 csv_writer.writerow(data)
                 csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
                 
