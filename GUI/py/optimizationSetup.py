@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'ui/optimizationSetup.ui',
 # licensing of 'ui/optimizationSetup.ui' applies.
 #
-# Created: Fri Oct  8 11:55:12 2021
+# Created: Sun Oct 10 16:29:28 2021
 #      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
@@ -63,9 +63,6 @@ class Ui_Dialog(object):
         self.checkbox_plot_solutions.setObjectName("checkbox_plot_solutions")
         self.horizontalLayout_17.addWidget(self.checkbox_plot_solutions)
         self.gridLayout.addLayout(self.horizontalLayout_17, 2, 0, 1, 1)
-        self.btn_get_settings = QtWidgets.QPushButton(self.layout_generation_setup_frame_2)
-        self.btn_get_settings.setObjectName("btn_get_settings")
-        self.gridLayout.addWidget(self.btn_get_settings, 2, 1, 1, 1)
         self.verticalLayout.addWidget(self.layout_generation_setup_frame_2)
         self.layout_generation_setup_frame = QtWidgets.QFrame(Dialog)
         self.layout_generation_setup_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -120,12 +117,14 @@ class Ui_Dialog(object):
         self.combo_optimization_algorithm.setMaximumSize(QtCore.QSize(110, 16777215))
         self.combo_optimization_algorithm.setObjectName("combo_optimization_algorithm")
         self.combo_optimization_algorithm.addItem("")
+        self.combo_optimization_algorithm.addItem("")
         self.horizontalLayout_11.addWidget(self.combo_optimization_algorithm)
         self.gridLayout_3.addLayout(self.horizontalLayout_11, 5, 0, 1, 3)
         self.horizontalLayout_13 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_13.setObjectName("horizontalLayout_13")
         self.gridLayout_3.addLayout(self.horizontalLayout_13, 6, 0, 1, 1)
-        self.electrical_thermal_frame = QtWidgets.QFrame(self.layout_generation_setup_frame)
+        self.verticalLayout.addWidget(self.layout_generation_setup_frame)
+        self.electrical_thermal_frame = QtWidgets.QFrame(Dialog)
         self.electrical_thermal_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.electrical_thermal_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.electrical_thermal_frame.setObjectName("electrical_thermal_frame")
@@ -137,8 +136,7 @@ class Ui_Dialog(object):
         self.btn_thermal_setup = QtWidgets.QPushButton(self.electrical_thermal_frame)
         self.btn_thermal_setup.setObjectName("btn_thermal_setup")
         self.gridLayout_2.addWidget(self.btn_thermal_setup, 0, 1, 1, 1)
-        self.gridLayout_3.addWidget(self.electrical_thermal_frame, 7, 0, 1, 3)
-        self.verticalLayout.addWidget(self.layout_generation_setup_frame)
+        self.verticalLayout.addWidget(self.electrical_thermal_frame)
         self.btn_run_powersynth = QtWidgets.QPushButton(Dialog)
         self.btn_run_powersynth.setDefault(True)
         self.btn_run_powersynth.setObjectName("btn_run_powersynth")
@@ -153,7 +151,6 @@ class Ui_Dialog(object):
         self.label_12.setText(QtWidgets.QApplication.translate("Dialog", "Floor Plan:", None, -1))
         self.label_13.setText(QtWidgets.QApplication.translate("Dialog", "X", None, -1))
         self.label_24.setText(QtWidgets.QApplication.translate("Dialog", "Plot Solution:", None, -1))
-        self.btn_get_settings.setText(QtWidgets.QApplication.translate("Dialog", "Get Settings.info File", None, -1))
         self.label_10.setText(QtWidgets.QApplication.translate("Dialog", "<html><head/><body><p><span style=\" font-size:10pt; font-weight:600;\">Layout Generation Setup:</span></p></body></html>", None, -1))
         self.label_11.setText(QtWidgets.QApplication.translate("Dialog", "Layout_Mode:", None, -1))
         self.combo_layout_mode.setItemText(0, QtWidgets.QApplication.translate("Dialog", "minimum-sized solutions", None, -1))
@@ -163,6 +160,7 @@ class Ui_Dialog(object):
         self.label_15.setText(QtWidgets.QApplication.translate("Dialog", "Seed:", None, -1))
         self.label_16.setText(QtWidgets.QApplication.translate("Dialog", "Optimization Algorithm:", None, -1))
         self.combo_optimization_algorithm.setItemText(0, QtWidgets.QApplication.translate("Dialog", "NG-RANDOM", None, -1))
+        self.combo_optimization_algorithm.setItemText(1, QtWidgets.QApplication.translate("Dialog", "NSGAII", None, -1))
         self.btn_electrical_setup.setText(QtWidgets.QApplication.translate("Dialog", "Open Electrical Setup", None, -1))
         self.btn_thermal_setup.setText(QtWidgets.QApplication.translate("Dialog", "Open Thermal Setup", None, -1))
         self.btn_run_powersynth.setText(QtWidgets.QApplication.translate("Dialog", "Run Powersynth", None, -1))

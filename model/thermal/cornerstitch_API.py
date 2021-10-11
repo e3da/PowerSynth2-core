@@ -196,13 +196,14 @@ class CornerStitch_Tmodel_API:
             ambient_temp=self.t_amb
             h_val=self.bp_conv
             
-            #for f in solution.features_list:
-                #f.printFeature()
+            for f in solution.features_list:
+                f.printFeature()
             self.temp_res = {}
             if len(h_val)==1:
                 h_val.append(0) # single-sided cooling
             if self.matlab_engine != None:
-                ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.pp_json_path)
+                print("PP_JSON_TAPI",self.pp_json_path)
+                ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")
             temp=ppw.parapower.run_parapower_thermal()

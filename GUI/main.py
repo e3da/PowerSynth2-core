@@ -21,6 +21,9 @@ from core.GUI.py.runOptions import Ui_Dialog as UI_run_options
 from core.GUI.solutionBrowser import showSolutionBrowser
 from core.GUI.createMacro import createMacro
 
+from core.general.settings import settings
+from core.CmdRun.cmd import read_settings_file
+
 class GUI():
     '''GUI Class -- Stores Important Information for the GUI'''
 
@@ -310,6 +313,7 @@ class GUI():
         ui = UI_edit_layout()
         ui.setupUi(editLayout)
         self.setWindow(editLayout)
+        ui.btn_get_settings.pressed.connect(self.settings_info_pass)
 
         def getLayerStack():
             ui.lineEdit_layer.setText(QtWidgets.QFileDialog.getOpenFileName(editLayout, 'Open layer_stack', os.getenv('HOME'))[0])
@@ -347,6 +351,7 @@ class GUI():
             self.pathToLayerStack = ui.lineEdit_layer.text()
             self.pathToLayoutScript = ui.lineEdit_layout.text()
             self.pathToBondwireSetup = ui.lineEdit_bondwire.text()
+            read_settings_file(self.settingsPath)
             #'''
 
 
@@ -368,13 +373,13 @@ class GUI():
             newPath.pop(-1)
             
             self.pathToWorkFolder = "/".join(newPath) + "/"
-            #print(newPath,self.pathToWorkFolder)
+            print(newPath,self.pathToWorkFolder)
             os.chdir(self.pathToWorkFolder)
             self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
             self.pathToFigs = self.pathToWorkFolder + "Figs/"
             self.pathToSolutions = self.pathToWorkFolder + "Solutions/"
 
-            self.device_dict, self.lead_list = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness))
+            self.device_dict, self.lead_list = generateLayout(self.pathToLayoutScript, self.pathToBondwireSetup, self.pathToLayerStack, self.pathToConstraints, int(self.reliabilityAwareness),settings)
 
             self.displayLayerStack()
 
@@ -570,12 +575,12 @@ class GUI():
             ui.floor_plan_y.setText(self.floorPlan[1])
             ui.floor_plan_x.setEnabled(False)
             ui.floor_plan_y.setEnabled(False)
-            ui.btn_get_settings.pressed.connect(self.settings_info_pass)
+            ui.electrical_thermal_frame.show()
             if self.settingsPath!=None:
                 ui.btn_run_powersynth.setEnabled(True)
         elif self.option == 0:
             optimizationSetup.setFixedHeight(350)
-            ui.btn_get_settings.pressed.connect(self.settings_info_pass)
+            #ui.btn_get_settings.pressed.connect(self.settings_info_pass)
             ui.electrical_thermal_frame.hide()
             if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
                 ui.floor_plan_x.setEnabled(False)
@@ -589,7 +594,20 @@ class GUI():
                 ui.num_layouts.setEnabled(True)
             ui.combo_layout_mode.currentIndexChanged.connect(floorplan_assignment)
             ui.btn_run_powersynth.setEnabled(True)
-            
+        elif self.option == 2:
+            if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
+                ui.floor_plan_x.setEnabled(False)
+                ui.floor_plan_y.setEnabled(False)
+                if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
+                    ui.num_layouts.setText("1")
+                    ui.num_layouts.setEnabled(False)
+                else:
+                    ui.num_layouts.setEnabled(True)
+            else:
+                ui.num_layouts.setEnabled(True)
+            ui.combo_layout_mode.currentIndexChanged.connect(floorplan_assignment)
+            ui.btn_run_powersynth.setEnabled(True)
+
         
         def run():
             # SAVE VALUES HERE
@@ -643,7 +661,12 @@ class GUI():
             # SAVE VALUES HERE
             self.modelType = ui.combo_model_type.currentText()
             self.measureNameElectrical = ui.lineedit_measure_name.text()
-            self.measureType = "0" if ui.combo_measure_type.currentText() == "inductance" else "1"
+            if ui.combo_measure_type.currentText() == "inductance":
+                self.measureType = "0"  
+            elif ui.combo_measure_type.currentText() == "resistance":
+                self.measureType = "1"
+            elif ui.combo_measure_type.currentText() == "capacitance":
+                self.measureType = "2"
             
             for i in range(ui.tableWidget.rowCount()):
                 try:

@@ -756,7 +756,10 @@ class Cmd_Handler:
         self.t_api = CornerStitch_Tmodel_API(comp_dict=self.comp_dict)
         if settings.PARAPOWER_FOLDER!='':
             self.t_api.pp_json_path=settings.PARAPOWER_FOLDER
+        else:
+            print("Parapower json folder not found")
         self.t_api.layer_stack=self.layer_stack
+        #print("PP_FOLDER",self.t_api.pp_json_path)
         if mode == 'command':
             self.measures += self.t_api.measurement_setup()
             self.t_api.set_up_device_power()
@@ -1001,7 +1004,7 @@ class Cmd_Handler:
                         continue
                     else:
                         #print("here",row[0],row[1],row[2])
-                        sol_data[row[0]] = ([float(row[2]), float(row[1])])
+                        sol_data[row[0]] = ([float(row[1]), float(row[2])])
             # sol_data = np.array(sol_data)
             #print (sol_data)
             if len(sol_data)>0:
@@ -1084,12 +1087,13 @@ class Cmd_Handler:
             y_label=labels[1]
         
         if plot:
-            #plt.xlim(min(data_x)-2, max(data_x)+2)
-            #plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
+            
+            plt.xlim(min(data_x)-2, max(data_x)+2)
+            plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
-            #plt.xlabel(x_label)
+            plt.xlabel(x_label)
             # naming the y axis
-            #plt.ylabel(y_label)
+            plt.ylabel(y_label)
 
             # giving a title to my graph
             plt.title('Solution Space')

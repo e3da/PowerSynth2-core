@@ -1520,7 +1520,7 @@ class ConstraintGraph:
              
             comp_type_='Flexible'
             type='non-fixed'
-            value=100 # minimum constraint value (0.1mm)
+            value=1000 # minimum constraint value (0.1mm)
             weight= 2*value
             #if (origin.propagated==False or dest.propagated==False) and (origin.index,dest.index) not in list(d.keys()):
             if  (origin.index,dest.index) not in list(d.keys()):
@@ -1547,7 +1547,7 @@ class ConstraintGraph:
              
             comp_type_='Flexible'
             type='non-fixed'
-            value=100 # minimum constraint value (0.1mm)
+            value=1000 # minimum constraint value (0.1mm)
             weight= 2*value
             #if (origin.propagated==False or dest.propagated==False) and (origin.index,dest.index) not in list(dv.keys()):
             if (origin.index,dest.index) not in list(dv.keys()):

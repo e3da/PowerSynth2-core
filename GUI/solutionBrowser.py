@@ -163,7 +163,7 @@ def showSolutionBrowser(self):
             if self.cmd.structure_3D.solutions:
                 #print(self.solution_ind)
                 #print(self.cmd.structure_3D.solutions[self.solution_ind])
-                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[float(self.floorPlan[0]), float(self.floorPlan[1])])
             #elif self.cmd.solutions:
                 #export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             else:
@@ -171,7 +171,7 @@ def showSolutionBrowser(self):
             
         def export_all():
             if self.cmd.structure_3D.solutions:
-                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=self.cmd.structure_3D.solutions, size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
+                export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=self.cmd.structure_3D.solutions, size=[float(self.floorPlan[0]), float(self.floorPlan[1])])
             
 
         def close_GUI():

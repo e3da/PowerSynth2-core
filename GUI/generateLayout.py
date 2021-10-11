@@ -2,11 +2,11 @@ from core.engine.Structure3D.structure_3D import Structure_3D
 from core.MDK.LayerStack.layer_stack import Layer, LayerStack
 from core.engine.Structure3D.structure_3D import Structure_3D
 from core.engine.InputParser.input_script import script_translator
-from core.general.settings import settings
 
 
-def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_file, i_v_constraint):
-    settings.MATERIAL_LIB_PATH = "/nethome/ialrazi/PS_2_test_Cases/tech_lib/Material/Materials.csv"  # FIXME:  Path is hardcoded.
+
+def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_file, i_v_constraint,settings):
+    #settings.MATERIAL_LIB_PATH = "/nethome/ialrazi/PS_2_test_Cases/tech_lib/Material/Materials.csv"  # FIXME:  Path is hardcoded.
     
     layer_stack = LayerStack()
     layer_stack.import_layer_stack_from_csv(layer_stack_file)
@@ -31,14 +31,15 @@ def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_f
     device_dict = dict()
     lead_list = []
 
-    for comp in layer.all_components:
-        if comp.layout_component_id.startswith("D"):
-            connections = []
-            for key in comp.conn_dict.keys():
-                connections.append(key)
-            device_dict[comp.layout_component_id] = connections
-        if comp.layout_component_id.startswith("L"):
-            lead_list.append(comp.layout_component_id)
+    for layer in structure_3D.layers:
+        for comp in layer.all_components:
+            if comp.layout_component_id.startswith("D") and comp.layout_component_id not in device_dict:
+                connections = []
+                for key in comp.conn_dict.keys():
+                    connections.append(key)
+                device_dict[comp.layout_component_id] = connections
+            if comp.layout_component_id.startswith("L") and comp.layout_component_id not in lead_list:
+                lead_list.append(comp.layout_component_id)
 
 
     return [device_dict, lead_list]

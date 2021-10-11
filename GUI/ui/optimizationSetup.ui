@@ -96,13 +96,6 @@
         </item>
        </layout>
       </item>
-      <item row="2" column="1">
-       <widget class="QPushButton" name="btn_get_settings">
-        <property name="text">
-         <string>Get Settings.info File</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -207,6 +200,11 @@
             <string>NG-RANDOM</string>
            </property>
           </item>
+          <item>
+           <property name="text">
+            <string>NSGAII</string>
+           </property>
+          </item>
          </widget>
         </item>
        </layout>
@@ -214,30 +212,30 @@
       <item row="6" column="0">
        <layout class="QHBoxLayout" name="horizontalLayout_13"/>
       </item>
-      <item row="7" column="0" colspan="3">
-       <widget class="QFrame" name="electrical_thermal_frame">
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QFrame" name="electrical_thermal_frame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QPushButton" name="btn_electrical_setup">
+        <property name="text">
+         <string>Open Electrical Setup</string>
         </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="btn_thermal_setup">
+        <property name="text">
+         <string>Open Thermal Setup</string>
         </property>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0">
-          <widget class="QPushButton" name="btn_electrical_setup">
-           <property name="text">
-            <string>Open Electrical Setup</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QPushButton" name="btn_thermal_setup">
-           <property name="text">
-            <string>Open Thermal Setup</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </widget>
       </item>
      </layout>
