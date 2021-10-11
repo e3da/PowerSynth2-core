@@ -694,29 +694,30 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         '''cs_sym_info,module_data = layout_engine.generate_solutions(mode, num_layouts=num_layouts, W=None, H=None,
                                                                      fixed_x_location=None, fixed_y_location=None,
                                                                     seed=seed, individual=None,db=db_file, bar=False)'''
-        structure_variable,CG1=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed)
+        structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed)
 
         layer_solutions=[]
         width=0
         height=0
         for i in range(len(structure.layers)):
-            if structure.layers[i].New_engine.bondwires!=None:
-                    for wire in structure.layers[i].New_engine.bondwires:
+            if structure.layers[i].bondwires!=None:
+                    for wire in structure.layers[i].bondwires:
                         bw_type=wire.cs_type
                         break
+            #print(structure_variable.layers[i].mode_1_location_h)
             for j in range(len(structure.layers[i].mode_1_location_h)):
                 #print(structure_variable.layers[i].mode_1_location_h[j])
                 #input()
                 CS_SYM_Updated = []
-                CG2 = CS_to_CG(mode)
+                #CG2 = CS_to_CG(mode)
                 #print(structure_fixed.layers[i].mode_2_location_h[j])
-                CS_SYM_Updated1, Layout_Rects1 = CG2.update_min(structure_variable.layers[i].mode_1_location_h[j],
+                CS_SYM_Updated1, Layout_Rects1 = cg_interface.update_min(structure_variable.layers[i].mode_1_location_h[j],
                                                                     structure_variable.layers[i].mode_1_location_v[j],
-                                                                    structure_variable.layers[i].New_engine.init_data[1],
-                                                                    structure_variable.layers[i].New_engine.bondwires,origin=structure_variable.layers[i].origin,
+                                                                    structure_variable.layers[i].new_engine.init_data[1],
+                                                                    structure_variable.layers[i].bondwires,origin=structure_variable.layers[i].origin,
                                                                     s=dbunit)
 
-
+                #print(CS_SYM_Updated1)
                 cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
                 CS_SYM_info = {}
                 for item in cur_fig_data:
@@ -730,13 +731,13 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 CS_SYM_Updated.append(CS_SYM_info)
                 structure.layers[i].updated_cs_sym_info.append(CS_SYM_Updated)
                 structure.layers[i].layer_layout_rects.append(Layout_Rects1)
-                cs_islands_up = structure.layers[i].New_engine.update_islands(CS_SYM_Updated1,
+                cs_islands_up = structure.layers[i].new_engine.update_islands(CS_SYM_Updated1,
                                                                                 structure.layers[i].mode_1_location_h[j],
                                                                                 structure.layers[i].mode_1_location_v[j],
                                                                                 structure.layers[
-                                                                                    i].New_engine.init_data[2],
+                                                                                    i].new_engine.init_data[2],
                                                                                 structure.layers[
-                                                                                    i].New_engine.init_data[3])
+                                                                                    i].new_engine.init_data[3])
 
                 structure.layers[i].cs_islands_up.append(cs_islands_up)
 
@@ -754,7 +755,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 layer_sol.layout_plot_info=structure.layers[i].layout_info
                 layer_sol.abstract_infos=structure.layers[i].abstract_info
                 layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
-                layer_sol.min_dimensions=structure.layers[i].New_engine.min_dimensions
+                layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
                 layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
                 solution.layer_solutions.append(layer_sol)
                 module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]
@@ -776,10 +777,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             for i in range(len(Solutions)):
                 solution=Solutions[i]
                 for j in range(len(solution.layer_solutions)):
-                    structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects,layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=solution.index, db=db,bw_type=bw_type)
-
-
-
+                    size=list(solution.layer_solutions[j].layout_plot_info.keys())[0]
+                    size=[size[0] / dbunit, size[1] / dbunit]
+                    structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects,layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=solution.index, db=db,bw_type=bw_type,size=size )
         if plot:
             sol_path = fig_dir + '/Mode_1'
             if not os.path.exists(sol_path):
@@ -793,22 +793,22 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path,bw_type=bw_type)
 
         
-            
-            for solution in Solutions:
-                all_patches=[]
-                all_colors=['blue','red','green','yellow','pink','violet']
-                for i in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                    alpha=(i)*1/len(solution.layer_solutions)
-                    color=all_colors[i]
-                    label='Layer '+str(i+1)
+            if len(solution.layer_solutions)>1:
+                for solution in Solutions:
+                    all_patches=[]
+                    all_colors=['blue','red','green','yellow','pink','violet']
+                    for i in range(len(solution.layer_solutions)):
+                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
+                        alpha=(i)*1/len(solution.layer_solutions)
+                        color=all_colors[i]
+                        label='Layer '+str(i+1)
 
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-                    patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    patches[0].label=label
-                    all_patches+=patches
-                solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
-        
+                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
+                        patches[0].label=label
+                        all_patches+=patches
+                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
+            
         
         PS_solutions=[] #  PowerSynth Generic Solution holder
 
@@ -1371,7 +1371,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
 
     '''
 
-    structure,CG0=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():
@@ -1427,29 +1427,30 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
     #print (Min_X_Loc)
     #print(Min_Y_Loc)
     #fixed_location_evaluation=fixed_floorplan_algorithms()
+    ZDL_H=[]
+    ZDL_V=[]
+    for vert in structure.root_node_h.vertices:
+        ZDL_H.append(vert.coordinate)
+    for vert in structure.root_node_v.vertices:
+        ZDL_V.append(vert.coordinate)
+    ZDL_H = list(set(ZDL_H))
+    ZDL_H.sort()
+    ZDL_V = list(set(ZDL_V))
+    ZDL_V.sort()
     fixed_location_evaluation=fixed_floorplan_algorithms()
-    fixed_location_evaluation.removable_nodes_h=structure.root_node_h.removed_nodes
-    fixed_location_evaluation.removable_nodes_v =structure.root_node_v.removed_nodes
-    fixed_location_evaluation.reference_nodes_h=structure.root_node_h.reference_nodes
-    fixed_location_evaluation.reference_nodes_v =structure.root_node_v.reference_nodes
-    fixed_location_evaluation.top_down_eval_edges_h=structure.root_node_h.top_down_eval_edges
-    fixed_location_evaluation.top_down_eval_edges_v =structure.root_node_v.top_down_eval_edges
+    fixed_location_evaluation.populate_attributes(structure.root_node_h,structure.root_node_v)
+    
+    
     #edgesh_root = get_unique_edges(structure.root_node_h.edges) # removes unnecessary edges within same vertices
     #edgesv_root = get_unique_edges(structure.root_node_v.edges)
     edgesh_root=structure.root_node_h.edges
     edgesv_root=structure.root_node_v.edges
 
-    ZDL_H = structure.root_node_h.ZDL
-    ZDL_V = structure.root_node_v.ZDL
-
-    ZDL_H = list(set(ZDL_H))
-    ZDL_H.sort()
-    ZDL_V = list(set(ZDL_V))
-    ZDL_V.sort()
-    structure.root_node_h.node_mode_2_locations,structure.root_node_v.node_mode_2_locations=fixed_location_evaluation.get_locations(ID=structure.root_node_h.id,edgesh=edgesh_root,ZDL_H=ZDL_H,edgesv=edgesv_root,ZDL_V=ZDL_V,level=mode,XLoc=Min_X_Loc,YLoc=Min_Y_Loc,seed=seed,num_solutions=num_layouts)
-    print ("H",structure.root_node_h.node_mode_2_locations)
-    print (structure.root_node_v.node_mode_2_locations)
-    #input()
+    
+    structure.root_node_h.node_mode_2_locations,structure.root_node_v.node_mode_2_locations=fixed_location_evaluation.get_root_locations(ID=structure.root_node_h.id,edgesh=edgesh_root,ZDL_H=ZDL_H,edgesv=edgesv_root,ZDL_V=ZDL_V,level=mode,XLoc=Min_X_Loc,YLoc=Min_Y_Loc,seed=seed,num_solutions=num_layouts)
+    #print ("H",structure.root_node_h.node_mode_2_locations)
+    #print (structure.root_node_v.node_mode_2_locations)
+    
 
     mode=2 # since rest of the nodes in the tree has a fixed dimension.
 
@@ -1492,6 +1493,44 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
                 #print (child.node_mode_2_locations)
 
     if structure.via_connected_layer_info!=None:
+        for child in structure.root_node_h.child:
+            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+            #print ("H",child.name,child.id,child.node_mode_2_locations)
+        for child in structure.root_node_v.child:
+            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+
+        for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+            #print(via_name,sub_root_node_list )
+            for node in sub_root_node_list:
+                node.set_min_loc()
+                #print (node.node_min_locations)
+                node.vertices.sort(key= lambda x:x.index, reverse=False)
+                ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
+                node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
+                #print(node.id,node.parent.id)
+                #print(node.node_mode_2_locations)
+        #input()
+        for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
+            sub_root=sub_root_node_list # root of each via connected layes subtree
+            
+            for i in range(len(structure.layers)):
+                if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
+                    structure.layers[i].forward_cg.LocationH[sub_root_node_list[0].id]=sub_root_node_list[0].node_mode_2_locations[sub_root_node_list[0].id]
+                    structure.layers[i].forward_cg.LocationV[sub_root_node_list[1].id]=sub_root_node_list[1].node_mode_2_locations[sub_root_node_list[1].id]
+                    #structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
+                    #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
+
+                    #print(structure.layers[i].forward_cg.LocationH)
+                    #print(structure.layers[i].forward_cg.LocationV)
+                    #input()
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    mode_2_location_h,mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
+                    #print (mode_2_location_h)
+                    #print(mode_2_location_v)
+                    structure.layers[i].mode_1_location_h=mode_2_location_h
+                    structure.layers[i].mode_1_location_v=mode_2_location_v
+        """
         for via_name, sub_root_node_list in structure.sub_roots.items():
             sub_tree_root=sub_root_node_list # root of each via connected layes subtree
             #print (sub_tree_root[0].node_mode_2_locations,sub_tree_root[1].node_mode_2_locations)
@@ -1585,6 +1624,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
                         structure.layers[i].mode_1_location_h.append(mode_2_location_h[0])
                         structure.layers[i].mode_1_location_v.append(mode_2_location_v[0])
                         #input()
+        """
     else:# handles 2D/2.5D layouts
         sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree
         #print(structure.root_node_h.node_mode_2_locations)
@@ -1606,24 +1646,25 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
             #print(sub_tree_root[0].node_mode_2_locations)
             #input()
             for i in range(len(structure.layers)):
-                if structure.layers[i].New_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].New_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                    structure.layers[i].c_g.LocationH[sub_tree_root[0].id]=sub_tree_root[0].node_mode_2_locations[sub_tree_root[0].id]
-                    structure.layers[i].c_g.LocationV[sub_tree_root[1].id]=sub_tree_root[1].node_mode_2_locations[sub_tree_root[1].id]
+                if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+                    structure.layers[i].forward_cg.LocationH[sub_tree_root[0].id]=sub_tree_root[0].node_mode_2_locations[sub_tree_root[0].id]
+                    structure.layers[i].forward_cg.LocationV[sub_tree_root[1].id]=sub_tree_root[1].node_mode_2_locations[sub_tree_root[1].id]
+                
                     #structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
                     #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
 
                     #print ("minLocationH", structure.layers[i].c_g.minLocationH)
                     #print ("minLocationV", structure.layers[i].c_g.minLocationV)
-                    structure.layers[i].mode_2_location_h= structure.layers[i].c_g.HcgEval( mode,Random=None,seed=seed, N=1)
-                    structure.layers[i].mode_2_location_v = structure.layers[i].c_g.VcgEval( mode,Random=None,seed=seed, N=1)
-                    mode_2_location_h,mode_2_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    mode_2_location_h,mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
                     #print (mode_2_location_h)
                     #print(mode_2_location_v)
                     structure.layers[i].mode_1_location_h.append(mode_2_location_h[0])
                     structure.layers[i].mode_1_location_v.append(mode_2_location_v[0])
-
-
-    return structure, CG0
+                
+                #print(structure.layers[i].mode_1_location_h)
+    return structure, cg_interface
 
 def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
                              num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,dbunit=1000):

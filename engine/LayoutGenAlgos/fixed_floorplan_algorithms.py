@@ -84,7 +84,7 @@ class fixed_floorplan_algorithms():
 
                         removed=[]
                         for edge in value:
-                            if edge[0]==maxm and edge[-2]==weight:
+                            if edge[0]==maxm :
                                 continue
                             else:
                                 removed.append(edge)
@@ -152,6 +152,7 @@ class fixed_floorplan_algorithms():
             #print("X", X)
             for k, v in list(X.items()):
                 H.append((k[0], k[1], v))
+            
             G = nx.MultiDiGraph()
             n = [x for x in range(len(ZDL_H))]
             G.add_nodes_from(n)
@@ -183,6 +184,7 @@ class fixed_floorplan_algorithms():
                         k = 0
                         val = []
                         # for j in range(len(B)):
+                        #print(B)
                         for j in range(0, i):
                             if B[j][i] > k:
                                 # k=B[j][i]
@@ -239,7 +241,7 @@ class fixed_floorplan_algorithms():
                         removed=[]
                         for edge in value:
                             
-                            if edge[0]==maxm and edge[-2]==weight:
+                            if edge[0]==maxm :
                                 continue
                             else:
                                 removed.append(edge)
