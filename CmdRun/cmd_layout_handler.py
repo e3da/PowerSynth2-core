@@ -1719,7 +1719,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     YLoc.sort()
     Min_X_Loc[len(XLoc) - 1] = max_x
     Min_Y_Loc[len(YLoc) - 1] = max_y
-    #print width,height
+    print (width,height)
     for k, v in Min_X_Loc.items():  # checking if the given width is greater or equal minimum width
 
         if width >= v:
