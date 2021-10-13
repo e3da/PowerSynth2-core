@@ -14,7 +14,7 @@ import csv
 
 #from core.CmdRun.cmd import export_solution_layout_attributes
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
-from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
+from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt, recreate_sols, update_sols
 from core.engine.LayoutSolution.database import create_connection, insert_record
 from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
 from core.engine.ConstrGraph.CGinterface import CS_to_CG
@@ -853,98 +853,73 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         width,height =get_dims(floor_plan=floor_plan)
         seed = get_seed(seed)
-        print ("MY SEED", seed)
-        """
-        if optimization == True:
-            choice = opt_choices(algorithm=algorithm)
-            if choice == "NG-RANDOM":
-                params = get_params(num_layouts=num_layouts,alg='NG-RANDOM')
-                num_layouts = params[0]
-                #start=time.time()
-                cs_sym_info, module_data = layout_engine.generate_solutions(mode, num_layouts=num_layouts, W=width,
-                                                                         H=height,
-                                                                         fixed_x_location=None, fixed_y_location=None,
-                                                                         seed=seed, individual=None,db=db_file, bar=False)
-                #end=time.time()
-                #print "RT",end-start
-                opt_problem = new_engine_opt(engine=layout_engine, W=width, H=height, seed=seed, level=mode,
-                                             method=None,
-                                             apis=apis, measures=measures)
-
-
-                Solutions = update_solution_data(layout_dictionary=cs_sym_info,module_info=module_data, opt_problem=opt_problem,
-                                                 measure_names=measure_names)
-            else:
-                if choice == "NSGAII":
-                    params = get_params(num_layouts=num_gen, alg='NSGAII')
-                    num_layouts = params[0]
-                    # optimization_algorithm="NSGAII"
-                    opt_problem = new_engine_opt(engine=layout_engine, W=width, H=height, seed=seed, level=mode,
-                                                 method="NSGAII",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.optimize()  # perform optimization
-
-                elif choice == "WS":
-                    # optimization_algorithm="W_S"
-                    params = get_params(num_layouts=num_layouts, num_disc=num_disc, alg='WS')
-                    num_layouts = params[0]
-                    num_disc = params[1]
-
-                    opt_problem = new_engine_opt(engine=layout_engine, W=width, H=height, seed=seed, level=mode,
-                                                 method="FMINCON",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.num_disc = num_disc
-                    opt_problem.optimize()  # perform optimization
-
-                elif choice == "SA":
-                    # optimization_algorithm="SA"
-                    params = get_params(num_layouts=num_layouts, temp_init=max_temp, alg='SA')
-                    num_layouts = params[0]
-                    temp_init = params[1]
-                    opt_problem = new_engine_opt(engine=layout_engine, W=width, H=height, seed=seed, level=mode,
-                                                 method="SA",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.T_init = temp_init  # initial temperature
-                    opt_problem.optimize()  # perform optimization
-                Solutions = update_solution_data(layout_dictionary=opt_problem.layout_data,module_info=opt_problem.module_info, measure_names=measure_names, perf_results=opt_problem.perf_results)
-
-            #---------------------------------------------- save pareto data and plot figures ------------------------------------
-            # checking pareto_plot and saving csv file
-            pareto_data = pareto_solutions(Solutions) # a dictionary with index as key and list of performance value as value {0:[p1,p2],1:[...],...}
-            export_solutions(solutions=Solutions, directory=sol_dir, pareto_data=pareto_data) # exporting solution info to csv file
-            if plot:
-                sol_path = fig_dir + '/Mode_2_pareto'
-                #if len(Solutions)<50:
-                sol_path_all = fig_dir + '/Mode_2_solutions'
-                if not os.path.exists(sol_path_all):
-                    os.makedirs(sol_path_all)
-                if not os.path.exists(sol_path):
-                    os.makedirs(sol_path)
-                pareto_data = pareto_solutions(Solutions)
-                for solution in Solutions:
-                    if solution.index in list(pareto_data.keys()):
-                        solution.layout_plot(layout_ind=solution.index, db=db_file, fig_dir=sol_path)
-                    solution.layout_plot(layout_ind=solution.index, db=db_file, fig_dir=sol_path_all)
-
-
-
-        else: 
-        """
-        #layout generation only  (update for 3D)
-        params = get_params(num_layouts=num_layouts, alg='LAYOUT_GEN')
+        params = get_params(num_layouts=num_layouts, alg=algorithm)
         num_layouts=params[0]
-        start=time.time()
-        structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+        #print ("MY SEED", seed)
         
-        end=time.time()
-        gen_time=end-start
+        if optimization == True:
+            start=time.time()
+            if algorithm=='NSGAII':
+                #print(num_layouts)
+                #opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures)
+                #structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
+                #structure_copy=structure
+                #for i in range(5):
+                
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample.get_design_strings()
+                """
+                hcg_string_objects,vcg_string_objects=structure_sample.get_design_strings()
+                hcg_strings=copy.deepcopy(structure_sample.hcg_design_strings)
+                vcg_strings=copy.deepcopy(structure_sample.vcg_design_strings)
+                ds=[hcg_string_objects,vcg_string_objects]
+                """
+
+                #print(len(structure_sample.hcg_design_strings))
+    
+                #print(len(structure_sample.vcg_design_strings))
+                    
+                #input()
         
+                #if optimization==True:
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures)
+                opt_problem.num_measure = 2  # number of performance metrics
+                opt_problem.num_gen = num_layouts  # number of generations
+                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,Random=False,num_layouts=num_layouts,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,dbunit=dbunit,measure_names=measure_names)
+                PS_solutions=opt_problem.solutions
+                runtime=opt_problem.sol_gen_runtime
+                eval_time=opt_problem.eval_time
+            else:
+                strt_random=time.time()
+                structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+                end_random=time.time()-start
+                PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)
+                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
+                start_random_eval=time.time()
+                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                end_random_eval=time.time()-start_random_eval
+                
+        
+            end=time.time()
+            #print("Eval",eval_time)
+            #print("Gen_time",runtime)
+            #print("Total_time",end-start)
+            #print("Random_generation",end_random)
+            #print("Random_eval",end_random_eval)
+                
+
+        else:
+            #layout generation only  (update for 3D)
+        
+            start=time.time()
+            structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+            PS_solutions=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)
+                
+            for solution in PS_solutions:
+                solution.params={'Perf_1':None,'Perf_2':None}
+            end=time.time()
+            gen_time=end-start
+        """
         layer_solutions=[]
         width=0
         height=0
@@ -1107,6 +1082,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 solution.parameters={'Perf_1':None,'Perf_2':None}
         #if plot and optimization==True:
             #export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
+        """
         return PS_solutions
 
            
@@ -1361,7 +1337,7 @@ def get_unique_edges(edge_list=None):
 
 
 
-def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,seed=None,dbunit=1000):
+def variable_size_solution_generation(structure=None,num_layouts=None,Random=None,algorithm=None,mode=None,seed=None,dbunit=1000):
     '''
     :param structure: 3D structure object
     :param num_layouts int -- provide a number of layouts used in NG RANDOM(macro mode)
@@ -1494,10 +1470,10 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
 
     if structure.via_connected_layer_info!=None:
         for child in structure.root_node_h.child:
-            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+            child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts)
             #print ("H",child.name,child.id,child.node_mode_2_locations)
         for child in structure.root_node_v.child:
-            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+            child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts)
 
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             #print(via_name,sub_root_node_list )
@@ -1506,7 +1482,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
                 #print (node.node_min_locations)
                 node.vertices.sort(key= lambda x:x.index, reverse=False)
                 ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
-                node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
+                node.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
                 #print(node.id,node.parent.id)
                 #print(node.node_mode_2_locations)
         #input()
@@ -1523,8 +1499,8 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
                     #print(structure.layers[i].forward_cg.LocationH)
                     #print(structure.layers[i].forward_cg.LocationV)
                     #input()
-                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
-                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
                     mode_2_location_h,mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
                     #print (mode_2_location_h)
                     #print(mode_2_location_v)
@@ -1615,8 +1591,8 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
 
                         #print ("minLocationH", structure.layers[i].c_g.minLocationH)
                         #print ("minLocationV", structure.layers[i].c_g.minLocationV)
-                        structure.layers[i].mode_2_location_h= structure.layers[i].c_g.HcgEval( mode,Random=None,seed=seed, N=1)
-                        structure.layers[i].mode_2_location_v = structure.layers[i].c_g.VcgEval( mode,Random=None,seed=seed, N=1)
+                        structure.layers[i].mode_2_location_h= structure.layers[i].c_g.HcgEval( mode,Random=Random,seed=seed, N=1)
+                        structure.layers[i].mode_2_location_v = structure.layers[i].c_g.VcgEval( mode,Random=Random,seed=seed, N=1)
 
                         mode_2_location_h,mode_2_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
                         #print (mode_2_location_h)
@@ -1655,8 +1631,8 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
 
                     #print ("minLocationH", structure.layers[i].c_g.minLocationH)
                     #print ("minLocationV", structure.layers[i].c_g.minLocationV)
-                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
-                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
                     mode_2_location_h,mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
                     #print (mode_2_location_h)
                     #print(mode_2_location_v)
@@ -1667,7 +1643,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,mode=None,
     return structure, cg_interface
 
 def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,dbunit=1000):
+                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,Random=None,dbunit=1000):
     '''
 
     :param structure: 3D structure object
@@ -1719,7 +1695,11 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     YLoc.sort()
     Min_X_Loc[len(XLoc) - 1] = max_x
     Min_Y_Loc[len(YLoc) - 1] = max_y
-    #print (width,height)
+    if Random==False and num_layouts==1:
+        width=max_x
+        height=max_y
+
+
     for k, v in Min_X_Loc.items():  # checking if the given width is greater or equal minimum width
 
         if width >= v:
@@ -1803,7 +1783,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     if vertex_coord in root_node_h_mode_2_location:
                         node_mode_2_locations_h[vertex_coord]=root_X[list(root_node_h_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_h)
-                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts)
 
             
 
@@ -1813,16 +1793,19 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     if vertex_coord in root_node_v_mode_2_location:
                         node_mode_2_locations_v[vertex_coord]=root_Y[list(root_node_v_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_v)
-                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts)
             
     
     if structure.via_connected_layer_info!=None:
         for child in structure.root_node_h.child:
-            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
-            #print ("H",child.name,child.id,child.node_mode_2_locations)
+            child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+            #print("H",child.name,child.id,len(child.design_strings))
+            #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
         for child in structure.root_node_v.child:
-            child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
-        
+            child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+            #print("V",child.name,child.id,len(child.design_strings))
+            #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+            #print ("H",child.name,child.id,child.node_mode_2_locations)
             #print ("V",child.name,child.id,child.node_mode_2_locations)
         #input()
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
@@ -1832,10 +1815,12 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                 #print (node.node_min_locations)
                 node.vertices.sort(key= lambda x:x.index, reverse=False)
                 ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
-                node.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts,ledge_dim=ledge_dim)
-                #print(node.id,node.parent.id)
-                #print(node.node_mode_2_locations)
-        #input()
+                node.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,ledge_dim=ledge_dim,algorithm=algorithm)
+
+
+
+                    #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints)
+
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
             
@@ -1849,8 +1834,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                     #print(structure.layers[i].forward_cg.LocationH)
                     #print(structure.layers[i].forward_cg.LocationV)
                     #input()
-                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
-                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
                     
                     structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
                     #print(structure.layers[i].mode_2_location_v)
@@ -1924,8 +1909,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
 
                         #print ("minLocationH", structure.layers[i].c_g.minLocationH)
                         #print ("minLocationV", structure.layers[i].c_g.minLocationV)
-                        structure.layers[i].mode_2_location_h= structure.layers[i].c_g.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
-                        structure.layers[i].mode_2_location_v = structure.layers[i].c_g.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                        structure.layers[i].mode_2_location_h= structure.layers[i].c_g.HcgEval( mode,Random=Random,seed=seed, N=num_layouts)
+                        structure.layers[i].mode_2_location_v = structure.layers[i].c_g.VcgEval( mode,Random=Random,seed=seed, N=num_layouts)
 
                         structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].c_g.minValueCalculation(structure.layers[i].c_g.HorizontalNodeList,structure.layers[i].c_g.VerticalNodeList,mode)
                         #print (structure.layers[i].mode_2_location_h)
@@ -1941,8 +1926,8 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
                 #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
 
                 
-                structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=None,seed=seed, N=num_layouts)
-                structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=None,seed=seed, N=num_layouts)
+                structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
                 
                 structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
                 #print (structure.layers[i].mode_2_location_h)

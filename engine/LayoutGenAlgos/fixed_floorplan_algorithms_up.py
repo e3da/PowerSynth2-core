@@ -3,6 +3,7 @@ sys.path.append('..')
 from core.engine.ConstrGraph.CGStructures import Edge,find_longest_path, is_connected
 from scipy.stats import distributions, truncnorm
 import numpy.random as random
+import numpy as np
 import copy
 
 def get_truncated_normal( low=0, upp=10, mean=0, sd=1):
@@ -35,7 +36,7 @@ def edge_split(start,split_point,end,fixed_vert_indices,adj_matrix,location):
         
         return new_edge
 #"""
-def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
+def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, num_layouts=0,algorithm=None):
     '''
     generic function for top down location evaluation of cg
     : param graph: constraint graph object
@@ -446,62 +447,190 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
             longest_path,min_constraints,longest_distance=find_longest_path(source.index,sink.index,adj_matrix)
             
             connected_graph_eval=False
-            for vert in sub_graph:
-                #print(vert.coordinate)
-                #print(vert.predecessors)
-                for coord in vert.predecessors:
-                    if coord>vert.coordinate and vert.index in longest_path:# and vert.coordinate not in locations:
-                        for edge_info in vert.predecessors[coord]:
-                            if edge_info[0]<0:
-                                connected_graph_eval=True
-                                break
 
-                if vert!=source and vert!=sink and vert.coordinate in fixed_vert_coords:
-                    connected_graph_eval=True
-                    break
-                
+            evaluation_done=False
+            if Random!=None and num_layouts==1 and algorithm==None :
+                if len(longest_path)>0:
+                    Random.longest_paths.append(longest_path)
+                    Random.min_constraints.append(min_constraints)
+                    Random.new_weights.append(0)
+                    #print("LP",ID,len(Random.longest_paths),algorithm)
                 else:
-                    continue 
+                    Random.longest_paths.append([])
+                    Random.min_constraints.append([])
+                    Random.new_weights.append([])
+
+
+            if Random!=None and algorithm!=None :
+                if longest_path in Random.longest_paths:
+                    current_path=longest_path
+                    current_index=Random.longest_paths.index(current_path)
+                    longest_distance=sum(Random.min_constraints[current_index])
+                    for value in Random.min_constraints[current_index]:
+                        if value<0:
+                            connected_graph_eval=True
+                            break
+                    for vert in sub_graph:
+                        if vert!=source and vert!=sink and vert.coordinate in fixed_vert_coords:
+                            connected_graph_eval=True
+                            break
+                        for coord in vert.predecessors:
+                            if coord>vert.coordinate and vert.index in longest_path:# and vert.coordinate not in locations:
+                                for edge_info in vert.predecessors[coord]:
+                                    if edge_info[0]<0:
+                                        connected_graph_eval=True
+                                        break
+
+                    #print(longest_path,min_constraints)
+                    if connected_graph_eval==False:
+
+                            #for _ in range(len(Random.min_constraints[current_index])-1):
+                                #value = gauss(0, 1)
+                                #Random.new_weights[current_index].append(value)
+                        if sink.coordinate in locations and source.coordinate in locations:
+                            allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                        else:
+                            allocated_distance=longest_distance
+                        '''if len(min_constraints)>1:
+                            Random.new_weights[current_index]=random.dirichlet(np.ones(len(Random.min_constraints[current_index])),size=1)[0]
+                            
+                        else:
+                            Random.new_weights[current_index]=[allocated_distance]'''
+                        #if len(min_constraints)==1:
+                            #Random.new_weights[current_index]=[allocated_distance]
+
+                        if longest_distance>0:
+                            randomization_range=allocated_distance-longest_distance
+                            distributed_room=[i for i in Random.min_constraints[current_index]]
+                            if randomization_range>0:
+                                #print(Random.new_weights[current_index])
+                                evaluation_weights=[int(i*randomization_range) for i in Random.new_weights[current_index]]
+                                rest_weight=randomization_range-sum(evaluation_weights)
+                                #print(distributed_room,evaluation_weights,randomization_range)
+                                for i in range(len(distributed_room)-1):
+                                    distributed_room[i]+=evaluation_weights[i]
+                                distributed_room[-1]+=rest_weight
+                                evaluation_done=True
+
+
+
+
+
+
+
+
+            if evaluation_done==False :
+                for vert in sub_graph:
+                    #print(vert.coordinate)
+                    #print(vert.predecessors)
+                    for coord in vert.predecessors:
+                        if coord>vert.coordinate and vert.index in longest_path:# and vert.coordinate not in locations:
+                            for edge_info in vert.predecessors[coord]:
+                                if edge_info[0]<0:
+                                    connected_graph_eval=True
+                                    break
+
+                    if vert!=source and vert!=sink and vert.coordinate in fixed_vert_coords:
+                        connected_graph_eval=True
+                        break
+                    
+                    else:
+                        continue 
             #print(ID,source.coordinate,sink.coordinate,longest_path)
             #print(connected_graph_eval)
             
-            if connected_graph_eval==True:
-                #print(longest_path,min_constraints)
-                locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path)
-                #print("CON",ID,locations)
-                
-                for edge in graph.nx_graph_edges:
-                    if edge.source.coordinate in locations and edge.type=='fixed':
-                        coord=edge.dest.coordinate
-                        if coord not in locations:
-                            locations[coord]=locations[edge.source.coordinate]+edge.constraint
-                #print("B",len(graph.nx_graph_edges),len(graph.edges))
-                #graph=update_graph(locations,graph)
-                #print(locations)
-                #input()
-                
-                #print("AC",len(graph.nx_graph_edges))
-                
-            else:
-                #longest_path,min_constraints,longest_distance=find_longest_path(source.index,sink.index,adj_matrix)
-                #print(longest_path,min_constraints)
-                #for edge in graph.nx_graph_edges:
-                    #edge.printEdge()
-                #allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
-                if sink.coordinate in locations and source.coordinate in locations:
-                    allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                if connected_graph_eval==True:
+                    #print(longest_path,min_constraints)
+                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID)
+                    #print("CON",ID,locations)
+                    
+                    for edge in graph.nx_graph_edges:
+                        if edge.source.coordinate in locations and edge.type=='fixed':
+                            coord=edge.dest.coordinate
+                            if coord not in locations:
+                                locations[coord]=locations[edge.source.coordinate]+edge.constraint
+                    #print("B",len(graph.nx_graph_edges),len(graph.edges))
+                    #graph=update_graph(locations,graph)
+                    #print(locations)
+                    #input()
+                    
+                    #print("AC",len(graph.nx_graph_edges))
+                    
                 else:
-                    allocated_distance=longest_distance
-                #print(longest_distance,allocated_distance)
-                #input()
-                if longest_distance>0:
-                    randomization_range=allocated_distance-longest_distance
-                    #print(randomization_range)
-                    graph.vertices.sort(key=lambda x: x.index, reverse=False)
-                    if randomization_range>0:
-                        distributed_room=randomization_room_distributor(randomization_range,min_constraints,Random,seed)
+                    #longest_path,min_constraints,longest_distance=find_longest_path(source.index,sink.index,adj_matrix)
+                    #print(longest_path,min_constraints)
+                    #for edge in graph.nx_graph_edges:
+                        #edge.printEdge()
+                    #allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
+                    if sink.coordinate in locations and source.coordinate in locations:
+                        allocated_distance=locations[sink.coordinate]-locations[source.coordinate]
                     else:
-                        distributed_room=[i for i in min_constraints]
+                        allocated_distance=longest_distance
+                    #print(longest_distance,allocated_distance)
+                    #input()
+                    if longest_distance>0:
+                        randomization_range=allocated_distance-longest_distance
+                        #print(randomization_range)
+                        graph.vertices.sort(key=lambda x: x.index, reverse=False)
+                        if randomization_range>0:
+                            #print(num_layouts,Random)
+                            if algorithm==None:
+                                algorithm='NG-Random'
+                            else:
+                                algorithm=algorithm
+                            distributed_room=randomization_room_distributor(randomization_range,min_constraints,Random,seed,algorithm=algorithm)
+                        else:
+                            distributed_room=[i for i in min_constraints]
+                        for i in range(len(longest_path)):
+                            index_=longest_path[i]
+
+                            if graph.vertices[index_].coordinate in locations:
+                                coord=graph.vertices[index_].coordinate
+                                for edge in graph.nx_graph_edges:
+                                    if edge.source.coordinate==coord and edge.dest.removable==True:
+                                        coord2=edge.dest.coordinate
+                                        if coord2 not in locations:
+                                            locations[coord2]=locations[coord]+edge.constraint
+
+                                #print("B",len(graph.nx_graph_edges),len(graph.edges))
+                                #graph=update_graph(locations,graph)
+                                
+
+                                
+                            else:
+                                coord=graph.vertices[index_].coordinate
+                                index_p=longest_path[i-1]
+                                #graph.vertices.sort(key=lambda x: x.index, reverse=False)
+                                prior_coord=graph.vertices[index_p].coordinate
+                            
+                                if coord not in locations and prior_coord in locations:
+                                    locations[coord]=locations[prior_coord]+distributed_room[i-1]
+                                    for edge in graph.nx_graph_edges:
+                                        if edge.source.coordinate ==coord and edge.dest.removable==True:
+                                            coord2=edge.dest.coordinate
+                                            if coord2 not in locations:
+                                                locations[coord2]=locations[coord]+edge.constraint
+                                    #print("BS",len(graph.nx_graph_edges),len(graph.edges))
+                                    #graph=update_graph(locations,graph)
+                                    #print("AS",len(graph.nx_graph_edges))
+                                else:
+                                    #print(coord,prior_coord)
+                                    #print(locations)
+                                    #input()
+                                    continue
+            else:
+                if connected_graph_eval==True:
+                    #print(longest_path,min_constraints)
+                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID)
+                    #print("CON",ID,locations)
+
+                    for edge in graph.nx_graph_edges:
+                        if edge.source.coordinate in locations and edge.type=='fixed':
+                                        coord=edge.dest.coordinate
+                                        if coord not in locations:
+                                            locations[coord]=locations[edge.source.coordinate]+edge.constraint
+
+                else:
                     for i in range(len(longest_path)):
                         index_=longest_path[i]
 
@@ -513,17 +642,20 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                                     if coord2 not in locations:
                                         locations[coord2]=locations[coord]+edge.constraint
 
-                            #print("B",len(graph.nx_graph_edges),len(graph.edges))
-                            #graph=update_graph(locations,graph)
-                            
+                                            #print("B",len(graph.nx_graph_edges),len(graph.edges))
+                #graph=update_graph(locations,graph)
+            #print(locations)
+        
+        #else:
+            #print("ERROR: NO PATH FOUND BETWEEN {} and {} in ID={}".format (source.coordinate,sink.coordinate,ID))
+        
 
-                            
                         else:
                             coord=graph.vertices[index_].coordinate
                             index_p=longest_path[i-1]
                             #graph.vertices.sort(key=lambda x: x.index, reverse=False)
                             prior_coord=graph.vertices[index_p].coordinate
-                            
+                
                             if coord not in locations and prior_coord in locations:
                                 locations[coord]=locations[prior_coord]+distributed_room[i-1]
                                 for edge in graph.nx_graph_edges:
@@ -531,96 +663,11 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
                                         coord2=edge.dest.coordinate
                                         if coord2 not in locations:
                                             locations[coord2]=locations[coord]+edge.constraint
-                                #print("BS",len(graph.nx_graph_edges),len(graph.edges))
-                                #graph=update_graph(locations,graph)
-                                #print("AS",len(graph.nx_graph_edges))
-                            else:
-                                #print(coord,prior_coord)
-                                #print(locations)
-                                #input()
-                                continue
-                                #print(locations)
-                                #input()
-                                """for edge in graph.nx_graph_edges:
-                                    if edge.source.coordinate in locations and edge.dest.removable==True:
-                                        coord=edge.dest.coordinate
-                                        if coord not in locations:
-                                            locations[coord]=locations[edge.source.coordinate]+edge.constraint
-                                            #print("B",len(graph.nx_graph_edges),len(graph.edges))
-                                            graph=update_graph(locations,graph)
-                                            #print("A",len(graph.nx_graph_edges))
-                                            #input()"""
-                    
-                    
-                    #else:
-                        #print("ERROR: NO LONGEST PATH FROM", source.coordinate, "TO", sink.coordinate, "in ID:", ID)
-                        #exit()
-                #graph=update_graph(locations,graph)
-            #print(locations)
-        
-        #else:
-            #print("ERROR: NO PATH FOUND BETWEEN {} and {} in ID={}".format (source.coordinate,sink.coordinate,ID))
-        
-        """else:
-            evaluated_coords=[]
-            not_evaluated=[]
-            for vert in sub_graph:
-                if vert.coordinate in locations:
-                    evaluated_coords.append(vert.coordinate)
-                else:
-                    not_evaluated.append(vert)
-            
-            if len(evaluated_coords)!=len(sub_graph):
-                #print(ID,evaluated_coords)
-                #for vert in not_evaluated:
-                    #print(vert.coordinate)
-                
-                
-                
-                #if src!=None:
-                for sink in not_evaluated:
-                    sub_graph.sort(key=lambda x: x.index, reverse=False)
-                    src=sub_graph[0]
-                    longest_path,min_constraints,longest_distance=find_longest_path(src.index,sink.index,adj_matrix)
-                    while len(longest_path)==0:
-                        for i in range(1,len(sub_graph)):
-                            src=sub_graph[i]
-                            if src.index<sink.index:
-                                longest_path,min_constraints,longest_distance=find_longest_path(src.index,sink.index,adj_matrix)
-                                if len(longest_path)>0:
-                                    break
-                            
-                    print(src.coordinate,sink.coordinate,longest_path)    
-                    input()   
-                    #longest_path,min_constraints,longest_distance=find_longest_path(src.index,sink.index,adj_matrix)
-                    if len(longest_path)>0:
-                        if src.coordinate not in sink.successors:
-                            locations[sink.coordinate]=locations[src.coordinate]+longest_distance
-                        else:
-                            src_loc=locations[src.coordinate]
-                            if len(sink.successors[src.coordinate])==1:
-                                backward_weight=sink.successors[src.coordinate][0][0]
-                            else:
-                                min_weight=0
-                                for edge_info in sink.successors[src.coordinate]:
-                                    if edge_info[0]<min_weight:
-                                        min_weight=edge_info[0]
-                                backward_weight=min_weight
-                            if abs(longest_distance)<abs(backward_weight):
-                                min_value=src_loc+longest_distance
-                                max_value=src_loc+abs(backward_weight)
-                                locations[sink.coordinate]=random.random_integers(min_value,max_value)
-                                #print(src.coordinate,sink.coordinate,min_value,max_value,(max_value-min_value))
-                                #rint(src_loc,locations[sink.coordinate])
-                                #input()
-                            else:
-                                locations[sink.coordinate]=locations[src.coordinate]+longest_distance
 
-                        graph=update_graph(locations,graph)
-                    else:
-                        print("HERE")
-                        input()
-                #print(locations)"""
+                            else:
+
+                                continue
+
         
         graph=update_graph(locations,graph)                
                 
@@ -640,15 +687,14 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None):
     
     if len(graph.nx_graph_edges)==0 :#or len(locations)==len(graph.vertices):
         #print("END",ID,locations)
-        return locations
+        #if Random!=None and num_layouts==1 and algorithm==None :
+        return locations, Random
+
     else:
         
         #print(len(graph.nx_graph_edges),len(graph.edges))
         #print("REC",locations)
-        '''if ID==-3:
-            print(locations)
-            input()'''
-        return solution_eval(graph_in=graph, locations=locations, ID=ID, Random=Random, seed=seed)
+        return solution_eval(graph_in=graph, locations=locations, ID=ID, Random=Random, seed=seed, num_layouts=num_layouts,algorithm=algorithm)
         #print("L",locations)
 
 #"""    
@@ -780,7 +826,14 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
         distributed_rooms[-1]+=randomization_range-sum_
         return distributed_rooms
 
-def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path):
+
+
+
+
+
+
+
+def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID=None):
     '''
     this function evaluates multiple source and multiple sink graph
     '''
@@ -894,7 +947,7 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
         sinks.append(current_vert)
         sources.sort()
         sinks.sort()
-        #non_fixed_vertices.sort()
+        non_fixed_vertices.sort()
         #print(all_verts[current_vert].coordinate ,locations)
 
     return locations

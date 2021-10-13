@@ -8,6 +8,8 @@ import copy
 import os
 #from colormap import rgb2hex
 import matplotlib
+import numpy.random as random
+import numpy as np
 from core.engine.ConstrGraph.CGStructures import Vertex, Edge, Graph, find_longest_path, fixed_edge_handling
 from core.engine.CornerStitch.CornerStitch import Node
 from core.engine.LayoutSolution.database import create_connection,insert_record
@@ -20,6 +22,7 @@ from core.engine.Structure3D.cell_3D import Cell3D
 from core.MDK.Constraint.constraint_up import constraint_name_list
 from core.engine.LayoutSolution.color_list import color_list_generator
 from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
+from core.engine.OptAlgoSupport.optimization_algorithm_support import DesignString
 
 class Structure_3D():
     def __init__(self):
@@ -47,8 +50,10 @@ class Structure_3D():
         self.current_info= None # current information from the user for reliability awareness case
         self.objects_3D =[] # duplicated 3D objects.
         self.types_for_all_layers_plot=[] # to store cs types for plotting all layers in the same figure
-        
-        
+        # for genetic algorithm
+        self.hcg_design_strings = []  # list of design string objects
+        self.vcg_design_strings = []
+
     def create_module_data_info(self,layer_stack=None):
         '''
         creates ModuleDataCornerSticth object
@@ -840,10 +845,12 @@ class Structure_3D():
                 via_root_node_h.name=via_name
                 via_root_node_v.name=via_name
                 via_root_node_h.parent=self.root_node_h # assigning root node as the parent node
+                via_root_node_h.direction='hor'
                 self.root_node_h.child.append(via_root_node_h) # assigning each via connected group as child node
                 via_root_node_v.parent=self.root_node_v
                 self.root_node_v.child.append(via_root_node_v)
-                
+                via_root_node_v.direction='ver'
+
                 for layer in self.layers:
                     if layer.name in layer_name_list:
                         # assuming all layers in the same via connected group have same origin and dimensions
@@ -916,7 +923,9 @@ class Structure_3D():
                 via_node_h=Node_3D(id=id) # for each via connected layer group
                 via_node_v=Node_3D(id=id) # for each via connected layer group
                 via_node_h.name=via_name
+                via_node_h.direction='hor'
                 via_node_v.name=via_name
+                via_node_v.direction='ver'
                 #for name in self.sub_roots:
                     
                 if via_name in name:
@@ -1383,7 +1392,382 @@ class Structure_3D():
         
         #propagating to parent node cg
         
+    def get_design_strings(self):
+        '''
+        populates hcg_design_strings and vcg_design_strings
+        '''
+        hcg_strings=[]
+        vcg_strings=[]
+        hcg_string_objects=[]
+        vcg_string_objects=[]
+        count=0
+        if self.via_connected_layer_info!=None:
+            for child in self.root_node_h.child:
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                #print("H",child.name,child.id,len(child.design_strings))
+                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+                hcg_strings+=child.design_strings[0].min_constraints
+                count+=len(child.design_strings[0].min_constraints)
+                hcg_string_objects.append(child.design_strings[0])
+            for child in self.root_node_v.child:
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                #print("V",child.name,child.id,len(child.design_strings))
+                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+                vcg_strings+=child.design_strings[0].min_constraints
+                vcg_string_objects.append(child.design_strings[0])
+
+            for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
+                #print(via_name,sub_root_node_list )
+                for node in sub_root_node_list:
+                    #print(len(node.design_strings))
+                    #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints)
+                    #input()
+                    if node.direction=='hor':
+                        hcg_strings+=node.design_strings[0].min_constraints
+                        count+=len(node.design_strings[0].min_constraints)
+                        hcg_string_objects.append(node.design_strings[0])
+                    elif node.direction=='ver':
+                        vcg_strings+=node.design_strings[0].min_constraints
+                        vcg_string_objects.append(node.design_strings[0])
+            for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
+                sub_root=sub_root_node_list # root of each via connected layes subtree
+
+                for i in range(len(self.layers)):
+                    if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
+                        #count+=len(list(self.layers[i].forward_cg.design_strings_h.values()))
+                        #print("HCG",self.layers[i].name)
+                        for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
+                            #for id,ds_ in ds.items():
+                            #print(id,len(ds_.min_constraints))
+                            if id in self.layers[i].forward_cg.design_strings_h:
+                                hcg_string_objects.append(self.layers[i].forward_cg.design_strings_h[id])
+                                ds_=self.layers[i].forward_cg.design_strings_h[id]
+                                #print(id)
+                                #print(len(ds_.min_constraints))
+                                if len(ds_.min_constraints)==0:
+                                    #print(ds_.min_constraints,ds_.new_weights)
+                                    continue
+                                else:
+                                    count+=len(ds_.min_constraints)
+                                    hcg_strings+=ds_.min_constraints
+
+                        #print("VCG")
+                        for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+                            #for id,ds_ in ds.items():
+                            #print(id,len(ds_.min_constraints))
+                            if id in self.layers[i].forward_cg.design_strings_v:
+                                vcg_string_objects.append(self.layers[i].forward_cg.design_strings_v[id])
+                                ds_=self.layers[i].forward_cg.design_strings_v[id]
+                                #print(id)
+                                #print(len(ds_.min_constraints))
+                                if len(ds_.min_constraints)==0:
+                                    #rint(ds_.min_constraints,ds_.new_weights)
+                                    continue
+                                else:
+                                    vcg_strings+=ds_.min_constraints
+                            #print(ds_.longest_paths,ds_.min_constraints)
+                        #input()
+                        #hcg_strings.append(list(self.layers[i].forward_cg.design_strings_h.values()))
+                        #vcg_strings.append(list(self.layers[i].forward_cg.design_strings_v.values()))
+
+                        #print(self.layers[i].forward_cg.design_strings_h,self.layers[i].forward_cg.design_strings_v)
+
+            #print("GATHERD",count)
+
+
+        else:# handles 2D/2.5D layouts
+            count=0
+
+            sub_tree_root=[self.root_node_h,self.root_node_v] # root of each via connected layes subtree
+            for i in range(len(self.layers)):
+                if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+
+                    #print("HCG",self.layers[i].name,self.layers[i].forward_cg.design_strings_h)
+                    for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
+                        #for id,ds_ in ds.items():
+
+                        if id in self.layers[i].forward_cg.design_strings_h:
+                            hcg_string_objects.append(self.layers[i].forward_cg.design_strings_h[id])
+                            ds_=self.layers[i].forward_cg.design_strings_h[id]
+                            #print(id)
+                            #print(len(ds_.min_constraints))
+                            if len(ds_.min_constraints)==0:
+                                #print(ds_.min_constraints,ds_.new_weights)
+                                continue
+                            else:
+                                count+=len(ds_.min_constraints)
+                                hcg_strings+=ds_.min_constraints
+                            #print("HCG",ds_.longest_paths,ds_.min_constraints)
+                    #print("VCG")
+                    #print(self.layers[i].forward_cg.design_strings_v[])
+                    for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+                        #for id,ds_ in ds.items():
+                        #print(id,self.layers[i].forward_cg.design_strings_v[id].longest_path,self.layers[i].forward_cg.design_strings_v[id].min_constraints)
+
+                        if id in self.layers[i].forward_cg.design_strings_v:
+                            vcg_string_objects.append(self.layers[i].forward_cg.design_strings_v[id])
+                            ds_=self.layers[i].forward_cg.design_strings_v[id]
+                            #print(id)
+                            #print(len(ds_.min_constraints))
+                            if len(ds_.min_constraints)==0:
+                                #print(ds_.min_constraints,ds_.new_weights)
+                                continue
+                            else:
+                                vcg_strings+=ds_.min_constraints
+                            #print(ds_.longest_paths,ds_.min_constraints)
+                    #input()
+
+
+                    #hcg_strings.append(list(self.layers[i].forward_cg.design_strings_h.values()))
+                    #vcg_strings.append(list(self.layers[i].forward_cg.design_strings_v.values()))
+
+            #print(count)
+        for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+            #for id,ds_ in ds.items():
+            print(id,self.layers[i].forward_cg.design_strings_v[id].longest_paths,self.layers[i].forward_cg.design_strings_v[id].min_constraints)
+
+        self.hcg_design_strings=hcg_strings
+        self.vcg_design_strings=vcg_strings
+        print("B")
+        print(self.hcg_design_strings)
+        print(self.vcg_design_strings)
+        return #hcg_string_objects,vcg_string_objects
+
+    def update_design_strings(self,individual):
+
+        hcg_new_weights=[]
+        vcg_new_weights=[]
+        start=0
+        for list_ in self.hcg_design_strings:
+
+            new_weights=individual[start:start+len(list_)]
+            start+=len(list_)
+            hcg_new_weights.append(new_weights)
+        #print(start)
+        #print(len(hcg_new_weights))
+        #print(hcg_new_weights)
+        for list_ in self.vcg_design_strings:
+
+            new_weights=individual[start:start+len(list_)]
+            start+=len(list_)
+            vcg_new_weights.append(new_weights)
+        #print(len(vcg_new_weights))
+        #print(vcg_new_weights)
+
+        normalized_hcg_new_weights_=[]
+        normalized_vcg_new_weights_=[]
+
+        for list_ in hcg_new_weights:
+            total=sum(list_)
+            #new_weights=[i/total for i in list_[:-1]]
+            #new_weights=[i/total for i in list_[:-1]]
+            #new_weights.append(1-sum(new_weights))
+            if total>0:
+                new_weights=[i/total for i in list_[:-1]]
+                new_weights.append(1-sum(new_weights))
+            else:
+                new_weights=[0 for i in list_]
+            #print(list_)
+            new_weights=[round(i,2) for i in new_weights]
+            normalized_hcg_new_weights_.append(new_weights)
+        for list_ in vcg_new_weights:
+            total=sum(list_)
+            if total>0:
+                new_weights=[i/total for i in list_[:-1]]
+                new_weights.append(1-sum(new_weights))
+            else:
+                new_weights=[0 for i in list_]
+
+            #print(list_)
+            new_weights=[round(i,2) for i in new_weights]
+            normalized_vcg_new_weights_.append(new_weights)
+
+
+        normalized_hcg_new_weights=copy.deepcopy(normalized_hcg_new_weights_)
+        normalized_vcg_new_weights=copy.deepcopy(normalized_vcg_new_weights_)
         
+        print(len(normalized_hcg_new_weights))
+        print(len(normalized_vcg_new_weights))
+        print(normalized_hcg_new_weights)
+        print(normalized_vcg_new_weights)
+
+        """
+        hcount=0
+        vcount=0
+        for list_ in normalized_hcg_new_weights:
+            hcount+=len(list_)
+        for list_ in normalized_vcg_new_weights:
+            vcount+=len(list_)
+        #print(hcount,vcount)"""
+
+
+
+        #update new_weights in design string objects
+        if self.via_connected_layer_info!=None:
+            for child in self.root_node_h.child:
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                #print("H",child.name,child.id,len(child.design_strings))
+                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+
+                for i in range(len(child.design_strings[0].min_constraints)):
+
+                    new_weight=normalized_hcg_new_weights.pop(0)
+                    #new_weight=random.dirichlet(np.ones(len(child.design_strings[0].min_constraints[i])),size=1)[0]
+                    child.design_strings[0].new_weights[i]=new_weight
+
+            #for child in self.root_node_h.child:
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                #print("H",child.name,child.id,len(child.design_strings))
+                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
+
+
+
+            for child in self.root_node_v.child:
+                for i in range(len(child.design_strings[0].min_constraints)):
+
+                    new_weight=normalized_vcg_new_weights.pop(0)
+                    child.design_strings[0].new_weights[i]=new_weight
+
+
+            #for child in self.root_node_v.child:
+                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                #print("V",child.name,child.id,len(child.design_strings))
+                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
+
+            for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
+                #print(via_name,sub_root_node_list )
+                for node in sub_root_node_list:
+
+                    #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints)
+                    if node.direction=='hor':
+                        for i in range(len(node.design_strings[0].min_constraints)):
+
+                            new_weight=normalized_hcg_new_weights.pop(0)
+
+                            node.design_strings[0].new_weights[i]=new_weight
+
+                        #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints,node.design_strings[0].new_weights)
+                    elif node.direction=='ver':
+                        for i in range(len(node.design_strings[0].min_constraints)):
+
+                            new_weight=normalized_vcg_new_weights.pop(0)
+
+                            node.design_strings[0].new_weights[i]=new_weight
+                        #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints,node.design_strings[0].new_weights)
+
+            #for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
+                #sub_root=sub_root_node_list # root of each via connected layes subtree
+            for i in range(len(self.layers)):
+                #print(self.layers[i].forward_cg.design_strings_h.keys())
+                #print(self.layers[i].name)
+                ds_=self.layers[i].forward_cg.design_strings_h[1]
+                for i in range(len(ds_.min_constraints)):
+                    new_weight=normalized_hcg_new_weights.pop(0)
+                    ds_.new_weights[i]=new_weight
+                #print(ds_,ds_.min_constraints,ds_.new_weights,ds_.direction)
+            for i in range(len(self.layers)):
+                dsv=self.layers[i].forward_cg.design_strings_v[1]
+                for i in range(len(dsv.min_constraints)):
+                    new_weight=normalized_vcg_new_weights.pop(0)
+                    dsv.new_weights[i]=new_weight
+                #print(dsv,dsv.min_constraints,dsv.new_weights,dsv.direction)
+            #input()
+            '''
+            for i in range(len(self.layers)):   
+                #print(self.layers[i].forward_cg.design_strings_h.keys())
+                for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
+                    print(self.layers[i].name,id,len(normalized_hcg_new_weights))
+                    if id in self.layers[i].forward_cg.design_strings_h:
+                        ds_=self.layers[i].forward_cg.design_strings_h[id]
+                        print(ds_.min_constraints) 
+                        if len(ds_.min_constraints)==0:
+                            print(ds_.longest_paths,ds_.new_weights)
+                            continue
+                        else:
+                            for i in range(len(ds_.min_constraints)):
+                                new_weight=normalized_hcg_new_weights.pop(0)
+                                ds_.new_weights[i]=new_weight
+                        print(ds_.min_constraints,ds_.new_weights,ds_.direction)
+                for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+                        #for id,ds_ in ds.items():
+                    print(self.layers[i].name,id,len(normalized_vcg_new_weights))
+                    if id in self.layers[i].forward_cg.design_strings_v:
+                        ds_=self.layers[i].forward_cg.design_strings_v[id]
+                        print(id)
+                        #print(len(ds_.min_constraints))
+                        #print(ds_.min_constraints)
+                        if len(ds_.min_constraints)==0:
+                            print(ds_.longest_paths,ds_.new_weights)
+                            continue
+                        else:
+                        
+                            for i in range(len(ds_.min_constraints)):
+                                new_weight=normalized_vcg_new_weights.pop(0)
+                                ds_.new_weights[i]=new_weight
+
+                        print(ds_.min_constraints,ds_.new_weights)
+            '''
+
+
+
+        else:# handles 2D/2.5D layouts
+
+
+            sub_tree_root=[self.root_node_h,self.root_node_v] # root of each via connected layes subtree
+            for i in range(len(self.layers)):
+                if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
+
+                    print("HCG",self.layers[i].name)
+                    for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
+                        #for id,ds_ in ds.items():
+
+                        if id in self.layers[i].forward_cg.design_strings_h:
+                            ds_=self.layers[i].forward_cg.design_strings_h[id]
+                            #print(id,ds_.longest_paths,ds_.min_constraints)
+                            #print(len(ds_.min_constraints))
+                            if len(ds_.min_constraints)==0:
+                                #print(ds_.longest_paths,ds_.new_weights)
+                                continue
+                            else:
+                                for j in range(len(ds_.min_constraints)):
+                                    new_weight=normalized_hcg_new_weights.pop(0)
+                                    ds_.new_weights[j]=new_weight
+                                    #print(ds_.new_weights)
+
+                                
+                    #VCG
+                    for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+                        #for id,ds_ in ds.items():
+                        #print(id,self.layers[i].forward_cg.design_strings_v[id])
+                        if id in self.layers[i].forward_cg.design_strings_v:
+                            dsv=self.layers[i].forward_cg.design_strings_v[id]
+
+                            #print(id)
+                            #print(len(ds_.min_constraints))
+                            if len(dsv.min_constraints)==0:
+                                #print(ds_.longest_paths,ds_.new_weights)
+                                continue
+                            else:
+                                for j in range(len(dsv.min_constraints)):
+                                    new_weight=normalized_vcg_new_weights.pop(0)
+                                    dsv.new_weights[j]=new_weight
+
+                            #print(ds_.min_constraints,ds_.new_weights)
+
+
+                    #hcg_strings.append(list(self.layers[i].forward_cg.design_strings_h.values()))
+                    #vcg_strings.append(list(self.layers[i].forward_cg.design_strings_v.values()))
+
+
+
+
+
+
+
+
+
+
+
         
 
 
@@ -1421,6 +1805,10 @@ class Node_3D(Node):
         #self.node_min_location_v = {}# to capture the final location of each layer's vertical cg node in the structure
         self.node_mode_2_locations={}
         self.node_mode_1_locations=[]
+
+        #for genetic algorithm
+        self.design_strings=[] # list of design_String objects
+        self.direction=None #'hor': for HCG, 'ver': for VCG
 
         Node.__init__(self, parent=self.parent,boundaries=None,stitchList=None,id=self.id)
     
@@ -2036,7 +2424,7 @@ class Node_3D(Node):
         #print("ID",self.id)
         #print(final)
 
-    def get_fixed_sized_solutions(self,level,Random,seed,N,ledge_dim=None):
+    def get_fixed_sized_solutions(self,level,Random,seed,N,ledge_dim=None,algorithm=None):
         '''
 
         evaluates fixed sized solutions based on parents coordinates
@@ -2096,13 +2484,31 @@ class Node_3D(Node):
                 #if self.id==-3:
                     #print("B",loc)
 
-                
-                loc= solution_eval(graph_in=copy.deepcopy(self.tb_eval_graph), locations=loc, ID=self.id, Random=Random, seed=seed)
-                loc_items=loc.items()
+                if Random==False and len(self.design_strings)==0:
+                    ds=DesignString(node_id=self.id,direction=self.direction)
+
+                elif Random==False and len(self.design_strings)==1 and algorithm!=None:
+                    ds=self.design_strings[0]
+                    #print(element.ID,loc_y,ds.longest_paths)
+                else:
+                    ds=None
+
+                #if Random==False:
+                #    ds=DesignString(node_id=self.id,direction=self.direction)
+                #else:
+                #    ds=None
+
+                loc,design_strings= solution_eval(graph_in=copy.deepcopy(self.tb_eval_graph), locations=loc, ID=self.id, Random=ds, seed=seed,num_layouts=N,algorithm=algorithm)
+                #loc_items=loc.items()
+                #print(design_strings)
                 
                 #print("HERE",self.id,sorted(loc_items))
                 count+=1
                 locations_.append(loc)  
+                if Random==False and N==1 and algorithm==None:
+
+                    self.design_strings.append(design_strings)
+
 
             self.node_mode_2_locations[self.id]=locations_
 

@@ -314,9 +314,7 @@ class Cmd_Handler:
             if run_option == 0:
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan)
-
-
+                                         floor_plan=floor_plan,dbunit=self.dbunit)
 
                 
 
