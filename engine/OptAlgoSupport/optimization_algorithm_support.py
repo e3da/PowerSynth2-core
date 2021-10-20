@@ -185,7 +185,7 @@ def plot_fig_data(Layout_Rects,level,bw_type=None,min_dimensions=None,Min_X_Loc=
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[]):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100):
         #self.engine = engine
         #self.W = W
         #self.H = H
@@ -201,7 +201,7 @@ class new_engine_opt:
         self.method = method
         self.seed = seed
         self.level = level
-        self.num_gen = 100
+        self.num_gen = num_gen
         # number of evaluation
         self.num_measure = 2
         # Sim Anneal
@@ -648,7 +648,6 @@ class new_engine_opt:
         self.cg_interface=cg_interface
         self.W=floorplan[0]
         self.H=floorplan[1]
-        self.num_gen=5
         self.db_file=db_file
         self.sol_dir=sol_dir
         self.fig_dir=fig_dir
@@ -681,6 +680,7 @@ class new_engine_opt:
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
         if self.method == "NSGAII":
             # start = timeit.default_timer()
+            
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
                                    num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen)
             opt.run()
