@@ -89,8 +89,8 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
-            webbrowser.open_new("./GUI/pdfs/PowerSynth_v1.9.pdf")  
-            # webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
+            #webbrowser.open_new("./GUI/pdfs/PowerSynth_v1.9.pdf")  
+            webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
         
         def startProject():
             self.editMaterials()
@@ -554,6 +554,7 @@ class GUI():
             if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
                 ui.floor_plan_x.setEnabled(False)
                 ui.floor_plan_y.setEnabled(False)
+                ui.combo_optimization_algorithm.setEnabled(False)
                 if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
                     ui.num_layouts.setText("1")
                     ui.num_layouts.setEnabled(False)
@@ -585,6 +586,7 @@ class GUI():
             if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
                 ui.floor_plan_x.setEnabled(False)
                 ui.floor_plan_y.setEnabled(False)
+                ui.combo_optimization_algorithm.setEnabled(False)
                 if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
                     ui.num_layouts.setText("1")
                     ui.num_layouts.setEnabled(False)
@@ -601,6 +603,7 @@ class GUI():
             if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
                 ui.floor_plan_x.setEnabled(False)
                 ui.floor_plan_y.setEnabled(False)
+                ui.combo_optimization_algorithm.setEnabled(False)
                 if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
                     ui.num_layouts.setText("1")
                     ui.num_layouts.setEnabled(False)
@@ -748,10 +751,14 @@ class GUI():
         thermalSetup = QtWidgets.QDialog(parent=self.currentWindow)
         ui = UI_thermal_setup()
         ui.setupUi(thermalSetup)
+        ui.combo_model_select.setEnabled(False)
 
         def continue_UI():
             # SAVE VALUES HERE
-            self.modelSelect = "0"  if ui.combo_model_select.currentText() == "TSFM" else "1" if ui.combo_model_select.currentText() == "Analytical" else "2"
+            #self.modelSelect = "0"  if ui.combo_model_select.currentText() == "TSFM" else "1" if ui.combo_model_select.currentText() == "Analytical" else "2"
+            #ui.combo_model_select.setCurrentText= "ParaPower" 
+            ui.combo_model_select.setEnabled(False)
+            self.modelSelect="2" #default to ParaPower
             self.measureNameThermal = ui.lineedit_measure_name.text()
 
             for i in range(ui.tableWidget.rowCount()):

@@ -43,6 +43,11 @@
          <widget class="QComboBox" name="combo_model_select">
           <item>
            <property name="text">
+            <string>ParaPower</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>TSFM</string>
            </property>
           </item>
@@ -53,7 +58,7 @@
           </item>
           <item>
            <property name="text">
-            <string>ParaPower</string>
+            <string/>
            </property>
           </item>
          </widget>

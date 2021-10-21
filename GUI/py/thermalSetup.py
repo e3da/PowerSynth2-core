@@ -3,7 +3,7 @@
 # Form implementation generated from reading ui file 'ui/thermalSetup.ui',
 # licensing of 'ui/thermalSetup.ui' applies.
 #
-# Created: Sun Oct 10 17:51:53 2021
+# Created: Thu Oct 21 14:10:54 2021
 #      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
@@ -35,6 +35,8 @@ class Ui_Dialog(object):
         self.combo_model_select.addItem("")
         self.combo_model_select.addItem("")
         self.combo_model_select.addItem("")
+        self.combo_model_select.addItem("")
+        self.combo_model_select.setItemText(3, "")
         self.horizontalLayout_17.addWidget(self.combo_model_select)
         self.gridLayout.addLayout(self.horizontalLayout_17, 1, 0, 1, 1)
         self.horizontalLayout_18 = QtWidgets.QHBoxLayout()
@@ -116,9 +118,9 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(QtWidgets.QApplication.translate("Dialog", "Thermal Setup", None, -1))
         self.label_24.setText(QtWidgets.QApplication.translate("Dialog", "<html><head/><body><p align=\"justify\"><span style=\" font-size:10pt; font-weight:600;\">Thermal Setup</span></p></body></html>", None, -1))
         self.label_25.setText(QtWidgets.QApplication.translate("Dialog", "Model Select:", None, -1))
-        self.combo_model_select.setItemText(0, QtWidgets.QApplication.translate("Dialog", "TSFM", None, -1))
-        self.combo_model_select.setItemText(1, QtWidgets.QApplication.translate("Dialog", "Analytical", None, -1))
-        self.combo_model_select.setItemText(2, QtWidgets.QApplication.translate("Dialog", "ParaPower", None, -1))
+        self.combo_model_select.setItemText(0, QtWidgets.QApplication.translate("Dialog", "ParaPower", None, -1))
+        self.combo_model_select.setItemText(1, QtWidgets.QApplication.translate("Dialog", "TSFM", None, -1))
+        self.combo_model_select.setItemText(2, QtWidgets.QApplication.translate("Dialog", "Analytical", None, -1))
         self.label_26.setText(QtWidgets.QApplication.translate("Dialog", "Measure Name:", None, -1))
         self.tableWidget.horizontalHeaderItem(0).setText(QtWidgets.QApplication.translate("Dialog", "Device", None, -1))
         self.tableWidget.horizontalHeaderItem(1).setText(QtWidgets.QApplication.translate("Dialog", "Power", None, -1))

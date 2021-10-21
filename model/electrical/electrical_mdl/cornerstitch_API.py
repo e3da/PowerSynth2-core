@@ -209,7 +209,7 @@ class CornerStitch_Emodel_API:
                     N_v = (0,0,1) 
                 elif isl_dir =='Z-':
                     N_v = (0,0,-1)
-                print(N_v)
+                #print(N_v)
                 obj = self.comp_dict[name] # Get object type based on the name
                 type = name[0]
                 z_id = obj.layer_id
