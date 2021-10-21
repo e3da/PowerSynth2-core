@@ -38,6 +38,9 @@ def showSolutionBrowser(self):
         #self.cmd.solutionsFigure.set_size_inches(5, 4)
         axes = self.cmd.solutionsFigure.gca()
         axes.set_title("Solution Space")
+        #fig=Figure()
+        #ax=fig.add_subplot(111)
+        #canvas_sol_browser = FigureCanvas(fig)
 
         data_x=[]
         data_y=[]
@@ -63,8 +66,23 @@ def showSolutionBrowser(self):
                 else:
                     data_y.append(sol.solution_id)
 
+        
         def on_pick(event):
             self.solution_ind = event.ind[0]
+            sel_point = self.solution_ind
+            #try:
+                #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
+            #print ('sel_point', sel_point)
+            axes.clear()
+            axes.scatter(data_x, data_y, picker=1, marker='o', c='b',s = 50)
+            axes.scatter(data_x[sel_point], data_y[sel_point], picker=1, marker='o', c='r',s=100)
+            canvas.draw()
+        
+
+            #except:
+                #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
+            
+            
 
             i = 1
             if self.option==1:
@@ -95,9 +113,13 @@ def showSolutionBrowser(self):
                     ui.lineEdit_size_h.setText(str(feature.length))
                     
                     break
+            ui.lineEdit_size_w.setEnabled(False)
+            ui.lineEdit_size_h.setEnabled(False)
 
             ui.lineEdit_x.setText(str(round(float(event.artist.get_offsets()[event.ind][0][0]), 3)))
             ui.lineEdit_y.setText(str(round(float(event.artist.get_offsets()[event.ind][0][1]), 3)))
+            ui.lineEdit_x.setEnabled(False)
+            ui.lineEdit_y.setEnabled(False)
 
 
         def display_initial_layout():
@@ -120,13 +142,21 @@ def showSolutionBrowser(self):
 
 
         axes.scatter(data_x, data_y, picker=True)
-
         canvas = FigureCanvas(self.cmd.solutionsFigure)
-        canvas.callbacks.connect('pick_event', on_pick)
         canvas.draw()
+        canvas.callbacks.connect('pick_event', on_pick)
         scene2 = QtWidgets.QGraphicsScene()
         scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
+        
+        #try:
+            #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
+            
+        
+
+        #except:
+            #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
+        
 
         if self.option:
             ui.x_label.setText(perf_metrices[0])

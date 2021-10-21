@@ -218,7 +218,7 @@ class new_engine_opt:
         self.sol_gen_runtime=0
         self.eval_time=0
 
-    def eval_3D_layout(self,module_data=None,solution=None,init = False):
+    def eval_3D_layout(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 
         solution: single PS_Solution object for thermal evaluation (ParaPower API)
@@ -254,16 +254,17 @@ class new_engine_opt:
                 if self.e_api.e_mdl == 'FastHenry':
                     self.e_api.form_isl_script()
                     self.e_api.add_source_sink(measure.source,measure.sink)
-                    R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
-                    if solution.solution_id == id_select:
-                        print ("RL_FH",R,L)
-                        input()
+                    self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
+                    self.e_api.generate_fasthenry_inputs(solution.solution_id)
+                    if sol_len==1:
+                        R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                    #if solution.solution_id == id_select:
+                        #print ("RL_FH",R,L)
+
 
                 if self.e_api.e_mdl == "Loop":
                     R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
-                    if solution.solution_id == id_select:
-                        print ("RL_loop",R,L)
-                        input()
+
 
                 if self.e_api.e_mdl == "LoopFHcompare": # Compare mode = Inductance
                     # Reinit and recalculate
