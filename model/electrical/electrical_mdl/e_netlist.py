@@ -1,5 +1,5 @@
 from core.model.electrical.electrical_mdl.e_module import EModule,EWires
-from core.model.electrical.meshing.e_mesh_direct import EMesh
+from core.model.electrical.meshing.MeshStructure import EMesh
 import copy
 import numpy as np
 import networkx as nx

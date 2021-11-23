@@ -215,7 +215,7 @@ def Test_Mutual():
 
 if __name__ == '__main__':
     start = time.time()
-    mutual_between_bars(w1=10, l1=10, t1=0.2, w2=10, l2=16.67, t2=0.2, l3=16.67, p=0, E=10)
+    print(mutual_between_bars(w1=4, l1=20, t1=0.2, w2=1, l2=20, t2=0.2, l3=0, p=0, E=10))
 
     print(("time",time.time()-start))
     start = time.time()

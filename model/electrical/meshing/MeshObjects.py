@@ -297,7 +297,47 @@ class RectCell(Rect):
             edge = (self.center_node.node_id,self.center_node.East.node_id,edge_data)
             edges.append(edge)
         return edges
+class MeshEdge:
+    def __init__(self, m_type=None, nodeA=None, nodeB=None, data={}, width=1, length=1, z=0, thick=0.2, ori=None,
+                 side=None,eval = True):
+        '''
 
+        Args:
+            m_type: mesh type internal, boundary
+            nodeA: First node object
+            nodeB: Second node object
+            data: A dictionary type for Edge data, name, type ...
+            width: trace width
+            length: trace length
+            z: trace z-position
+            thick: trace thickness
+            ori: trace orientation in 2D
+            side: only use in hierarchial mode, this determines the orientation of the edge
+            eval: True or False, decision is made whether this piece is evaluated or not. If False, a small value of R,L will be used,
+                  Also, for such a case, mutual inductance evaluation would be ignored
+        '''
+        self.type = m_type  # Edge type, internal, boundary
+        # Edge parasitics (R, L for now). Handling C will be different
+        self.R = 1e-6
+        self.L = 1e-12
+        self.len = length
+        self.width = width
+        self.z = z  # if None this is an hier edge
+        self.thick = thick
+        # Evaluated width and length for edge
+        self.data = data
+        self.name = data['name']
+        # Updated Edge Current
+        self.I = 0
+        self.J = 0
+        self.E = 0
+
+        # Edges neighbour nodes
+        self.nodeA = nodeA
+        self.nodeB = nodeB
+        # Always == None if this is hierarchy type 1
+        self.ori = ori
+        self.side = side  # 0:NE , 1:NW , 2:SW , 3:SE
 class MeshNodeTable():
     def __init__(self, node_dict={}, xs=[], ys=[], z_pos = 0):
         '''

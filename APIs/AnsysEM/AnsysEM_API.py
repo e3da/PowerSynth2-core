@@ -51,6 +51,7 @@ class AnsysEM_API():
         self.max_f_id = 7
         self.selected_PS_features =[]
         self.sheet_ps_feature_via_table = {}
+        self.json_list =[]
     def __str__(self):
         info ='''
         {}
@@ -95,11 +96,16 @@ class AnsysEM_API():
                 box.set_color(self.devivce_color)
             if 'L' in PS_feature.name:
                 box.set_color(self.lead_color)
+                self.json_list.append(PS_feature.export_json())
+                
             if 'V' in PS_feature.name:
                 self.sheet_ps_feature_via_table[PS_feature.name] = PS_feature
+                self.json_list.append(PS_feature.export_json())
                 continue
             if 'T' in PS_feature.name:
                 box.set_color(self.trace_color)
+                self.json_list.append(PS_feature.export_json())
+                
             if 'Ceramic' in PS_feature.name:
                 box.set_color(self.iso_color)  
             if "." in PS_feature.name:
@@ -235,7 +241,16 @@ class AnsysEM_API():
             os.system('rm '+py_file)
         f = open(py_file,'w')
         f.write(self.output_script)
-
+        self.write_json()
+    def write_json(self):
+        out = ""
+        json_file = self.exported_script_dir+'/'+self.design_name + '.json'
+        for txt in self.json_list:
+            out += txt + "\n"
+        if os.path.isfile(json_file):
+            os.system('rm '+json_file)
+        f = open(json_file,'w')
+        f.write(out)
 if __name__ == "__main__":
     print("testing ANSYS EM API")
     new_api = ANSYS_EM_API(workspace='/nethome/qmle/AnsysEM/',version='19.3')

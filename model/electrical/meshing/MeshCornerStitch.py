@@ -336,9 +336,11 @@ class EMesh_CS(EMesh):
         # Take unique values only
         tbl_xs = list(set(tbl_xs))
         tbl_ys = list(set(tbl_ys))
-        MeshNodeTable = MeshNodeTable(node_dict=mesh_nodes, xs=tbl_xs, ys=tbl_ys, z_pos=z_pos)
-        return MeshNodeTable
-
+        mesh_tbl = MeshNodeTable(node_dict=mesh_nodes, xs=tbl_xs, ys=tbl_ys, z_pos=z_pos)
+        return mesh_tbl
+    def add_ground_mirror(self):
+        print("find ground pair-signal pair")
+        
     '''
     def add_ground_uniform_mesh(self,t = 0.2, z = 0, width = 40 , length = 40, N = 10,z_id =0):
         # Default a 10x10 mesh

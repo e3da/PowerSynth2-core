@@ -3,12 +3,11 @@ import sys
 import pandas as pd
 cur_path =sys.path[0] # get current path (meaning this file location)
 
-cur_path = cur_path[0:-36] #exclude "powercad/electrical_mdl"
+cur_path = cur_path[0:-36] #exclude 
 print ("cur path",cur_path)
 
 sys.path.append(cur_path)
 print (sys.path[0])
-
 # get the 3 fold integral mutual equation.
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
@@ -60,7 +59,7 @@ def form_skd(width=2, N = 3):
     d_min = width / sum(d_mult)
     d_mult = np.array(d_mult)
     d = d_mult*d_min
-    d = [int(i) for i in d]
+    d = [int(math.ceil(i)) for i in d] # set min to 1um 
     print("freq_dependent",d)
 
     return d
@@ -76,14 +75,12 @@ def self_ind_py(w,l,t):
     '''This function is from FastHenry Joelself.c might consider to rewrite this in C++ for speed up
     https://github.com/ediloren/FastHenry2/blob/master/src/fasthenry/joelself.c
     '''
-    
     w1 = w/l
     t1 = t/l
     r = sqrt(w1*w1 + t1*t1)
     aw = sqrt(w1*w1 + 1)
     at = sqrt(t1*t1 + 1)
     ar = sqrt(w1*w1 +t1*t1 +1)
-
     z = 0.25 * ((1/w1) * asinh(w1/at) + (1/t1) * asinh(t1/aw) + asinh(1/r)) # checked
 
     z += (1/24.0) * ((t1*t1/w1) * asinh(w1/(t1*at*(r+ar))) +(w1*w1/t1) *asinh(t1/(w1*aw*(r+ar))) +\
@@ -103,6 +100,7 @@ def self_ind_py(w,l,t):
 class ETrace():
     
     def __init__(self):
+        self.name = ''
         self.start_pt = (0,0,0) # in mm lower left corner
         self.end_pt = (0,0,0) # in mm
         self.thick = 0.2 #mm
@@ -162,7 +160,7 @@ class ETrace():
         
         dws = form_skd(self.width,N=self.nwinc)
         dhs = form_skd(self.thick,N=self.nhinc)
-        
+        print(dws,dhs)
         for i in range(self.nwinc):
             for j in range(self.nhinc):
                 new_fil = EFilament()
@@ -194,8 +192,16 @@ class ETrace():
                 
                 id +=1
         return id
-
-
+    def form_mesh_ground_plane(trace_shadows = []):
+        '''
+        trace_shadows: a list of trace signal objects that are close to this ground plane
+        '''
+        print(trace_shadows)
+    def find_trace_signal_shadows():
+        '''
+        find a list of signals that would have the closest return path to the ground plane
+        '''
+        
 class EFilament():
     def __init__(self):
         self.ori = 0  # 0 - horizontal 1-vertical 2-vertical 3-diagonal
@@ -274,13 +280,14 @@ class EFilament():
         self.length = len
         r = sqrt(self.width**2+self.thick**2)
         k = len/r
-        if self.eval_mode == 'wire':
-            Lval = len*1e-6*CalVal2(k)
-        else:
-            Lval = self_ind_py(self.width,len,self.thick) *1e-3* 1e-9
+        #print(self.eval_mode)
+        Lval = len*1e-6*CalVal2(k)
+        #if self.eval_mode == 'wire':
+        #    Lval = len*1e-6*CalVal2(k)
+        #else:
+        #    Lval = self_ind_py(self.width,len,self.thick) *1e3 * 1e-9
         
         #Lval = self_ind_c_type(self.width,len,self.thick) # input values in cm
-        
         Rval = copper_res*len/(self.width*self.thick)*1e6
         #print ("lapprox-lreal",Lval1,Lval)
         self.R = Rval
@@ -397,10 +404,10 @@ class LoopEval():
         self.mesh_method = 'uniform'
         self.view_en = 'False'
         self.mesh_id_dict={}
-        self.open_loop = True
+        self.open_loop = False
         self.tc_to_id = {}
         self.traces = {}
-    
+        self.eval_ground_imp = False
     def update_P(self,freq=1e9):
         self.freq = freq
         dimension = (len(self.all_eles),len(self.all_eles))
@@ -459,9 +466,11 @@ class LoopEval():
 
     def form_partial_impedance_matrix(self):
         dimension = (len(self.all_eles),len(self.all_eles))
+        print(dimension)
         rem = {}
         self.R_Mat =np.zeros(dimension,dtype =np.complex64)
         self.L_Mat = np.ones(dimension,dtype =np.complex64)
+        
         mutual_id = 0
         for i in range(len(self.all_eles)):
             for k in range(len(self.all_eles)):
@@ -480,7 +489,7 @@ class LoopEval():
                         w1,l1,t1,w2,l2,t2,l3,p,E = self.all_eles[i].get_mutual_params(self.all_eles[k])
                     else:
                         continue
-                    dis = sqrt(l3**2 + p**2 + E**2)
+                    dis = l3**2 + p**2 + E**2
                     k1 = (w1,l1,t1,w2,l2,t2,dis)
                     k2 = (w2,l2,t2,w1,l1,t1,dis) 
                     if not (k1 in self.mutual_map or k2 in self.mutual_map): 
@@ -507,7 +516,7 @@ class LoopEval():
                     params = self.all_eles[i].get_mutual_params(self.all_eles[k])
                     w1,l1,t1,w2,l2,t2,l3,p,E = params
                     if not(sum(params)==0):
-                        dis = sqrt(l3**2 + p**2 + E**2)
+                        dis = l3**2 + p**2 + E**2
                         key = (w1,l1,t1,w2,l2,t2,dis)
                         m_id = self.mutual_map[key]
                     else:
@@ -524,19 +533,27 @@ class LoopEval():
                 self.L_Mat[k,i] = self.L_Mat[i,k]
                
     
-    def form_mesh_matrix(self):
+    def form_mesh_matrix(self,mesh_id_type = {}):
+        '''
+        mesh_id_type: used to form correct mesh for the loop case or full eval case (include)
+        '''
         # dummy version for filament input only, will update for mesh later
-        dimension = (self.tot_els,self.num_loops)
+        self.num_sig = 0
+        for k in mesh_id_type:
+            if mesh_id_type[k] == 1:
+                self.num_sig+=1
+        if not(self.eval_ground_imp): # This case we compute the complete signal-ground loop
+            dimension = (self.tot_els,self.num_sig)
+            
+            
+        else: # we compute each trace group separatedly 
+            dimension = (self.tot_els,self.num_loops)
+                        
         self.M = np.zeros(dimension,dtype= np.complex64)
         for el in self.all_eles:
             if el.type == 1:
                 self.M[el.id,el.m_id] = 1
-        #if self.name == 'manual':
-        #    df = pd.DataFrame(self.M)
-        #    df.to_csv('manual.csv')
-        #self.show_M()
-        #print ("Mesh matrix")
-        #print (self.M)
+       
     
     def is_P_pos_def(self):
         if  np.all(np.linalg.eigvals(self.P) > 0):
@@ -587,36 +604,58 @@ class LoopEval():
         plt.show()
         '''
     
-    def form_u_mat(self):
+    def form_u_mat(self,mode=0,vout =0):
         u = np.ones((self.tot_els,1),dtype = np.complex64)
-        for el in self.all_eles:
-            u[el.id] = 1
+        if mode ==0: # for signals only
+            for el in self.all_eles:
+                u[el.id] = 1
+        elif mode==1: # extract Z_gp
+            for el in self.all_eles:
+                if el.type ==1:
+                    u[el.id] = 1-vout
+                else:
+                    u[el.id] = vout
         return u
 
-    def solve_linear_systems(self):
-
+    def solve_linear_systems(self,decoupled = False):
+        #self.open_loop = True
         u = self.form_u_mat()
-        
         if not(self.open_loop):
             y = solve(self.P,u) # direct solve
-
-        x = solve(self.P,self.M)
         
-        self.I  = np.ones((self.tot_els,self.num_loops),dtype= np.complex64)
-        #print (self.open_loop)
-        for j in range(self.num_loops):
-            sum_mat = np.zeros((self.tot_els,1),dtype = np.complex64)
-            if not(self.open_loop):
-                vout = sum(x[:,j]) / sum(y)
-                self.I[:,[j]] = x[:,[j]] - vout * y
-
-            else: 
-                self.I[:,[j]] = x[:,[j]]
-                vout = 0
+        v_dict = {}
+        
+        if decoupled:
+            M = np.zeros((self.tot_els,1))
+            for el in self.all_eles:
+                if el.type == 1:
+                    M[el.id] = 1    
+            x = np.linalg.solve(self.P,M)
+            sum_Is = sum(x)
+            vout = sum_Is / sum(y)
+            self.I  = np.ones((self.tot_els,self.num_sig+1),dtype= np.complex64)
+        else:
+            x = np.linalg.solve(self.P,self.M)
+            self.I  = np.ones((self.tot_els,self.num_sig),dtype= np.complex64)
             
-        Z = np.zeros((self.num_loops,self.num_loops),dtype = np.complex64)
-        temp = np.matmul(np.transpose(self.M),self.I)   
-        Z = np.linalg.inv(temp)
+            for j in range(self.num_sig):
+                
+                if not(self.open_loop):
+                    sum_Is=sum(x[:,j])
+                    vout = sum_Is / sum(y)
+                    v_dict[j] = vout
+                    self.I[:,[j]] = x[:,[j]] - vout * y
+                else:
+                    self.I[:,[j]] = x[:,[j]]
+                    v_dict[j] = 0 
+                
+        if not(decoupled):
+            print("signal only")
+            Z = self.eval_loop_impedance(mode = 1)
+        else: # Mostly use for characterization purpose
+            Z = self.eval_loop_impedance(mode = 2, vout = vout) # When mode==2 we will try to decouple the ground using Vout info
+            
+        
         R_mat = Z.real
         L_mat = Z.imag/2/np.pi/self.freq
         self.R_loop= R_mat # loop Res result
@@ -625,20 +664,53 @@ class LoopEval():
         #print("LOOP NAME:",self.name)
         #print ("R Matrix \n", R_mat)
         #print ("L Matrix \n", L_mat) 
-        #print (Z.imag/2/np.pi/self.freq) 
+        
+        
+        #print(np.abs(self.I)/max(np.abs(self.I)))
         return Z
         
-        
+    def eval_loop_impedance(self,mode = 1, vout = 0):
+        if mode == 1: # we eval all singal loop
+            Z = np.zeros((self.num_sig,self.num_sig),dtype = np.complex64)
+            I_tot = np.matmul(np.transpose(self.M),self.I)
+            Z = np.linalg.inv(I_tot)
+        if mode ==2: # in this mode we extract ground impedance as the third signal knowing Vout
+            Z = np.zeros((self.num_sig+1,self.num_sig+1),dtype = np.complex64)
+            M = np.zeros((self.tot_els,self.num_sig + 1)) # form a new mesh matrix
+            Vmat = np.zeros((self.tot_els,self.num_sig + 1),dtype = np.complex64)
+            for el in self.all_eles:
+                if el.type == 1:
+                    Vmat[el.id,el.m_id] = 1-vout # signal
+
+                else:
+                    Vmat[el.id,el.m_id] =vout # ground-decoupled
+
+                M[el.id,el.m_id] = 1
+            
+            self.I = solve(self.P,Vmat)
+            
+            I_tot = np.matmul(np.transpose(M),self.I)
+            Z = np.linalg.inv(I_tot)
+            for id in range(self.num_sig):
+                Z[id,:] = Z[id,:] * (1-vout)
+            Z[self.num_sig,:] = Z[self.num_sig,:] * (vout)
+            
+            
+                           
+        return Z  
     def view(self):
         view_plane = input("Select a view: [xy/yz/xz] ")
         view_mode = int(input("select between [0: Mesh, 1: current density]"))
         rects=[]
         fig,ax = plt.subplots()
-        ax.set_title(self.name+ '_view')
+        ax.set_title('current densytity on '+view_plane)
+        
         xs = []
         ys = []
         zs = []
         if view_plane == "yz":
+            
+                    
             if view_mode == 1:
                 cmap=plt.cm.jet
                 norm,jmap = self.eval_current_density() 
@@ -646,9 +718,9 @@ class LoopEval():
                 cbar = plt.colorbar(sm)
                 for el in self.all_eles:
                     if el.ori == 0:
-                        xy = (el.start_pt[1]*1e3,el.start_pt[2]*1e3)
-                        ys.append(el.start_pt[1]*1e3)
-                        zs.append(el.start_pt[2]*1e3)
+                        xy = (el.start_pt[1],el.start_pt[2])
+                        ys.append(el.start_pt[1])
+                        zs.append(el.start_pt[2])
                         if view_mode == 0:
                             if el.type ==0:
                                 c = 'red'
@@ -662,12 +734,13 @@ class LoopEval():
                             else:
                                 ec ='black'
                             c = cmap(norm(jmap[el.id]))   
-                        r = Rectangle(xy = xy,width = el.width*1e3, height =el.thick*1e3,fc = c, ec = ec)
+                        r = Rectangle(xy = xy,width = el.width, height =el.thick,fc = c, ec = ec)
                         ax.add_patch(r)
                         
                         rects.append(r)
-                XLIM = [min(ys)-5, max(ys)+5]
-                YLIM = [min(zs)-5, max(zs)+5]
+                print(ys,zs)
+                XLIM = [min(ys)-500, max(ys)+500]
+                YLIM = [min(zs)-500, max(zs)+500]
 
         if view_plane == "xz":
             if view_mode == 1:
@@ -675,24 +748,40 @@ class LoopEval():
                 norm,jmap = self.eval_current_density() 
                 sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
                 cbar = plt.colorbar(sm)
-                for el in self.all_eles:
-                    if el.ori == 1:
-                        xy = (el.start_pt[0]*1e3,el.start_pt[2]*1e3)
-                        if view_mode == 0:
-                            if el.type ==0:
-                                c = 'red'
-                            else:
-                                c = 'blue'
-                            #print ('xy',xy,el.width*1e3,el.thick*1e3)
-                        elif view_mode ==1:
-                            #print (el.id,jmap[el.id])
-                            if el.type == 0:
-                                ec = 'red'
-                            else:
-                                ec ='black'
-                            c = cmap(norm(jmap[el.id]))   
-                        r = Rectangle(xy = xy,width = el.width*1e3, height =el.thick*1e3,fc = c, ec = ec)
-                        ax.add_patch(r)
+                Jg = []
+                xg = []
+            for el in self.all_eles:
+                if el.ori == 1:
+                    xy = (el.start_pt[0],el.start_pt[2])
+                    xs.append(el.start_pt[0])
+                    if xy[1]==160:
+                        print(jmap[el.id])
+                        Jg.append(jmap[el.id])
+                        xg.append(xy[0])
+                    zs.append(el.start_pt[2])
+                    if view_mode == 0:
+                        ec = 'yellow'
+                        if el.type ==0:
+                            c = 'red'
+                        else:
+                            c = 'blue'
+                        ax.text(xy[0],xy[1],el.id,fontsize=12)
+                        print(el.id,self.I[el.id,:],self.R_Mat[el.id,el.id],self.L_Mat[el.id,el.id])
+                    elif view_mode ==1:
+                        #print (el.id,jmap[el.id])
+                        if el.type == 0:
+                            ec = 'red'
+                        else:
+                            ec ='black'
+                        c = cmap(norm(jmap[el.id]))   
+                    r = Rectangle(xy = xy,width = el.width, height =el.thick,fc = c, ec = ec)
+                    ax.add_patch(r)
+            df = pd.DataFrame({'X(um)':xg,'JG(A/m^2)':Jg})
+            df.to_csv("Loop-Current-Density.csv")
+            cbar.set_label('Current Density A/m^2')
+            
+            XLIM = [min(xs)-1000, max(xs)+1000]
+            YLIM = [min(zs)-500, max(zs)+500]
         if view_plane == "xy":
             if view_mode == 1:
                 cmap=plt.cm.jet
@@ -723,7 +812,9 @@ class LoopEval():
         ax.add_collection(p)
         
         plt.xlim(XLIM[0], XLIM[1])
-        plt.ylim(YLIM[0], YLIM[1])      
+        plt.ylim(YLIM[0], YLIM[1])   
+        plt.xlabel('X (um)')
+        plt.ylabel('Z (um)')   
         plt.show()
     
     def eval_current_density(self):
@@ -733,11 +824,44 @@ class LoopEval():
                 el_current = np.absolute(np.sum(self.I[el.id,:])) # get the current from the mesh current
             else:
                 el_current = np.absolute(np.sum(self.I[el.id,:]))
-            el_js.append((el_current)/(el.width*el.thick))
+            el_js.append((np.abs(el_current))/(el.width*el.thick)*1e12)
         norm = mpl.colors.Normalize(vmin=min(el_js), vmax=max(el_js))
         return norm,el_js        
+    def add_ETrace(self,trace_mesh=None,mesh_method = 'uniform'):
+        trace_mesh.m_id = self.mesh_id
+        if trace_mesh.start_pt[0] == trace_mesh.end_pt[0]:
+            trace_mesh.ori = 1
+            if trace_mesh.start_pt[1] < trace_mesh.end_pt[1]: # select upward direction as positive
+                trace_mesh.dir = 2 
+            else:
+                trace_mesh.dir = -2 
+        elif trace_mesh.start_pt[1] == trace_mesh.end_pt[1]:
+            trace_mesh.ori = 0
 
-    def add_trace_cell(self,tc,nw = 5, nh = 5 ,el_type = 'S',):
+            if trace_mesh.start_pt[0] < trace_mesh.end_pt[0]: # select right direction as positive
+                trace_mesh.dir = 1 
+            else:
+                trace_mesh.dir = -1 
+        if trace_mesh.type ==1:
+            self.num_loops+=1
+            self.traces[self.mesh_id] = trace_mesh
+            self.mesh_id +=1
+        else:
+            self.open_loop = False
+            trace_mesh.type = 0
+            self.traces[-self.ground_id]=trace_mesh
+            self.ground_id +=1 
+            self.mesh_id +=1
+            
+
+        if mesh_method == 'uniform':
+            numels = trace_mesh.form_mesh_uniform(start_id=self.tot_els)
+        elif mesh_method == 'nonuniform' :
+            numels = trace_mesh.form_mesh_frequency_dependent(start_id=self.tot_els)
+        self.all_eles += trace_mesh.elements
+        self.tot_els += len(trace_mesh.elements)
+        
+    def add_trace_cell(self,tc,nw = 5, nh = 5 ,el_type = 'S',): 
         '''
         Add a trace cell element from layout engine to loop evaluation
         '''
@@ -790,8 +914,11 @@ class LoopEval():
             
             end_id = trace_mesh.form_mesh_uniform(start_id=self.tot_els,eval_mode=eval_mode)
             self.tot_els=end_id
-        elif self.mesh_method == 'nonuniform':
+        elif self.mesh_method == 'nonuniform' and el_type=='S':
             self.tot_els = trace_mesh.form_mesh_frequency_dependent(start_id=self.tot_els)
+        else:
+            self.tot_els= trace_mesh.form_mesh_uniform(start_id=self.tot_els,eval_mode=eval_mode)
+            
         self.all_eles += trace_mesh.elements
         
         
@@ -851,10 +978,11 @@ def read_input(file):
         numloops = 0
         elements = []
         mesh_id = 0
-        mesh_method = 'uniform'
-        view = 'False'
+        view = 'True'
         outdir = None
         mesh_id_dict={}
+        mesh_id_type={}
+        open_loop= True
         with open(file, 'r') as inputfile:
             for line in inputfile.readlines():    
                 line = line.strip("\r\n")
@@ -898,7 +1026,7 @@ def read_input(file):
                     if el.type == 1:
                         mesh_id+=1  
                     
-                if line[0] == 'T': # get the trace value
+                if line[0] == 'T' or line[0] == 'G': # get the trace value
                     trace_mesh = ETrace()
                     start_pt = info[1].replace('(', '').replace(')', '')
                     end_pt = info[2].replace('(', '').replace(')', '')
@@ -923,44 +1051,58 @@ def read_input(file):
                             trace_mesh.dir = -1 
                     if info[3] == 'S':
                         trace_mesh.type = 1
-                        numloops +=1
                     elif info[3] == 'G':
                         trace_mesh.type = 0
+                        open_loop = False
+                    numloops +=1
+                    
+                    
                     width = info[4].strip('w=')
                     height = info[5].strip('h=')
-                    nwinc = info[6].strip('nw=')
-                    nhinc = info[7].strip('nh=')
-                    
                     trace_mesh.width = int(float(width)*1e3) # um
                     trace_mesh.thick = int(float(height)*1e3) # um
-                    trace_mesh.nwinc = int(nwinc)
-                    trace_mesh.nhinc = int(nhinc)
-                    #print("mesh_id",mesh_id)
-                    trace_mesh.m_id = mesh_id
 
-                    if mesh_method == 'uniform':
-                        numels = trace_mesh.form_mesh_uniform(start_id=numels)
-                    elif mesh_method == 'nonuniform':
+                    if line[0] == 'T':
+                        nwinc = info[6].strip('nw=')
+                        nhinc = info[7].strip('nh=')
+                        trace_mesh.nwinc = int(nwinc)
+                        trace_mesh.nhinc = int(nhinc)
+                    
+
+                    print("mesh_id",mesh_id)
+                    trace_mesh.m_id = mesh_id
+                   
+                    if mesh_method == 'nonuniform' and trace_mesh.type == 1:
                         numels = trace_mesh.form_mesh_frequency_dependent(start_id=numels)
-                        
+                    elif mesh_method == 'characterize':
+                        if trace_mesh.type ==1:
+                            numels = trace_mesh.form_mesh_frequency_dependent(start_id=numels)
+                        else: # ground type
+                            numels = trace_mesh.form_mesh_ground_plane
+                                
+                    else:
+                        numels = trace_mesh.form_mesh_uniform(start_id=numels)
+                                                
                     
                     elements+= trace_mesh.elements  
                     print(info[0],trace_mesh.dir)
                     #for e in elements:
                     #    print(e.id,e.m_id) 
-                    if trace_mesh.type == 1:
-                        mesh_id_dict[info[0]] = mesh_id
-                        mesh_id+=1
-                        
+                    #if trace_mesh.type == 1:
+                    mesh_id_dict[info[0]] = mesh_id
+                    mesh_id_type[mesh_id] = trace_mesh.type
+                    mesh_id+=1
     loop_evaluation = LoopEval()
+    loop_evaluation.open_loop = open_loop
+
     loop_evaluation.name = "manual"
     loop_evaluation.all_eles = elements
     loop_evaluation.tot_els = numels
     loop_evaluation.num_loops = numloops
     loop_evaluation.form_partial_impedance_matrix()
-    loop_evaluation.form_mesh_matrix()
+    loop_evaluation.form_mesh_matrix(mesh_id_type=mesh_id_type)
     loop_evaluation.update_mutual_mat()
-    loop_evaluation.update_P(1e9)
+    loop_evaluation.update_P(2.1e6)
     loop_evaluation.solve_linear_systems()
     debug = True
     if debug:
@@ -970,8 +1112,8 @@ def read_input(file):
     #loop_evaluation.freq_sweep()
     #print (loop_evaluation.L_loop)
     #print (loop_evaluation.L_Mat)
-    #if view == 'True':
-    #    loop_evaluation.view()
+    if view == 'True':
+        loop_evaluation.view()
     
     print (mesh_id_dict)
     for k in mesh_id_dict:
@@ -1111,15 +1253,32 @@ def test_ratio():
         Mlist.append(M)
     plt.plot(range(n),Mlist)
     plt.show()
-    
+
+def test_accuracy():
+    ds = [3.5,4,4.5,5,5.5,6,6.5,7,7.5]
+    Mlist= []
+    len_fil = np.linspace(5,20,100)
+    d = 2
+    for ls in len_fil:
+        param = [4,ls,0.3,6,ls,0.3,0,0,d]
+        p0 = np.array(param)
+        M0 = mutual_between_bars(*p0)  
+        Mlist.append(M0)
+    print(Mlist)
+    plt.plot(len_fil,Mlist)
+    plt.show()
+def eval_single_M():
+    param = [0.1,20,0.2,0.1,20,0.2,0,0,1]
+    M0 = mutual_between_bars(*param)  
+    print (M0)
 if __name__ == "__main__":
     #np.set_printoptions(precision=3)
     #test_mutual_accuracy_1()
     #test_ratio()
-    #read_input('/nethome/qmle/loop_model/simple_test_case/simple.txt')
+    read_input('/nethome/qmle/loop_model/simple_test_case/simple.txt')
     #read_input('/nethome/qmle/loop_model/simple_test_case/layout1.txt')
-    
-    read_input('/nethome/qmle/loop_model/simple_test_case/2wires.txt')
+    eval_single_M()
+    #read_input('/nethome/qmle/loop_model/simple_test_case/2wires.txt')
     #test_length_vs_mutual()
     #input_interface()
     

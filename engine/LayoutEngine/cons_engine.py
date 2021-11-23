@@ -12,7 +12,7 @@ from core.engine.ConstrGraph.CGinterface import CS_to_CG
 from core.engine.LayoutSolution.database import create_connection,insert_record
 from core.MDK.Design import parts
 from core.MDK.Design.group import Island
-from core.model.electrical.meshing.e_mesh_direct import MeshNode
+from core.model.electrical.meshing.MeshObjects import MeshNode
 #from core.engine.ConstrGraph.ConstraintGraph import constraintGraph
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 

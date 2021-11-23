@@ -326,3 +326,4 @@ def wire_resistance(f, l, r, p=1.724e-8):
         r_w = 1e-6
 
     return r_w
+print (trace_inductance(3,20,0.2,0.6))

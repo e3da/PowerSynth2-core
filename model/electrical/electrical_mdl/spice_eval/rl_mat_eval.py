@@ -842,10 +842,10 @@ def test_RL_circuit4():
 def test_RL_circuit5(): # mutual wire group
     circuit = RL_circuit()
 
-    circuit._graph_add_comp('B1', 1, 0, 1 + 17.3e-9j)
-    circuit._graph_add_comp('B2', 1, 0, 1 + 16.9e-9j)
-    circuit._graph_add_M('M23', 'B1', 'B2', 4.54e-9)
-    circuit.indep_voltage_source(0, 1, 1)
+    circuit._graph_add_comp('B1', 1, 0, 1 + 18.2e-9j)
+    circuit._graph_add_comp('B2', 1, 0, 1 + 18.2e-9j)
+    circuit._graph_add_M('M23', 'B1', 'B2', 14.4e-9)
+    circuit.indep_current_source(0, 1, 1)
     circuit.assign_freq(1e9)
     circuit.graph_to_circuit_minimization()
 
@@ -853,7 +853,7 @@ def test_RL_circuit5(): # mutual wire group
     circuit.solve_iv(method = 2)
     print((circuit.results))
 
-    imp = (circuit.results['v1']) / circuit.results['I_Vs']
+    imp = (circuit.results['v1']) 
     print((np.real(imp), np.imag(imp) / circuit.s))
 if __name__ == "__main__":
     #validate_solver_simple()

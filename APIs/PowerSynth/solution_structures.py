@@ -17,7 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-
+import json
 class PSFeature(object):
     """Class definition for individual features in a PowerSynth solution."""
     def __init__(self, name, x=0, y=0, z=0, width=0, length=0, height=0, material_name=None, power=0, h_val=None):
@@ -71,7 +71,8 @@ class PSFeature(object):
             return False
         else:
             return True
-
+    def export_json(self):
+        return json.dumps(self.__dict__)
 
 
 class PSSolution(object):
