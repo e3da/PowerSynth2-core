@@ -823,6 +823,7 @@ class CornerStitch_Emodel_API:
         :param sink:
         :return:
         '''
+        print ("HERE")
         if ',' in src:
             sources = src.split(',')
         else:
@@ -833,6 +834,7 @@ class CornerStitch_Emodel_API:
             sinks = [sink]
 
         src_pt = self.emesh.comp_net_id[sources[0]] 
+        sink_pt = self.emesh.comp_net_id[sinks[0]]
         sort_name = 'B_sorted{}'
         count = 1    
         self.circuit = RL_circuit()
@@ -850,7 +852,7 @@ class CornerStitch_Emodel_API:
             self.circuit.equiv(src_pt,self.emesh.comp_net_id[src],name = sort_name.format(count))
             count+=1
         for sink in sinks:
-            self.circuit._add_termial(sink)
+            self.circuit._add_termial(sink_pt)
         self.circuit.m_graph_read(self.emesh.m_graph)
         self.circuit.assign_freq(self.freq*1000)
         self.circuit.graph_to_circuit_minimization()

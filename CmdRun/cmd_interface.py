@@ -1203,9 +1203,10 @@ if __name__ == "__main__":
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
                 , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
-                {imam_nethome1:'Xiaoling_Case_Opt/macro_script_42X32.txt'},\
-                    {qmle_nethome:'Meshing/Planar/Rayna_case_updated/macro_script_40X40.txt'},\
-                    {qmle_nethome:'Unit_Test_Cases/trace_to_trace/Case_1/cmd'}]
+                  {imam_nethome1:'Xiaoling_Case_Opt/macro_script_42X32.txt'},\
+                  {qmle_nethome:'Meshing/Planar/Rayna_case_updated/macro_script_40X40.txt'},\
+                  {qmle_nethome:'Unit_Test_Cases/trace_to_trace/Case_1/cmd'}
+                  ,{qmle_nethome:'Quang_JESPE/macro_script.txt'}]
 
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))

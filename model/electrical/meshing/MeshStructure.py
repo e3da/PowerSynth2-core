@@ -13,6 +13,9 @@ import numpy as np
 import math
 from matplotlib import cm
 import networkx as nx
+import joblib
+from sklearn.preprocessing import PolynomialFeatures
+
 # PowerCad
 from core.model.electrical.electrical_mdl.e_module import EModule
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D,plot_combined_I_map_layer,plot_v_map_3D,plot_J_map_3D
@@ -22,6 +25,8 @@ from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
 from core.model.electrical.electrical_mdl.e_module import EComp
+from core.model.electrical.electrical_mdl.e_loop_element import self_ind_py
+
 from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
 
 
@@ -267,14 +272,39 @@ class EMesh():
                 #all_r = trace_res_krige(self.f, self.all_W, self.all_L, t=0, p=p, mdl=self.mdl['R'],mode=mode).tolist()
                 # Handle small length pieces by linear approximation
                 all_r = [trace_resistance_full(self.f, w, l, t, h,p=p) for w, l in zip(self.all_W, self.all_L)]
-                #all_r = [1e-6 for i in range(len(self.all_W))]
+                #all_r = [p*l/(w*t) for  w, l in zip(self.all_W, self.all_L)]
+                #all_r = [1 for i in range(len(self.all_W))]
                 #if self.mdl_type ==0:
                 #    all_l = trace_ind_krige(self.f, self.all_W, self.all_L, mdl=self.mdl['L'],mode=mode).tolist()
                 #elif self.mdl_type == 1:
                 #    all_l = trace_ind_lm(self.f,self.all_W,self.all_L,mdl = self.mdl['L'])
                 #self.plot_trace_RL_val_RS(zdata=all_l,dtype='L')
-
-                all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
+                # MS equation
+                #all_l = [trace_inductance(w, l, t, h) for w, l in zip(self.all_W, self.all_L)]
+                # open loop equation
+                
+                all_l_ol = [self_ind_py(w*1000,l*1000,t*1000)*1e3 for w,l in zip(self.all_W, self.all_L)]
+                x_WL = [[w,l] for w,l in zip(self.all_W, self.all_L)]
+                x_WL = np.array(x_WL)
+                poly = PolynomialFeatures(degree=5,interaction_only= False)
+                xtrain_scaled = poly.fit_transform(x_WL)
+                
+                model = joblib.load("/nethome/qmle/response_surface_update/model_1_test1.rsmdl")
+                R_model = model[100000000.0]['R']
+                L_model = model[100000000.0]['L']
+                #all_r = R_model.predict(xtrain_scaled)
+                all_l = L_model.predict(xtrain_scaled)
+                min_l = min(np.abs(all_l))
+                for i in range(len(self.all_W)):
+                    w =self.all_W[i]
+                    l = self.all_L[i] 
+                    if 5*self.all_W[i] > self.all_L[i]:
+                        all_l[i] = min_l
+                all_l =all_l_ol
+                #print(x_WL)
+                #print(all_l)
+                #print(all_l_ol)
+                
                 #print (self.all_W)
                 #print (self.all_L)
                 #print (all_r)

@@ -103,11 +103,11 @@ def network_plot_3D(G, ax, cmap_node={}, cmap_edge={},show_labels = False,highli
                 # Scatter plot
                 if cmap_node == {}:
                     if highlight_nodes==None:
-                        size = 10
+                        size = 5
                     elif lbl in highlight_nodes:
                         size = 25
                     else:
-                        size =10
+                        size =5
                     if type[key]=='internal':
                         ax.scatter(xi, yi, zi, c='blue', s=size, edgecolors='k', alpha=1)
                     else:

@@ -33,7 +33,7 @@ class EdgeData():
 class LayoutLoopInterface():
     # all unit in um
     def __init__(self,islands = None, hier_E = None, freq =1e6, layer_stack =None):
-        self.freq = freq
+        self.frequency = freq
         self.short_bw = False # Set true to short all bw for trace validation
         self.layout_info = islands
         self.layer_stack = layer_stack
@@ -73,7 +73,7 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -116,10 +116,7 @@ class LayoutLoopInterface():
             self.pos[n] = self.graph.nodes[n]['locs'][0:2] # for 2D plotting purpose
         self.form_hierarchical_connections() # update bondwire new locations first
         for n in self.graph.nodes:
-            if n == 6:
-                print("wrong graph update")
             if not n in self.pos3d:
-                
                 self.pos3d[n] = self.graph.nodes[n]['locs'] # for later graph rebuild
                 self.nodes_dict_3d[tuple(self.graph.nodes[n]['locs'])] = n # for later graph rebuild
         
@@ -190,7 +187,7 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    print ('bwribbon',rib_tc.eval_length()/1000, ori,'z',rib_tc.z)
+                    #print ('bwribbon',rib_tc.eval_length()/1000, ori,'z',rib_tc.z)
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
                 self.graph.add_edge(nets[e[0]], nets[e[1]],e_type = e_type,res_int=1)
     
@@ -301,7 +298,6 @@ class LayoutLoopInterface():
                         self.y_wires[p1[1],p2[1]].append(rib_tc)
                 rib_tc.dir = dir
                 ori_str = ('h' if ori == 1 else 'v')  
-                print ('ori',ori_str)
                 data = {'type': edata,'ori':ori_str,'obj':rib_tc}
                 #self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
                 #print ('bw_edge',n1,n2)
@@ -662,7 +658,7 @@ class LayoutLoopInterface():
 
             ori = ('h' if tc.dir==1 else 'v')
             data= {'type':etype+'_bw','ori':ori,'obj':tc}
-            print (data,R,L)
+            #print (data,R,L)
             # THIS IS TO EXCLUDE BW LOOP (TESTING) 
             if self.short_bw:
                 R = 1e-12
@@ -677,8 +673,8 @@ class LayoutLoopInterface():
         if mode == "all-signal":
             for tc in loop_obj.tc_to_id:
                 id1 = loop_obj.tc_to_id[tc]
-                R1 = loop_obj.R_loop[id1,id1]
-                L1 = loop_obj.L_loop[id1,id1]
+                R1 = abs(loop_obj.R_loop[id1,id1])
+                L1 = abs(loop_obj.L_loop[id1,id1])
                 # ADD self RL values
                 
                 n1,n2 = self.rebuild_graph_add_edge(tc,0,0,R1,L1,etype = 'fw')
@@ -740,9 +736,9 @@ class LayoutLoopInterface():
 
                         if not (e1 in m_dict):
                             #if not self.short_bw:
-                            self.mutual_pair[(e1,e2)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2])
+                            self.mutual_pair[(e1,e2)] = (0, abs(loop_obj.L_loop[id1,id2]))
                             #self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
-                            print ("Mutual pair",self.mutual_pair)
+                            #print ("Mutual pair",self.mutual_pair)
                             m_dict[e1] = e2
                             m_dict[e2] = e1
 
@@ -851,13 +847,12 @@ class LayoutLoopInterface():
         for bundle in self.x_bundles:
             #print("SOLVING BUNDLE: ", bundle)
             loop_model = LoopEval('x_'+str(bundle_id))
+            loop_model.frequency = self.frequency*1000
             #loop_model.mesh_method='nonunifom'
             bundle_id+=1
             wire_type = self.find_ground_wire(ori = 0, traces = self.x_bundles[bundle])
             for trace in self.x_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
-            loop_model.form_partial_impedance_matrix()
-            loop_model.update_mutual_mat()
             
 
             x_loops.append(loop_model)
@@ -872,16 +867,13 @@ class LayoutLoopInterface():
         for bundle in self.y_bundles:
             #print("SOLVING BUNDLE: ", bundle)
             loop_model = LoopEval('y_'+str(bundle_id))
+            loop_model.frequency = self.frequency*1000
             #loop_model.mesh_method='nonunifom'
             bundle_id+=1
             wire_type = self.find_ground_wire(ori = 1, traces = self.y_bundles[bundle])
             for trace in self.y_bundles[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
-            loop_model.form_partial_impedance_matrix()
-            try:
-                loop_model.update_mutual_mat()
-            except:
-                print(bundle)
+            
 
             y_loops.append(loop_model)
         bundle_id = 0
@@ -894,8 +886,7 @@ class LayoutLoopInterface():
             wire_type = self.find_ground_wire(ori = 0, traces = self.x_wires[bundle])
             for trace in self.x_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
-            loop_model.form_partial_impedance_matrix()
-            loop_model.update_mutual_mat()
+            
             x_loops.append(loop_model)
         bundle_id = 0
         
@@ -907,8 +898,6 @@ class LayoutLoopInterface():
             wire_type = self.find_ground_wire(ori = 1, traces = self.y_wires[bundle])
             for trace in self.y_wires[bundle]:
                 loop_model.add_trace_cell(trace,el_type = wire_type[trace])
-            loop_model.form_partial_impedance_matrix()
-            loop_model.update_mutual_mat()
 
             y_loops.append(loop_model)
         
@@ -931,10 +920,16 @@ class LayoutLoopInterface():
             self.doc_report.add_paragraph("Total number of vertical bundles: {}".format(len(y_loops)))
         
         #self.all_loops=solve_loop_models_parallel(self.all_loops)
+        mode ='regression'
         
         for loop_model in self.all_loops:
+            #print("evaluating ... ", loop_model.name)
+            loop_model.mode = mode
+            loop_model.form_mesh_traces(mesh_method='uniform_fixed_width')
+            loop_model.form_partial_impedance_matrix()
+            loop_model.update_mutual_mat()
             loop_model.form_mesh_matrix()
-            loop_model.update_P(self.freq)
+            loop_model.update_P()
             loop_model.solve_linear_systems()
             
             if self.debug:
@@ -992,8 +987,8 @@ class LayoutLoopInterface():
         self.doc_report.add_heading("Analysis for loop: {} \n".format(loop.name),2)
         text= loop.export_loop(mode = 1)
         self.doc_report.add_paragraph(text)
-        self.doc_write_matrix_to_report(loop.R_loop,"R_Loop of "+ loop.name)
-        self.doc_write_matrix_to_report(loop.L_loop,"L_loop of "+ loop.name)
+        self.doc_write_matrix_to_report(np.abs(loop.R_loop),"R_Loop of "+ loop.name)
+        self.doc_write_matrix_to_report(np.abs(loop.L_loop),"L_loop of "+ loop.name)
         #self.doc_write_matrix_to_report(loop.I,"I_Matrix of "+loop.name)
 
     def doc_save_a_report(self,file):
@@ -1003,7 +998,6 @@ class LayoutLoopInterface():
         nx,ny = list(matrix.shape)
         self.doc_report.add_heading("Matrix " + name , 3)
         text = "Matrix {} with {} rows and {} columns".format(name,nx,ny)
-        print(text)
         self.doc_report.add_paragraph(text)
         
         table = self.doc_report.add_table(rows=1,cols = ny+1)
@@ -1105,8 +1099,8 @@ class LayoutLoopInterface():
     
     def handle_orthogonal_trace(self,t1,t2,o1,isl_name,elv):
         '''
-        This function create a new node at the middle of the corner rectangle forming by 2 traces
-        Then the initial (naive) nodes generated by these traces are removed (to maximize loop length)
+        This function create a new node (*) at the center of the corner rectangle forming by 2 traces
+        Then the initial nodes generated by these traces are removed (to maximize loop length)
 
         -----------------------------------|
         X                              *   X 
@@ -1245,7 +1239,7 @@ class LayoutLoopInterface():
                         z = sheet_data.z
                         for tc in traces:
                             if tc.encloses(x , y) and z == (tc.z + tc.thick):
-                                print("ADD a component node",sheet_data.net,tc.z)
+                                #print("ADD a component node",sheet_data.net,tc.z)
                                 self.add_node_tracecell(tc,x,y,isl_name) # merge the z level to trace for simplification in connection
                                         
                         self.comp_net_id[sheet_data.net] = self.node_id-1
@@ -1507,7 +1501,6 @@ class LayoutLoopInterface():
 
 def solve_loop_models_parallel(all_loops=None):
     num = int(cpu_count()/2)
-    print(num)
     with Pool(num) as p:
         results = p.map(solve_single_loop,all_loops)
     return results

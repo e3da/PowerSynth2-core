@@ -244,7 +244,8 @@ class EWires(EComp):
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
         length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
-        #print ("wire group length",length)
+        
+        print ("wire group length",length)
         # length of the bondwires in reality are usually longer due to different bonding techinque, for JEDEC
         # https://awrcorp.com/download/faq/english/docs/Elements/BWIRES.htm
         # first divide the wire in 3 section and assume alpha,beta to be 30 degree
@@ -294,7 +295,7 @@ class EWires(EComp):
                     R=R_val/self.num_wires
                     L=L_val/self.num_wires
                 #print("length",length)
-                #print("wire R,L", R, L)
+                print("wire R,L", R, L)
                 self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R, 'L': L, 'C': None})
             else : # No mutual eval needed, fast evaluation
                 self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R_val, 'L': L_val, 'C': None})

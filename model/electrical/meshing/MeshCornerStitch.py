@@ -3,9 +3,11 @@ author: Quang Le
 Getting mesh directly from CornerStitch points and islands data
 '''
 
+from numpy.lib.ufunclike import fix
 from core.model.electrical.meshing.MeshStructure import EMesh
 from core.general.data_struct.util import Rect, draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import T_Node
+from core.model.electrical.electrical_mdl.e_loop_element import form_skd
 from core.model.electrical.meshing.MeshAlgorithm import MeshTable
 from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
 from core.general.data_struct.Tree import Tree
@@ -23,27 +25,14 @@ L_SHAPE = 1
 T_SHAPE = 2
 
 
-def form_skindepth_distribution(start=0,stop=1,freq=1e6, cond=5.96*1e7, N = 11):
-    '''
-    Gotta make sure that N is always an odd number such as 1 3 5 7 ...
-    '''
-    w = (stop - start)/1000
-    u = 4 * math.pi * 1e-7
-    #skind_depth = math.sqrt(1 / (math.pi * freq * u * cond * 1e6))
-    #print (freq)
-    skind_depth = int(math.sqrt(1 / (math.pi * freq * u * cond)) * 1e6)# first calculate the skindepth value in um
-    #nwinc = int(math.ceil((math.log(w * 1e-3 / skind_depth / 3) / math.log(2) * 2 + 3)/3))
-    nwinc = N
-    #print (skind_depth,"um")
-    split_list = np.zeros((1,nwinc+1)) # 1 row and N collumn
-    split_list[0,0] = start
-    split_list[0,nwinc] = stop 
-    for i in range(nwinc//2): # get the half (integer) of the number of split
-        split_list[0,i+1] = start + int(skind_depth*(i+1)*10)
-        split_list[0,N-i-1] =  stop - int(skind_depth*(i+1)*10)
-    #print (split_list[0])
-    #print (np.linspace(start,stop,N))
-    return split_list[0]
+def form_skindepth_distribution(start=0,stop=1, N = 11):
+    ds = form_skd(width = abs(start-stop),N=N-1)
+    split = [start]
+    for i in range(len(ds)):
+        split.append(split[i]+ds[i])
+    split[-1]=stop
+    
+    return split
 
 
 
@@ -95,20 +84,27 @@ class EMesh_CS(EMesh):
         if mode == 0:
             self._handle_pins_connections()
 
-    def mesh_update_optimized(self, Nw=5):
+    def mesh_update_optimized(self):
         '''
         If trace orientations are included, this will be used
         :param Nw: number of mesh points on the width of traces
         :return:
         '''
         method = "skin_depth"
-        #method = "uniform"
+        #method = "uniform-fixed_width"
+        
         print("accelerate the mesh generation")
         #fig, ax = plt.subplots()
         ax = None
         isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
-        ignore_trace = ['9.3','10.3','11.3']
+        ignore_trace = []
+        # go through all traces and calculate the best Nw
+        u = 4 * math.pi * 1e-7
+        cond = 5.96*1e7
+        skind_depth = int(math.sqrt(1 / (math.pi * self.f*1e3 * u * cond)) * 1e6)
+        fixed_width =skind_depth # um
+        print('fixed_width based on skindepth',fixed_width)
         #ignore_trace=[]
         for g in self.hier_E.isl_group:
             skip = False
@@ -122,15 +118,28 @@ class EMesh_CS(EMesh):
             #print ('z_level',z,'z_id',g.z_id,dz)
             isl = isl_dict[g.name]
             planar_flag,trace_cells = self.handle_trace_trace_connections(island=isl)
+            min_Nw=3
             if not(planar_flag): # A layout with all horizontal and vertical elements
                 trace_cells = self.handle_pins_connect_trace_cells(trace_cells=trace_cells, island_name=g.name)
+                Nws = []
+                for tc in trace_cells:
+                    width = tc.width if tc.dir == 1 else tc.height
+                    Nws.append(int(width/fixed_width))
+                if method =='uniform-fixed_width':
+                    Nw = min(Nws)
+                if method == 'skin_depth':
+                    Nw = int(min(np.log2(Nws)))+1
+                if Nw < min_Nw:
+                    Nw = min_Nw
+                print('Nw',Nw)
+                
                 if len(isl.elements) == 1:  # Handle cases where the trace cell width is small enough to apply macro model (RS)
                     # need a better way to mark the special case for RS usage, maybe distinguish between power and signal types
                     mesh_pts_tbl = self.mesh_nodes_trace_cells(trace_cells=trace_cells, Nw=Nw, ax=ax, method =method,isl=g,z_pos =z,z_id =g.z_id)
                 else:
                     mesh_pts_tbl = self.mesh_nodes_trace_cells(trace_cells=trace_cells, Nw=Nw, ax=ax,method = method,isl=g,z_pos =z,z_id =g.z_id)
                 self.set_nodes_neigbours_optimized(mesh_tbl=mesh_pts_tbl)
-                self.mesh_edges_optimized(mesh_tbl=mesh_pts_tbl, trace_num=len(trace_cells), Nw=Nw, mesh_type=method, macro_mode=False)
+                self.mesh_edges_optimized(mesh_tbl=mesh_pts_tbl, trace_num=len(trace_cells), Nw=Nw, mesh_type=method, macro_mode=False,fixed_width=fixed_width)
                 self.handle_hier_node_opt(mesh_pts_tbl,g)
             else: # handle planar type using cornerstitch adaptive mode
                 mesh_table = self.generate_planar_mesh_cells(island = isl,z = z)
@@ -147,7 +156,8 @@ class EMesh_CS(EMesh):
     
         self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
         # Remove all isolated node (such as not connected gate pins) so that PEEC wont have all 0 row
-        #self.plot_isl_mesh(True,mode = "matplotlib")
+        self.plot_isl_mesh(True,mode = "matplotlib")
+        #plt.show()
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
     def handle_node_contraction(self):
         # go through each node in the contracted node table and connect their edges to the anchor node
@@ -198,6 +208,7 @@ class EMesh_CS(EMesh):
         cor_tc = []  # list of corner trace cells, to be handled later
         # For capactiane, compute the total capacitance in an island. Then store this value to the mesh node.
         isl_area = 0
+        
         for tc in trace_cells:
             tc_type = tc.type
             top = tc.top
@@ -214,8 +225,10 @@ class EMesh_CS(EMesh):
                 if Nw!=1:
                     if method == "uniform":
                         ys = np.linspace(tc.bottom, tc.top, Nw)
+                    if method == 'uniform-fixed_width':
+                        ys = np.linspace(tc.bottom, tc.top, Nw)
                     if method == "skin_depth":
-                        ys = form_skindepth_distribution(start = tc.bottom,stop = tc.top, N=Nw,freq = self.f*1e3)
+                        ys = form_skindepth_distribution(start = tc.bottom,stop = tc.top, N=Nw)
                 else:
                     tc.height_eval()
                     ys = np.asarray([tc.bottom + tc.height / 2])
@@ -237,10 +250,12 @@ class EMesh_CS(EMesh):
                 for loc in tc.comp_locs:
                     ys.append(loc[1])
                 if Nw!=1:
-                    if method == "uniform":
+                    if method == 'uniform-fixed_width':
+                        xs = np.linspace(tc.left, tc.right, Nw)
+                    elif method == "uniform":
                         xs = np.linspace(tc.left, tc.right, Nw)
                     elif method == "skin_depth":
-                        xs = form_skindepth_distribution(start = tc.left,stop = tc.right, N=Nw,freq = self.f*1e3)
+                        xs = form_skindepth_distribution(start = tc.left,stop = tc.right, N=Nw)
                 else:
                     tc.width_eval()
                     xs = np.asarray([tc.left + tc.width / 2])
@@ -265,12 +280,12 @@ class EMesh_CS(EMesh):
             corner_dir = np.array([c_tc.has_left, c_tc.has_right, c_tc.has_bot, c_tc.has_top])
             corner_dir = list(corner_dir.astype(int))
             # create the grid on the corner piece
-            if method == "uniform":
+            if method == "uniform" or method == "uniform-fixed_width":
                 xs = np.linspace(c_tc.left, c_tc.right, Nw)
                 ys = np.linspace(c_tc.bottom, c_tc.top, Nw)
             elif method == "skin_depth":
-                xs = form_skindepth_distribution(start = c_tc.left,stop = c_tc.right, N=Nw,freq = self.f*1e3)
-                ys = form_skindepth_distribution(start = c_tc.bottom,stop = c_tc.top, N=Nw,freq = self.f*1e3)
+                xs = form_skindepth_distribution(start = c_tc.left,stop = c_tc.right, N=Nw)
+                ys = form_skindepth_distribution(start = c_tc.bottom,stop = c_tc.top, N=Nw)
 
             if corner_dir == [0, 1, 0, 1]:  # bottom left corner
                 for id in range(Nw):
@@ -859,7 +874,7 @@ class EMesh_CS(EMesh):
 
         return points
 
-    def mesh_edges_optimized(self, mesh_tbl=None, trace_num=None, Nw=5, mesh_type="uniform", thick=0.2,macro_mode = False):
+    def mesh_edges_optimized(self, mesh_tbl=None, trace_num=None, Nw=5, mesh_type="uniform", thick=0.2,macro_mode = False,fixed_width=1000):
         '''
 
         Args:
@@ -995,7 +1010,9 @@ class EMesh_CS(EMesh):
                     
                     if not self.graph.has_edge(node.node_id, North.node_id):
                         length = North.pos[1] - node.pos[1]
-                        if mesh_type == 'uniform':
+                        if mesh_type == 'uniform-fixed_width':
+                            width = fixed_width
+                        elif mesh_type == 'uniform':
                             width = tc.width / Nw * err_mag
                         elif mesh_type == 'skin_depth':
                             if East == None:
@@ -1036,7 +1053,9 @@ class EMesh_CS(EMesh):
                     
                     if not self.graph.has_edge(node.node_id, South.node_id):
                         length = node.pos[1] - South.pos[1]
-                        if mesh_type == 'uniform':
+                        if mesh_type == 'uniform-fixed_width':
+                            width = fixed_width
+                        elif mesh_type == 'uniform':
                             width = tc.width / Nw * err_mag
                         elif mesh_type == 'skin_depth':
                             if East == None:
@@ -1077,7 +1096,9 @@ class EMesh_CS(EMesh):
                     name = str(node.node_id) + '_' + str(East.node_id)
                     if not self.graph.has_edge(node.node_id, East.node_id):
                         length = East.pos[0] - node.pos[0]
-                        if mesh_type == 'uniform':
+                        if mesh_type == 'uniform-fixed_width':
+                            width = fixed_width
+                        elif mesh_type == 'uniform':
                             width = tc.height / Nw * err_mag
                         elif mesh_type == 'skin_depth':
                             if North == None:
@@ -1119,7 +1140,9 @@ class EMesh_CS(EMesh):
                     name = str(node.node_id) + '_' + str(West.node_id)
                     if not self.graph.has_edge(node.node_id, West.node_id):
                         length = node.pos[0] - West.pos[0]
-                        if mesh_type == 'uniform':
+                        if mesh_type == 'uniform-fixed_width':
+                            width = fixed_width
+                        elif mesh_type == 'uniform':
                             width = tc.height / Nw * err_mag
                         elif mesh_type == 'skin_depth':
                             if North == None:
@@ -1168,6 +1191,7 @@ class EMesh_CS(EMesh):
         '''
         xs = mesh_tbl.xs
         ys = mesh_tbl.ys
+        
         z_pos = mesh_tbl.z_pos
         xs_id = {xs[i]: i for i in range(len(xs))}
         ys_id = {ys[i]: i for i in range(len(ys))}
@@ -1382,7 +1406,7 @@ class EMesh_CS(EMesh):
             ax.set_xlim3d(0, 50000)
             ax.set_ylim3d(0, 50000)
             ax.set_zlim3d(200, 2000)
-            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[81,85],mode = mode)
+            self.plot_3d(fig=fig, ax=ax, show_labels=True, highlight_nodes=[],mode = mode)
             plt.savefig("island_mesh.png")
     def test_plot_neightbors(self, mesh_tbl):
         node_map = mesh_tbl.nodes
