@@ -13,6 +13,9 @@ import time
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
+from core.model.electrical.electrical_mdl.e_ltspice_visualize import LtSpice_layout_to_schematic
+
+
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.engine.CornerStitch.CSinterface import Rectangle
 
@@ -47,6 +50,10 @@ class new_engine_opt:
         # List of measure object
         self.measures = measures
     
+    def extract_3D_loop_schematic_beta(self,e_api = None):
+        schem = LtSpice_layout_to_schematic(e_api)
+        #schem.set_up_relative_locations()
+
     def eval_3D_layout(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 
@@ -93,9 +100,7 @@ class new_engine_opt:
                     
                 if self.e_api.e_mdl == "Loop":
                     R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
-                    if solution.solution_id == id_select:
-                        print ("RL_loop",R,L)
-                        input()
+                    self.extract_3D_loop_schematic_beta(self.e_api)
 
                 if self.e_api.e_mdl == "LoopFHcompare": # Compare mode = Inductance
                     # Reinit and recalculate
@@ -128,11 +133,8 @@ class new_engine_opt:
                     self.e_api.e_mdl = 'LoopFHcompare'
                     #input()
                     
-                print ("RL",R,L)
-                #"""   
-                #except:
-                #R=10000
-                #L=10000
+                #print ("RL",R,L)
+                
 
                 
 
@@ -144,6 +146,7 @@ class new_engine_opt:
                     result.append(L)  # resistance in mOhm
 
             if isinstance(measure, ThermalMeasure):
+                # DISABLED ON QUANG's branch, if you see this line, you need to ENABLE ParaPower.
                 #solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
                 #input()

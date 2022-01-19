@@ -259,6 +259,19 @@ class CornerStitch_Emodel_API:
                         self.e_sheets.append(pin)
                     elif obj.type == 1:  # If this is a component
                         dev_name = obj.layout_component_id
+                        # define spice type here for later extraction 
+                        # the definition through user specify name is not good
+                        # either define in the part object or define in the user manual
+                        # HARDCODED
+                        if "MOS" in obj.name:
+                            spc_type = 'MOSFET'
+                        elif "DIODE" in obj.name:
+                            spc_type = 'DIODE'
+                        elif "CAP" in obj.name:
+                            spc_type = 'CAP' 
+                        # HARDCODED
+                        
+                        print("DEVICE NAME",dev_name)
                         dev_pins = []  # all device pins
                         dev_conn_list = []  # list of device connection pairs
                         dev_para = []  # list of device connection internal parasitic for corresponded pin
@@ -292,9 +305,9 @@ class CornerStitch_Emodel_API:
                                 pin2 = dev_name + '_' + conn[1]
                                 dev_conn_list.append([pin1, pin2])  # update pin connection
                                 dev_para.append(obj.conn_dict[conn])  # update intenal parasitics values
-
+                        
                         self.e_comps.append(
-                            EComp(sheet=dev_pins, conn=dev_conn_list, val=dev_para))  # Update the component
+                            EComp(inst_name =dev_name, sheet=dev_pins, conn=dev_conn_list, val=dev_para,spc_type=spc_type))  # Update the component
         for m in self.measure:
             m.src_dir = self.src_sink_dir[m.source]
             m.sink_dir = self.src_sink_dir[m.sink]

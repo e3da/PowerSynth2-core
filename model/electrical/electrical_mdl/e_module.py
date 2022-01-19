@@ -118,7 +118,7 @@ class Escript:
         print(data)
 
 class EComp:
-    def __init__(self, sheet=[], conn=[], val=[], type="active"):
+    def __init__(self, sheet=[], conn=[], val=[], type="active",spc_type='MOSFET',inst_name= ""):
         '''
         Args:
             sheet: list of sheet for device's pins
@@ -126,12 +126,14 @@ class EComp:
             val: corresponded R,L,C value for each branch (a list of dictionary) {R: , L:, C: }
             type: passive or active.
         '''
+        self.inst_name = inst_name
         self.sheet = sheet
         self.net_graph = nx.Graph()
         self.conn = conn  # based on net name of the sheets
         self.passive = val  # value of each edge, if -1 then 2 corresponding node in graph will be merged
         # else: this is a dict of {'R','L','C'}
         self.type = type
+        self.spice_type = spc_type
         self.update_nodes()
         self.class_type ='comp'
     def update_nodes(self):

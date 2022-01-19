@@ -73,7 +73,7 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -187,7 +187,7 @@ class LayoutLoopInterface():
                     rib_tc.bwn2=n2
                     
                     # BOND_WIRE
-                    #print ('bwribbon',rib_tc.eval_length()/1000, ori,'z',rib_tc.z)
+                    print ('bwribbon',rib_tc.eval_length()/1000, ori,'z',rib_tc.z)
                     self.ribbon_dict[(nets[e[0]], nets[e[1]])] = [rib_tc,thickness,z,ori] # get ribbon like data and store to a dictionary
                 self.graph.add_edge(nets[e[0]], nets[e[1]],e_type = e_type,res_int=1)
     
@@ -564,6 +564,8 @@ class LayoutLoopInterface():
                 if tx.dir <0 :
                     wire_type[tx] = 'G' # 'S" set all to signal
                     gr_w.append(tx)
+                    #sig_w.append(tx)
+                    
                 else:
                     wire_type[tx] = 'S'
                     sig_w.append(tx)
@@ -670,7 +672,7 @@ class LayoutLoopInterface():
         rem_dict = {} # to make sure there is no overlapping in mutual pair
         rebuild_graph_info = {} # for debugging purpose and back-annotation of net-graph figure.
         
-        if mode == "all-signal":
+        if mode == "eval_ground_imp":
             for tc in loop_obj.tc_to_id:
                 id1 = loop_obj.tc_to_id[tc]
                 R1 = abs(loop_obj.R_loop[id1,id1])
@@ -736,9 +738,8 @@ class LayoutLoopInterface():
 
                         if not (e1 in m_dict):
                             #if not self.short_bw:
-                            self.mutual_pair[(e1,e2)] = (0, abs(loop_obj.L_loop[id1,id2]))
-                            #self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
-                            #print ("Mutual pair",self.mutual_pair)
+                            #self.mutual_pair[(e1,e2)] = (0, (loop_obj.L_loop[id1,id2]))
+                            self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
                             m_dict[e1] = e2
                             m_dict[e2] = e1
 
@@ -923,20 +924,21 @@ class LayoutLoopInterface():
         mode ='regression'
         
         for loop_model in self.all_loops:
-            #print("evaluating ... ", loop_model.name)
+            print("evaluating ... ", loop_model.name)
             loop_model.mode = mode
             loop_model.form_mesh_traces(mesh_method='uniform_fixed_width')
             loop_model.form_partial_impedance_matrix()
             loop_model.update_mutual_mat()
             loop_model.form_mesh_matrix()
             loop_model.update_P()
-            loop_model.solve_linear_systems()
-            
+            loop_model.solve_linear_systems(decoupled=True)
+            #if 'wire' in loop_model.name:
+            #    print(loop_model.L_loop)
             if self.debug:
                 self.doc_export_report_for_each_loop(loop_model)
             #    P_df = pd.DataFrame(data=loop_model.P)
             #    P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
-            self.rebuild_graph(loop_model)
+            self.rebuild_graph(loop_model,mode='eval_ground_imp')
             
 
 
@@ -951,7 +953,7 @@ class LayoutLoopInterface():
                 edge_list.append((e[0],e[1]))
                 selected_node.append(e[0])
                 selected_node.append(e[1])
-                #print(e)
+                
 
             elif 'return' in edata['type']:
                 edge_list.append((e[0],e[1]))
@@ -970,6 +972,7 @@ class LayoutLoopInterface():
             memfile = io.BytesIO()
             self.plot(mode=4,save=True,mem_file=memfile)
             self.doc_handle_figure(memfile=memfile,fig_heading = "Netlist Graph")
+            self.doc_print_net_list_line_by_line()
             self.doc_save_a_report('./debug_report.docx')  
     '''The below functions are used to format the report for debugging purpose'''
     
@@ -983,6 +986,25 @@ class LayoutLoopInterface():
             d_format = today.strftime("%m/%d/%y")
             first_line= "This is an automated report for the current layout in debug mode. Report generated on {}".format(d_format)
             self.doc_report.add_paragraph(first_line)  
+    
+    
+    def doc_print_net_list_line_by_line(self):
+        for e in self.net_graph.edges(data = True):
+            edata = e[2]['data']
+            eval = e[2]
+            if 'fw' in edata['type']:
+                line = "{} -- {} -- R: {} Ohm, L: {} Henry \n".format(e[0],e[1],eval['res'],eval['ind'])
+                self.doc_report.add_paragraph(line)    
+        # compute K
+        for m in self.mutual_pair:
+            print(m)
+            e1 = m[0]
+            e2 = m[1]
+            line = "edge 1 {} -- edge 2 {}, M {}".format(e1,e2,self.mutual_pair[m])
+            self.doc_report.add_paragraph(line)    
+
+            
+    
     def doc_export_report_for_each_loop(self,loop):
         self.doc_report.add_heading("Analysis for loop: {} \n".format(loop.name),2)
         text= loop.export_loop(mode = 1)
