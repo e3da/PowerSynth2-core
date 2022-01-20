@@ -24,6 +24,7 @@ from docx import Document
 from docx.shared import Inches
 from datetime import date
 from multiprocessing import Pool,cpu_count
+import math
 import io
 class EdgeData():
     def __init__(self):
@@ -63,7 +64,8 @@ class LayoutLoopInterface():
         self.tc_to_edges_init = {} # initial trace cell to edges
         self.tc_to_edges_splitted = {} # trace cell to edges duing bundle creation.
 
-        self.mutual_pair = {}
+        self.mutual_pair = {} # for PEEC like evaluation
+        self.mutual_coup_coeff_pair = {} # for extraction into LtSpice
         self.edge_to_x_bundle = {}
         self.edge_to_y_bundle = {}
         self.contracted_nodes = {} # dict of nodes pair that can be combined
@@ -73,7 +75,7 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -205,14 +207,14 @@ class LayoutLoopInterface():
             if edata['e_type'] == 'comp_edge' or edata['e_type'] == 'via':
                 data = {'type': edata['e_type'],'ori':None,'obj':None}
                 #print('comp_edge',e[0],e[1])
-                self.net_graph.add_edge(e[0],e[1],data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later         
+                self.net_graph.add_edge(e[0],e[1],data=data,res= 1e-12,ind=1e-12,len=10) # add original compedge to loop_graph to ensure closed loop later         
             if edata == None : # self_loop from merging edge, cant be found
                 bw_net = self.contracted_nodes[e[1]] # get the contracted node
                 edata = self.graph.get_edge_data(bw_net,e[0]) # bw_net is already contracted *
                 #print('merged_edge',e[0],e[1])
 
                 data = {'type': edata,'ori':None,'obj':None}
-                self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12) # add original compedge to loop_graph to ensure closed loop later
+                self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12,len=10) # add original compedge to loop_graph to ensure closed loop later
                 if edata == None or edata == 'comp_edge':
                     continue
          
@@ -602,7 +604,7 @@ class LayoutLoopInterface():
                 n1 = self.add_node_to_3d(pos1)
                 n2 = self.add_node_to_3d(pos2)
                 data= {'type':etype,'ori':'h','obj':tc}
-                self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
+                self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L,len=10)
             if abs(tc.dir) == 2:
                 pos1 = (tc.center()[0], tc.bottom,z)
                 pos2 = (tc.center()[0],tc.top,z)
@@ -610,7 +612,7 @@ class LayoutLoopInterface():
                 n2 = self.add_node_to_3d(pos2)
                 data= {'type':etype,'ori':'v','obj':tc}
 
-                self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
+                self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L,len=10)
         elif tc.struct == 'bw':
             if tc.bwn1!= None and tc.bwn2 != None:
                 n1 = tc.bwn1
@@ -665,16 +667,18 @@ class LayoutLoopInterface():
             if self.short_bw:
                 R = 1e-12
                 L = 1e-12
-            self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L)
+            self.net_graph.add_edge(n1,n2,data=data,res=R,ind=L,len=10)
         return n1,n2
     def rebuild_graph(self,loop_obj,mode = ""):
         m_dict = {}
+        l_eval_dict={}
         rem_dict = {} # to make sure there is no overlapping in mutual pair
         rebuild_graph_info = {} # for debugging purpose and back-annotation of net-graph figure.
         
         if mode == "eval_ground_imp":
-            for tc in loop_obj.tc_to_id:
-                id1 = loop_obj.tc_to_id[tc]
+            print(loop_obj.L_loop)
+            for tc in loop_obj.tc_to_id_gr:
+                id1 = loop_obj.tc_to_id_gr[tc]
                 R1 = abs(loop_obj.R_loop[id1,id1])
                 L1 = abs(loop_obj.L_loop[id1,id1])
                 # ADD self RL values
@@ -683,7 +687,36 @@ class LayoutLoopInterface():
                 rebuild_graph_info[(n1,n2)]="type:{} R: {} L:{} ".format('fw',R1,L1)
 
                 m_dict[tc] = (n1,n2)
-        else:
+                l_eval_dict[tc] = L1
+            
+            # handle mutual and k coefficients
+            check_list={}
+            
+            for tc1 in loop_obj.tc_to_id_gr:
+                id1 = loop_obj.tc_to_id_gr[tc1]
+                if id1 == -1:
+                    continue    
+                e1 = m_dict[tc1]
+                L1 = l_eval_dict[tc1]
+                for tc2 in loop_obj.tc_to_id_gr:
+                    id2 = loop_obj.tc_to_id_gr[tc2]
+                    if id1 == id2 or id2 == -1:
+                        continue
+                    else:
+                        e2 = m_dict[tc2]
+                        L2= l_eval_dict[tc2]
+                        if not (id1,id2) in check_list:
+                            check_list[(id1,id2)]= 1
+                            check_list[(id2,id1)]= 1
+                            print(id1,id2)
+                            
+                            self.mutual_pair[(e1,e2)] = (0, (loop_obj.L_loop[id1,id2]))
+                            k = loop_obj.L_loop[id1,id2]/math.sqrt(L1*L2)
+                            self.mutual_coup_coeff_pair[(e1,e2)] = k
+                            m_dict[e1] = e2
+                            m_dict[e2] = e1
+            #input()
+        elif mode == "eval_normal":
 
             for tc in loop_obj.tc_to_id:
                 id1 = loop_obj.tc_to_id[tc]
@@ -723,25 +756,25 @@ class LayoutLoopInterface():
                     n1,n2 = self.rebuild_graph_add_edge(tc,n1,n2,1e-12,1e-12,etype='return')
                     rebuild_graph_info[(n1,n2)]="type:{} R: {} L:{} ".format('return',1e-12,1e-12)
 
-        if loop_obj.num_loops > 1: # ADD mutual value
-            for tc1 in loop_obj.tc_to_id:
-                id1 = loop_obj.tc_to_id[tc1]
-                if id1 == -1:
-                    continue    
-                e1 = m_dict[tc1]
-                for tc2 in loop_obj.tc_to_id:
-                    id2 = loop_obj.tc_to_id[tc2]
-                    if id1 == id2 or id2 == -1:
-                        continue
-                    else:
-                        e2 = m_dict[tc2]
+            if loop_obj.num_loops > 1: # ADD mutual value
+                for tc1 in loop_obj.tc_to_id:
+                    id1 = loop_obj.tc_to_id[tc1]
+                    if id1 == -1:
+                        continue    
+                    e1 = m_dict[tc1]
+                    for tc2 in loop_obj.tc_to_id:
+                        id2 = loop_obj.tc_to_id[tc2]
+                        if id1 == id2 or id2 == -1:
+                            continue
+                        else:
+                            e2 = m_dict[tc2]
 
-                        if not (e1 in m_dict):
-                            #if not self.short_bw:
-                            #self.mutual_pair[(e1,e2)] = (0, (loop_obj.L_loop[id1,id2]))
-                            self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
-                            m_dict[e1] = e2
-                            m_dict[e2] = e1
+                            if not (e1 in m_dict):
+                                #if not self.short_bw:
+                                self.mutual_pair[(e1,e2)] = (0, (loop_obj.L_loop[id1,id2]))
+                                #self.mutual_pair[(e2,e1)] = (loop_obj.R_loop[id1,id2], loop_obj.L_loop[id1,id2]) # ensure mutual value is considered
+                                m_dict[e1] = e2
+                                m_dict[e2] = e1
 
                         #self.rebuild_graph_add_edge(tc1,n3,n4,R2,L2) # add the self value for this trace cell
         if self.debug:
@@ -769,7 +802,7 @@ class LayoutLoopInterface():
                 self.net_graph.add_node(n2,locs = e[1])
                 self.new_nodes_id+=1
             data = {'type': 'small_bundle','ori':None,'obj':None}
-            self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12)
+            self.net_graph.add_edge(n1,n2,data=data,res= 1e-12,ind=1e-12,len=10)
         self.net_2d_pos = {} # to store 2d location for 2d net graphing purpose
         for n in self.net_graph.nodes:
             try:
@@ -846,7 +879,7 @@ class LayoutLoopInterface():
         x_loops = []
 
         for bundle in self.x_bundles:
-            #print("SOLVING BUNDLE: ", bundle)
+            print("Updating BUNDLE: ", bundle)
             loop_model = LoopEval('x_'+str(bundle_id))
             loop_model.frequency = self.frequency*1000
             #loop_model.mesh_method='nonunifom'
@@ -938,7 +971,7 @@ class LayoutLoopInterface():
                 self.doc_export_report_for_each_loop(loop_model)
             #    P_df = pd.DataFrame(data=loop_model.P)
             #    P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
-            self.rebuild_graph(loop_model,mode='eval_ground_imp')
+            self.rebuild_graph(loop_model,mode='eval_normal')
             
 
 
@@ -970,7 +1003,7 @@ class LayoutLoopInterface():
         #input()
         if self.debug:
             memfile = io.BytesIO()
-            self.plot(mode=4,save=True,mem_file=memfile)
+            self.plot(mode=5,save=True,mem_file=memfile)
             self.doc_handle_figure(memfile=memfile,fig_heading = "Netlist Graph")
             self.doc_print_net_list_line_by_line()
             self.doc_save_a_report('./debug_report.docx')  
@@ -997,10 +1030,9 @@ class LayoutLoopInterface():
                 self.doc_report.add_paragraph(line)    
         # compute K
         for m in self.mutual_pair:
-            print(m)
             e1 = m[0]
             e2 = m[1]
-            line = "edge 1 {} -- edge 2 {}, M {}".format(e1,e2,self.mutual_pair[m])
+            line = "edge 1 {} -- edge 2 {}, K {} ,M {}".format(e1,e2,self.mutual_coup_coeff_pair[m],self.mutual_pair[m])
             self.doc_report.add_paragraph(line)    
 
             
@@ -1442,14 +1474,57 @@ class LayoutLoopInterface():
                 ax1.set_title("digraph on ele:" + str(ele))
                 nx.draw(n_graph,n_pos,with_labels=True) # mesh graph
         
+        # FOR 2D layout netlist debugging only
+        
         elif mode ==4:
             fig = plt.figure("net_graph")
             ax1 = fig.add_subplot(111)
             ax1.set_title('NET GRAPH')
             nx.draw_networkx(self.net_graph, pos=self.net_2d_pos,
                              with_labels=True, node_size=50, font_size=12)
-            
-            
+        elif mode == 5:
+            fig = plt.figure(1,dpi=200)
+            ax1 = fig.add_subplot(111)
+            ax1.set_title("NETLIST")
+            # FIRST WE SORT THE XS AND YS VALUES FOR EACH BUNDLE
+            xs_to_xp = {}
+            ys_to_yp = {}
+            mult = 5# a multiplier to increase the edge distance
+            xp = []
+            yp = []
+            new_2d_pos_scaled= {}
+            net_labels = {}
+            for p in self.net_2d_pos:
+                point = self.net_2d_pos[p]
+                xp.append(point[0])
+                yp.append(point[1])
+            xp = list(set(xp))
+            xp.sort()
+            yp = list(set(yp))
+            yp.sort()
+            for ix in range(len(xp)):
+                xs_to_xp[xp[ix]] = ix*mult
+            for iy in range(len(yp)):
+                ys_to_yp[yp[iy]] = iy*mult
+            # upodate the postion 
+            for p in self.net_2d_pos:
+                point = self.net_2d_pos[p]
+                point_scaled = (xs_to_xp[point[0]],ys_to_yp[point[1]])
+                new_2d_pos_scaled[p] = point_scaled 
+            print(new_2d_pos_scaled)
+            for e in self.net_graph.edges(data = True):
+                edata = e[2]['data']
+                eval = e[2]
+                if 'fw' in edata['type']:
+                    R = round(eval['res']*1e3,2)
+                    L = round(eval['ind']*1e9,2)
+                    line = "{}m-{}n".format(R,L)     
+                    net_labels[(e[0],e[1])] = ''#line           
+            nx.draw_networkx(self.net_graph, pos=new_2d_pos_scaled,
+                             with_labels=True, node_size=10, font_size=10)
+            nx.draw_networkx_edge_labels(self.net_graph,pos = new_2d_pos_scaled,edge_labels=net_labels,
+                                         font_size=8,font_color='black',font_family='arial')
+            plt.autoscale()  
         if save == True:
             plt.savefig(mem_file,format='png')
         else:

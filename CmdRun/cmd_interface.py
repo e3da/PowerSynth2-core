@@ -1206,6 +1206,7 @@ if __name__ == "__main__":
                   {imam_nethome1:'Xiaoling_Case_Opt/macro_script_42X32.txt'},\
                   {qmle_nethome:'Meshing/Planar/Rayna_case_updated/macro_script_40X40.txt'},\
                   {qmle_nethome:'Unit_Test_Cases/trace_to_trace/Case_1/cmd'}
+                  ,{qmle_nethome:'Quang_JESPE/macro_script.txt'}
                   ,{qmle_nethome:'Quang_JESPE/macro_script_20x25.txt'}
                   ,{qmle_nethome:'Quang_JESPE/macro_script_25x30.txt'}
                   ,{qmle_nethome:'Quang_JESPE/macro_script_30x35.txt'}

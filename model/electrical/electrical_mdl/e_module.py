@@ -206,9 +206,11 @@ class EWires(EComp):
         Return an average representation in form of a trace model
         A bondwire group is represented in term of a single ribbon type bondwire. 
         '''
-        c_s = self.sheet[0].get_center()
-        c_e = self.sheet[1].get_center()
         
+        c_s = start#self.sheet[0].get_center()
+        c_e = stop#self.sheet[1].get_center()
+        print(c_s,c_e)
+        print(start,stop)
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))  # using integer input, this is the overall length of the group
         #print('BW-loop: ','start',start,'stop',stop,'length',length/1000)
         average_width = self.num_wires*self.r*2 *1000
