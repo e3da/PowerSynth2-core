@@ -956,6 +956,11 @@ class LayoutLoopInterface():
         #self.all_loops=solve_loop_models_parallel(self.all_loops)
         mode ='regression'
         
+        eval_mode = 'eval_normal'
+        if eval_mode =='eval_ground_imp':
+            decoupled = True
+        elif eval_mode == 'eval_normal':
+            decoupled = False
         for loop_model in self.all_loops:
             print("evaluating ... ", loop_model.name)
             loop_model.mode = mode
@@ -964,14 +969,14 @@ class LayoutLoopInterface():
             loop_model.update_mutual_mat()
             loop_model.form_mesh_matrix()
             loop_model.update_P()
-            loop_model.solve_linear_systems(decoupled=True)
+            loop_model.solve_linear_systems(decoupled=decoupled)
             #if 'wire' in loop_model.name:
             #    print(loop_model.L_loop)
             if self.debug:
                 self.doc_export_report_for_each_loop(loop_model)
             #    P_df = pd.DataFrame(data=loop_model.P)
             #    P_df.to_csv("P_mat_{}.csv".format(loop_model.name))
-            self.rebuild_graph(loop_model,mode='eval_normal')
+            self.rebuild_graph(loop_model,mode=eval_mode)
             
 
 
