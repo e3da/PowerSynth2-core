@@ -382,6 +382,7 @@ class CornerStitch_Emodel_API:
         elif "Loop" in self.e_mdl:
             # Call loop finder here
             self.emesh = LayoutLoopInterface(islands=islands,hier_E = self.hier, freq =self.freq, layer_stack =self.layer_stack)
+            self.emesh.check_number_of_electrical_layer() # Check number of routing layers for netlist output simplication
             self.emesh.ori_map =self.trace_ori # Update the trace orientation if given
             #print("define current directions")
             self.emesh.form_graph()

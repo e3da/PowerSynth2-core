@@ -394,7 +394,7 @@ class EFilament():
         r = sqrt(self.width**2+self.thick**2)
         k = len/r
         #Lval = len*1e-6*CalVal2(k)
-        mode = 'equation'
+        mode = 'regression'
         Rval_eq = copper_res*len/(self.width*self.thick)*1e6
         
         if self.filament_type == 'wire':
@@ -656,7 +656,7 @@ class LoopEval():
             self.mode = 'equation'
         else:    
             self.mode ='regression'#'regression'
-        self.mode = 'equation'
+        self.mode = 'regression'
     
         if 'wire' in self.name:
             self.mode = 'equation'

@@ -4,6 +4,7 @@
 # 2. Depending on nets on each netgroup, form a graph structure for each layer and ask user to define loop direction.
 # 3. Simplify the structure into RL rects and Cap rects. 
 # 4. Reuse the Loop definition every time for accelerated mesh generation
+from typing import OrderedDict
 import networkx as nx
 import sys, os
 #import dill
@@ -26,6 +27,12 @@ from datetime import date
 from multiprocessing import Pool,cpu_count
 import math
 import io
+from enum import Enum
+class StackType(Enum):
+    # Types for characterization decision
+    SDG = 1 # S-D-G
+    GDS = 2 # G-D-S
+    SDS = 3 # S-D-S
 class EdgeData():
     def __init__(self):
         self.parent = None # parent trace cell
@@ -38,7 +45,13 @@ class LayoutLoopInterface():
         self.short_bw = False # Set true to short all bw for trace validation
         self.layout_info = islands
         self.layer_stack = layer_stack
+        self.layer_stack_simplified = [] # simplified version which care about Signal, Ground and Dielectric only 
         self.hier = hier_E
+        # Layers and Netlist Handling
+        self.num_RL_layer = 0 # 1 for 2D case         -- these are routing layers 
+        self.num_backside_layer = 0 # 0-1 for 2D case -- these are backside layers
+        self.num_C_layer = 0 # 0-1 for 2D case        -- these are dielectric layers
+        self.layer_island_dict = {} # Here we store all islands data for each layer in a dict
         self.graph = nx.Graph()
         self.ori_map = {}
         self.comp_nodes = {}
@@ -64,7 +77,7 @@ class LayoutLoopInterface():
         self.tc_to_edges_init = {} # initial trace cell to edges
         self.tc_to_edges_splitted = {} # trace cell to edges duing bundle creation.
 
-        self.mutual_pair = {} # for PEEC like evaluation
+        self.mutual_pair = {} # for PEEC evaluation
         self.mutual_coup_coeff_pair = {} # for extraction into LtSpice
         self.edge_to_x_bundle = {}
         self.edge_to_y_bundle = {}
@@ -75,7 +88,29 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+    
+    def check_number_of_electrical_layer(self):
+        ''' Read the layerstack and define number of trace layers'''
+        ''' Although these data are in the layerstack already, we need to rearrange them for quick access'''
+        all_layer_info = self.layer_stack.all_layers_info
+        for layer in all_layer_info:
+            layer_obj = all_layer_info[layer]
+            if layer_obj.e_type == 'S': # PowerSynth way to check for a routing layer TODO: need to specify a different way in the future
+                self.num_RL_layer += 1 
+                self.layer_stack_simplified.append({'id':layer_obj.id,'electrical_type':layer_obj.e_type}) # only store the ids and e_type here. 
+                # if we have to characterize we know which ID to apply the model to
+            elif layer_obj.e_type == 'G':
+                self.num_backside_layer +=1
+                self.layer_stack_simplified.append({'id':layer_obj.id,'electrical_type':layer_obj.e_type})
+            elif layer_obj.e_type == 'D':
+                self.num_C_layer +=1
+                self.layer_stack_simplified.append({'id':layer_obj.id,'electrical_type':layer_obj.e_type})
+                
+        self.layer_stack_simplified = sorted(self.layer_stack_simplified, key = lambda i: i['id'])       
+        print(self.layer_stack_simplified)    
+        input()
+            
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -93,10 +128,14 @@ class LayoutLoopInterface():
         self.ele_lst = []
         self.hier_group_dict = {}
         self.comp_edge = []
+        # add a step here to handle all layout island that are on the same layer then perform meshing all together.
+        
         for g in self.hier.isl_group:
             z = self.hier.z_dict[g.z_id]
+            print('Z_level-', z,g.z_id)
             dz = self.get_thick(g.z_id)
-            isl = isl_dict[g.name]  
+            isl = isl_dict[g.name]
+            self.layer_island_dict[g.z_id] = g.name  
             self.form_wire_frame(isl,g.name,z,dz) # form wireframe for each island on each z level
             self.ele_lst.append(z)
             pos = {}
@@ -121,7 +160,7 @@ class LayoutLoopInterface():
             if not n in self.pos3d:
                 self.pos3d[n] = self.graph.nodes[n]['locs'] # for later graph rebuild
                 self.nodes_dict_3d[tuple(self.graph.nodes[n]['locs'])] = n # for later graph rebuild
-        
+        input()
 
     def form_hierarchical_connections(self):
         '''
@@ -954,9 +993,12 @@ class LayoutLoopInterface():
             self.doc_report.add_paragraph("Total number of vertical bundles: {}".format(len(y_loops)))
         
         #self.all_loops=solve_loop_models_parallel(self.all_loops)
-        mode ='regression'
-        
-        eval_mode = 'eval_normal'
+        mode ='equation'
+        if mode == 'equation':
+            meshing_algorithm = 'nonuniform'
+        elif mode == 'regression':
+            meshing_algorithm = 'uniform_fixed_width'
+        eval_mode = 'eval_ground_imp'
         if eval_mode =='eval_ground_imp':
             decoupled = True
         elif eval_mode == 'eval_normal':
@@ -964,7 +1006,8 @@ class LayoutLoopInterface():
         for loop_model in self.all_loops:
             print("evaluating ... ", loop_model.name)
             loop_model.mode = mode
-            loop_model.form_mesh_traces(mesh_method='uniform_fixed_width')
+            
+            loop_model.form_mesh_traces(mesh_method=meshing_algorithm)
             loop_model.form_partial_impedance_matrix()
             loop_model.update_mutual_mat()
             loop_model.form_mesh_matrix()
@@ -1524,7 +1567,7 @@ class LayoutLoopInterface():
                     R = round(eval['res']*1e3,2)
                     L = round(eval['ind']*1e9,2)
                     line = "{}m-{}n".format(R,L)     
-                    net_labels[(e[0],e[1])] = ''#line           
+                    net_labels[(e[0],e[1])] = line           
             nx.draw_networkx(self.net_graph, pos=new_2d_pos_scaled,
                              with_labels=True, node_size=10, font_size=10)
             nx.draw_networkx_edge_labels(self.net_graph,pos = new_2d_pos_scaled,edge_labels=net_labels,
