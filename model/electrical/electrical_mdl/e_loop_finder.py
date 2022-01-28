@@ -13,7 +13,9 @@ import pandas as pd
 from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
 from core.model.electrical.meshing.MeshStructure import EMesh
-from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell
+from core.model.electrical.meshing.MeshAlgorithm import MeshTable
+
+from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
 import _thread
 import numpy as np
@@ -46,6 +48,7 @@ class LayoutLoopInterface():
         self.layout_info = islands
         self.layer_stack = layer_stack
         self.layer_stack_simplified = [] # simplified version which care about Signal, Ground and Dielectric only 
+        self.layer_mesh_table = {}
         self.hier = hier_E
         # Layers and Netlist Handling
         self.num_RL_layer = 0 # 1 for 2D case         -- these are routing layers 
@@ -109,13 +112,16 @@ class LayoutLoopInterface():
                 
         self.layer_stack_simplified = sorted(self.layer_stack_simplified, key = lambda i: i['id'])       
         print(self.layer_stack_simplified)    
-        input()
             
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
         return layer.thick
-
+    def get_z(self,layer_id):
+        all_layer_info = self.layer_stack.all_layers_info
+        layer = all_layer_info[layer_id]
+        return layer.z
+    
     def form_graph(self):
         self.doc_start_a_report()
 
@@ -130,29 +136,70 @@ class LayoutLoopInterface():
         self.comp_edge = []
         # add a step here to handle all layout island that are on the same layer then perform meshing all together.
         
+        # STEP 1: Organize the layer_name and island_name
+        
         for g in self.hier.isl_group:
             z = self.hier.z_dict[g.z_id]
             print('Z_level-', z,g.z_id)
+            print(g.name)
             dz = self.get_thick(g.z_id)
-            isl = isl_dict[g.name]
-            self.layer_island_dict[g.z_id] = g.name  
-            self.form_wire_frame(isl,g.name,z,dz) # form wireframe for each island on each z level
+            if not(g.z_id in self.layer_island_dict):
+                self.layer_island_dict[g.z_id] = [g.name] # Add new list to collect island name
+            else:
+                self.layer_island_dict[g.z_id].append(g.name) # Add island name to layer
+        
+        # STEP 2: Process mesh elements for each layer
+        for layer_id in self.layer_island_dict:
+            self.layer_mesh_table[layer_id] = MeshTable()
+            current_mesh =self.layer_mesh_table[layer_id]
+            print("forming graph for ", layer_id)
+            z = z = self.hier.z_dict[layer_id]
+            layer_name = 'Layer_{}'.format(layer_id)
+            all_trace_copper = []
+            all_net_on_trace = []
+            for island_name in self.layer_island_dict[layer_id]:
+                isl = isl_dict[island_name]
+                all_trace_copper+=isl.elements
+                all_net_on_trace += isl.child
+            # add trace to the MeshTable object
+            for trace_data in all_trace_copper:
+                x,y,width,height =  trace_data[1:5]
+                t_cell =RectCell(int(x),int(y),int(width),int(height)) 
+                self.layer_mesh_table[layer_id].traces.append(t_cell)
+            for net_data in all_net_on_trace:
+                name = net_data[5]
+                x,y,width,height =  net_data[1:5]
+                net_cell =RectCell(int(x),int(y),int(width),int(height)) 
+                
+                if "L" in name: # lead type
+                    current_mesh.leads.append(net_cell)
+                elif "B" in name:
+                    current_mesh.pads.append(net_cell)
+                elif "D" in name:
+                    current_mesh.components.append(net_cell)
+                    
+                
+            current_mesh.form_hanan_mesh_table_on_island()
+            current_mesh.place_devices_and_components()
+            current_mesh.plot_lev_1_mesh_island(layer_name)
+            
+            self.form_wire_frame(island=isl,isl_name = island_name,layer_name=layer_name,elv=z,dz=dz) # form wireframe for each island on each z level
             self.ele_lst.append(z)
             pos = {}
             # debug interface
             new_graph = deepcopy(self.graph)
 
             for n in self.graph.nodes: # Only plot the nodes on same level and save to pickle
-                if self.graph.nodes[n]['island'] == g.name:
+                if self.graph.nodes[n]['island'] == layer_name:
                     pos[n] = self.graph.nodes[n]['locs'][0:2]
                 else:
                     new_graph.remove_node(n)
             if self.debug:
                 memfile = io.BytesIO()
-                name = "digraph for island -- " + g.name
-                self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph,save=True,mem_file = memfile)
+                name = "digraph for layer -- " + str(layer_id)
+                self.plot(mode=2,isl = g.name,pos = pos,graph = new_graph,save=False,mem_file = memfile)
                 self.doc_handle_figure(memfile,name)
-        self.ele_lst = list(set(self.ele_lst))
+            self.ele_lst = list(set(self.ele_lst))
         for n in self.graph.nodes:
             self.pos[n] = self.graph.nodes[n]['locs'][0:2] # for 2D plotting purpose
         self.form_hierarchical_connections() # update bondwire new locations first
@@ -160,6 +207,7 @@ class LayoutLoopInterface():
             if not n in self.pos3d:
                 self.pos3d[n] = self.graph.nodes[n]['locs'] # for later graph rebuild
                 self.nodes_dict_3d[tuple(self.graph.nodes[n]['locs'])] = n # for later graph rebuild
+                
         input()
 
     def form_hierarchical_connections(self):
@@ -1249,7 +1297,7 @@ class LayoutLoopInterface():
 
 
     
-    def form_wire_frame(self, island,isl_name,elv,dz):
+    def form_wire_frame(self, island = None,isl_name= '',layer_name='',elv=0,dz=0):
         '''
         The objective is to form a simplest wireframe graph, this is used to get the inital orientation of all traces
         island: layout info object

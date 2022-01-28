@@ -1,3 +1,15 @@
+
+# This is the layout generation and optimization flow using command line only
+import sys, os
+#sys.path.append('..')
+# Set relative location
+cur_path =sys.path[0] # get current path (meaning this file location)
+print(cur_path)
+
+cur_path = cur_path[0:-len('core/model/electrical/meshing')]
+print(cur_path)
+sys.path.append(cur_path)
+
 from core.model.electrical.meshing.MeshObjects import RectCell
 
 import networkx as nx
@@ -292,8 +304,7 @@ class MeshTable():
             if self.corners_type[c] == 'concave':
                 plt.scatter(c[0], c[1], color='red', s=20)
         plt.autoscale()
-
-        plt.savefig(name+".png")
+        plt.show()
     def plot_island_routing(self):
         ''' For routing purpose'''
         id = random.randint(0, len(self.components))
@@ -427,7 +438,7 @@ def test_electrical_meshing_planar():
     island.place_devices_and_components()
     print("time", time.time() - start)
     island.plot_lev_1_mesh_island("layout_4")
-    #island.form_trace_uniform_mesh()
+    island.form_trace_uniform_mesh()
 if __name__ == "__main__":
     test_layout_routing()
     #test_electrical_meshing_level_1_layout1()
