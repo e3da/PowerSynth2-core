@@ -333,7 +333,83 @@ class CornerStitch_Emodel_API:
             self.get_layer_data_to_electrical(islands=island_data,layer_id =l_key)
         # handle bondwire group 
         self.make_wire_and_via_table()
+    # TEMPORARY CODE ONLY DONT MERGE TO MAIN ...
+    def eval_trace_trace_cap(self,tc1,tc2,iso_thick,epsilon = 8.854*1e-12 ):
+        '''
+        I used epsilon of air for now, replace with your material
+        '''
+        l1,b1,w1,h1 = tc1[1:5]
+        l2,b2,w2,h2 = tc2[1:5] 
+        overlap = not(l1+w1 <= l2 or l1 >= l2+w2 or b1>=b2+h2 or b2>=b1+h1)
+        if overlap:
+            # both are in um
+            ov_width = abs(w2-w1)
+            ov_height = abs(h2-h1)
+            ov_area = ov_width*1e-6*ov_height*1e-6
+            cap = epsilon*ov_area/(iso_thick*1e-6) # in Fahad            
+        else:
+            cap = -1 # for no overlap
+        return cap
     
+    def eval_cap_3d(self,islands,iso_id = [3]): # Need to figure out this list of iso_id in the future
+        print(islands)
+        layer_isl_dict = {}
+        # First we get all island layer and assume we know the isolation layer
+        for isl in islands:
+            isl_id = int(isl.name.split('.')[-1])
+            if isl_id in layer_isl_dict:
+                layer_isl_dict[isl_id]+=isl.elements # get traces object only
+            else:
+                layer_isl_dict[isl_id] = isl.elements # first create the list 
+        print(layer_isl_dict)
+        print("Now chheck for overlap between layers")
+        # In Imam, single substrate, number of layer equal number of isolation
+        all_layer_pair = []
+        all_layer_pair_to_thick = {}
+        for iso in iso_id:
+            iso_thick = self.get_thick(iso) # To compute capacitance
+            all_layer_pair.append([iso-1,iso+1])
+            all_layer_pair_to_thick[(iso-1,iso+1)] = iso_thick
+        layer_pair_to_cap_table = {} 
+        for layer_pair in all_layer_pair:
+            layer_1 = layer_pair[0]
+            layer_2 = layer_pair[1]
+            is_thick = all_layer_pair_to_thick[(layer_1,layer_2)]
+            trace_list_1, trace_list_2 = [[],[]]
+            if layer_1 in layer_isl_dict:
+                trace_list_1 = layer_isl_dict[layer_1]    
+            if layer_2 in layer_isl_dict:
+                trace_list_2 = layer_isl_dict[layer_2]
+            # Case 1: Only one trace_list exist, then this tracelist has capacitance to ground --> might need to specify ground layer
+            # Case 2: trace list 1 and trace_list 2 both exist
+            cap_table = {} # it is tc1-tc2 if case 2, else tc-grd if case 1
+            if trace_list_1==[] or trace_list_2 ==[]:
+                trace_list = [tl for tl in [trace_list_1,trace_list_2] if tl!=[]]
+                trace_list = trace_list[0]
+                # find cap to ground here...
+            else: # if trace_list_1 and trace_list_2 both exist
+                for tc1 in trace_list_1:
+                    tc1_name = tc1[5]
+                    for tc2 in trace_list_2:
+                        tc2_name = tc2[5]
+                        if not((tc1_name,tc2_name) in cap_table or (tc2_name,tc1_name) in cap_table):
+                            cap = self.eval_trace_trace_cap(tc1,tc2,iso_thick)
+                            cap_table[(tc1_name,tc2_name)] = cap
+                            cap_table[(tc2_name,tc1_name)] = cap
+                
+            layer_pair_to_cap_table[(layer_1,layer_2)] = cap_table
+        # I print all the cap here, please check
+        input("Begin cap extraction, press any button to continue ...")        
+        for layer_pair in layer_pair_to_cap_table:
+            print("Begin printing cap values between layer {} and layer {}".format(layer_pair[0],layer_pair[1]))
+            cap_table = layer_pair_to_cap_table[layer_pair]
+            for trace_pair in cap_table: # might have some overlaping
+                if not(cap_table[trace_pair] == -1 or cap_table[trace_pair] == 0): # ignor non-overlap cases
+                    line = "Cap value between {} and {} is {} F".format(trace_pair[0],trace_pair[1],cap_table[trace_pair])
+                    print(line)
+        input("End cap extraction, press any button to continue ...") 
+        print("end")       
+        
     def init_layout_3D(self,module_data = None):
         '''
 
@@ -360,6 +436,8 @@ class CornerStitch_Emodel_API:
         islands = []
         for isl_group in list(module_data.islands.values()):
             islands.extend(isl_group)
+        self.eval_cap_3d(islands)
+        print(islands)
         if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
             self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack)
 
