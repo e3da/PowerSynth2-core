@@ -29,7 +29,7 @@ class RL_circuit():
         self.num_ind = 0  # number of inductors
         self.num_V = 0  # number of independent voltage sources
         self.num_I = 0  # number of independent current sources
-        self.i_unk = 0  # number of current unknowns
+        self.num_branch = 0  # number of current unknowns
         self.num_opamps = 0  # number of op amps
         self.num_vcvs = 0  # number of controlled sources of various types
         self.num_vccs = 0
@@ -452,7 +452,7 @@ class RL_circuit():
 
         print('failed to find matching branch element in find_vname')
 
-    def matrix_formation(self, i_unk):
+    def matrix_formation(self, num_branch):
         s = self.s
         sn =0
 
@@ -483,7 +483,7 @@ class RL_circuit():
             # B  C MATRIX
 
             if x == 'V':
-                if i_unk > 1:  # is B greater than 1 by n?, V
+                if num_branch > 1:  # is B greater than 1 by n?, V
                     if n1 != 0:
                         self.M[n1 - 1, sn] = 1
                         self.M_t[sn, n1 - 1] = 1
@@ -505,7 +505,7 @@ class RL_circuit():
 
             if x == 'B':
 
-                if i_unk > 1:  # is B greater than 1 by n?, L
+                if num_branch > 1:  # is B greater than 1 by n?, L
                     imp = -s * np.imag(self.value[el]) - np.real(self.value[el])
                     self.D[sn, sn] += imp
                     
@@ -552,8 +552,8 @@ class RL_circuit():
                 self.D[ind2_index, ind1_index] += -s * Mval
 
         # ERR CHECK
-        if sn != i_unk:
-            print(('source number, sn={:d} not equal to i_unk={:d} in matrix B and C'.format(sn, i_unk)))
+        if sn != num_branch:
+            print(('source number, sn={:d} not equal to num_branch={:d} in matrix B and C'.format(sn, num_branch)))
 
 
     def V_mat(self, num_nodes):
@@ -562,8 +562,8 @@ class RL_circuit():
             self.V[i] = 'v{0}'.format(i + 1)
 
     def J_mat(self):
-        # The J matrix is an mx1 matrix, with one entry for each i_unk from a source
-        # sn = 0   # count i_unk source number
+        # The J matrix is an mx1 matrix, with one entry for each num_branch from a source
+        # sn = 0   # count num_branch source number
         # oan = 0   #count op amp number
         for i in range(len(self.cur_element)):
             # process all the unknown currents
@@ -604,9 +604,9 @@ class RL_circuit():
     def X_mat(self):
         self.X = np.concatenate((self.V[:], self.J[:]), axis=0)
 
-    def A_mat(self, num_nodes, i_unk):
+    def A_mat(self, num_nodes, num_branch):
         n = num_nodes
-        m = i_unk
+        m = num_branch
         self.A = np.zeros((m + n, m + n), dtype=np.complex_)
         first_row = np.concatenate((self.G,self.M),axis= 1) # form [G , M]
         second_row = np.concatenate((self.M_t, self.D), axis=1)  # form [M_t , D]
@@ -637,13 +637,13 @@ class RL_circuit():
         self.V = np.chararray((self.num_nodes,1), itemsize=4)
         self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex_)
         self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
-        i_unk = len(self.cur_element)
-        self.M = np.zeros((self.num_nodes, i_unk), dtype=np.complex_)
-        self.M_t = np.zeros((i_unk, self.num_nodes), dtype=np.complex_)
-        self.D = np.zeros((i_unk, i_unk), dtype=np.complex_)
-        self.Vi = np.zeros((i_unk, 1), dtype=np.complex_)
-        self.J = np.chararray((i_unk,1),itemsize =10)
-        self.matrix_formation(i_unk)
+        num_branch = len(self.cur_element)
+        self.M = np.zeros((self.num_nodes, num_branch), dtype=np.complex_)
+        self.M_t = np.zeros((num_branch, self.num_nodes), dtype=np.complex_)
+        self.D = np.zeros((num_branch, num_branch), dtype=np.complex_)
+        self.Vi = np.zeros((num_branch, 1), dtype=np.complex_)
+        self.J = np.chararray((num_branch,1),itemsize =10)
+        self.matrix_formation(num_branch)
         # Output preparation
         self.J_mat()
         self.V_mat(self.num_nodes)
@@ -651,7 +651,7 @@ class RL_circuit():
         self.Vi_mat()
         self.Z_mat() # this is the sources info
         self.X_mat()
-        self.A_mat(self.num_nodes, i_unk)
+        self.A_mat(self.num_nodes, num_branch)
     #precision = 10
     #fp = open('memory_profiler_basic_mean.log', 'w+')
     #@profile(precision=precision, stream=fp)

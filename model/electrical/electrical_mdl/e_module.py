@@ -13,6 +13,7 @@ from core.model.electrical.electrical_mdl.e_struct import E_plate,Sheet
 from core.model.electrical.parasitics.models_bondwire import wire_inductance, wire_partial_mutual_ind, wire_resistance, \
     ball_mutual_indutance, ball_self_inductance
 from collections import OrderedDict
+
 class Escript:
     def __init__(self, file):
         '''
@@ -118,24 +119,25 @@ class Escript:
         print(data)
 
 class EComp:
-    def __init__(self, sheet=[], conn=[], val=[], type="active",spc_type='MOSFET',inst_name= ""):
+    def __init__(self, sheet=[], connections=[], val=[], type="active",spc_type='MOSFET',inst_name= ""):
         '''
         Args:
             sheet: list of sheet for device's pins
-            conn: list if sheet.nets pair that connected
+            connections: list if sheet.nets pair that connected
             val: corresponded R,L,C value for each branch (a list of dictionary) {R: , L:, C: }
             type: passive or active.
         '''
         self.inst_name = inst_name
         self.sheet = sheet
         self.net_graph = nx.Graph()
-        self.conn = conn  # based on net name of the sheets
+        self.connections = connections  # based on net name of the sheets
         self.passive = val  # value of each edge, if -1 then 2 corresponding node in graph will be merged
         # else: this is a dict of {'R','L','C'}
         self.type = type
         self.spice_type = spc_type
         self.update_nodes()
         self.class_type ='comp'
+        
     def update_nodes(self):
         for sh in self.sheet:
             self.net_graph.add_node(sh.net, node=sh)
@@ -147,9 +149,11 @@ class EComp:
 
     def build_graph(self, mode =0):
         self.update_edges()
-
+    def __str__(self) -> str:
+        message = "device_type:" + str(self.type) + " spice type "+str(self.spice_type)
+        return message
 class EVia(EComp):
-    def __init__(self, start=None, stop=None):
+    def __init__(self, start=None, stop=None,via_name= ""):
         '''
         This is a simple model for Via connection. Assume a perfect conductor type for now
         To do: add via model to calculate parasitic 
@@ -158,7 +162,7 @@ class EVia(EComp):
             stop: stop sheet
             
         '''
-        EComp.__init__(self, sheet=[start, stop], conn=[[start.net, stop.net]], type="via")
+        EComp.__init__(self, sheet=[start, stop], connections=[[start.net, stop.net]], type="via",inst_name= via_name)
         self.class_type ='via'
         self.via_type = 'f2f'
     def build_graph(self, mode =0):
@@ -171,7 +175,7 @@ class EVia(EComp):
 
 class EWires(EComp):
     def __init__(self, wire_radius=0, num_wires=0, wire_dis=0, start=None, stop=None, wire_model=None, frequency=10e3,
-                 p=2.65e-8, circuit=None):
+                 p=2.65e-8, circuit=None,inst_name =""):
         '''
 
         Args:
@@ -184,7 +188,7 @@ class EWires(EComp):
             frequency: frequency of operation
             p: material resistivity (default: Al)
         '''
-        EComp.__init__(self, sheet=[start, stop], conn=[[start.net, stop.net]], type="wire_group")
+        EComp.__init__(self, sheet=[start, stop], connections=[[start.net, stop.net]], type="wire_group",inst_name=inst_name)
         self.num_wires = num_wires
         self.f = frequency
         self.r = wire_radius
@@ -439,7 +443,7 @@ class EModule:
         self.sh_nets = [sh.net for sh in self.sheet]
         self.plate = plate  # list of 3D plates
         self.layer_stack = layer_stack  # Will be used later to store layer info
-        self.group = OrderedDict()  # trace islands in any layer
+        self.trace_island_group = OrderedDict()  # trace islands in any layer
         self.components = components
         if self.components != []: # If the components have extra pins, which are not touching the traces
             self.unpack_comp()
@@ -452,228 +456,15 @@ class EModule:
                         sh.net_type = "external"
                     self.sheet.append(sh)
 
-    def form_group_split_rect(self):
-        '''
-        Form island of traces (self.plate), this is used to define correct mesh boundary for each trace group
-        Returns: a dictionary of group ID for plates
-
-        '''
-        # "Source: https://stackoverflow.com/questions/27016803/find-sets-of-disjoint-sets-from-a-list-of-tuples-or-sets-in-python" a=[]
-        a = []
-        traces = self.plate
-        if len(traces) > 1:
-            for t1 in traces:
-                for t2 in traces:
-                    if t1.intersects(t2):
-                        a.append([t1, t2])
-            self.d = OrderedDict((tuple(t),set(t)) for t in a)  # forces keys to be unique
-
-            while True:
-                for tuple_, set1 in list(self.d.items()):
-                    try:
-                        match = next(k for k, set2 in list(self.d.items()) if k != tuple_ and set1 & set2)
-                    except StopIteration:
-                        # no match for this key - keep looking
-                        continue
-                    else:
-                        self.d[tuple_] = set1 | self.d.pop(match)
-                        break
-                else:
-                    # no match for any key - we are done!
-                    break
-            self.output = sorted(tuple(s) for s in list(self.d.values()))
-
-        else:
-            self.output = [[traces[0]]]
-
-        for i in range(len(self.output)):
-            self.group[i] = self.output[i]
-
-
-    def form_group_cs_flat(self):
-        '''
-        Using flat level layout info to form the hierarchy
-        Returns: self.group
-        '''
-        group_id = 0
-        self.group=OrderedDict()
-        name_to_group={}
-        for p in self.plate:
-            name = p.group_id
-            if not (name in name_to_group):
-                self.group[group_id]=[p]
-                name_to_group[name]=group_id
-                group_id+=1
-            else:
-                self.group[name_to_group[name]].append(p)
-
     def form_group_cs_hier(self):
         name_to_group = {}
         for p in self.plate:
             name = p.group_id
             if not (name in name_to_group):
-                self.group[name] = [p]
+                self.trace_island_group[name] = [p]
                 name_to_group[name] = 1
             else:
-                self.group[name].append(p)
-    def split_layer_cs_data(self):
-        '''
-        This will split the layout based on the horizontal and vertical cs data
-        Args:
-            cs_sym_data:
-
-        Returns: list of rectangles on separated groups
-
-        '''
-
-        self.plate = []
-        self.group_layer_dict = OrderedDict()
-        self.splitted_group = OrderedDict()
-        for group in list(self.group.keys()):  # First collect all xs and ys coordinates
-            h_rects = []
-            v_rects = []
-            split_rects = []
-
-            self.splitted_group[group] = []
-            z = self.group[group][0].z
-            dz = self.group[group][0].dz
-            n = self.group[group][0].n
-            if self.layer_stack != None:
-                self.group_layer_dict[group] = self.layer_stack.id_by_z(z)
-            # collect the h and v rects
-            for plate in self.group[group]:
-                trace = plate.rect
-                if trace.cs_type == 'h':
-                    h_rects.append(trace)
-                elif trace.cs_type == 'v':
-                    v_rects.append(trace)
-            # search through all y locations and collect the extending intervals
-            y_locs_intervals = {}
-            counter = 0
-
-            for h_rect in h_rects:
-                y1 = h_rect.top
-                y2 = h_rect.bottom
-                x1 = h_rect.left
-                x2 = h_rect.right
-                if not y1 in y_locs_intervals:
-                    y_locs_intervals[y1]=[(x1,x2)]
-                else:
-                    y_locs_intervals[y1].append((x1, x2))
-
-                if not y2 in y_locs_intervals:
-                    y_locs_intervals[y2] = [(x1, x2)]
-                else:
-                    y_locs_intervals[y2].append((x1, x2))
-            for v_rect in v_rects:
-                cuts = v_rect.find_cut_intervals(dir=0, cut_set=y_locs_intervals)
-                cuts = list(set(cuts))
-                if cuts == []:
-                    continue
-                else:
-                    split_rects += v_rect.split_rect(cuts=cuts, dir=1)
-                    #fig, ax = plt.subplots()
-                    #draw_rect_list([v_rect], 'blue', '+', ax=ax)
-                    #draw_rect_list(v_rect.split_rect(cuts=cuts, dir=1), 'green', '', ax=ax)
-                    #plt.show()
-
-            fig, ax = plt.subplots()
-            #draw_rect_list(h_rects, 'red', '//', ax=ax)
-            #fig, ax = plt.subplots()
-            draw_rect_list(v_rects, 'blue', '/', ax=ax)
-            fig, ax = plt.subplots()
-
-            #draw_rect_list(split_rects, 'green', '', ax=ax)
-
-            #print len(split_rects)
-            #for r in split_rects:
-            #    print r.left, r.right, r.bottom, r.top
-
-            plt.show()
-
-
-            for r in split_rects:
-                t = round(r.top / 1000.0, 3)
-                b = round(r.bottom / 1000.0, 3)
-                l = round(r.left / 1000.0, 3)
-                r = round(r.right / 1000.0, 3)
-                newRect = Rect(top=t, bottom=b, left=l, right=r)
-                newPlate = E_plate(rect=newRect, z=z, dz=dz, n=n)
-                newPlate.name = 'T' + str(counter) + '_(' + 'isl' + str(group) + ')'
-                counter += 1
-                self.splitted_group[group].append(newPlate)
-                self.plate.append(newPlate)
-        self.group = self.splitted_group
-
-    def split_layer_group(self):
-        # simply create a  Hanan Grid out of the given input to form connection between connected pieces
-        # This doesnt work the same way for CS data
-        self.plate = []
-        self.group_layer_dict = OrderedDict()
-        self.splitted_group = OrderedDict()
-        for group in list(self.group.keys()):  # First collect all xs and ys coordinates
-            rects = []
-            counter = 0
-            xs = []
-            ys = []
-            self.splitted_group[group] = []
-            z = self.group[group][0].z
-            if self.layer_stack != None:
-                self.group_layer_dict[group] = self.layer_stack.id_by_z(z)
-            dz = self.group[group][0].dz
-            n = self.group[group][0].n
-            for plate in self.group[group]:
-                trace = plate.rect
-                xs += [trace.left, trace.right]
-                ys += [trace.top, trace.bottom]
-            # final sort and clean up
-            xs = list(set(xs))
-            ys = list(set(ys))
-            xs.sort()
-            ys.sort()
-            ls = list(range(len(xs) - 1))  # left
-            ls = [xs[i] for i in ls]
-            ls.sort()
-            rs = list(range(1, len(xs)))  # right
-            rs = [xs[i] for i in rs]
-            rs.sort()
-            bs = list(range(len(ys) - 1))  # bot
-            bs = [ys[i] for i in bs]
-            bs.sort()
-            ts = list(range(1, len(ys)))  # top
-            ts = [ys[i] for i in ts]
-            ts.sort()
-
-            for left, right in zip(ls, rs):
-                for bot, top in zip(bs, ts):
-                    midx = left + (right - left) / 2
-                    midy = bot + (top - bot) / 2
-                    split = False
-                    for plate in self.group[group]:
-                        trace = plate.rect
-                        if trace.encloses(midx, midy):
-                            split = True
-                            break
-
-                    if split:
-                        t = round(top/1000.0,3)
-                        b = round(bot / 1000.0, 3)
-                        l = round(left / 1000.0, 3)
-                        r = round(right / 1000.0, 3)
-
-                        newRect = Rect(top=t, bottom=b, left=l, right=r)
-                        rects.append(newRect)
-                        newPlate = E_plate(rect=newRect, z=z, dz=dz, n=n)
-                        newPlate.name = 'T' + str(counter) + '_(' + 'isl' + str(group) + ')'
-                        counter += 1
-
-                        self.splitted_group[group].append(newPlate)
-                        if self.layer_stack != None:
-                            self.group_layer_dict[group] = self.layer_stack.id_by_z(z)
-                        self.plate.append(newPlate)
-                        # else:
-                        #    splitted_group[group].append(cur_plate)
-        self.group = self.splitted_group
+                self.trace_island_group[name].append(p)
 
 def test1():
     r1 = Rect(14, 10, 0, 10)
@@ -724,24 +515,6 @@ def test1():
     sh13 = Rect(6, 5, -1.35, -1.25)
     S13 = Sheet(rect=sh13, net_name='bwS_m2', type='point', n=(0, 0, 1), z=0.2)
 
-    new_module = EModule(plate=[R1, R2, R3, R4, R5, R6, R7],
-                         sheet=[S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13])
-    new_module.form_group_split_rect()
-    new_module.split_layer_group()
-
-    fig = plt.figure(1)
-    ax = a3d.Axes3D(fig)
-    ax.set_xlim3d(-5, 20)
-    ax.set_ylim3d(-5, 20)
-    ax.set_zlim3d(0, 5)
-    plot_rect3D(rect2ds=new_module.plate + new_module.sheet, ax=ax)
-
-    hier = EHier(module=new_module)
-    hier.form_hierachy()
-    hier.tree.update_digraph()
-    fig, ax = plt.subplots()
-    hier.tree.plot_tree(ax)
-    plt.show()
 
 
 def test_comp():

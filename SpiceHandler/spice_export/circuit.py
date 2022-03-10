@@ -19,7 +19,7 @@ class Circuit():
         self.num_ind=0 # number of inductors
         self.num_V=0 # number of independent voltage sources
         self.num_I=0 # number of independent current sources
-        self.i_unk = 0  # number of current unknowns
+        self.num_branch = 0  # number of current unknowns
         self.num_opamps = 0  # number of op amps
         self.num_vcvs = 0  # number of controlled sources of various types
         self.num_vccs = 0
@@ -479,8 +479,8 @@ class Circuit():
         print(('number of nodes: {:d}'.format(num_nodes)))
         # count the number of element types that affect the size of the B, C, D, E and J arrays
         # these are current unknows
-        i_unk = self.num_V + self.num_opamps + self.num_vcvs + self.num_ccvs + self.num_cccs + self.num_ind
-        print(('number of unknown currents: {:d}'.format(i_unk)))
+        num_branch = self.num_V + self.num_opamps + self.num_vcvs + self.num_ccvs + self.num_cccs + self.num_ind
+        print(('number of unknown currents: {:d}'.format(num_branch)))
         print(('number of RLC (passive components): {:d}'.format(self.num_rlc)))
         print(('number of inductors: {:d}'.format(self.num_ind)))
         print(('number of independent voltage sources: {:d}'.format(self.num_V)))
@@ -562,7 +562,7 @@ class Circuit():
                 if n2 != 0 and cn1 != 0:
                     self.G[n2 - 1, cn1 - 1] -= g
 
-    def B_mat(self, i_unk):
+    def B_mat(self, num_branch):
         # generate the B Matrix
         sn = 0  # count source number as code walks through the data frame
         for i in range(len(self.df_circuit_info)):
@@ -573,7 +573,7 @@ class Circuit():
             # process elements with input to B matrix
             x = self.df_circuit_info.loc[i, 'element'][0]  # get 1st letter of element name
             if x == 'V':
-                if i_unk > 1:  # is B greater than 1 by n?, V
+                if num_branch > 1:  # is B greater than 1 by n?, V
                     if n1 != 0:
                         self.B[n1 - 1, sn] = 1
                     if n2 != 0:
@@ -588,7 +588,7 @@ class Circuit():
                 self.B[n_vout - 1, sn] = 1
                 sn += 1  # increment source count
             if (x == 'H') or (x == 'F'):  # H: ccvs, F: cccs,
-                if i_unk > 1:  # is B greater than 1 by n?, H, F
+                if num_branch > 1:  # is B greater than 1 by n?, H, F
                     # check to see if any terminal is grounded
                     # then stamp the matrix
                     if n1 != 0:
@@ -602,7 +602,7 @@ class Circuit():
                         self.B[n2 - 1] = -1
                 sn += 1  # increment source count
             if x == 'E':  # vcvs type, only ik column is altered at n1 and n2
-                if i_unk > 1:  # is B greater than 1 by n?, E
+                if num_branch > 1:  # is B greater than 1 by n?, E
                     if n1 != 0:
                         self.B[n1 - 1, sn] = 1
                     if n2 != 0:
@@ -614,7 +614,7 @@ class Circuit():
                         self.B[n2 - 1] = -1
                 sn += 1  # increment source count
             if x == 'L':
-                if i_unk > 1:  # is B greater than 1 by n?, L
+                if num_branch > 1:  # is B greater than 1 by n?, L
                     if n1 != 0:
                         self.B[n1 - 1, sn] = 1
                     if n2 != 0:
@@ -627,13 +627,13 @@ class Circuit():
                 sn += 1  # increment source count
 
         # check source count
-        if sn != i_unk:
-            print(('source number, sn={:d} not equal to i_unk={:d} in matrix B'.format(sn, i_unk)))
+        if sn != num_branch:
+            print(('source number, sn={:d} not equal to num_branch={:d} in matrix B'.format(sn, num_branch)))
             # print self.B
             # find the the column position in the C and D matrix for controlled sources
             # needs to return the node numbers and branch number of controlling branch
     
-    def C_mat(self,i_unk):
+    def C_mat(self,num_branch):
         # generate the C Matrix
         sn = 0  # count source number as code walks through the data frame
         for i in range(len(self.df_circuit_info)):
@@ -646,7 +646,7 @@ class Circuit():
             # process elements with input to B matrix
             x = self.df_circuit_info.loc[i, 'element'][0]  # get 1st letter of element name
             if x == 'V':
-                if i_unk > 1:  # is B greater than 1 by n?, V
+                if num_branch > 1:  # is B greater than 1 by n?, V
                     if n1 != 0:
                         self.C[sn, n1 - 1] = 1
                     if n2 != 0:
@@ -660,7 +660,7 @@ class Circuit():
 
             if x == 'O':  # op amp type, input connections of the opamp go into the C matrix
                 # C[sn,n_vout-1] = 1
-                if i_unk > 1:  # is B greater than 1 by n?, O
+                if num_branch > 1:  # is B greater than 1 by n?, O
                     # check to see if any terminal is grounded
                     # then stamp the matrix
                     if n1 != 0:
@@ -677,7 +677,7 @@ class Circuit():
             if x == 'F':  # need to count F (cccs) types
                 sn += 1  # increment source count
             if x == 'H':  # H: ccvs
-                if i_unk > 1:  # is B greater than 1 by n?, H
+                if num_branch > 1:  # is B greater than 1 by n?, H
                     # check to see if any terminal is grounded
                     # then stamp the matrix
                     if n1 != 0:
@@ -691,7 +691,7 @@ class Circuit():
                         self.C[n2 - 1] = -1
                 sn += 1  # increment source count
             if x == 'E':  # vcvs type, ik column is altered at n1 and n2, cn1 & cn2 get value
-                if i_unk > 1:  # is B greater than 1 by n?, E
+                if num_branch > 1:  # is B greater than 1 by n?, E
                     if n1 != 0:
                         self.C[sn, n1 - 1] = 1
                     if n2 != 0:
@@ -714,7 +714,7 @@ class Circuit():
                 sn += 1  # increment source count
 
             if x == 'L':
-                if i_unk > 1:  # is B greater than 1 by n?, L
+                if num_branch > 1:  # is B greater than 1 by n?, L
                     if n1 != 0:
                         self.C[sn, n1 - 1] = 1
                     if n2 != 0:
@@ -727,10 +727,10 @@ class Circuit():
                 sn += 1  # increment source count
 
         # check source count
-        if sn != i_unk:
-            print(('source number, sn={:d} not equal to i_unk={:d} in matrix C'.format(sn, i_unk)))
+        if sn != num_branch:
+            print(('source number, sn={:d} not equal to num_branch={:d} in matrix C'.format(sn, num_branch)))
         #print self.C
-    def D_mat(self,i_unk):
+    def D_mat(self,num_branch):
         # generate the D Matrix
         s = Symbol('s')  # the Laplace variable
         sn = 0  # count source number as code walks through the data frame
@@ -748,12 +748,12 @@ class Circuit():
 
             if x == 'L':
                 if self.comp_mode=='sym':
-                    if i_unk > 1:  # is D greater than 1 by 1?
+                    if num_branch > 1:  # is D greater than 1 by 1?
                         self.D[sn, sn] += -s * sympify(self.df_circuit_info.loc[i, 'element'])
                     else:
                         self.D[sn] += -s * sympify(self.df_circuit_info.loc[i, 'element'])
                 elif self.comp_mode=='val':
-                    if i_unk > 1:  # is D greater than 1 by 1?
+                    if num_branch > 1:  # is D greater than 1 by 1?
                         self.D[sn, sn] += -s * float(self.df_circuit_info.loc[i, 'value'])
                     else:
                         self.D[sn] += -s * float(self.df_circuit_info.loc[i, 'value'])
@@ -785,8 +785,8 @@ class Circuit():
             if x == 'K':  # K: coupled inductors, KXX LYY LZZ value
                 # if there is a K type, D is m by m
                 Mname = 'M' + self.df_circuit_info.loc[i, 'element'][1:]
-                vn1, vn2, ind1_index = self.find_vname(self.df_circuit_info.loc[i, 'Lname1'])  # get i_unk position for Lx
-                vn1, vn2, ind2_index = self.find_vname(self.df_circuit_info.loc[i, 'Lname2'])  # get i_unk position for Ly
+                vn1, vn2, ind1_index = self.find_vname(self.df_circuit_info.loc[i, 'Lname1'])  # get num_branch position for Lx
+                vn1, vn2, ind2_index = self.find_vname(self.df_circuit_info.loc[i, 'Lname2'])  # get num_branch position for Ly
                 # enter sM on diagonals = value*sqrt(LXX*LZZ)
                 kval= self.df_circuit_info.loc[i, 'value']
                 lval1 = self.df_uk_current.loc[ind1_index, 'value']
@@ -810,8 +810,8 @@ class Circuit():
             self.V[i] = sympify('v{:d}'.format(i + 1))
 
     def J_mat(self):
-        # The J matrix is an mx1 matrix, with one entry for each i_unk from a source
-        # sn = 0   # count i_unk source number
+        # The J matrix is an mx1 matrix, with one entry for each num_branch from a source
+        # sn = 0   # count num_branch source number
         # oan = 0   #count op amp number
         for i in range(len(self.df_uk_current)):
             # process all the unknown currents
@@ -865,15 +865,15 @@ class Circuit():
         self.X = self.V[:] + self.J[:]  # the + operator in python concatinates the lists
         #print self.X  # display the X matrix
 
-    def A_mat(self,num_nodes,i_unk):
+    def A_mat(self,num_nodes,num_branch):
         n = num_nodes
-        m = i_unk
+        m = num_branch
         self.A = zeros(m + n, m + n)
         for i in range(n):
             for j in range(n):
                 self.A[i, j] = self.G[i, j]
 
-        if i_unk > 1:
+        if num_branch > 1:
             for i in range(n):
                 for j in range(m):
                     self.A[i, n + j] = self.B[i, j]
@@ -883,7 +883,7 @@ class Circuit():
                 for j in range(m):
                     self.A[n + i, n + j] = self.D[i, j]
 
-        if i_unk == 1:
+        if num_branch == 1:
             for i in range(n):
                 self.A[i, n] = self.B[i]
                 self.A[n, i] = self.C[i]
@@ -905,26 +905,26 @@ class Circuit():
 
         # count the number of element types that affect the size of the B, C, D, E and J arrays
         # these are element types that have unknown currents
-        i_unk = self.df_uk_current.shape[0]
+        num_branch = self.df_uk_current.shape[0]
         n = num_nodes
-        m = i_unk
-        # if i_unk == 0, just generate empty arrays
-        self.B = zeros(num_nodes, i_unk)
-        self.C = zeros(i_unk, num_nodes)
-        self.D = zeros(i_unk, i_unk)
-        self.Ev = zeros(i_unk, 1)
-        self.J = zeros(i_unk, 1)
+        m = num_branch
+        # if num_branch == 0, just generate empty arrays
+        self.B = zeros(num_nodes, num_branch)
+        self.C = zeros(num_branch, num_nodes)
+        self.D = zeros(num_branch, num_branch)
+        self.Ev = zeros(num_branch, 1)
+        self.J = zeros(num_branch, 1)
         self.G_mat()
-        self.B_mat(i_unk)
-        self.C_mat(i_unk)
-        self.D_mat(i_unk)
+        self.B_mat(num_branch)
+        self.C_mat(num_branch)
+        self.D_mat(num_branch)
         self.J_mat()
         self.V_mat(n)
         self.I_mat()
         self.Ev_mat()
         self.Z_mat()
         self.X_mat()
-        self.A_mat(num_nodes,i_unk)
+        self.A_mat(num_nodes,num_branch)
         eq_temp = 0  # temporary equation used to build up the equation
         self.equ = zeros(m + n, 1)  # initialize the array to hold the equations
         print("solving ...")

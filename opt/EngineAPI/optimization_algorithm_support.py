@@ -123,48 +123,6 @@ class new_engine_opt:
         #print converted_data
         return converted_data
 
-    def eval_layout(self,module_data=None):
-        #print"Here_eval",module_data
-        result = []
-        #print "DATA",layout_data
-        #print "M", self.measures
-        measures=[None,None]
-
-        for measure in self.measures:
-            if isinstance(measure,ElectricalMeasure):
-                measures[0]=measure
-            if isinstance(measure,ThermalMeasure):
-                measures[1]=measure
-        self.measures=measures
-        for i in range(len(self.measures)):
-            measure=self.measures[i]
-            # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
-            if isinstance(measure, ElectricalMeasure):
-                type = measure.measure
-
-                self.e_api.init_layout_isl(module_data=module_data)
-                start=time.time()
-
-                R, L = self.e_api.extract_RL(src=measure.source, sink=measure.sink)
-
-                #print 'R',R,'L',L
-                end = time.time()
-                #print "RT", end - start
-                '''
-                R=10
-                L=10
-                '''
-
-                if type == 0:  # LOOP RESISTANCE
-                    result.append(R)  # resistance in mOhm
-                if type == 1:  # LOOP INDUCTANCE
-                    result.append(L)  # resistance in mOhm
-
-            if isinstance(measure, ThermalMeasure):
-                max_t = self.t_api.eval_max_temp(module_data=module_data)
-                result.append(max_t)
-
-        return result
 
     def find_individuals(self, X_Loc, Y_Loc):
         for k, v in list(X_Loc.items()):

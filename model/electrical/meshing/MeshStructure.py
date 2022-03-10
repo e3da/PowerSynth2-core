@@ -7,11 +7,12 @@ Direct mesh from input geometry from e_module and e_hierarchy
 
 # IMPORT
 import time
-from mpl_toolkits.mplot3d import Axes3D
+from matplotlib.patches import Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 from matplotlib import cm
+import matplotlib.lines as lines
 import networkx as nx
 import joblib
 from sklearn.preprocessing import PolynomialFeatures
@@ -30,8 +31,105 @@ from core.model.electrical.electrical_mdl.e_loop_element import self_ind_py
 from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
 
 
-
-class EMesh():
+class EMesh(): # rewrite and clean up old EMesh 
+    def __init__(self):
+        self.name = ''
+        self.all_node = []
+        self.node_table = {} # position map to node_obj
+        self.xyz_to_id = {}
+        self.id_to_xyz = {}
+        
+        self.edge_table = {} # edge between 2 node
+        self.node_id =0
+        self.mesh_graph = nx.Graph()
+    
+    # display_methods   
+    
+    def add_node(self,pt_xyz,node_obj):
+        node_name = "{}.{}".format(self.name,self.node_id)
+        self.node_table[pt_xyz] = node_obj
+        
+        self.xyz_to_id[pt_xyz] = node_name 
+        self.id_to_xyz[node_name] = pt_xyz
+        self.node_id+=1
+        self.mesh_graph.add_node(node_name)
+    
+    def add_edge(self,xyz1,xyz2,trace_data,trace_type,ori):
+        node_id_1 = self.xyz_to_id[xyz1]
+        node_id_2 = self.xyz_to_id[xyz2]
+        if not (self.mesh_graph.has_edge(node_id_1,node_id_2)):
+            self.edge_table[(node_id_1,node_id_2)] = (trace_data,trace_type)
+            self.mesh_graph.add_edge(node_id_1,node_id_2)
+    
+    def display_all_nodes(self,projection = '2d',display_node_id = False,display_node_net =True,fig = None,ax = None):
+        display = False
+        if fig == None and ax == None:
+            fig = plt.figure()
+            ax = fig.add_subplot()
+            display = True
+        for pos in self.node_table:
+            node_name= self.node_table[pos].node_name
+            node_type = self.node_table[pos].node_type
+            net_name = self.node_table[pos].net_name
+            x,y,z = pos
+            if display_node_net:
+                ax.text(pos[0],pos[1],s=net_name)
+            if display_node_id:
+                ax.text(x=pos[0],y=pos[1],z=pos[2],s = node_name)
+            color = 'red' if node_type =='boundary' else 'blue'
+            
+            if projection == '3d':
+                ax.scatter([x],[y],[z],s=10,c = color)
+            elif projection == '2d':
+                ax.scatter([x],[y],s=10,c = color)
+        if display:        
+            plt.show()
+    
+    def display_edges_cells(self,fig = None, ax = None, mode =0):
+        display = False
+        if (fig == None and ax == None):
+            fig = plt.figure()
+            ax = fig.add_subplot()
+            display=True        
+        for e in self.edge_table:
+            e_type = self.edge_table[e][1]
+            if mode == 0: # view the cell rectangle
+                x,y,w,h = self.edge_table[e][0]
+                if e_type == 'internal':
+                    rect = Rectangle(xy=(x,y),width=w,height=h,ec='black',fc='blue',alpha = 0.3)
+                elif e_type == 'boundary':
+                    rect = Rectangle(xy=(x,y),width=w,height=h,ec='black',fc='red',alpha =0.3)
+                ax.add_patch(rect)
+            elif mode ==1:
+                pt1 = self.id_to_xyz[e[0]]
+                pt2 = self.id_to_xyz[e[1]]
+                x_data = [pt1[0],pt2[0]]
+                y_data = [pt1[1],pt2[1]]
+                
+                color = 'blue' if e_type == 'internal' else 'red'
+                line = lines.Line2D(x_data,y_data,lw=2,color =color)
+                
+                ax.add_line(line)
+        ax.autoscale()
+        if display:
+            plt.show()
+    
+    
+    def display_nodes_and_edges(self, mode =0):
+        fig = plt.figure()
+        ax = fig.add_subplot()
+        self.display_all_nodes(fig=fig,ax = ax)
+        self.display_edges_cells(fig=fig,ax= ax,mode = mode)
+        plt.show()
+        
+    def display_node_table(self):
+        for pos in self.node_table:
+            node_name= self.node_table[pos].node_name
+            message = "Node:{} -- Pos: {}".format(node_name,pos)
+            print(message)
+    
+    
+class EMesh2():
     # Electrical Meshing for one selected layer
     def __init__(self, hier_E=None, freq=1000, mdl=None,mdl_type = 0):
         '''

@@ -12,8 +12,7 @@ from networkx.readwrite import edgelist
 import pandas as pd
 from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
-from core.model.electrical.meshing.MeshStructure import EMesh
-from core.model.electrical.meshing.MeshAlgorithm import MeshTable
+from core.model.electrical.meshing.MeshAlgorithm import MeshTable,MeshTableCollection
 
 from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
@@ -54,7 +53,7 @@ class LayoutLoopInterface():
         self.num_RL_layer = 0 # 1 for 2D case         -- these are routing layers 
         self.num_backside_layer = 0 # 0-1 for 2D case -- these are backside layers
         self.num_C_layer = 0 # 0-1 for 2D case        -- these are dielectric layers
-        self.layer_island_dict = {} # Here we store all islands data for each layer in a dict
+        
         self.graph = nx.Graph()
         self.ori_map = {}
         self.comp_nodes = {}
@@ -122,6 +121,8 @@ class LayoutLoopInterface():
         layer = all_layer_info[layer_id]
         return layer.z
     
+    
+    
     def form_graph(self):
         self.doc_start_a_report()
 
@@ -130,7 +131,6 @@ class LayoutLoopInterface():
         else:
             self.find_ori = False
         isl_dict = {isl.name: isl for isl in self.layout_info}
-        fig, ax = plt.subplots()
         self.ele_lst = []
         self.hier_group_dict = {}
         self.comp_edge = []
@@ -141,47 +141,49 @@ class LayoutLoopInterface():
         for g in self.hier.isl_group:
             z = self.hier.z_dict[g.z_id]
             print('Z_level-', z,g.z_id)
-            print(g.name)
             dz = self.get_thick(g.z_id)
             if not(g.z_id in self.layer_island_dict):
                 self.layer_island_dict[g.z_id] = [g.name] # Add new list to collect island name
             else:
                 self.layer_island_dict[g.z_id].append(g.name) # Add island name to layer
         
-        # STEP 2: Process mesh elements for each layer
+        # STEP 2: Process mesh elements for each layer and each island
         for layer_id in self.layer_island_dict:
-            self.layer_mesh_table[layer_id] = MeshTable()
-            current_mesh =self.layer_mesh_table[layer_id]
-            print("forming graph for ", layer_id)
+            print(self.layer_island_dict)
+            self.layer_mesh_table[layer_id] = MeshTableCollection()
+            
+            print("forming graph for layer:", layer_id)
             z = z = self.hier.z_dict[layer_id]
             layer_name = 'Layer_{}'.format(layer_id)
-            all_trace_copper = []
-            all_net_on_trace = []
+            
             for island_name in self.layer_island_dict[layer_id]:
+                isl_mesh = MeshTable()
                 isl = isl_dict[island_name]
-                all_trace_copper+=isl.elements
-                all_net_on_trace += isl.child
-            # add trace to the MeshTable object
-            for trace_data in all_trace_copper:
-                x,y,width,height =  trace_data[1:5]
-                t_cell =RectCell(int(x),int(y),int(width),int(height)) 
-                self.layer_mesh_table[layer_id].traces.append(t_cell)
-            for net_data in all_net_on_trace:
-                name = net_data[5]
-                x,y,width,height =  net_data[1:5]
-                net_cell =RectCell(int(x),int(y),int(width),int(height)) 
+                all_trace_copper = isl.elements
+                all_net_on_trace = isl.child
                 
-                if "L" in name: # lead type
-                    current_mesh.leads.append(net_cell)
-                elif "B" in name:
-                    current_mesh.pads.append(net_cell)
-                elif "D" in name:
-                    current_mesh.components.append(net_cell)
+            # add trace to the MeshTable object
+                for trace_data in all_trace_copper:
+                    x,y,width,height =  trace_data[1:5]
+                    t_cell =RectCell(int(x),int(y),int(width),int(height)) 
+                    isl_mesh.traces.append(t_cell)
+                for net_data in all_net_on_trace:
+                    name = net_data[5]
+                    x,y,width,height =  net_data[1:5]
+                    net_cell =RectCell(int(x),int(y),int(width),int(height)) 
+                    isl_mesh.traces.append(net_cell)
+                    if "L" in name: # lead type
+                        isl_mesh.leads.append(net_cell)
+                    elif "B" in name:
+                        isl_mesh.pads.append(net_cell)
+                    elif "D" in name:
+                        isl_mesh.components.append(net_cell)
                     
                 
-            current_mesh.form_hanan_mesh_table_on_island()
-            current_mesh.place_devices_and_components()
-            current_mesh.plot_lev_1_mesh_island(layer_name)
+                isl_mesh.form_hanan_mesh_table_on_island()
+                isl_mesh.place_devices_and_components()
+                self.layer_mesh_table[layer_id].add_table(island_name,isl_mesh)
+            self.layer_mesh_table[layer_id].plot_all_mesh_island(name=layer_name)
             
             self.form_wire_frame(island=isl,isl_name = island_name,layer_name=layer_name,elv=z,dz=dz) # form wireframe for each island on each z level
             self.ele_lst.append(z)

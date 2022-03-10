@@ -1,7 +1,7 @@
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
-#from corner_stitch.input_script import *
+from core.model.electrical.meshing.MeshStructure import EMesh
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 from core.MDK.Design.parts import Part
@@ -10,6 +10,9 @@ from core.model.electrical.electrical_mdl.e_netlist import ENetlist
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.model.electrical.parasitics.mdl_compare import load_mdl
 from core.model.electrical.electrical_mdl.e_loop_finder import LayoutLoopInterface
+from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
+from core.model.electrical.meshing.MeshAlgorithm import MeshTable,MeshTableCollection
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -79,7 +82,7 @@ class CornerStitch_Emodel_API:
         self.wires = []
         self.vias = []
         # this is fixed to internal
-        
+        self.layer_island_dict = {} # Here we store all islands data for each layer in a dict
         self.rs_model = None
     def process_trace_orientation(self,trace_ori_file=None):
         with open(trace_ori_file, 'r') as file_data:
@@ -139,7 +142,7 @@ class CornerStitch_Emodel_API:
 
 
 
-    def get_z_loc(self,layer_id=0,N=None):
+    def get_z_loc(self,layer_id=0):
         '''
         For each island given a layer_id information, get the z location
         Args:
@@ -268,7 +271,9 @@ class CornerStitch_Emodel_API:
                         elif "DIODE" in obj.name:
                             spc_type = 'DIODE'
                         elif "CAP" in obj.name:
-                            spc_type = 'CAP' 
+                            spc_type = 'CAP'
+                        else: 
+                            spc_type = 'INTERNAL_PIN' 
                         # HARDCODED
                         
                         print("DEVICE NAME",dev_name)
@@ -305,9 +310,9 @@ class CornerStitch_Emodel_API:
                                 pin2 = dev_name + '_' + conn[1]
                                 dev_conn_list.append([pin1, pin2])  # update pin connection
                                 dev_para.append(obj.conn_dict[conn])  # update intenal parasitics values
-                        
-                        self.e_comps.append(
-                            EComp(inst_name =dev_name, sheet=dev_pins, conn=dev_conn_list, val=dev_para,spc_type=spc_type))  # Update the component
+                        comp = EComp(inst_name =dev_name, sheet=dev_pins, connections=dev_conn_list, val=dev_para,spc_type=spc_type)
+                        print("component", comp)
+                        self.e_comps.append(comp)  # Update the component
         for m in self.measure:
             m.src_dir = self.src_sink_dir[m.source]
             m.sink_dir = self.src_sink_dir[m.sink]
@@ -360,18 +365,18 @@ class CornerStitch_Emodel_API:
         # Update module object
         self.module = EModule(plate=self.e_plates, sheet=self.e_sheets, components=self.wires + self.e_comps + self.vias)
         self.module.form_group_cs_hier()
-        
-        if self.hier == None:
-            self.hier = EHier(module=self.module)
-            self.hier.form_hierachy()
-        else:  # just update, no need to recreate the hierachy -- prevent mem leak
-            #self.hier = EHier(module=self.module)
-            self.hier.update_module(self.module)
-            self.hier.update_hierarchy()
+        # Form and store hierachy information using hypergraph        
+        self.hier = EHier(module=self.module)
+        self.hier.form_hypergraph()
         # Combine all islands group for all layer
         islands = []
+        
         for isl_group in list(module_data.islands.values()):
             islands.extend(isl_group)
+        
+        # Mesh for PEEC to initialize, if loop model is used we can apply the reduction later
+        self.form_initial_mesh()
+        # Need to rewrite the Emesh formulation for PEEC.
         if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
             self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
             self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
@@ -379,12 +384,15 @@ class CornerStitch_Emodel_API:
                 self.emesh.mesh_init(mode =0)
             else:
                 self.emesh.mesh_init(mode =1)
+        # Need to redefine the loop from any layout structure 
         elif "Loop" in self.e_mdl:
             # Call loop finder here
             self.emesh = LayoutLoopInterface(islands=islands,hier_E = self.hier, freq =self.freq, layer_stack =self.layer_stack)
             self.emesh.check_number_of_electrical_layer() # Check number of routing layers for netlist output simplication
             self.emesh.ori_map =self.trace_ori # Update the trace orientation if given
             #print("define current directions")
+            self.emesh.form_initial_mesh()
+            # 
             self.emesh.form_graph()
             #print("find path")
             #TODO: for measure in self.mesures 
@@ -419,7 +427,78 @@ class CornerStitch_Emodel_API:
             #self.emesh.graph_to_circuit_transfomation()
             print("solve MNA")
         
-
+    def form_initial_mesh(self):
+        print(self.hier.isl_name_traces)
+        self.layer_mesh_table = {}
+        self.layer_island_dict = {}
+        self.layer_z_info = {} # storing z level and thickness of the current layer
+        self.layer_isl_count = {}
+        self.isl_indexing = {}
+        # STEP 1: Organize the layer_name and island_name
+        for isl_name in self.hier.isl_name_traces:
+            z_level = self.hier.inst_z_id[isl_name] 
+            z = self.get_z_loc(z_level)
+            thick = self.get_thick(z_level)
+            
+            
+            if not(z_level in self.layer_island_dict):
+                self.layer_island_dict[z_level] = [isl_name]
+                self.layer_z_info[z_level] = [z,thick]
+                self.layer_isl_count[z_level] = 0
+            else:
+                self.layer_island_dict[z_level].append(isl_name)
+                self.layer_isl_count[z_level]+= 1
+            self.isl_indexing[isl_name] = self.layer_isl_count[z_level]
+        # STEP 2: Process mesh elements for each layer and each island
+        for layer_id in self.layer_island_dict:
+            z, thick = self.layer_z_info[layer_id]
+            self.layer_mesh_table[layer_id] = MeshTableCollection(z=int(z*1000),thick = int(thick*1000),zid = layer_id)
+            #z = self.hier.z_dict[layer_id]
+            layer_name = 'Layer_{}'.format(layer_id)
+            print("forming graph for layer:", layer_name)
+            
+            
+            for island_name in self.layer_island_dict[layer_id]:
+                isl_mesh = MeshTable(island_name = island_name, id = self.isl_indexing[island_name])
+                all_trace_copper = [] 
+                all_net_on_trace = []
+                for trace_name in self.hier.isl_name_traces[island_name]:
+                    all_trace_copper.append(self.hier.trace_map[trace_name])
+                for net_name in self.hier.trace_island_nets[island_name]:
+                    all_net_on_trace.append(self.hier.pin_map[net_name])
+                    
+                
+            # add trace to the MeshTable object
+                for trace_data in all_trace_copper:
+                    rect_obj = trace_data.rect
+                    t_cell =RectCell(rect_obj.left,rect_obj.bottom,rect_obj.width,rect_obj.height) 
+                    isl_mesh.traces.append(t_cell)
+                for net_data in all_net_on_trace:
+                    rect_obj = net_data.rect
+                    name = net_data.net
+                    net_cell =RectCell(rect_obj.left,rect_obj.bottom,rect_obj.width,rect_obj.height) 
+                    center = net_cell.center()
+                    #self.layer_mesh_table[layer_id].add_net(x= int(center[0]), y = int(center[1]),name = name)
+                    if name in self.hier.trace_island_nets[island_name]:
+                        if "L" in name: # lead type
+                            #isl_mesh.leads.append(net_cell)
+                            #isl_mesh.traces.append(net_cell)
+                            isl_mesh.small_pads.append(net_cell)
+                        elif "B" in name:
+                            isl_mesh.small_pads.append(net_cell)
+                        elif "D" in name:
+                            #isl_mesh.components.append(net_cell)
+                            #isl_mesh.traces.append(net_cell)
+                            isl_mesh.small_pads.append(net_cell)
+                        elif "V" in name:
+                            isl_mesh.small_pads.append(net_cell)
+                
+                isl_mesh.form_hanan_mesh_table_on_island()
+                isl_mesh.place_devices_and_components()
+                self.layer_mesh_table[layer_id].add_table(island_name,isl_mesh)
+            self.layer_mesh_table[layer_id].layer_nodes_generation()
+            self.layer_mesh_table[layer_id].plot_all_mesh_island(name=layer_name)
+            plt.show()
     def eval_RL_Loop_mode(self,src=None,sink=None):
         self.circuit = RL_circuit()
         pt1 = self.emesh.comp_net_id[src]
@@ -741,19 +820,29 @@ class CornerStitch_Emodel_API:
     def make_wire_and_via_table(self):
         #first form via connection for trace to trace case
         #self.form_t2t_via_connections()
+        self.device_pins = {} # This dictionary map the device_net to the corresponded pin location
         
         for wire_table in list(self.wire_dict.values()):
-            for obj in wire_table:
-                wire_data = wire_table[obj]  # get the wire data
+            for inst_name in wire_table:
+                wire_data = wire_table[inst_name]  # get the wire data
                 if 'BW_object' in wire_data:
                     wire_obj = wire_data['BW_object']
                     num_wires = int(wire_data['num_wires'])
-                    start = wire_data['Source']
-                    stop = wire_data['Destination']
+                    start_net_name = wire_data['Source']
+                    stop_net_name = wire_data['Destination']
                     #print self.net_to_sheet
-
-                    s1 = self.net_to_sheet[start]
-                    s2 = self.net_to_sheet[stop]
+                    start_pin_name = wire_data['source_pad'] 
+                    stop_pin_name = wire_data['destination_pad'] 
+                    
+                    # update the z location for these pins
+                    
+                    if start_pin_name in self.net_to_sheet: # Means there is an update for z location
+                        self.net_to_sheet[start_pin_name].z = self.net_to_sheet[start_net_name].z
+                    if stop_pin_name in self.net_to_sheet: # Means there is an update for z location
+                        self.net_to_sheet[stop_pin_name].z = self.net_to_sheet[stop_net_name].z
+                    
+                    s1 = self.net_to_sheet[start_net_name]
+                    s2 = self.net_to_sheet[stop_net_name]
                     if sum(s1.n) == -1:
                         wdir = 'Z-' 
                     else:
@@ -761,7 +850,7 @@ class CornerStitch_Emodel_API:
                     spacing = float(wire_data['spacing'])
                     wire = EWires(wire_radius=wire_obj.radius, num_wires=num_wires, wire_dis=spacing, start=s1, stop=s2,
                                 wire_model=None,
-                                frequency=self.freq, circuit=RL_circuit())
+                                frequency=self.freq, circuit=RL_circuit(),inst_name = inst_name)
                     wire.wire_dir = wdir
                     self.wires.append(wire)
                 else: # NEED TO DEFINE A VIA OBJECT, THIS IS A BAD ASSUMTION
@@ -769,7 +858,7 @@ class CornerStitch_Emodel_API:
                     stop = wire_data['Destination']
                     s1 = self.net_to_sheet[start]
                     s2 = self.net_to_sheet[stop]
-                    via = EVia(start=s1,stop=s2)
+                    via = EVia(start=s1,stop=s2,via_name = inst_name)
                     if s1.via_type != None:
                         via.via_type = s1.via_type
                     self.vias.append(via)

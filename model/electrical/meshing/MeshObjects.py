@@ -3,8 +3,6 @@
 # A generic method to detect all concave vs convex corners
 # A method to form trace islands after placement
 
-
-from numpy.core.fromnumeric import trace
 from core.general.data_struct.util import Rect
 
 class TraceCell(Rect):
@@ -46,7 +44,29 @@ class TraceCell(Rect):
         3 : z+
         -3: z- 
         '''
-
+        
+    def get_cell_corners(self):
+        # Return the xy locations of the cell and its type
+        pt_dict = {(self.left,self.bottom): 'internal',(self.left,self.top): 'internal',(self.right,self.top): 'internal',(self.right,self.bottom): 'internal'}
+        pt_index = {(self.left,self.bottom): 0
+                    ,(self.left,self.top): 1
+                    ,(self.right,self.top): 2
+                    ,(self.right,self.bottom): 3}
+        if not(self.has_left): # check left boundary
+            pt_dict[(self.left,self.bottom)] = 'boundary'
+            pt_dict[(self.left,self.top)] = 'boundary'
+        if not(self.has_right): # check right boundary
+            pt_dict[(self.right,self.bottom)] = 'boundary'
+            pt_dict[(self.right,self.top)] = 'boundary'
+        if not(self.has_bot): # check bottom boundary
+            pt_dict[(self.right,self.bottom)] = 'boundary'
+            pt_dict[(self.left,self.bottom)] = 'boundary'
+        if not(self.has_top): # check top boundary
+            pt_dict[(self.left,self.top)] = 'boundary'
+            pt_dict[(self.right,self.top)] = 'boundary'
+        return pt_dict,pt_index
+            
+        
     def find_corner_type(self):
         # Define corner type based on the neighbour
         print("type of corner")
@@ -96,8 +116,14 @@ class TraceCell(Rect):
             return abs(self.left-self.right)
         elif self.dir == 2:
             return abs(self.top-self.bottom)
-
 class MeshNode:
+    def __init__ (self,pos,name,node_type = 'internal',net = ''):
+        self.position = pos
+        self.node_name = name
+        self.node_type = node_type # internal or boundary
+        self.net_name = net # only for leads, pads, and devices pin
+        
+class MeshNode2:
     def __init__(self, pos=[], type='', node_id=0, group_id=None, mode=1):
         '''
 
@@ -115,8 +141,6 @@ class MeshNode:
         self.type = type  # Node type
         self.b_type = []  # if type is boundary this will tell if it is N,S,E,W
         self.pos = pos  # Node Position x , y ,z
-        self.C = 1
-
         # For neighbours nodes of each point
         self.West = None
         self.East = None
@@ -163,12 +187,135 @@ class RectCell(Rect):
         self.net = '' # to store the net of the object 
         # mesh node object
         self.center_node = None # to be updated by mesing algorithm
-
+        # Points/Node
+        # Map the location to type of each corner point of this cell # init with all internal node
+        self.node_dict =  {(self.left, self.bottom)  : 'internal'
+                          ,(self.left, self.top)    : 'internal'
+                          ,(self.right, self.top)   : 'internal'
+                          ,(self.right, self.bottom): 'internal'}
+        self.node_index = {(self.left, self.bottom)  : 0
+                          ,(self.left, self.top)     : 1
+                          ,(self.right, self.top)    : 2
+                          ,(self.right, self.bottom) : 3}
+    def get_cell_corners(self):
+        # Return the xy locations of the cell and its type
+        
+        if not(self.has_left()): # check left boundary
+            self.node_dict[(self.left,self.bottom)] = 'boundary'
+            self.node_dict[(self.left,self.top)] = 'boundary'
+        if not(self.has_right()): # check right boundary
+            self.node_dict[(self.right,self.bottom)] = 'boundary'
+            self.node_dict[(self.right,self.top)] = 'boundary'
+        if not(self.has_bot()): # check bottom boundary
+            self.node_dict[(self.right,self.bottom)] = 'boundary'
+            self.node_dict[(self.left,self.bottom)] = 'boundary'
+        if not(self.has_top()): # check top boundary
+            self.node_dict[(self.left,self.top)] = 'boundary'
+            self.node_dict[(self.right,self.top)] = 'boundary'
+        return self.node_dict,self.node_index
+    
+    def get_cell_edges(self):
+        # Return list of edges with center location
+        ratio = 1/3
+        edge_width = 2000
+        cell_width = self.right-self.left
+        cell_height = self.top - self.bottom
+        pt_0 = (self.left,self.bottom)
+        pt_1 = (self.left,self.top)
+        pt_2 = (self.right,self.top)
+        pt_3 = (self.right,self.bottom)
+        
+        # ori : 0 -- horizontal, 1--vertical
+        # Handle vertical traces first
+        # 0 --- 1 
+        if not(self.has_left()):
+            trace_left = self.left 
+            trace_width = edge_width#int(cell_width*ratio)
+            edge_type = 'boundary'
+        else:
+            trace_left = self.left - int(self.West.width*ratio)
+            trace_width = int((self.West.width + self.width)*ratio)
+            edge_type = 'internal'
+            
+        e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+        # 2 --- 3
+        if not(self.has_right()):
+            trace_width = edge_width#int(cell_width*ratio)
+            trace_left = self.right - trace_width
+            edge_type = 'boundary'
+            
+        else:
+            trace_left = self.right - int(self.width*ratio)
+            trace_width = int((self.East.width + cell_width)*ratio) 
+            edge_type = 'internal'
+            
+        e_2_3 = [pt_2,pt_3,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+        # Handle horizontal traces 
+        # 1 -- 2
+        if not(self.has_top()):
+            trace_height = edge_width#int(cell_height*ratio)
+            trace_bottom = self.top -trace_height
+            edge_type = 'boundary'
+            
+        else:
+            trace_height = int((cell_height + self.North.height)*ratio)
+            trace_bottom = self.top - int(cell_height*ratio)    
+            edge_type = 'internal'
+            
+        e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+        # 0 -- 3
+        if not(self.has_bot()):
+            trace_height = edge_width#int(cell_height*ratio)
+            trace_bottom = self.bottom
+            edge_type = 'boundary'
+            
+        else:
+            trace_height = int((cell_height + self.South.height)*ratio)
+            trace_bottom = self.bottom - int(self.South.height*ratio)  
+            edge_type = 'internal'
+             
+        e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+        
+        return(e_0_1,e_2_3,e_1_2,e_0_3)
+        
 
     def __str__(self):
         out = 'x: ' + str(self.x) + ' y: ' + str(self.y) + ' W: ' + str(self.W) + ' H: ' + str(self.H)
         return out
     ''' Below methods are used in the MeshTable OBJECT'''
+    
+    def has_left(self):
+        if self.West is None:
+            return False
+        elif self.West.type == 0:
+            return False
+        else:
+            return True
+    
+    def has_right(self):
+        if self.East is None:
+            return False
+        elif self.East.type == 0:
+            return False
+        else:
+            return True
+    
+    def has_top(self):
+        if self.North is None:
+            return False
+        elif self.North.type == 0:
+            return False
+        else:
+            return True
+    
+    def has_bot(self):
+        if self.South is None:
+            return False
+        elif self.South.type == 0:
+            return False
+        else:
+            return True
+                
     def find_West_id(self,left_bound = 0):
         if self.id[0] == left_bound:
             return None

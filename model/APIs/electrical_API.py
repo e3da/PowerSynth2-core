@@ -262,11 +262,11 @@ class CornerStitch_Emodel_API:
         #'''
         if self.hier == None:
             self.hier = EHier(module=self.module)
-            self.hier.form_hierachy()
+            self.hier.form_hierarchy_tree()
         else:  # just update, no need to recreate the hierachy -- prevent mem leak
             #self.hier = EHier(module=self.module)
             self.hier.update_module(self.module)
-            self.hier.update_hierarchy()
+            self.hier.update_hierarchy_tree()
         '''
         fig = plt.figure(1)
         ax = a3d.Axes3D(fig)
@@ -322,123 +322,7 @@ class CornerStitch_Emodel_API:
 
             self.eval_cap_mesh()
             netlist.export_netlist_to_ads(file_name=dir)
-    def init_layout(self, layout_data=None):
-        '''
-        Read part info and link them with part info, from an updaed layout, update the electrical network
-        :return: updating self.e_sheets, self.e_plates
-        '''
-        # UPDATE ALL PLATES and SHEET FOR THE LAYOUT
-        # print "data"
-        # print layout_data
-        self.layout_data = list(layout_data.values())[0]
-        self.width, self.height = list(layout_data.keys())[0]
-        # self.width = round(self.width/1000.0, sig)
-        # self.height = round(self.height/1000.0, sig)
-        self.e_plates = []  # list of electrical components
-        self.e_sheets = []  # list of sheets for connector presentaion
-        self.e_comps = []  # list of all components
-        self.net_to_sheet = {}  # quick look up table to find the sheet object based of the net_name
-        # Update based on layout info
-        #print "inside",self.layout_data
-        for k in self.layout_data:
-            #print "Here",k
-            data = self.layout_data[k]
 
-            for rect in data:
-                x, y, w, h = [rect.x, rect.y, rect.width,rect.height]  # convert from integer to float
-
-                new_rect = Rect(top=y + h, bottom=y, left=x, right=x + w)
-                p = E_plate(rect=new_rect, z=self.layer_to_z['T'][0], dz=self.layer_to_z['T'][1])
-
-                self.e_plates.append(p)
-                type = k[0]
-                if type in ['B', 'D', 'L']:  # if this is bondwire pad or device or lead type.
-                    # Below we need to link the pad info and update the sheet list
-                    # Get the object
-                    obj = self.comp_dict[k]
-                    if isinstance(obj, RoutingPath):  # If this is a routing object
-                        # reuse the rect info and create a sheet
-                        z = self.layer_to_z[type][0]
-                        new_rect = Rect(top=(y + h) / 1000, bottom=y / 1000, left=x / 1000, right=(x + w) / 1000)
-
-                        pin = Sheet(rect=new_rect, net_name=k, net_type='internal', n=(0, 0, 1), z=z)
-                        self.e_sheets.append(pin)
-                        # need to have a more generic way in the future
-                        self.net_to_sheet[k] = pin
-                    elif isinstance(obj, Part):
-                        if obj.type == 0:  # If this is lead type:
-                            new_rect = Rect(top=(y + h) / 1000, bottom=y / 1000, left=x / 1000, right=(x + w) / 1000)
-                            z = self.layer_to_z[type][0]
-                            pin = Sheet(rect=new_rect, net_name=k, net_type='internal', n=(0, 0, 1), z=z)
-                            self.net_to_sheet[k] = pin
-                            self.e_sheets.append(pin)
-                        elif obj.type == 1:  # If this is a component
-                            dev_name = obj.layout_component_id
-                            dev_pins = []  # all device pins
-                            dev_conn_list = []  # list of device connection pairs
-                            dev_para = []  # list of device connection internal parasitic for corresponded pin
-                            for pin_name in obj.pin_locs:
-                                net_name = dev_name + '_' + pin_name
-                                locs = obj.pin_locs[pin_name]
-                                px, py, pwidth, pheight, side = locs
-                                if side == 'B':  # if the pin on the bottom side of the device
-                                    z = self.layer_to_z[type][0]
-                                elif side == 'T':  # if the pin on the top side of the device
-                                    z = self.layer_to_z[type][0] + obj.thickness
-                                top = y / 1000 + (py + pheight)
-                                bot = y / 1000 + py
-                                left = x / 1000 + px
-                                right = x / 1000 + (px + pwidth)
-                                rect = Rect(top=top, bottom=bot, left=left, right=right)
-                                pin = Sheet(rect=rect, net_name=net_name, z=z)
-                                self.net_to_sheet[net_name] = pin
-                                dev_pins.append(pin)
-                            # Todo: need to think of a way to do this only once
-                            dev_conns = self.conn_dict[dev_name]  # Access the connection table
-                            for conn in dev_conns:
-                                if dev_conns[conn] == 1:  # if the connection is selected
-                                    pin1 = dev_name + '_' + conn[0]
-                                    pin2 = dev_name + '_' + conn[1]
-                                    dev_conn_list.append([pin1, pin2])  # update pin connection
-                                    dev_para.append(obj.conn_dict[conn])  # update intenal parasitics values
-
-                            self.e_comps.append(
-                                EComp(sheet=dev_pins, conn=dev_conn_list, val=dev_para))  # Update the component
-
-        self.make_wire_table()
-        # Update module object
-        self.module = EModule(plate=self.e_plates, sheet=self.e_sheets, components=self.wires + self.e_comps)
-        self.module.form_group_cs_flat()
-        self.module.split_layer_group()
-        if self.hier ==None:
-            self.hier = EHier(module=self.module)
-            self.hier.form_hierachy()
-        else: # just update, no new objects
-            self.hier.update_module(self.module)
-            self.hier.update_hierarchy()
-
-        self.emesh = EMesh(hier_E=self.hier, freq=self.freq, mdl=self.rs_model)
-        self.emesh.mesh_grid_hier(corner_stitch=True)
-        self.emesh.update_trace_RL_val()
-        self.emesh.update_hier_edge_RL()
-        # pr = cProfile.Profile()
-        # pr.enable()
-        '''
-        fig = plt.figure(4)
-        ax = Axes3D(fig)
-        ax.set_xlim3d(0, 42)
-        ax.set_ylim3d(0, 80)
-        ax.set_zlim3d(0, 2)
-        self.emesh.plot_3d(fig=fig, ax=ax, show_labels=True)
-        plt.show()
-        '''
-
-
-        self.emesh.mutual_data_prepare(mode=0)
-        self.emesh.update_mutual(mode=0)
-        netlist = ENetlist(self.module, self.emesh)
-        netlist.export_netlist_to_ads(file_name='Half_bridge.net')
-        # pr.disable()
         # pr.create_stats()
         # file = open('C:\Users\qmle\Desktop\New_Layout_Engine\New_design_flow\mystats.txt', 'w')
         # stats = pstats.Stats(pr, stream=file)
