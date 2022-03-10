@@ -351,6 +351,8 @@ class CornerStitch_Emodel_API:
             cap = -1 # for no overlap
         return cap
     
+    def eval_trace_ground_cap(self,tc,iso_thick,epsilon = 8.854*1e-12):
+        print ("to be implemented later")
     def eval_cap_3d(self,islands,iso_id = [3]): # Need to figure out this list of iso_id in the future
         print(islands)
         layer_isl_dict = {}
