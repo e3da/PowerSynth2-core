@@ -11,7 +11,7 @@ import sys
 
 # get the 3 fold integral mutual equation.
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind
-#from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
 
 import ctypes
 import numpy as np
