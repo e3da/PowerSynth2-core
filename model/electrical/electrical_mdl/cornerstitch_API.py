@@ -334,46 +334,99 @@ class CornerStitch_Emodel_API:
         # handle bondwire group 
         self.make_wire_and_via_table()
     # TEMPORARY CODE ONLY DONT MERGE TO MAIN ...
-    def eval_trace_trace_cap(self,tc1,tc2,iso_thick,epsilon = 8.854*1e-12 ):
+    def eval_trace_trace_cap(self,tc1,tc2,iso_thick=0, mode = 1 ,epsilon = 8.854*1e-12 ):
+        """Eval trace to trace capacitance for each trace is a rectangular object from island
+
+        Args:
+            tc1 (list): Trace data 1
+            tc2 (list): Trace data 2
+            iso_thick (int): isolation thickness
+            mode (int): 0 - 2D trace-trace, 1- 3D trace-trace
+            epsilon (_type_, optional): _description_. Defaults to 8.854*1e-12.
+
+        Returns:
+            _type_: trace-trace capacitance
+        """        
         '''
         I used epsilon of air for now, replace with your material
         '''
         l1,b1,w1,h1 = tc1[1:5]
         l2,b2,w2,h2 = tc2[1:5] 
         overlap = not(l1+w1 <= l2 or l1 >= l2+w2 or b1>=b2+h2 or b2>=b1+h1)
-        if overlap:
-            # both are in um
-            ov_width = abs(w2-w1)
-            ov_height = abs(h2-h1)
-            ov_area = ov_width*1e-6*ov_height*1e-6
-            cap = epsilon*ov_area/(iso_thick*1e-6) # in Fahad            
-        else:
-            cap = -1 # for no overlap
-        return cap
+        if mode ==0: # the equation used here assume that 2 plae has same area, we need to tweak it a litle
+            # first we find S is the distance horizontally or veritcally
+            if not(l1+w1 <= l2 or l1 >= l2+w2) and (b1>=b2+h2 or b2>=b1+h1): # H over lap but not V
+                S = (b1 - b2 - h2 if b2<b1 else b2-b1-h1)
+                w = (h1 if h1<=h2 else h2)
+            elif (l1+w1 <= l2 or l1 >= l2+w2) and not(b1>=b2+h2 or b2>=b1+h1): # V over lap but not H
+                S = (l1 - l2 - w2 if l2<l1 else l2-l1-w1)
+                w = (w1 if w1<=w2 else w2)
+            else:
+                return -1
+            if S == 0: # means these 2 are sharing edge
+                return -1
+            cap = epsilon/np.pi*(np.log(1+2*w/S))
+            return cap
+        elif mode ==1:
+            if overlap:
+                # both are in um
+                ov_width = abs(w2-w1)
+                ov_height = abs(h2-h1)
+                ov_area = ov_width*1e-6*ov_height*1e-6
+                cap = epsilon*ov_area/(iso_thick*1e-6) # in Fahad            
+            else:
+                cap = -1 # for no overlap
+            return cap
+        
     
     def eval_trace_ground_cap(self,tc,iso_thick,epsilon = 8.854*1e-12):
         print ("to be implemented later")
+        
+        
     def eval_cap_3d(self,islands,iso_id = [3]): # Need to figure out this list of iso_id in the future
-        print(islands)
         layer_isl_dict = {}
         # First we get all island layer and assume we know the isolation layer
         for isl in islands:
-            isl_id = int(isl.name.split('.')[-1])
-            if isl_id in layer_isl_dict:
-                layer_isl_dict[isl_id]+=isl.elements # get traces object only
+            layer_id = int(isl.name.split('.')[-1])
+            if layer_id in layer_isl_dict:
+                layer_isl_dict[layer_id]+=isl.elements # get traces object only
             else:
-                layer_isl_dict[isl_id] = isl.elements # first create the list 
-        print(layer_isl_dict)
-        print("Now chheck for overlap between layers")
-        # In Imam, single substrate, number of layer equal number of isolation
+                layer_isl_dict[layer_id] = isl.elements # first create the list 
+        input("Begin cap extraction, press any button to continue ...")        
+        
+        # First eval the mutual-cap on each layer
+        
+        for layer_id in layer_isl_dict:
+            cap_table = {} # it is tc1-tc2 if case 2, else tc-grd if case 1
+            trace_list = layer_isl_dict[layer_id] # get each trace list
+            for tc1 in trace_list:
+                tc1_name = tc1[5]
+                for tc2 in trace_list:
+                    tc2_name = tc2[5]
+                    if tc1_name!=tc2_name:
+                        if not((tc1_name,tc2_name) in cap_table or (tc2_name,tc1_name) in cap_table):
+                            cap = self.eval_trace_trace_cap(tc1,tc2,mode=0) # mode 1 for 3d trace-trace
+                            cap_table[(tc1_name,tc2_name)] = cap
+                            cap_table[(tc2_name,tc1_name)] = -1 # Here we dont need to store this value again, but marked as calculated
+            print("Mutual cap among trace ilands on same layer")
+            print("Start priting for layer_id: {}".format(layer_id))
+            for trace_pair in cap_table: # might have some overlaping
+                if not(cap_table[trace_pair] == -1 or cap_table[trace_pair] == 0): # ignor non-overlap cases
+                    line = "Cap value between {} and {} is {} F".format(trace_pair[0],trace_pair[1],cap_table[trace_pair])
+                    print(line)
+        
+        
+        # Eval trace-trace in 3d
         all_layer_pair = []
         all_layer_pair_to_thick = {}
+        layer_pair_to_cap_table = {} 
+        
         for iso in iso_id:
             iso_thick = self.get_thick(iso) # To compute capacitance
             all_layer_pair.append([iso-1,iso+1])
             all_layer_pair_to_thick[(iso-1,iso+1)] = iso_thick
-        layer_pair_to_cap_table = {} 
         for layer_pair in all_layer_pair:
+            cap_table = {}
             layer_1 = layer_pair[0]
             layer_2 = layer_pair[1]
             is_thick = all_layer_pair_to_thick[(layer_1,layer_2)]
@@ -384,24 +437,24 @@ class CornerStitch_Emodel_API:
                 trace_list_2 = layer_isl_dict[layer_2]
             # Case 1: Only one trace_list exist, then this tracelist has capacitance to ground --> might need to specify ground layer
             # Case 2: trace list 1 and trace_list 2 both exist
-            cap_table = {} # it is tc1-tc2 if case 2, else tc-grd if case 1
             if trace_list_1==[] or trace_list_2 ==[]:
                 trace_list = [tl for tl in [trace_list_1,trace_list_2] if tl!=[]]
                 trace_list = trace_list[0]
                 # find cap to ground here...
             else: # if trace_list_1 and trace_list_2 both exist
+                # eval 3d mode
                 for tc1 in trace_list_1:
                     tc1_name = tc1[5]
                     for tc2 in trace_list_2:
                         tc2_name = tc2[5]
                         if not((tc1_name,tc2_name) in cap_table or (tc2_name,tc1_name) in cap_table):
-                            cap = self.eval_trace_trace_cap(tc1,tc2,iso_thick)
+                            cap = self.eval_trace_trace_cap(tc1,tc2,iso_thick,mode=1) # mode 1 for 3d trace-trace
                             cap_table[(tc1_name,tc2_name)] = cap
-                            cap_table[(tc2_name,tc1_name)] = cap
+                            cap_table[(tc2_name,tc1_name)] = -1 # Here we dont need to store this value again, but marked as calculated
                 
+                            
             layer_pair_to_cap_table[(layer_1,layer_2)] = cap_table
         # I print all the cap here, please check
-        input("Begin cap extraction, press any button to continue ...")        
         for layer_pair in layer_pair_to_cap_table:
             print("Begin printing cap values between layer {} and layer {}".format(layer_pair[0],layer_pair[1]))
             cap_table = layer_pair_to_cap_table[layer_pair]
