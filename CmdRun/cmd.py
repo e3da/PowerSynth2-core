@@ -427,13 +427,13 @@ class Cmd_Handler:
             e_name,e_measure_type,source,sink,dev_conn,frequency, e_mdl_type = [None for i in range(7)]
         
         self.measures = []
-        if self.thermal_mode!=None:
+        if self.thermal_mode:
             t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
             t_measure_data = {'name': t_name, 'devices': devices}
             self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
                                 model_type=thermal_model)
 
-        if self.electrical_mode!=None:
+        if self.electrical_mode:
             e_measure_data = {'name':e_name,'type':e_measure_type,'source':source,'sink':sink}
             self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
     
@@ -805,7 +805,7 @@ class Cmd_Handler:
             self.e_api.form_connection_table(mode='command')
             self.e_api.get_frequency()
             self.measures += self.e_api.measurement_setup()
-        elif mode == 'macro':
+        elif mode == 'macro' and self.e_api!=None:
             print("macro mode")
             
             self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
@@ -816,7 +816,7 @@ class Cmd_Handler:
                 
 
             self.measures += self.e_api.measurement_setup(meas_data)
-        if self.layout_ori_file != None:
+        if self.layout_ori_file != None and self.e_api!=None:
             #print("this is a test now")
             self.e_api.process_trace_orientation(self.layout_ori_file)
         #if self.output_option:
@@ -856,7 +856,8 @@ class Cmd_Handler:
         '''
         self.measures = []
         self.setup_thermal()
-        self.setup_electrical()
+        if self.e_api!= None:
+            self.setup_electrical()
 
     def cmd_handler_flow(self, arguments =[]):
         if len(arguments) <= 1: # Turn on simple user interface mode

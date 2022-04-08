@@ -303,8 +303,12 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
 
         
         solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
-        if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
+        if opt_problem.e_api != None:
+            if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
+                print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+        else:
             print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+                
         #Solutions.append(solution)
     if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
         e_results = opt_problem.e_api.parallel_run(solutions)

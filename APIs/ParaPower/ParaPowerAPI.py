@@ -142,7 +142,7 @@ class ParaPowerInterface(object):
         self.matlab_engine = None
         # self.path = matlab_path
         # TODO: Save location is hardcoded 
-        self.path = "/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
+        self.path = "/nethome/qmle//ParaPower/JSON_output"
 		#self.path="/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
         #self.eng = self.init_matlab()
         self.solution_name = solution_name
@@ -171,7 +171,7 @@ class ParaPowerInterface(object):
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/ARL_ParaPower/')
+        self.matlab_engine.cd('/nethome/qmle/ParaPower/ARL_ParaPower')
 
         
 
@@ -204,8 +204,8 @@ class ParaPowerInterface(object):
         md_json = json.dumps(self.to_dict())
         # temperature = matlab_engine.PowerSynthImport_V2(md_json)
         temperature = 5
-        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
-        #results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
+        #results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
         results = json.loads(results)
         #print(results)
         temperature = results['temperature'][-1]
