@@ -69,6 +69,7 @@ class new_engine_opt:
             if isinstance(measure,ThermalMeasure):
                 measures[1]=measure
         self.measures=measures
+        # TODO: THIS IS JUST A TEMP FOR CAP EVALUATION FOR IMAM 's JOURNAL--- DO NOT MERGE:
         
         for i in range(len(self.measures)):
             measure=self.measures[i]
