@@ -76,7 +76,7 @@ class CornerStitch_Tmodel_API:
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/tmevans/MATLAB/ParaPower-_develop/ARL_ParaPower/')
+        self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/ARL_ParaPower/')
 
     def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
         layer_average_list = []
@@ -195,14 +195,14 @@ class CornerStitch_Tmodel_API:
             
             ambient_temp=self.t_amb
             h_val=self.bp_conv
-            
-            for f in solution.features_list:
-                f.printFeature()
+            solution.features_list.sort(key=lambda x: x.z, reverse=False)
+            #for f in solution.features_list:
+                #f.printFeature()
             self.temp_res = {}
             if len(h_val)==1:
                 h_val.append(0) # single-sided cooling
             if self.matlab_engine != None:
-                print("PP_JSON_TAPI",self.pp_json_path)
+                #print("PP_JSON_TAPI",self.pp_json_path)
                 ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")

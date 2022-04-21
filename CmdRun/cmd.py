@@ -10,6 +10,7 @@ sys.path.append(cur_path)
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
+from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
 from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
@@ -117,6 +118,11 @@ class Cmd_Handler:
         self.output_option= False
         self.thermal_mode = None
         self.electrical_mode = None
+        self.export_ansys_em = None
+        self.export_task = []
+        self.export_ansys_em_info = {}
+        self.thermal_models_info = {}
+        self.electrical_models_info = {}
         self.UI_active = False
         self.data_x = None
         self.data_y = None
@@ -214,6 +220,10 @@ class Cmd_Handler:
                         floorplan= [1,1] # handle those cases when floorplan is not required.
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
+                if info[0] == 'Export_AnsysEM_Setup:':
+                    self.export_ansys_em = True
+                if info[0] == 'End_Export_AnsusEM_Setup.':
+                    self.export_ansys_em = False
                 if info[0]== 'Thermal_Setup:':
                     self.thermal_mode = True
                 if info[0] == 'End_Thermal_Setup.':
@@ -231,7 +241,16 @@ class Cmd_Handler:
                         self.netlist_dir = info[1]
                     if info[0] == 'Netlist_Mode':
                         self.netlist_mode = int(info[1])
-                if self.thermal_mode !=None:
+                if(self.export_ansys_em):
+                    if info[0] == 'Design_name:':
+                        self.export_ansys_em_info['design_name']= info[1]
+                    if info[0] == 'Version:':
+                        self.export_ansys_em_info['version']= info[1]
+                    if info[0] == 'Run_mode:':
+                        self.export_ansys_em_info['run_mode']= int(info[1])
+                    if info[0] == 'Simulator:':
+                        self.export_ansys_em_info['simulator'] = int(info[1])
+                if(self.thermal_mode): # Get info for thermal setup
                     if info[0] == 'Model_Select:':
                         thermal_model = int(info[1])
                     if info[0] == 'Measure_Name:' and t_name==None:
@@ -310,7 +329,8 @@ class Cmd_Handler:
             self.init_cs_objects(run_option=run_option)
 
             self.set_up_db() # temp commented1 out
-            
+            self.need_electrical_setup()
+            self.init_export_tasks(run_option)
             if run_option == 0:
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
@@ -334,6 +354,7 @@ class Cmd_Handler:
 
                 
                 solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
+                solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
                 initial_solutions=[solution]
                 md_data=[solution.module_data]
                 PS_solutions=[] #  PowerSynth Generic Solution holder
@@ -378,6 +399,8 @@ class Cmd_Handler:
                                          floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
 
                 self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,layout_mode,plot = self.plot)
+            self.generate_export_files()
+
         else:
             # First check all file path
             if not (check_file(self.layout_script)):
@@ -397,7 +420,40 @@ class Cmd_Handler:
             print ("Check your input again ! ")
 
             return cont
-
+    def need_electrical_setup(self):
+        '''Set of messages for electrical connection in different scennarios'''
+        if self.electrical_mode==None:
+            if self.export_ansys_em:
+                print("Need Electrical Setup for bondwires connection in ANSYSEM")
+                print("The tool will attempt to extract Ansysem design without bondwires connection")
+    # ------------------ Export Features ---------------------------------------------
+    def init_export_tasks(self,run_option=0):
+        '''Start ANSYSEM, and others export features'''
+        if self.export_ansys_em_info!={}:
+            version = self.export_ansys_em_info['version']
+            design_name = self.export_ansys_em_info['design_name']
+            if self.export_ansys_em_info['simulator'] == 1:
+                active_design = 'Q3D Extractor'
+            else:
+                active_design = 'HFSS'
+            workspace = self.db_dir+'/AnsysEM'
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=0)
+            self.export_task.append(ansysem)
+    def generate_export_files(self):
+        '''Generate export files after the solution3D is generated'''
+        '''List of export tasks'''
+        for task in self.export_task:
+            if isinstance(task,AnsysEM_API): # Handle AnsysEM
+                ansysem = task
+                if not(os.path.exists(ansysem.exported_script_dir)):
+                    cmd = 'mkdir ' + ansysem.exported_script_dir
+                    os.system(cmd)
+                for sol in self.structure_3D.solutions:
+                    if self.export_ansys_em_info['run_mode'] == 2:
+                        ansysem_export = copy.deepcopy(ansysem) # copy the original structure
+                        ansysem_export.design_name+=str(sol.solution_id) # update names based on solution id
+                        ansysem_export.translate_powersynth_solution_to_ansysem(sol)
+                        ansysem_export.write_script()
     # ------------------ File Resquest -------------------------------------------------
     def database_dir_request(self):
         print ("Please enter a directory to save layout database")
@@ -569,7 +625,14 @@ class Cmd_Handler:
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
-        
+            via_type_assignment={}
+            for via_name,layers in via_connecting_layers.items():
+                if 'Through' in layers:
+                    via_type_assignment[via_name]='Through'
+                else:
+                    via_type_assignment[via_name]=None
+
+
         
 
         #updating constraint table
@@ -588,6 +651,14 @@ class Cmd_Handler:
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
+
+        if len(via_connecting_layers)>0:
+            for comp_name, component in self.comp_dict.items():
+                if comp_name.split('.')[0] in via_type_assignment:
+                    component.via_type=via_type_assignment[comp_name.split('.')[0]]
+
+
+
         if len(self.structure_3D.layers)>1:
             all_patches=[]
             all_colors=['blue','red','green','yellow','pink','violet']
@@ -656,13 +727,16 @@ class Cmd_Handler:
         #input()
         """
         self.structure_3D.create_module_data_info(layer_stack=self.layer_stack)
+        self.structure_3D.populate_via_objects()
         self.structure_3D.populate_initial_layout_objects_3D()
+        self.structure_3D.update_initial_via_objects()
 
         ##------------------------Debugging-----------------------------------------###
         debug=False
         if debug:
             print("Plotting 3D layout structure")
             solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
+            solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
             initial_solutions=[solution]
             
             
@@ -770,6 +844,8 @@ class Cmd_Handler:
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
+            if model_type==2:
+                self.t_api.init_matlab()
     def init_apis(self):
         '''
         initialize electrical and thermal APIs

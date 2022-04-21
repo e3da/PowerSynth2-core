@@ -28,6 +28,7 @@ class Structure_3D():
     def __init__(self):
         
         self.layers=[] # list of layer objects in the structure
+        self.via_pairs=[]# list to populate via objects to avoid double counting of vias on 2 layers
         self.Htree=[] # list of horizontal cs tree from each layer
         self.Vtree=[] # list of vertical cs tree from each layer
         self.sub_roots={} # dictionary of  virtual root nodes for each group of layers connected with same via , via name is the key
@@ -50,6 +51,7 @@ class Structure_3D():
         self.current_info= None # current information from the user for reliability awareness case
         self.objects_3D =[] # duplicated 3D objects.
         self.types_for_all_layers_plot=[] # to store cs types for plotting all layers in the same figure
+        self.solder_attach_required={} # storing elements that require solder attach
         # for genetic algorithm
         self.hcg_design_strings = []  # list of design string objects
         self.vcg_design_strings = []
@@ -171,7 +173,7 @@ class Structure_3D():
 
         md_data.islands[layer.name] = init_data_islands
         md_data.footprint[layer.name] = (fp_width * s, fp_height * s)
-
+        md_data.solder_attach_info=self.solder_attach_required
         solution = CornerStitchSolution(index=0)
         solution.module_data=md_data #updated module data is in the solution
 
@@ -419,6 +421,34 @@ class Structure_3D():
         self.voltage_info= voltage_info
         self.current_info= current_info
 
+    def populate_via_objects(self):
+        '''
+        Via footprint is distributed across two layers. Source and destination. To make unique via object, this function is required.
+        '''
+        all_via_objects=[]
+        all_comps=[]
+        for layer in self.layers:
+            for comp in layer.all_components:
+                if isinstance(comp,Part):
+                    all_comps.append(comp)
+                    if comp.name[0]=='V' and  comp.via_type!='Through':
+                        all_via_objects.append(comp)
+
+
+        for i in range(len(all_via_objects)):
+            for j in range(len(all_via_objects)):
+                via_bottom=all_via_objects[i]
+                via_top=all_via_objects[j]
+                if via_top!=via_bottom:
+
+                    if via_bottom.layout_component_id.split('.')[0]==via_top.layout_component_id.split('.')[0]:
+
+                        if '_' in via_bottom.layout_component_id:
+                            pair=[via_top,via_bottom]
+                        else:
+                            pair=[via_bottom,via_top]
+                        if pair not in self.via_pairs:
+                            self.via_pairs.append(pair)
 
 
 
@@ -430,7 +460,7 @@ class Structure_3D():
         #s=1000 #multiplier for layout engine
         for layer in self.layers:
             objects_3D=[]
-            
+            self.solder_attach_required[layer.name]=[]
             
             comps_names=[]
             for comp in layer.all_components:
@@ -439,10 +469,21 @@ class Structure_3D():
                     comps_names.append(name)
                     
                     if isinstance(comp,Part):
+                        '''
                         if name[0]=='D': # only device thickness is considered
                             height=comp.thickness
                         else:
                             height=0.18 # fixed for now ; need to implement properly
+                        '''
+                        if comp.via_type!='Through':
+
+                            height=comp.thickness
+
+
+                        else:
+                            #height=comp.thickness
+                            height=0.1 # in mm .Hardcoded as the real via will be through DBC
+
                         material=comp.material_id # assumed that components have material id from component file
                         width=comp.footprint[0]*dbunit # width from component file
                         length=comp.footprint[1]*dbunit # length from component file
@@ -470,6 +511,16 @@ class Structure_3D():
                             f.w=float(rect[ind+4])*dbunit
                             f.l=float(rect[ind+5])*dbunit
                         if f.z<0:
+                            if layer.name in self.solder_attach_required:
+                                '''not_required=[]
+                                for comp in layer.all_components:
+                                    if isinstance(comp,Part):
+                                        if comp.via_type=='Through' and f.name==comp.layout_component_id:
+                                            not_required.append(f.name)'''
+
+                                #if f.name not in not_required:
+                                #if f.h>0:
+                                self.solder_attach_required[layer.name].append([f.name,f.x,f.y,f.w,f.l])
                             dots=0
                             for i in range(len(rect)):
                                 if rect[i]=='.':
@@ -479,15 +530,28 @@ class Structure_3D():
                                 if 'V' in rect_name or 'L' in rect_name or 'D' in rect_name:
                                     layer_id=int(rect[-2].strip('_'))-1
                                     rect[-2]=layer_id
-
+                            solder_layer_available=False
+                            for id_,layer_ in self.module_data.layer_stack.all_layers_info.items():
+                                if layer_.name[0]=='S':
+                                    solder_layer_available=True
+                                    break
                             if layer.id==int(rect[-2])-1 and  layer.direction=='Z+':
                                 if layer.id in self.module_data.layer_stack.all_layers_info: 
-                                    f1=self.module_data.layer_stack.all_layers_info[layer.id]
-                                    f.z=(f1.z_level+f1.thick+(dots-1)*0.18)  # hardcoded for device thickness 
+
+                                    if solder_layer_available:
+                                        f1=self.module_data.layer_stack.all_layers_info[layer.id+1] # solder material layer is considered
+                                    else:
+                                        f1=self.module_data.layer_stack.all_layers_info[layer.id]
+                                    #print(rect)
+                                    #input()
+                                    f.z=(f1.z_level+f1.thick+(dots-1)*f.h)
                                     f.z=round(f.z,3)
                             if layer.id==int(rect[-2])+1 and layer.direction=='Z-':
                                 if layer.id in self.module_data.layer_stack.all_layers_info: 
-                                    f1=self.module_data.layer_stack.all_layers_info[layer.id]
+                                    if solder_layer_available:
+                                        f1=self.module_data.layer_stack.all_layers_info[layer.id-1]
+                                    else:
+                                        f1=self.module_data.layer_stack.all_layers_info[layer.id]
                                     f.z=f1.z_level-f.h*dots
                                     f.z=round(f.z,3)
             
@@ -516,7 +580,105 @@ class Structure_3D():
         
         #input()     
             
-    
+    def update_initial_via_objects(self):
+        '''
+        To update the via objects in the initial_layout_objects_3D
+        '''
+        all_objects_3D=[]
+        for layer in self.layers:
+            for object_ in layer.initial_layout_objects_3D:
+                all_objects_3D.append(object_)
+
+
+        solder_layer_available=False
+        solder_thick=0
+        for id_,layer_ in self.module_data.layer_stack.all_layers_info.items():
+            if layer_.name[0]=='S':
+                solder_layer_available=True
+                solder_thick=layer_.thick
+                #solder_material=layer_.material_id
+                break
+
+        for layer in self.layers:
+            #print(layer.name)
+            for object_ in layer.initial_layout_objects_3D:
+                #object_.print_cell_3D()
+                if object_.h==0 and '_' not in object_.name and object_.name[0]=='V':
+                    #object_.print_cell_3D()
+                    for pair in self.via_pairs:
+                        #if pair[0].layout_component_id.split('.')[0]==rect_name:
+                        if pair[0].layout_component_id==object_.name:
+                            parent_comp_id=pair[0].parent_component_id
+                            #print(parent_comp_id,solder_thick)
+                            if parent_comp_id[0]=='D':# checking if via is on top of a device
+                                for feat in all_objects_3D:
+                                    if feat.name==parent_comp_id:
+                                        #feat.print_cell_3D()
+                                        object_.z=feat.z+feat.h #+0.1 # solder material thickness 0.1 mm
+                                        #print(object_.z)
+                            else:
+                                for feat in all_objects_3D:
+                                    if feat.name==parent_comp_id:
+                                        object_.z=feat.z+feat.h+ solder_thick
+                                        '''if pair[0].via_type!='Through':
+                                            object_.z=feat.z+feat.h+ solder_thick
+                                        else:
+                                            object_.z=feat.z+feat.h'''
+
+                                        #print(object_.name,object_.z)
+
+
+                            top_landing_parent=pair[1].parent_component_id
+                            for feat in all_objects_3D:
+                                if feat.name==top_landing_parent:
+                                    if feat.name[0]=='D':
+                                        height_=feat.z-object_.z
+                                    else:
+                                        height_=feat.z-solder_thick-object_.z
+                                    object_.h=height_
+        '''
+        for layer in self.layers:
+            print(layer.name)
+            for object_ in layer.initial_layout_objects_3D:
+                object_.print_cell_3D()
+        input()
+        '''
+
+
+
+        """
+        for f in objects_3D:
+                #f.print_cell_3D()
+                
+                if f.h==0:
+                    for pair in self.via_pairs:
+                        if pair[0].layout_component_id.split('.')[0]==rect_name:
+                            parent_comp_id=pair[0].parent_component_id
+                            if parent_comp_id[0]=='D':# checking if via is on top of a device
+                                for feat in objects_3D:
+                                    if feat.name==parent_comp_id:
+                                        f.z=feat.z+feat.h #+0.1 # solder material thickness 0.1 mm
+                                        
+                                        #via_attach=Cell3D(name=f.name+'_attach',z=f.z-0.1,w=f.w,l=f.l,h=0.1,material=material)
+                                        #objects_3D.append(cell_3D_object)
+                                        '''top_landing_parent=pair[1].parent_component_id
+                                        rect_name,rect_layer_id=top_landing_parent.split('.')
+
+                                        print(rect_name,rect_layer_id)
+                                        for layer in self.layers:
+                                            if layer.id==int(rect_layer_id):
+                                                for component in layer.all_components:
+                                                    if component.layout_component_id==top_landing_parent:
+                                                        if isinstance(component, RoutingPath):
+                                                            print(layer.thickness)
+                                        input()
+                                        '''
+        """
+
+
+
+
+
     
     
     def create_sample_solution(self):
@@ -755,37 +917,56 @@ class Structure_3D():
                 via_connected_layer_info[via_name]=layers_
         
         layer_wise_vias={}
+        layer_wise_through_vias={}
         for i in range(len(self.layers)):
             layer_wise_vias[self.layers[i].name]=[]
-        
+            layer_wise_through_vias[self.layers[i].name]=[]
+
         for via_name, layers in info.items():
             
             for layer_name in layers:
                 if layer_name in layer_wise_vias:
-                    
-                    layer_wise_vias[layer_name].append(via_name)
+                    if via_name not in through_vias:
+                        layer_wise_vias[layer_name].append(via_name)
+                    else:
+                        layer_wise_through_vias[layer_name].append(via_name)
 
-        via_names=(layer_wise_vias.values())
-        
-        via_names_list = []
-        [via_names_list.append(x) for x in via_names if x not in via_names_list]
-        via_names_list=[tuple(i) for i in via_names_list]
-        interfacing_layer_info={}
-        for via_name in via_names_list:
-            interfacing_layer_info[via_name]=[]
 
-        
-        for key in interfacing_layer_info.keys():
-            for layer_name, via_name_list in layer_wise_vias.items():
-                #print(key,via_name_list)
-                a=set(key)
-                
-                b=set(via_name_list)
-                
-                if b.issubset(a):
-                    #print(layer_name)
-                    if layer_name not in interfacing_layer_info[key]:
-                        interfacing_layer_info[key].append(layer_name)
+
+        #print("LWV",layer_wise_vias)
+        #print(layer_wise_through_vias)
+
+
+
+        through_via_names=(layer_wise_through_vias.values())
+
+        through_via_names_list=[]
+
+
+        [through_via_names_list.append(x) for x in through_via_names if x not in through_via_names_list]
+        through_via_names_list=[x for x in through_via_names_list if x!=[]]
+        if len(list(layer_wise_vias.values()))>0 and isinstance(list(layer_wise_vias.values())[0],str):
+            via_names=(layer_wise_vias.values())
+
+            via_names_list = []
+            [via_names_list.append(x) for x in via_names if x not in via_names_list]
+            via_names_list=[tuple(i) for i in via_names_list]
+            interfacing_layer_info={}
+            for via_name in via_names_list:
+                interfacing_layer_info[via_name]=[]
+
+
+            for key in interfacing_layer_info.keys():
+                for layer_name, via_name_list in layer_wise_vias.items():
+                    #print(key,via_name_list)
+                    a=set(key)
+
+                    b=set(via_name_list)
+
+                    if b.issubset(a):
+                        #print(layer_name)
+                        if layer_name not in interfacing_layer_info[key]:
+                            interfacing_layer_info[key].append(layer_name)
                         
             '''if tuple(via_name_list) in interfacing_layer_info:
                 if layer_name not in interfacing_layer_info[tuple(via_name_list)]:
@@ -805,24 +986,30 @@ class Structure_3D():
             del interfacing_layer_info[key]'''
         
         for via_name_list in interfacing_layer_info:
-            count=0
-            name=via_name_list[count]
-            while name in through_vias:
-                count+=1
-                if len(via_name_list)>count:
-                    name=via_name_list[count]
-                else:
-                    break
-              
-            if name not in through_vias:
-                for i in range(count+1,len(via_name_list)):
-                    via=via_name_list[i]
-                    name+='_'+via
-            
+            #print(via_name_list)
+            if not isinstance(via_name_list,str):
+                count=0
+                name=via_name_list[count]
+                while name in through_vias:
+                    count+=1
+                    if len(via_name_list)>count:
+                        name=via_name_list[count]
+                    else:
+                        break
+
+                if name not in through_vias:
+                    for i in range(count+1,len(via_name_list)):
+                        via=via_name_list[i]
+                        name+='_'+via
+            else:
+                name=via_name_list
+
 
             self.interfacing_layer_info[name]=interfacing_layer_info[via_name_list]
         
         self.via_connected_layer_info=via_connected_layer_info
+        if len(self.interfacing_layer_info)==0:
+            self.interfacing_layer_info=via_connected_layer_info
         '''
         print("Interfacing_Layer_Info",self.interfacing_layer_info)
         print("Via_Connected_Layer_Info",self.via_connected_layer_info)
