@@ -12,6 +12,7 @@ import os
 import time
 import matplotlib
 import copy
+import math
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
@@ -243,7 +244,7 @@ class new_engine_opt:
                     self.e_api.init_layout_3D(module_data=module_data)
                 R,L = [-1,-1] # set -1 as default values to detect error
                 #self.e_api.type = 'Loop' # hardcodedß
-                print ('API type', self.e_api.e_mdl)
+                #print ('API type', self.e_api.e_mdl)
                 id_select = None # specify a value for debug , None otherwise
 
                 if self.e_api.e_mdl == 'PowerSynthPEEC':
@@ -295,8 +296,10 @@ class new_engine_opt:
                     '''
                     self.e_api.e_mdl = 'LoopFHcompare'
                     #input()
-                    
-                print ("RL",R,L)
+                if math.isnan(R) or math.isnan(L) : 
+                    print ("ERROR: No loop found. Please check the electrical loop description.")
+                    print ("RL",R,L)
+                    R,L= [-1,-1]
                     
                 #except:
                 #R=10000

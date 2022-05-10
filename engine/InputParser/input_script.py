@@ -140,7 +140,8 @@ class ScriptInputMethod():
 
                     if len(pads_s)>2:
                         source_pad=pads_s[-1]
-                        source = table_info[i][2].strip('_'+source_pad)
+                        drop_part='_'+source_pad
+                        source = table_info[i][2].replace(drop_part,'')
                     else:
                         #source_pad=pads_s[0]
                         source_pad =table_info[i][2]
@@ -149,7 +150,8 @@ class ScriptInputMethod():
                     pads_d = table_info[i][3].split('_')
                     if len(pads_d) > 2:
                         dest_pad = pads_d[-1]
-                        destination =table_info[i][3].strip('_'+dest_pad)
+                        drop_part='_'+dest_pad
+                        destination =table_info[i][3].replace(drop_part,'')
                     else:
                         #dest_pad=pads_d[0]
                         dest_pad=table_info[i][3]
@@ -166,12 +168,17 @@ class ScriptInputMethod():
 
                     if len(pads_s)>3 and pads_s[-1]=='':
                         source_pad=pads_s[-2]+'_'
-                        source = table_info[i][2].strip('_'+source_pad)
+                        drop_part='_'+source_pad
+                        source = table_info[i][2].replace(drop_part,'')
                     elif len(pads_s)==3:
                         source_pad=pads_s[-1]
                         if source_pad=='':
                             source_pad=(pads_s[-2]+'_') #if device via has a downward connection
-                        source = table_info[i][2].strip('_'+source_pad)
+                        #print(table_info[i][2],source_pad)
+                        drop_part='_'+source_pad
+                        #print(table_info[i][2].strip(drop_part))
+
+                        source = table_info[i][2].replace(drop_part,'')
 
                     else:
                         #source_pad=pads_s[0]
@@ -182,10 +189,12 @@ class ScriptInputMethod():
                     #print(pads_d)
                     if len(pads_d) > 3 and pads_d[-1]=='':
                         dest_pad = pads_d[-2]+'_'
-                        destination =table_info[i][3].strip('_'+dest_pad)
+                        drop_part='_'+dest_pad
+                        destination =table_info[i][3].replace(drop_part,'')
                     elif len(pads_d) ==3:
                         dest_pad = pads_d[-1]
-                        destination =table_info[i][3].strip('_'+dest_pad)
+                        drop_part='_'+dest_pad
+                        destination =table_info[i][3].replace(drop_part,'')
                     else:
                         #dest_pad=pads_d[0]
                         dest_pad=table_info[i][3]
@@ -615,11 +624,11 @@ class ScriptInputMethod():
                     elif (layout_info[j][k][0] == 'C' or layout_info[j][k][0] == 'R') and layout_info[j][k+1] in all_components_types:
                         rotate=False
                         angle=None
-                        for m in range(len(layout_info[j])):
-                            if layout_info[j][m][0]=='R':
-                                rotate=True
-                                angle=layout_info[j][m].strip('R')
-                                break
+                        #for m in range(len(layout_info[j])):
+                        if layout_info[j][-1][0]=='R': # assuming Rotation parameter is at the end of the line
+                            rotate=True
+                            angle=layout_info[j][m].strip('R')
+                            break
                         if rotate==False:
                             layout_component_id = layout_info[j][k] #+ '.' + layout_info[j][-2]
                             if type(layout_info[j][-2])=='str':
@@ -628,7 +637,7 @@ class ScriptInputMethod():
                                 layer_id=int(layout_info[j][-2])
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            #print"Foot",element.footprint
+                            #print("Foot",element.footprint)
                             self.all_parts_info[layout_info[j][k+1]].append(element)
 
                         else:
@@ -666,6 +675,7 @@ class ScriptInputMethod():
 
         # double checking if any component is missed
         all_component_types = self.cs_type_map.all_component_types
+        #print(all_component_types)
         for j in range(len(layout_info)):
             if (len(layout_info[j]))>2:
                 for k, v in list(self.all_parts_info.items()):
@@ -704,6 +714,7 @@ class ScriptInputMethod():
            
         self.cs_type_map.all_component_types=all_component_types
         #if len(self.cs_type_map.all_component_types)>len(self.cs_type_map.types_index):
+        #print(self.cs_type_map.all_component_types)
         self.cs_type_map.populate_types_name_index()
        
         
@@ -841,6 +852,7 @@ class ScriptInputMethod():
                 for k, v in list(self.all_route_info.items()):
                     for element in v:
                         if len(element.layout_component_id.split('.'))>1:
+                            #print(element.layout_component_id)
                             if element.layout_component_id.split('.')[0] in layout_data[j] and element.layout_component_id.split('.')[1]==layout_data[j][-2]:
                                 if element.type == 0 and element.name == 'trace':
                                     type_name = 'power_trace'
@@ -1028,6 +1040,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             island.direction=all_layers[i].direction
         # finding child of each island
         all_layers[i].islands = all_layers[i].populate_child(all_layers[i].islands)
+        all_layers[i].updated_components_hierarchy_information()
         # updating the order of the rectangles in cs_info for corner stitch
 
         # ---------------------------------for debugging----------------------
@@ -1079,8 +1092,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             wire=bw_items[wire_id]
             if 'D' in wire['Source'] and ('B' in wire['source_pad'] or 'V' in wire['source_pad']) :
                 removed_child.append(wire['source_pad'])
-            if 'D' in wire['Destination'] and ('B' in wire['dest_pad'] or 'B' in wire['dest_pad']):
-                removed_child.append(wire['dest_pad'])
+            if 'D' in wire['Destination'] and ('B' in wire['destination_pad'] or 'B' in wire['destination_pad']):
+                removed_child.append(wire['destination_pad'])
         
         removed_child_list=[]
         for island in all_layers[i].islands:
@@ -1102,6 +1115,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                     #extra='_'+element[5]
                     #island.name.replace(extra, '')
                     #print(island.name)
+            
     
     return all_layers, ScriptMethod.via_connected_layer_info,ScriptMethod.cs_type_map
     

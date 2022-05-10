@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import collections
 import csv
+import math
 
 #from core.CmdRun.cmd import export_solution_layout_attributes
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
@@ -328,8 +329,14 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
             value=e_results[i][type_]
 
             for m_name,value_ in s.parameters.items():
-                if value_==-1:
-                    s.parameters[m_name]=value
+                if value_==-1 :
+                    if math.isnan(value) or math.isnan(value) : 
+                        print ("ERROR: No loop found. Please check the electrical loop description.")
+                        #print ("RL",R,L)
+                        R,L= [-1,-1]
+                        s.parameters[m_name]=-1
+                    else:
+                        s.parameters[m_name]=value
 
             print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
 
@@ -519,14 +526,14 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                                                                           structure.layers[i].new_engine.init_data[3])
             module_data.islands[structure.layers[i].name]=cs_islands_up
             module_data.footprint[structure.layers[i].name]=k # (wdith, height)
-
+        module_data.solder_attach_info=structure.solder_attach_required
         md_data=[module_data]
         Solutions = []
         #name='Solution_0'
         index=0
         solution = CornerStitchSolution(index=0)
         solution.module_data=module_data #updated module data is in the solution
-
+        
         for i in range(len(structure.layers)):
             structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[0][0]
             structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
@@ -583,7 +590,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         for i in range(len(Solutions)):
             solution=Solutions[i]
-            sol=PSSolution(solution_id=solution.index)
+            sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             sol.cs_solution=solution
             #plot_solution_structure(sol)
@@ -715,11 +722,13 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         layer_solutions=[]
         width=0
         height=0
+        bw_type=None
         for i in range(len(structure.layers)):
             if structure.layers[i].bondwires!=None:
                     for wire in structure.layers[i].bondwires:
                         bw_type=wire.cs_type
                         break
+            
             #print(structure_variable.layers[i].mode_1_location_h)
             for j in range(len(structure.layers[i].mode_1_location_h)):
                 #print(structure_variable.layers[i].mode_1_location_h[j])
@@ -763,6 +772,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         for k in range((num_layouts)):
             solution = CornerStitchSolution(index=k)
             module_data=copy.deepcopy(structure.module_data)
+            module_data.solder_attach_info=structure.solder_attach_required
             for i in range(len(structure.layers)):
                 structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[k][0]
                 fp_size=list(structure.layers[i].layout_info.keys())[0]
@@ -830,7 +840,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         for i in range(len(Solutions)):
             solution=Solutions[i]
-            sol=PSSolution(solution_id=solution.index)
+            sol=PSSolution(solution_id=solution.index,module_data=solution.module_data)
             sol.cs_solution=solution
             #print("Here")
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)

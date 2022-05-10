@@ -34,7 +34,7 @@ import multiprocessing
 from multiprocessing import Pool
 class FastHenryAPI(CornerStitch_Emodel_API):
     
-    def __init__(self, comp_dict={}, wire_conn={},ws ='/nethome/jgm019/testcases/fasthenry'):
+    def __init__(self, comp_dict={}, wire_conn={},ws ='/nethome/ialrazi/PS_2_test_Cases/fasthenry'):
         '''
         :param comp_dict: list of all components and routing objects
         :param wire_conn: a simple table for bondwires setup
@@ -411,7 +411,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                             x, y = sheet_data.rect.center()
                             z = sheet_data.z #*1000
                             cp = [x , y , z ]
-                            # print "CP",cp
+                            
                             if not (sheet_data.net in self.emesh.comp_net_id):
                                 self.emesh.comp_dict[comp] = 1
                             self.add_fh_points(name,cp)

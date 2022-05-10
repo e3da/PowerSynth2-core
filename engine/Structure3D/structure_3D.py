@@ -232,7 +232,7 @@ class Structure_3D():
         r1+=r1_c
         all_rows.append(r1)
 
-
+        
         for i in range(len(constraint_name_list)-4): # minimum dimension constraints (1D values)
             cons_name=constraint_name_list[i]
             r2 = [cons_name]
@@ -242,6 +242,7 @@ class Structure_3D():
                     r2_c[i]=1
                 else:
                     for k,v in list(component_to_cs_type.items()):
+                        
                         if v==Types[i]:
                             for comp in all_components:
                                 if k==comp.name and isinstance(comp,Part):
@@ -933,8 +934,9 @@ class Structure_3D():
 
 
 
-        #print("LWV",layer_wise_vias)
-        #print(layer_wise_through_vias)
+        '''print("LWV",layer_wise_vias)
+        print(layer_wise_through_vias)
+        input()'''
 
 
 
@@ -968,22 +970,8 @@ class Structure_3D():
                         if layer_name not in interfacing_layer_info[key]:
                             interfacing_layer_info[key].append(layer_name)
                         
-            '''if tuple(via_name_list) in interfacing_layer_info:
-                if layer_name not in interfacing_layer_info[tuple(via_name_list)]:
-                    interfacing_layer_info[tuple(via_name_list)].append(layer_name)'''
-        '''removable_keys=[]
-        for key1 in interfacing_layer_info.keys():
-            for key2 in interfacing_layer_info.keys():
-                if key1!=key2:
-                    a=set(key1)
-                
-                    b=set(key2)
-                
-                    if b.issubset(a):
-                        removable_keys.append(key2)
-
-        for key in removable_keys:
-            del interfacing_layer_info[key]'''
+        else:
+            interfacing_layer_info={}   
         
         for via_name_list in interfacing_layer_info:
             #print(via_name_list)

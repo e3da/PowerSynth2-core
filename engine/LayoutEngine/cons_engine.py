@@ -255,10 +255,10 @@ class New_layout_engine():
                             for element in island.elements:
                                 wire.source_node_id=element[-1] # node id
                                 break
-        #self.bondwires = copy.deepcopy(bondwires)  # to pass bondwire info to CG
-        #for wire in self.bondwires:
-            #print("here", wire.printWire())
-        #input()
+            #self.bondwires = copy.deepcopy(bondwires)  # to pass bondwire info to CG
+            '''for wire in bondwires:
+                print("here", wire.printWire())
+            input()'''
 
 
 
@@ -284,6 +284,8 @@ class New_layout_engine():
             if isinstance(comp, parts.Part):
                 type=comp.cs_type
                 footprint=comp.footprint
+                
+                parent_type='EMPTY' # default
                 for island in self.init_data[2]:
                     
                     if comp.layout_component_id in island.child_names:

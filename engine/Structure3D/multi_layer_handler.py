@@ -451,9 +451,45 @@ class Layer():
         self.bondwires=bondwire_objects
         return 
 
+    def updated_components_hierarchy_information(self):
+        # To update parent component info for each child in island
+        comp_hierarchy={}
+        for island in self.islands:
+            #print(island.child_names)
+
+            for child1 in island.child:
+                if child1[-2]==1:
+                    for child2 in island.elements:
+                        if (child1[1]>=child2[1]) and (child1[2]>= child2[2]) and (child1[1]+child1[3]<=child2[1]+child2[3]) and (child1[2]+child1[4]<=child2[2]+child2[4]):
+                            comp_hierarchy[child1[5]]=child2[5]
 
 
-   
+
+        #input()
+
+
+        for island in self.islands:
+            #print(island.child)
+            #while len(list(comp_hierarchy.keys()))!=len(island.child_names):
+            if len(island.child)>1:
+                for child2 in island.child:
+                    for child1 in island.child:
+                        if child1==child2:
+                            continue
+                        else:
+                            #print("OUT",child1,child2)
+                            #checking if a child is on a higher hierarchy level and enclosed by the parent child
+                            if (child1[-2]>1 and child2[5] in comp_hierarchy) and (child1[1]>=child2[1]) and (child1[2]>= child2[2]) and (child1[1]+child1[3]<=child2[1]+child2[3]) and (child1[2]+child1[4]<=child2[2]+child2[4]):
+                                #print(child1,child2)
+                                comp_hierarchy[child1[5]]=child2[5]
+
+            #print(len(list(comp_hierarchy.keys())))
+        #print(comp_hierarchy)
+
+        for comp in self.all_components:
+            if comp.layout_component_id in comp_hierarchy:
+                comp.parent_component_id=comp_hierarchy[comp.layout_component_id]
+
     # if there is change in the order of traces given by user to ensure connected order among the traces, this function updates the input rectangles into corner stitch input
     #It replaces all unordered traces with the proper ordered one for each island (group)
     def update_cs_info(self,islands=None):
@@ -599,7 +635,22 @@ class Layer():
         types_for_all_layers_plot=[]
         
         if len(self.bondwires)>0:
+            wire_bonds=copy.deepcopy(self.bondwires)
             for wire in self.bondwires:
+
+
+                if wire.num_of_wires>1:
+                    for i in range(1,wire.num_of_wires):
+                        wire1=copy.deepcopy(wire)
+                        if wire1.dir_type==1: #vertical
+                            wire1.source_coordinate[0]+=(i*800)
+                            wire1.dest_coordinate[0]+=(i*800)
+
+                        if wire1.dir_type==0: #horizontal
+                            wire1.source_coordinate[1]+=(i*800)
+                            wire1.dest_coordinate[1]+=(i*800)
+                        wire_bonds.append(wire1)
+            for wire in wire_bonds:#self.bondwires:
                 source = [wire.source_coordinate[0]/dbunit, wire.source_coordinate[1]/dbunit]
                 dest = [wire.dest_coordinate[0]/dbunit, wire.dest_coordinate[1]/dbunit]
                 point1 = (source[0], source[1])

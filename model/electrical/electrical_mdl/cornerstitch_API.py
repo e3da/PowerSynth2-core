@@ -343,6 +343,7 @@ class CornerStitch_Emodel_API:
         Returns:
 
         '''
+        
         self.setup_layout_objects(module_data=module_data)
         
         # Update module object

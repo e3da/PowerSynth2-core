@@ -252,15 +252,17 @@ class Cmd_Handler:
                         self.export_ansys_em_info['simulator'] = int(info[1])
                 if(self.thermal_mode): # Get info for thermal setup
                     if info[0] == 'Model_Select:':
-                        thermal_model = int(info[1])
+                        self.thermal_models_info['model'] = int(info[1])
                     if info[0] == 'Measure_Name:' and t_name==None:
+                        self.thermal_models_info['measure_name']= info[1]
                         t_name = info[1]
                     if info[0] == 'Selected_Devices:':
-                        devices = info[1].split(",")
+                        self.thermal_models_info['devices']= info[1].split(",")
                     if info[0] == 'Device_Power:':
                         power = info[1].split(",")
                         
                         power = [float(i) for i in power]
+                        self.thermal_models_info['devices_power']= power
                     if info[0] == 'Heat_Convection:':
                         try:
                             h_conv = float(info[1])
@@ -268,15 +270,23 @@ class Cmd_Handler:
                         except:
                             h_val = info[1].split(",")
                             h_conv = [float(i) for i in h_val]
+                        self.thermal_models_info['heat_convection']= h_conv
+
                     if info[0] == 'Ambient_Temperature:':
                         t_amb = float(info[1])
+                        self.thermal_models_info['ambient_temperature'] = t_amb
                 if self.electrical_mode != None:
                     if info[0] == 'Measure_Name:' and e_name==None:
                         e_name = info[1]
+                        self.electrical_models_info['measure_name']= e_name
                     if info[0] == 'Model_Type:':
                         e_mdl_type = info[1]
+                        self.electrical_models_info['model_type']= e_mdl_type
+
                     if info[0] == 'Measure_Type:':
-                        type = int(info[1])
+                        e_measure_type = int(info[1])
+                        self.electrical_models_info['measure_type']= e_measure_type
+
                     if info[0] == 'End_Device_Connection.':
                         dev_conn_mode = False
                     if dev_conn_mode:
@@ -284,16 +294,21 @@ class Cmd_Handler:
                         conn = info[1].split(",")
                         conn = [int(i) for i in conn]
                         dev_conn[dev_name] = conn
+                        self.electrical_models_info['device_connections']= dev_conn
+
                     if info[0] == 'Device_Connection:':
                         dev_conn_mode = True
 
 
                     if info[0] == 'Source:':
-                        source = info[1]
+                        self.electrical_models_info['source']= info[1]
+
                     if info[0] == 'Sink:':
-                        sink = info[1]
+                        self.electrical_models_info['sink']= info[1]
+
                     if info[0] == 'Frequency:':
-                        frequency = float(info[1])
+                        self.electrical_models_info['frequency']= float(info[1])
+
         check_file = os.path.isfile
         check_dir = os.path.isdir
         # Check if these files exist
@@ -304,8 +319,8 @@ class Cmd_Handler:
                and rs_model_check\
                and check_file(self.constraint_file)
         # make dir if they are not existed
-        print(("self.new_mode",self.new_mode))
-        print(("self.flex",self.flexible))
+        #print(("self.new_mode",self.new_mode))
+        #print(("self.flex",self.flexible))
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -329,6 +344,9 @@ class Cmd_Handler:
             self.init_cs_objects(run_option=run_option)
 
             self.set_up_db() # temp commented1 out
+            self.setup_models() # setup electrothermal models, the e_t apis are initiated anyway for AnsysEm and Solidworks extraction purpose
+
+
             self.need_electrical_setup()
             self.init_export_tasks(run_option)
             if run_option == 0:
@@ -380,7 +398,7 @@ class Cmd_Handler:
                 #self.solutions = eval_single_layout(layout_engine=self.engine, layout_data=cs_sym_info,
                                                     #apis={'E': self.e_api,'T': self.t_api}, measures=self.measures,module_info=md_data)
             if run_option == 2:
-
+                '''
                 self.measures = []
                 if self.thermal_mode!=None:
                     t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
@@ -391,7 +409,7 @@ class Cmd_Handler:
                 if self.electrical_mode!=None:
                     e_measure_data = {'name':e_name,'type':type,'source':source,'sink':sink}
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
-
+                '''
 
                 
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
@@ -420,6 +438,49 @@ class Cmd_Handler:
             print ("Check your input again ! ")
 
             return cont
+
+    #------------------- Models Setup and Init----------------------------------------------------
+
+    def setup_models(self):
+        print(self.thermal_models_info.keys())
+        print(self.electrical_models_info.keys())
+        if self.thermal_models_info!= {}:
+            power = self.thermal_models_info['devices_power']
+            h_conv = self.thermal_models_info['heat_convection']
+            t_amb = self.thermal_models_info['ambient_temperature']
+            t_name = self.thermal_models_info['measure_name']
+            thermal_model = self.thermal_models_info['model']
+            devices = self.thermal_models_info['devices']
+        else:
+            power,h_conv,t_amb,t_name,devices,thermal_model = [None for i in range(6)]
+
+        if self.electrical_models_info != {}:
+            e_name = self.electrical_models_info['measure_name']
+            e_measure_type = self.electrical_models_info['measure_type']
+            source = self.electrical_models_info['source']
+            sink = self.electrical_models_info['sink']
+            try:
+                dev_conn = self.electrical_models_info['device_connections']
+            except:
+                print("No device found")
+                dev_conn = None
+            frequency = self.electrical_models_info['frequency']
+            e_mdl_type = self.electrical_models_info['model_type']
+        else:
+            e_name,e_measure_type,source,sink,dev_conn,frequency, e_mdl_type = [None for i in range(7)]
+
+        self.measures = []
+        if self.thermal_mode!=None:
+            t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
+            t_measure_data = {'name': t_name, 'devices': devices}
+            self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
+                                model_type=thermal_model)
+
+        if self.electrical_mode!=None:
+            e_measure_data = {'name':e_name,'type':e_measure_type,'source':source,'sink':sink}
+            self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
+
+
     def need_electrical_setup(self):
         '''Set of messages for electrical connection in different scennarios'''
         if self.electrical_mode==None:
@@ -437,7 +498,7 @@ class Cmd_Handler:
             else:
                 active_design = 'HFSS'
             workspace = self.db_dir+'/AnsysEM'
-            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=0)
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=run_option)
             self.export_task.append(ansysem)
     def generate_export_files(self):
         '''Generate export files after the solution3D is generated'''
@@ -614,14 +675,14 @@ class Cmd_Handler:
         self.dbunit=1000 # in um
         self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
 
-        #calling script parser function to parse the geometry and bondwire setup script
+        # calling script parser function to parse the geometry and bondwire setup script
         all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         # adding wire table info for each layer
         for layer in all_layers:
             self.wire_table[layer.name] = layer.wire_table
         self.structure_3D.layers=all_layers
         self.structure_3D.cs_type_map=cs_type_map
-        #populating 3D structure components
+        # populating 3D structure components
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
@@ -798,15 +859,15 @@ class Cmd_Handler:
             self.measures += self.e_api.measurement_setup()
         elif mode == 'macro':
             print("macro mode")
-            
-            self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
-            self.e_api.get_frequency(frequency)
-            self.e_api.get_layer_stack(self.layer_stack)
-            if type =='LoopFHcompare':
-                self.e_api.e_mdl = "LoopFHcompare"
+            if type!=None:
+                self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
+                self.e_api.get_frequency(frequency)
+                self.e_api.get_layer_stack(self.layer_stack)
+                if type =='LoopFHcompare':
+                    self.e_api.e_mdl = "LoopFHcompare"
                 
 
-            self.measures += self.e_api.measurement_setup(meas_data)
+                self.measures += self.e_api.measurement_setup(meas_data)
         if self.layout_ori_file != None:
             #print("this is a test now")
             self.e_api.process_trace_orientation(self.layout_ori_file)

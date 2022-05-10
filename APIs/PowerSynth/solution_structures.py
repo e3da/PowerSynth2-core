@@ -64,14 +64,15 @@ class PSSolution(object):
     """A collection of features in a PowerSynth solution.
 
     """
-    def __init__(self, solution_id, features_list=None, parameters=None, boundary_conditions=None):
+    def __init__(self, solution_id, features_list=None, parameters=None, boundary_conditions=None,module_data = None):
         self.solution_id = solution_id
         self.features_list = features_list
         self.parameters= parameters
         self.boundary_conditions = boundary_conditions
+        self.module_data = module_data
         self.cs_solution=None # to store info from layout engine
 
-    def add_feature(self, name, x, y, z, width, lenght, height, material_name, power=0, h_val=0):
+    def add_feature(self, name, x, y, z, width, length, height, material_name, power=0, h_val=0):
         if self.features_list is None:
             self.features_list = []
         self.features_list.append(PSFeature(name,
@@ -94,10 +95,34 @@ class PSSolution(object):
         cs_solution: layout engine solution object
         module_data: layout_engine_module_info
         '''
+        self.module_data=module_data
         features=[]
         for id, layer_object in module_data.layer_stack.all_layers_info.items():
             if (layer_object.e_type=='C' or layer_object.e_type=='S') : # from layer stack all layers with electrical components are excluded here
                 continue
+            elif layer_object.name[0]=='S':
+                component_layer=layer_object.name.replace('S','I')
+                for layer_name,comp_list in module_data.solder_attach_info.items():
+                    if layer_name==component_layer:
+                        for comp_info in comp_list:
+                            name_=comp_info[0]+'_attach'
+
+                            x=comp_info[1]/1000.0
+                            y=comp_info[2]/1000.0
+
+
+                            z=layer_object.z_level
+                            width=comp_info[3]/1000.0
+                            length=comp_info[4]/1000.0
+                            height=layer_object.thick
+
+                            #print (layer_object.material)
+                            material_name=layer_object.material.name
+
+                            feature=PSFeature(name=name_, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
+                            #feature.printFeature()
+                            features.append(feature)
+
             else:
                 #print(layer_object.e_type)
                 name=layer_object.name
@@ -112,6 +137,18 @@ class PSSolution(object):
                 
                 feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
                 features.append(feature)
+
+        #setting up z location of encapsulant
+        encapsulant_z_updated={}
+        for feature in features:
+            #feature.printFeature()
+            if 'Ceramic' in feature.name:
+                encapsulant_z_updated[feature.name.replace('Ceramic','E')]=feature.z+feature.height
+
+        for feature in features:
+            if feature.name[0]=='E':
+                feature.z=encapsulant_z_updated[feature.name]
+
         if mode>=0:
             min_offset_x=100000
             min_offset_y=100000
@@ -148,6 +185,10 @@ class PSSolution(object):
                     #print(name,object_.x,type(object_.x))
                     x=object_.x/1000.0+min_offset_x
                     y=object_.y/1000.0+min_offset_y
+                    for f in features:
+                        if '_attach' in f.name and name in f.name: # updating x,y location of solder materials.
+                            f.x=x
+                            f.y=y
                     z=object_.z
                     width=object_.w/1000.0
                     length=object_.l/1000.0
@@ -211,10 +252,12 @@ class PSSolution(object):
                 """
         for f in features:
             #if mode!=2:
-            if min_width!=None and min_length!=None:
-                if '_Metal' in f.name:
-                    f.width=min_width # dynamically changing dimension to support variable sized solution
-                    f.length=min_length # dynamically changing dimension to support variable sized solution
+            if (min_width!=None and min_length!=None) or mode == -1: # initial layout evaluation
+                if '_Metal' in f.name or '_Attach' in f.name or f.name[0]=='E':
+                    if min_width!=None and min_length!=None:
+                        if '_Metal' in f.name:
+                            f.width=min_width # dynamically changing dimension to support variable sized solution
+                            f.length=min_length # dynamically changing dimension to support variable sized solution
                 if 'Baseplate' in f.name:
                     f.width=min_width+10 # dynamically changing dimension to support variable sized solution
                     f.length=min_length+10 # dynamically changing dimension to support variable sized solution

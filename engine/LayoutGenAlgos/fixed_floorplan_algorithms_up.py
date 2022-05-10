@@ -692,7 +692,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
 
     else:
         
-        #print(len(graph.nx_graph_edges),len(graph.edges))
+        #print(len(graph.nx_graph_edges),len(graph.edges),ID)
         #print("REC",locations)
         return solution_eval(graph_in=graph, locations=locations, ID=ID, Random=Random, seed=seed, num_layouts=num_layouts,algorithm=algorithm)
         #print("L",locations)
