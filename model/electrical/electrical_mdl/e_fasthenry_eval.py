@@ -363,6 +363,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             # find closest node to connect the wire virtually
 
         return bw_text
+    
     def gen_equiv_list(self):
         text = ''
         for loc in self.locs_name_dict:
