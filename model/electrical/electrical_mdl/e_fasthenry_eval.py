@@ -5,7 +5,7 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 3. Can be used for post optimization extraction
 '''
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
-from core.engine.Structure3D.structure_3D import Node_3D
+#from core.engine.Structure3D.structure_3D import Node_3D
 from core.model.electrical.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
 from core.model.electrical.meshing.MeshStructure import EMesh
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
@@ -88,7 +88,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.out_text += '.end'
         
         original_stdout = sys.stdout # Save a reference to the original standard output
-        with open(self.work_space+'/eval.inp', 'w') as f:
+        out_file=self.ws+'/eval.inp'
+        with open(out_file, 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             print(self.out_text)
             sys.stdout = original_stdout # Reset the standard output to its original value
@@ -410,7 +411,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                             x, y = sheet_data.rect.center()
                             z = sheet_data.z #*1000
                             cp = [x , y , z ]
-                            # print "CP",cp
+                            
                             if not (sheet_data.net in self.emesh.comp_net_id):
                                 self.emesh.comp_dict[comp] = 1
                             self.add_fh_points(name,cp)
@@ -576,4 +577,3 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
             return -1,-1
         #print ('R',r_list,'L',l_list)
-        

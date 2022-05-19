@@ -427,12 +427,24 @@ class CS_to_CG():
                     else:
                         y = wire_2[1]
                     # wire=[x,y,abs(wire_2[1]-wire_1[1]),abs(wire_2[2]-wire_1[2]),wire_1[-2],wire_1[-1]]
-                    wire = [wire_1[0], wire_1[1], wire_2[0], wire_2[1], wire_1[-3],
+                    wire_sol = [wire_1[0], wire_1[1], wire_2[0], wire_2[1], wire_1[-3],
                             wire_1[-2]]  # xA,yA,xB,yB,type,zorder
                     # print "final_wire", wire
                     # layout_rects.append(wire_1)
                     # layout_rects.append(wire_2)
-                    layout_rects.append(wire)
+                    if wire.num_of_wires>1:
+                        for i in range(1,wire.num_of_wires):
+                            if wire.dir_type==1: #vertical
+                                wire_sol2 = [wire_1[0]+i*0.8, wire_1[1], wire_2[0]+i*0.8, wire_2[1], wire_1[-3],
+                                        wire_1[-2]]  # xA,yA,xB,yB,type,zorder
+                                layout_rects.append(wire_sol2)
+                            if wire.dir_type==0: #horizontal
+                                wire_sol2 = [wire_1[0], wire_1[1]+i*0.8, wire_2[0], wire_2[1]+i*0.8, wire_1[-3],
+                                        wire_1[-2]]  # xA,yA,xB,yB,type,zorder
+                                layout_rects.append(wire_sol2)
+
+                    layout_rects.append(wire_sol)
+
 
             # for k, v in sym_to_cs.items():
             # print k,v

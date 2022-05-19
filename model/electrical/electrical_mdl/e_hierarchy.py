@@ -151,6 +151,8 @@ class EHier():
                 trace.node = trace_node
                 self.traces.append(trace)
                 for sh in self.module.sheet:
+                    if trace.name =='T3.6':
+                        print("check device sheet")
                     if trace.include_sheet(sh):
                         sh_node = T_Node(name=sh.net, type='sheet', data=sh, tree=self.tree)
                         sh.node = sh_node

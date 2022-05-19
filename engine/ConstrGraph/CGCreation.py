@@ -17,6 +17,7 @@ import math
 from bisect import bisect_left
 from core.engine.ConstrGraph.CGStructures import Vertex, Edge, Graph, find_longest_path, Top_Bottom, fixed_edge_handling
 from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
+from core.engine.OptAlgoSupport.optimization_algorithm_support import DesignString
 #from powercad.corner_stitch.constraint import constraint
 #########################################################################################################################
 
@@ -71,6 +72,9 @@ class ConstraintGraph:
 
         self.hcg_forward={} # hcg: node id =key and corresponding cg as value
         self.vcg_forward={}
+
+        self.design_strings_h={} # for genetic algorithm
+        self.design_strings_v={}  # for genetic algorithm
 
 
         # need to transfer to evaluation function
@@ -5757,7 +5761,7 @@ class ConstraintGraph:
 
 
     '''
-    def HcgEval(self, level,Random,seed, N):
+    def HcgEval(self, level,Random,seed, N,algorithm,ds=None):
         """
 
         :param level: mode of operation
@@ -5825,22 +5829,46 @@ class ConstraintGraph:
 
                         start=self.x_coordinates[element.ID][0]
                         end=self.x_coordinates[element.ID][-1]
-                                                    
+                        #print(loc_x,ledge_dims)
                         loc_x[left]=loc_x[start]+ledge_dims[0]
                         loc_x[right]=loc_x[end]-ledge_dims[0]
                         
                     seed=seed+count*1000
                     #for vert in element.graph.vertices:
                         #print(vert.coordinate,vert.min_loc)
+                    '''if Random==False and element.ID not in self.design_strings_h:
+                        ds=DesignString(node_id=element.ID,direction='hor')
+                    elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
+                        ds=self.design_strings_h[element.ID]
+                        
+                    
+                    
+                    else:
+                        ds=None'''
+                    #if Random==False and element.ID not in self.design_strings_h:
+                    if element.ID==1 and Random==False and algorithm==None:
+                            ds_found=DesignString(node_id=element.ID,direction='hor')
+                            self.design_strings_h[element.ID]=ds_found
+                    elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
+                        ds_found=self.design_strings_h[element.ID]
+                        #print(element.ID,loc_y,ds.longest_paths)
 
+                    else:
+                        ds_found=None
+                    #print(element.ID,ds_found.min_constraints,ds_found.n)
+                    #if ds_found!=None:
+                        #print("DS_FH",ds_found.node_id,ds_found.min_constraints,ds_found.new_weights)
 
-                    loc= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=Random, seed=seed)
+                    loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
                     loc_items=loc.items()
 
                     #print("HERE",element.ID,sorted(loc_items))
                     count+=1
-                    locations_.append(loc)
-                                        
+                    locations_.append(loc)  
+                    if Random==False and N==1 and algorithm==None and element.ID in self.design_strings_h:
+                        self.design_strings_h[element.ID]=design_strings
+
+
                 self.LocationH[element.ID]=locations_
 
         return self.LocationH
@@ -6587,7 +6615,7 @@ class ConstraintGraph:
 
 
 
-    def VcgEval(self, level,Random,seed, N):
+    def VcgEval(self, level,Random,seed, N,algorithm,ds=None):
 
         if level == 2:
             for element in reversed(self.tb_eval_v):
@@ -6652,11 +6680,26 @@ class ConstraintGraph:
 
 
                     seed=seed+count*1000
+                    #if Random==False and element.ID not in self.design_strings_v:
+                    if element.ID==1 and Random==False  and algorithm==None:
+                            ds_found=DesignString(node_id=element.ID,direction='ver')
+                            self.design_strings_v[element.ID]=ds_found
+                    elif Random==False and element.ID in self.design_strings_v and algorithm!=None:
+                        ds_found=self.design_strings_v[element.ID]
+                        #print(element.ID,loc_y,ds.longest_paths)
 
-                    locs= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=Random, seed=seed)
+                    else:
+                        ds_found=None
+                    #if ds_found!=None:
+                        #print("DS_FV",ds_found.node_id,ds_found.min_constraints,ds_found.new_weights)
+                    locs,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
                     #print("HEREV",element.ID,locs)
                     count+=1
-                    locations_.append(locs)
+                    locations_.append(locs)  
+                    if Random==False and N==1 and algorithm==None and element.ID in self.design_strings_v:
+
+                        self.design_strings_v[element.ID]= design_strings
+
                 #print(element.ID,locations_)
                 self.LocationV[element.ID]=locations_
 

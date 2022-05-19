@@ -5,7 +5,7 @@ import os
 
 from numpy.lib.nanfunctions import _nanmedian_small 
 cur_path =sys.path[0] # get current path (meaning this file location)
-print(cur_path)
+#print(cur_path)
 cur_path = cur_path[0:-len("core/APIs/AnsysEM")] #exclude "core/APIs/AnsysEM"
 sys.path.append(cur_path)
 import math
@@ -78,9 +78,10 @@ class AnsysEM_API():
         self.module_data = PS_solution_3d.module_data
         self.init_script_and_add_design()
         self.PS_features_list = PS_solution_3d.features_list
-        print("translate the solution into AnsysEM geometry info")
+        #print("translate the solution into AnsysEM geometry info")
         for i in range(len(PS_solution_3d.features_list)): # convert PSfeature to AnsysBox scripts
             PS_feature =  PS_solution_3d.features_list[i]
+            #print(PS_feature.printFeature())
             #if 'V' in PS_feature.name: # ignore via
             #    continue
             box = AnsysEM_Box()
@@ -117,7 +118,7 @@ class AnsysEM_API():
             box.read_ps_feature(PS_feature,name)
             self.output_script+= box.script
         self.handle_3D_connectivity()
-        #self.add_src_sink()
+        self.add_src_sink()
         self.output_script+=Auto_identify_nets
         self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
         #self.output_script+=Analyze_all
@@ -177,6 +178,7 @@ class AnsysEM_API():
         self.form_T_Vias()
     
     def form_T_Vias(self):
+        #print(self.sheet_ps_feature_via_table)
         for v in self.e_api.vias:
             start = v.sheet[0]
             stop = v.sheet[1]

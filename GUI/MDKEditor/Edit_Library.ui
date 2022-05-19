@@ -1,0 +1,1086 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MDKWindow</class>
+ <widget class="QMainWindow" name="MDKWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>911</width>
+    <height>580</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>PowerSynth MDK Window</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QPushButton" name="save_button">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>500</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string extracomment="Save tables' materials to MDK file">Save tables' materials to MDK file</string>
+    </property>
+    <property name="text">
+     <string>Save</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="cancel_button">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>500</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string extracomment="Close this window">Close this window</string>
+    </property>
+    <property name="text">
+     <string>Cancel</string>
+    </property>
+   </widget>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>741</width>
+      <height>491</height>
+     </rect>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>ALL</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>711</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Type</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Young Modulus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Poisson's Ratio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Melting Temperature</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density(Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density(Liquid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity(Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity(Liquid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity (Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity (Liquid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Electrical Resistivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative permittivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permeability</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CTE</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="remove_all_button">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Chosen material is removed from the table">Chosen material is removed from the table</string>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="add_all_button">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Add blank line to below of the table">Add blank line to below of the table</string>
+      </property>
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_all_button">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Changed values are updated">Changed values are updated</string>
+      </property>
+      <property name="text">
+       <string>Edit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clone_all_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Make clone material and show it top of the table">Make clone material and show it top of the table</string>
+      </property>
+      <property name="text">
+       <string>Clone</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>PCM</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>711</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Young Modulus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Poisson's Ratio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CTE</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Melting Temperature</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density(Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density(Liquid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity (Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity (Liquid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity (Solid)</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity (Liquid)</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="remove_pcm_button">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Chosen material is removed from the table">Chosen material is removed from the table</string>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="add_pcm_button">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Add blank line to below of the table">Add blank line to below of the table</string>
+      </property>
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_pcm_button">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Changed values are updated">Changed values are updated</string>
+      </property>
+      <property name="text">
+       <string>Edit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clone_pcm_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Make clone material and show it top of the table">Make clone material and show it top of the table</string>
+      </property>
+      <property name="text">
+       <string>Clone</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_3">
+     <attribute name="title">
+      <string>Conductor</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget_3">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>711</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <property name="autoScroll">
+       <bool>true</bool>
+      </property>
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Young Modulus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Poisson's Ratio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Electrical Resistivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permittivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative permeability</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CTE</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="add_con_button">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Add blank line to below of the table">Add blank line to below of the table</string>
+      </property>
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clone_con_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Make clone material and show it top of the table">Make clone material and show it top of the table</string>
+      </property>
+      <property name="text">
+       <string>Clone</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_con_button">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Changed values are updated">Changed values are updated</string>
+      </property>
+      <property name="text">
+       <string>Edit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="remove_con_button">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Chosen material is removed from the table">Chosen material is removed from the table</string>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_4">
+     <attribute name="title">
+      <string>Insulator</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget_4">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>711</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Young Modulus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Poisson's Ratio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Electrical Resistivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permittivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permeability</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CTE</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="remove_ins_button">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Chosen material is removed from the table">Chosen material is removed from the table</string>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="add_ins_button">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Add blank line to below of the table">Add blank line to below of the table</string>
+      </property>
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_ins_button">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Changed values are updated">Changed values are updated</string>
+      </property>
+      <property name="text">
+       <string>Edit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clone_ins_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Make clone material and show it top of the table">Make clone material and show it top of the table</string>
+      </property>
+      <property name="text">
+       <string>Clone</string>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_5">
+     <attribute name="title">
+      <string>Semiconductor</string>
+     </attribute>
+     <widget class="QTableWidget" name="tableWidget_5">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>711</width>
+        <height>411</height>
+       </rect>
+      </property>
+      <column>
+       <property name="text">
+        <string>Name</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Young Modulus</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Poisson's Ratio</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Density</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Thermal Conductivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Specific Heat Capacity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Electrical Resistivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permittivity</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>Relative Permeability</string>
+       </property>
+      </column>
+      <column>
+       <property name="text">
+        <string>CTE</string>
+       </property>
+      </column>
+     </widget>
+     <widget class="QPushButton" name="remove_sem_button">
+      <property name="geometry">
+       <rect>
+        <x>480</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Chosen material is removed from the table">Chosen material is removed from the table</string>
+      </property>
+      <property name="text">
+       <string>Remove</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="add_sem_button">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Add blank line to below of the table">Add blank line to below of the table</string>
+      </property>
+      <property name="text">
+       <string>Add</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="edit_sem_button">
+      <property name="geometry">
+       <rect>
+        <x>360</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Changed values are updated">Changed values are updated</string>
+      </property>
+      <property name="text">
+       <string>Edit</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clone_sem_button">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>430</y>
+        <width>75</width>
+        <height>23</height>
+       </rect>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="toolTip">
+       <string extracomment="Make clone material and show it top of the table">Make clone material and show it top of the table</string>
+      </property>
+      <property name="text">
+       <string>Clone</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="load_button">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>500</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string extracomment="Open MDK file and upload it to the table">Open MDK file and upload it to the table</string>
+    </property>
+    <property name="text">
+     <string>Load</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="select_button">
+    <property name="geometry">
+     <rect>
+      <x>390</x>
+      <y>500</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="toolTip">
+     <string extracomment="Choose material you want to use">Choose material you want to use</string>
+    </property>
+    <property name="text">
+     <string>Select</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>911</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionImport_2"/>
+    <addaction name="actionSave"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionOpen_explanation"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QDockWidget" name="dockWidget_2">
+   <property name="minimumSize">
+    <size>
+     <width>170</width>
+     <height>135</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>170</width>
+     <height>500</height>
+    </size>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_2">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QToolBox" name="toolBox">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="page_2">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>152</width>
+          <height>434</height>
+         </rect>
+        </property>
+        <attribute name="label">
+         <string>Search Material</string>
+        </attribute>
+        <widget class="QComboBox" name="comboBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>0</y>
+           <width>131</width>
+           <height>22</height>
+          </rect>
+         </property>
+         <item>
+          <property name="text">
+           <string>Name</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Young Modulus</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Poisson's Ratio</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Melting Temperature</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Electrical Resistivity</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Density</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Density(Solid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Density(Liquid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Specific Heat Capacity</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Specific Heat Capacity (Solid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Specific Heat Capacity (Liquid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Thermal Conductivity</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Thermal Conductivity (Solid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Thermal Conductivity (Liquid)</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Relative Permittivity</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Relative Permeability</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>CTE</string>
+          </property>
+         </item>
+        </widget>
+        <widget class="QLineEdit" name="SearchItem">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>30</y>
+           <width>113</width>
+           <height>20</height>
+          </rect>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="search_button">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>60</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="mouseTracking">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string extracomment="Search specific material, and it show the top of the table">Search specific material, and it show the top of the table</string>
+         </property>
+         <property name="text">
+          <string>Search</string>
+         </property>
+        </widget>
+        <widget class="QPushButton" name="sort_button">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>90</y>
+           <width>75</width>
+           <height>23</height>
+          </rect>
+         </property>
+         <property name="mouseTracking">
+          <bool>true</bool>
+         </property>
+         <property name="toolTip">
+          <string extracomment="Sort materials based on the field">Sort materials based on the field</string>
+         </property>
+         <property name="text">
+          <string>Sort</string>
+         </property>
+        </widget>
+       </widget>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <action name="actionImport">
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="text">
+    <string>Export</string>
+   </property>
+  </action>
+  <action name="actionImport_file">
+   <property name="text">
+    <string>Import File</string>
+   </property>
+  </action>
+  <action name="actionType_Material">
+   <property name="text">
+    <string>Type Material</string>
+   </property>
+  </action>
+  <action name="actionImport_2">
+   <property name="text">
+    <string>Import</string>
+   </property>
+  </action>
+  <action name="actionOpen_explanation">
+   <property name="text">
+    <string>Open explanation</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

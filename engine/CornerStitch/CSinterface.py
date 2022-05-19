@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 from core.engine.CornerStitch.CornerStitch import Substrate, Tree
 from core.general.data_struct.util import Rect
 from core.engine.LayoutSolution.color_list import color_list_generator
-
+import copy
 debug=False
 
 
@@ -70,7 +70,33 @@ class Rectangle(Rect):
         if self.Netid != None:
             print(self.Netid)
 
+class HierarchyGroup():
+    '''
+    To parse input script and preserve hierarchy
+    '''
+    def __init__(self,id=0,elements=[],parent=None,child=[],hier_level=0):
+        self.id=id # to distinguish among different groups
+        self.elements=elements # input script lines in the same group
+        self.parent=parent # parent group
+        self.child=child # child group
+        self.hier_level=hier_level # no. of dots in the input script line to determine hierarchy level
+    
+    def printGroup(self):
+        '''
+        printing attributes for debugging
+        '''
+        print ("ID: ", self.id)
+        print ("Elements: ", self.elements)
+        print ("Parent Group: ", self.parent.id)
+        '''print ("Child Groups: ")
+        if len(self.child)>0:
+            for child in self.child:
+                print(child.id)
+        else:
+            print("No child")'''
+        print ("Hierarchy level: ", self.hier_level)
 
+    
 class CornerStitch():
     '''
     Initial corner-stitched layout creation
@@ -113,9 +139,51 @@ class CornerStitch():
                     input_list[1:1]=dots
                     Modified_input.append(input_list)
                 
+            input_tree=[]
+            root_group= HierarchyGroup()
+            stack=[root_group]
+            previous=root_group
+            for i in range(len(Modified_input)):
+                inp=Modified_input[i]
+                hier_level=1
+                for j in inp:
+                    if j=='.':
+                        hier_level+=1
+                if hier_level<previous.hier_level:
+                    parent_=stack[-1]
+                    while parent_.hier_level>=hier_level:
+                        if len(stack)>1:
+                            del stack[-1]
+                            parent_=stack[-1]
+                        else:
+                            print("ERROR: No parent group found")
+                            break
+                elif hier_level>previous.hier_level:
+                    stack.append(previous)
+                    parent_=stack[-1]
+                
+                if inp[0]=='-':
+                    previous.elements.append(inp)
+                else:
+                        
+                    current=HierarchyGroup(id=previous.id+1,elements=[inp],parent=parent_,hier_level=hier_level)
+                    previous=current
+                    input_tree.append(current)
 
-        
-        return Modified_input
+            '''for element in input_tree:
+                if element.hier_level==1:
+                    for el in element.elements:
+                        print(el)
+                else:
+                    dots=[]
+                    for i in range(element.hier_level-1):
+                        dots.append('+ ')
+                    print(dots),
+                    for el in element.elements:
+                        print(el)'''
+                
+            
+            return input_tree #Modified_input
 
     # function to generate initial layout
     def draw_layout(self, rects=None,types=None,colors=None,ZDL_H=None,ZDL_V=None, dbunit=1000):
@@ -194,6 +262,7 @@ class CornerStitch():
 
         return Patches, Graph
 
+    #'''
     # input tile coordinates and type are passed to create corner stitched layout
     def input_processing(self, Input, origin, Base_W, Base_H):
 
@@ -212,88 +281,65 @@ class CornerStitch():
         
         Htree = Tree(hNodeList=[Hnode0], vNodeList=None)
         Vtree = Tree(hNodeList=None, vNodeList=[Vnode0])
+        
+        for i in range(len(Input)):
+            line= Input[i]
+            if line.hier_level==1:
+                for inp in line.elements:
+                    #print(inp)
+                    start = inp[0]
+                    x1 = int(inp[1])
+                    y1 = int(inp[2]) + int(inp[4])
+                    x2 = int(inp[1]) + int(inp[3])
+                    y2 = int(inp[2])
+                    
+                    
+                    #print(x1,y1,x2,y2,inp[5])
+                    Parent = Vtree.vNodeList[0]
+                    Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
+                    
+                    Parent.child[-1].layout_script_elements.append(inp)
 
-        while (len(Input) > 0):
-            inp = Input.pop(0)
-            #print(inp)
-            
-            if inp[1] == "." and inp[2] != ".":  ## determining hierarchy level (2nd level):Device insertion
-                start = inp[0]
-                x1 = int(inp[2]) # top-left corner x coordinate
-                y1 = int(inp[3]) + int(inp[5]) # top-left corner y coordinate
-                x2 = int(inp[2]) + int(inp[4]) # bottom-right corner x coordinate
-                y2 = int(inp[3]) # bottom-right corner y coordinate
-                for i in reversed(Htree.hNodeList):
-                    if i.parent.id == 1:
-                        
-                        ParentH = i
-                        break
-                CHILDH = ParentH
-                
-                CHILDH.insert(start, x1, y1, x2, y2, inp[6], inp[7], Htree, ParentH,rotate_angle=inp[-1])  # rotate_angle=inp[-1]
+                    ParentH = Htree.hNodeList[0]
+                    ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
+                    ParentH.child[-1].layout_script_elements.append(inp)
 
-                for i in reversed(Vtree.vNodeList):
-                    if i.parent.id == 1:
-                        
-                        Parent = i
-                        break
-                CHILD = Parent
-                CHILD.insert(start, x1, y1, x2, y2, inp[6], inp[7], Vtree, Parent, rotate_angle=inp[-1])
+            else:
+                for node_ in Htree.hNodeList:
+                    for element in line.parent.elements:
+                        if element in node_.layout_script_elements:
+                            ParentH=node_
+                            break
+                for node_ in Vtree.vNodeList:
+                    for element in line.parent.elements:
+                        if element in node_.layout_script_elements:
+                            Parent=node_
+                            break
 
-            if inp[1] == "." and inp[2] == ".":  ##determining hierarchy level (3rd level):Pin insertion
 
-                start = inp[0]
-                x1 = int(inp[3])
-                y1 = int(inp[4]) + int(inp[6])
-                x2 = int(inp[3]) + int(inp[5])
-                y2 = int(inp[4])
-                for i in reversed(Htree.hNodeList):
-                    if i.parent.id == 1:
-                        med = i
-                        break
+                for inp in line.elements:
+                    inp2=copy.deepcopy(inp)
+                    #print(inp2)
+                    inp=list(filter(lambda a: a != '.', inp))
+                    start = inp[0]
+                    x1 = int(inp[1])
+                    y1 = int(inp[2]) + int(inp[4])
+                    x2 = int(inp[1]) + int(inp[3])
+                    y2 = int(inp[2])
+                    
+                    
+                    #print(x1,y1,x2,y2,inp[5])
+                    #Parent = Vtree.vNodeList[0]
+                    Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
+                    Parent.child[-1].layout_script_elements.append(inp2)
 
-                ParentH = med.child[-1]
-                CHILDH = ParentH
-
-                
-                CHILDH.insert(start, x1, y1, x2, y2, inp[7], inp[8], Htree, ParentH, rotate_angle=inp[-1])
-
-                for i in reversed(Vtree.vNodeList):
-                    if i.parent.id == 1:
-                        med = i
-                        break
-
-                Parent = med.child[-1]
-                CHILD = Parent
-
-                CHILD.insert(start, x1, y1, x2, y2, inp[7], inp[8], Vtree, Parent, rotate_angle=inp[-1])
-
-            if inp[1] != ".":  # determining hierarchy level (1st level):Trace insertion
-
-                start = inp[0]
-                Parent = Vtree.vNodeList[0]
-                
-                x1 = int(inp[1])
-                y1 = int(inp[2]) + int(inp[4])
-                x2 = int(inp[1]) + int(inp[3])
-                y2 = int(inp[2])
-                
-                
-                #print(x1,y1,x2,y2,inp[5])
-                Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
-
-                ParentH = Htree.hNodeList[0]
-
-                x1 = int(inp[1])
-                y1 = int(inp[2]) + int(inp[4])
-                x2 = int(inp[1]) + int(inp[3])
-                y2 = int(inp[2])
-
-                ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
+                    #ParentH = Htree.hNodeList[0]
+                    ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
+                    ParentH.child[-1].layout_script_elements.append(inp2)
 
         Htree.setNodeId1(Htree.hNodeList)
         Vtree.setNodeId1(Vtree.vNodeList)
-
+        debug=False
         if debug:
             print ("Horizontal NodeList")
 
@@ -302,24 +348,24 @@ class CornerStitch():
                 print (i.id, i, len(i.stitchList))
                 rectlist=[]
                 
-                if len(i.child)>0:
-                    for j in i.stitchList:
-                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-                        rectlist.append(k)
-                    #fig,ax=plt.subplots()
-                    self.draw_rect_list_cs(rectlist,ax=ax,x_max=57,y_max=51)
+                #if len(i.child)>0:
+                for j in i.stitchList:
+                    k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+                    rectlist.append(k)
+                fig,ax=plt.subplots()
+                self.draw_rect_list_cs(rectlist,name='HNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
 
             for i in Vtree.vNodeList:
 
                 print (i.id, i, len(i.stitchList))
                 rectlist=[]
                 
-                if len(i.child)>0:
-                    for j in i.stitchList:
-                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-                        rectlist.append(k)
-                    fig,ax=plt.subplots()
-                    self.draw_rect_list_cs(rectlist,ax=ax,x_max=57,y_max=51)
+                #if len(i.child)>0:
+                for j in i.stitchList:
+                    k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+                    rectlist.append(k)
+                fig,ax=plt.subplots()
+                self.draw_rect_list_cs(rectlist,name='VNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
 
             for i in Htree.hNodeList:
 
@@ -347,7 +393,173 @@ class CornerStitch():
 
         return Htree, Vtree
 
-    def draw_rect_list_cs(self,rectlist, ax, dbunit=1000,x_min=0,y_min=0,x_max=None, y_max=None):
+
+        
+    
+    
+    
+    
+    '''
+    # input tile coordinates and type are passed to create corner stitched layout
+    def input_processing(self, Input, origin, Base_W, Base_H):
+
+        #ToDo: generalize parent finding. Currently supports upto 3rd level of hierarchy.
+        """
+
+        Input: Input Rectangles in the form: ['/',x,y,width,height,type,'/']
+        origin: Substrate origin
+        Base_W: Substrate Width
+        Base_H: Substrate Height
+        :return: Corner stitched layout
+        """
+
+        substrate = Substrate(origin,Base_W, Base_H, "EMPTY")
+        Hnode0, Vnode0 = substrate.Initialize() # initialized empty background tile (root node) for the CS trees
+        
+        Htree = Tree(hNodeList=[Hnode0], vNodeList=None)
+        Vtree = Tree(hNodeList=None, vNodeList=[Vnode0])
+        #print(Input)
+        #input()
+        while (len(Input) > 0):
+            inp = Input.pop(0)
+            #print(inp)
+            
+            if inp[1] == "." and inp[2] != ".":  ## determining hierarchy level (2nd level):Device insertion
+                start = inp[0]
+                x1 = int(inp[2]) # top-left corner x coordinate
+                y1 = int(inp[3]) + int(inp[5]) # top-left corner y coordinate
+                x2 = int(inp[2]) + int(inp[4]) # bottom-right corner x coordinate
+                y2 = int(inp[3]) # bottom-right corner y coordinate
+                for i in reversed(Htree.hNodeList):
+                    if i.parent.id == 1:
+                        
+                        ParentH = i
+                        break
+                CHILDH = ParentH
+                
+                CHILDH.insert(start, x1, y1, x2, y2, inp[6], inp[7], Htree, ParentH,rotate_angle=inp[-1])  # rotate_angle=inp[-1]
+                CHILDH.layout_script_elements.append(inp)
+                for i in reversed(Vtree.vNodeList):
+                    if i.parent.id == 1:
+                        
+                        Parent = i
+                        break
+                CHILD = Parent
+                CHILD.insert(start, x1, y1, x2, y2, inp[6], inp[7], Vtree, Parent, rotate_angle=inp[-1])
+                CHILD.layout_script_elements.append(inp)
+
+            if inp[1] == "." and inp[2] == ".":  ##determining hierarchy level (3rd level):Pin insertion
+
+                start = inp[0]
+                x1 = int(inp[3])
+                y1 = int(inp[4]) + int(inp[6])
+                x2 = int(inp[3]) + int(inp[5])
+                y2 = int(inp[4])
+                for i in reversed(Htree.hNodeList):
+                    if i.parent.id == 1:
+                        med = i
+                        break
+
+                ParentH = med.child[-1]
+                CHILDH = ParentH
+
+                
+                CHILDH.insert(start, x1, y1, x2, y2, inp[7], inp[8], Htree, ParentH, rotate_angle=inp[-1])
+                CHILDH.layout_script_elements.append(inp)
+
+                for i in reversed(Vtree.vNodeList):
+                    if i.parent.id == 1:
+                        med = i
+                        break
+
+                Parent = med.child[-1]
+                CHILD = Parent
+
+                CHILD.insert(start, x1, y1, x2, y2, inp[7], inp[8], Vtree, Parent, rotate_angle=inp[-1])
+                CHILD.layout_script_elements.append(inp)
+
+            if inp[1] != ".":  # determining hierarchy level (1st level):Trace insertion
+
+                start = inp[0]
+                Parent = Vtree.vNodeList[0]
+                
+                x1 = int(inp[1])
+                y1 = int(inp[2]) + int(inp[4])
+                x2 = int(inp[1]) + int(inp[3])
+                y2 = int(inp[2])
+                
+                
+                #print(x1,y1,x2,y2,inp[5])
+                Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
+                Parent.layout_script_elements.append(inp)
+
+                ParentH = Htree.hNodeList[0]
+
+                x1 = int(inp[1])
+                y1 = int(inp[2]) + int(inp[4])
+                x2 = int(inp[1]) + int(inp[3])
+                y2 = int(inp[2])
+
+                ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
+                ParentH.layout_script_elements.append(inp)
+        
+        Htree.setNodeId1(Htree.hNodeList)
+        Vtree.setNodeId1(Vtree.vNodeList)
+        debug=True
+        if debug:
+            print ("Horizontal NodeList")
+
+            for i in Htree.hNodeList:
+
+                print (i.id, i, len(i.stitchList))
+                rectlist=[]
+                
+                if len(i.child)>0:
+                    for j in i.stitchList:
+                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+                        rectlist.append(k)
+                    fig,ax=plt.subplots()
+                    self.draw_rect_list_cs(rectlist,name='HNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
+
+            for i in Vtree.vNodeList:
+
+                print (i.id, i, len(i.stitchList))
+                rectlist=[]
+                
+                if len(i.child)>0:
+                    for j in i.stitchList:
+                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+                        rectlist.append(k)
+                    fig,ax=plt.subplots()
+                    self.draw_rect_list_cs(rectlist,name='VNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
+
+            for i in Htree.hNodeList:
+
+                print (i.id, i, len(i.stitchList))
+
+                
+                for j in i.stitchList:
+                    k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+                    print (k)
+
+                if i.parent == None:
+                    print (0)
+                else:
+                    print (i.parent.id, i.id)
+                for j in i.boundaries:
+                    if j.cell.type != None:
+                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
+
+                    else:
+                        k = j.cell.x, j.cell.y, j.cell.type, j.nodeId
+                    print ("B", i.id, k)
+
+
+        
+
+        return Htree, Vtree
+    '''
+    def draw_rect_list_cs(self,rectlist, ax, dbunit=1000,name=None,x_min=0,y_min=0,x_max=None, y_max=None):
         
         types=[]
         for r in rectlist:
@@ -371,7 +583,9 @@ class CornerStitch():
         plt.xlim(x_min, x_min+x_max/dbunit)
         plt.ylim(y_min, y_min+y_max/dbunit)
         plt.gca().set_aspect('equal', adjustable='box')
-        plt.show()
+        fig_dir='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Test_Case/Figs_test'
+        plt.savefig(fig_dir+'/initial_layout_'+name+'.png', pad_inches = 0, bbox_inches = 'tight')
+        #plt.show()
 
 
 
@@ -471,6 +685,7 @@ if __name__== "__main__":
     # cs_info=[[Type,x,y,width,height,name,starting character, ending character, rotation angle, hierarchy level],[....]]
     dbunit=1000
     cs_info=[['Type_1', 3.0, 3.0, 51.0, 9.0, 'T1', '+', '+', 0, 0], ['Type_4', 6.0, 5.0, 3.0, 3.0, 'L1', '+', '+', 1, 0], ['Type_3', 36.0, 10.0, 1.0, 1.0, 'B6', '+', '+', 1, 0], ['Type_3', 45.0, 10.0, 1.0, 1.0, 'B8', '+', '+', 1, 0], ['Type_1', 15.0, 15.0, 9.0, 24.0, 'T2', '+', '-', 0, 0], ['Type_1', 3.0, 39.0, 21.0, 9.0, 'T3', '-', '+', 0, 0], ['Type_6', 16.0, 21.0, 6.0, 4.0, 'D1', '+', '+', 1, 3], ['Type_3', 17.0, 23.0, 1.0, 1.0, 'B9', '+', '+', 2, 0], ['Type_3', 20.0, 23.0, 1.0, 1.0, 'B10', '+', '+', 2, 0], ['Type_6', 16.0, 27.0, 6.0, 4.0, 'D2', '+', '+', 1, 3], ['Type_3', 17.0, 29.0, 1.0, 1.0, 'B11', '+', '+', 2, 0], ['Type_3', 20.0, 29.0, 1.0, 1.0, 'B12', '+', '+', 2, 0], ['Type_4', 5.0, 40.0, 3.0, 3.0, 'L2', '+', '+', 1, 0], ['Type_2', 3.0, 15.0, 3.0, 21.0, 'T4', '+', '+', 0, 0], ['Type_5', 4.0, 17.0, 1.0, 1.0, 'L4', '+', '+', 1, 0], ['Type_2', 9.0, 15.0, 3.0, 21.0, 'T5', '+', '+', 0, 0], ['Type_5', 10.0, 17.0, 1.0, 1.0, 'L5', '+', '+', 1, 0], ['Type_3', 10.0, 29.0, 1.0, 1.0, 'B1', '+', '+', 1, 0], ['Type_3', 10.0, 23.0, 1.0, 1.0, 'B3', '+', '+', 1, 0], ['Type_1', 27.0, 15.0, 3.0, 33.0, 'T6', '+', '-', 0, 0], ['Type_1', 30.0, 15.0, 24.0, 10.0, 'T7', '-', '-', 0, 0], ['Type_1', 30.0, 39.0, 24.0, 9.0, 'T8', '-', '+', 0, 0], ['Type_6', 35.0, 16.0, 4.0, 6.0, 'D3', '+', '+', 1, 0], ['Type_3', 36.0, 20.0, 1.0, 1.0, 'B13', '+', '+', 2, 0], ['Type_3', 36.0, 17.0, 1.0, 1.0, 'B14', '+', '+', 2, 0], ['Type_6', 44.0, 16.0, 4.0, 6.0, 'D4', '+', '+', 1, 0], ['Type_3', 45.0, 20.0, 1.0, 1.0, 'B15', '+', '+', 2, 0], ['Type_3', 45.0, 17.0, 1.0, 1.0, 'B16', '+', '+', 2, 0], ['Type_3', 28.0, 23.0, 1.0, 1.0, 'B4', '+', '+', 1, 0], ['Type_3', 28.0, 29.0, 1.0, 1.0, 'B2', '+', '+', 1, 0], ['Type_4', 48.0, 40.0, 3.0, 3.0, 'L3', '+', '+', 1, 0], ['Type_2', 33.0, 33.0, 21.0, 3.0, 'T9', '+', '+', 0, 0], ['Type_5', 51.0, 34.0, 1.0, 1.0, 'L7', '+', '+', 1, 0], ['Type_2', 33.0, 27.0, 21.0, 3.0, 'T10', '+', '+', 0, 0], ['Type_5', 51.0, 28.0, 1.0, 1.0, 'L6', '+', '+', 1, 0], ['Type_3', 36.0, 28.0, 1.0, 1.0, 'B5', '+', '+', 1, 0], ['Type_3', 45.0, 28.0, 1.0, 1.0, 'B7', '+', '+', 1, 0]]
+    
     types=[]
     ZDL_H=[]
     ZDL_V=[]

@@ -5,7 +5,7 @@ class ModuleDataCornerStitch:
         self.footprint = {} # layer_name: [Width and Height] 
         self.layer_stack = None # a Layer Stack object
         self.via_connectivity_info=None # a dictionary that holds via name and corresponding connected layers
-
+        self.solder_attach_info=None
     def get_devices_on_layer(self,layer_id=0): # TODO: gotta setup the layer id for island in layout script
         devices = {} # key=name val=locs
         for isl in self.islands[layer_id]:

@@ -4,10 +4,10 @@ import sys, os
 # Set relative location
 cur_path =sys.path[0] # get current path (meaning this file location)
 cur_path = cur_path[0:-11] #exclude "powercad/cmd_run"
-print(cur_path)
+#print(cur_path)
 sys.path.append(cur_path)
 
-from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure 
+from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
@@ -23,10 +23,14 @@ from pympler import muppy,summary
 from core.MDK.LayerStack.layer_stack import LayerStack
 import matplotlib.pyplot as plt
 import os
+import sys
 import glob
 import copy
 import csv
 from core.general.settings import settings
+
+import core.GUI.main as main
+from matplotlib.figure import Figure
 
 
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
@@ -67,6 +71,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.ANSYS_IPY64 = os.path.abspath(info[1])
                 if info[0] == "FASTHENRY_FOLDER:":
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
+                if info[0] == "PARAPOWER_FOLDER:":
+                    settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
@@ -78,7 +84,7 @@ class Cmd_Handler:
         self.layout_script = None  # layout file dir
         self.bondwire_setup = None  # bondwire setup dir
         self.layer_stack_file = None  # layerstack file dir
-        self.rs_model_file = None  # rs model file dir
+        self.rs_model_file = 'default'        
         self.fig_dir = None  # Default dir to save figures
         self.db_dir = None  # Default dir to save layout db
         self.constraint_file=None # Default csv file to save constraint table
@@ -88,6 +94,7 @@ class Cmd_Handler:
         self.plot=False # flag for plotting solution layouts
         # Data storage
         self.db_file = None  # A file to store layout database
+        self.solutionsFigure = Figure()
 
         # CornerStitch Initial Objects
         self.structure_3D=Structure_3D()
@@ -103,7 +110,7 @@ class Cmd_Handler:
         self.e_api = None
         self.t_api = None
         # Solutions
-        self.soluions = None
+        self.solutions = None
 
         self.macro =None
         self.layout_ori_file = None
@@ -116,6 +123,9 @@ class Cmd_Handler:
         self.export_ansys_em_info = {}
         self.thermal_models_info = {}
         self.electrical_models_info = {}
+        self.UI_active = False
+        self.data_x = None
+        self.data_y = None
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -201,9 +211,12 @@ class Cmd_Handler:
                 if info[0] == "Layout_Mode:":  # engine option
                     layout_mode = int(info[1])
                 if info[0] == "Floor_plan:":
-                    floor_plan = info[1]
-                    floor_plan = floor_plan.split(",")
-                    floor_plan = [float(i) for i in floor_plan]
+                    try:
+                        floor_plan = info[1]
+                        floor_plan = floor_plan.split(",")
+                        floor_plan = [float(i) for i in floor_plan]
+                    except:
+                        floorplan= [1,1] # handle those cases when floorplan is not required.
                 if info[0] == 'Num_generations:':
                     num_gen = int(info[1])
                 if info[0] == 'Export_AnsysEM_Setup:':
@@ -229,13 +242,13 @@ class Cmd_Handler:
                         self.netlist_mode = int(info[1])
                 if(self.export_ansys_em):
                     if info[0] == 'Design_name:':
-                        self.export_ansys_em_info['design_name']= info[1]  
+                        self.export_ansys_em_info['design_name']= info[1]
                     if info[0] == 'Version:':
-                        self.export_ansys_em_info['version']= info[1]  
+                        self.export_ansys_em_info['version']= info[1]
                     if info[0] == 'Run_mode:':
-                        self.export_ansys_em_info['run_mode']= int(info[1])    
+                        self.export_ansys_em_info['run_mode']= int(info[1])
                     if info[0] == 'Simulator:':
-                        self.export_ansys_em_info['simulator'] = int(info[1])   
+                        self.export_ansys_em_info['simulator'] = int(info[1])
                 if(self.thermal_mode): # Get info for thermal setup
                     if info[0] == 'Model_Select:':
                         self.thermal_models_info['model'] = int(info[1])
@@ -306,8 +319,8 @@ class Cmd_Handler:
                and rs_model_check\
                and check_file(self.constraint_file)
         # make dir if they are not existed
-        print(("self.new_mode",self.new_mode))
-        print(("self.flex",self.flexible))
+        #print(("self.new_mode",self.new_mode))
+        #print(("self.flex",self.flexible))
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -338,13 +351,14 @@ class Cmd_Handler:
                 '''Generate 3D layout strcutures'''
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan)
-                
+                                         floor_plan=floor_plan,dbunit=self.dbunit)
+
                 
 
             elif run_option == 1:
                 
                 solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
+                solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
                 initial_solutions=[solution]
                 md_data=[solution.module_data]
                 PS_solutions=[] #  PowerSynth Generic Solution holder
@@ -354,7 +368,9 @@ class Cmd_Handler:
                     sol=PSSolution(solution_id=solution.index)
                     sol.make_solution(mode=-1,cs_solution=solution,module_data=solution.module_data)
                     #plot_solution_structure(sol)
+                    sol.cs_solution=solution
                     PS_solutions.append(sol)
+                    
                 measure_names=[None,None]
                 if len(self.measures)>0:
                     for m in self.measures:
@@ -368,7 +384,20 @@ class Cmd_Handler:
                 #self.solutions = eval_single_layout(layout_engine=self.engine, layout_data=cs_sym_info,
                                                     #apis={'E': self.e_api,'T': self.t_api}, measures=self.measures,module_info=md_data)
             if run_option == 2:
+                '''
+                self.measures = []
+                if self.thermal_mode!=None:
+                    t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
+                    t_measure_data = {'name': t_name, 'devices': devices}
+                    self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
+                                       model_type=thermal_model)
 
+                if self.electrical_mode!=None:
+                    e_measure_data = {'name':e_name,'type':type,'source':source,'sink':sink}
+                    self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency, meas_data=e_measure_data, type = e_mdl_type)
+                '''
+
+                
                 self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
                                          optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
                                          floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)
@@ -413,6 +442,23 @@ class Cmd_Handler:
 
         if self.electrical_models_info != {}:
             e_name = self.electrical_models_info['measure_name'] 
+    #------------------- Models Setup and Init----------------------------------------------------
+
+    def setup_models(self):
+        print(self.thermal_models_info.keys())
+        print(self.electrical_models_info.keys())
+        if self.thermal_models_info!= {}:
+            power = self.thermal_models_info['devices_power']
+            h_conv = self.thermal_models_info['heat_convection']
+            t_amb = self.thermal_models_info['ambient_temperature']
+            t_name = self.thermal_models_info['measure_name']
+            thermal_model = self.thermal_models_info['model']
+            devices = self.thermal_models_info['devices']
+        else:
+            power,h_conv,t_amb,t_name,devices,thermal_model = [None for i in range(6)]
+
+        if self.electrical_models_info != {}:
+            e_name = self.electrical_models_info['measure_name']
             e_measure_type = self.electrical_models_info['measure_type']
             source = self.electrical_models_info['source']
             sink = self.electrical_models_info['sink']
@@ -425,9 +471,9 @@ class Cmd_Handler:
             e_mdl_type = self.electrical_models_info['model_type']
         else:
             e_name,e_measure_type,source,sink,dev_conn,frequency, e_mdl_type = [None for i in range(7)]
-        
+
         self.measures = []
-        if self.thermal_mode:
+        if self.thermal_mode!=None:
             t_setup_data = {'Power': power, 'heat_conv': h_conv, 't_amb': t_amb}
             t_measure_data = {'name': t_name, 'devices': devices}
             self.setup_thermal(mode='macro', setup_data=t_setup_data, meas_data=t_measure_data,
@@ -455,7 +501,7 @@ class Cmd_Handler:
             else:
                 active_design = 'HFSS'
             workspace = self.db_dir+'/AnsysEM'
-            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=0)
+            ansysem = AnsysEM_API(version = version,layer_stack=self.layer_stack,active_design =active_design, design_name = design_name,solution_type = '',workspace = workspace, e_api = self.e_api,run_option=run_option)
             self.export_task.append(ansysem)
     def generate_export_files(self):
         '''Generate export files after the solution3D is generated'''
@@ -633,14 +679,14 @@ class Cmd_Handler:
         self.dbunit=1000 # in um
         self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
 
-        #calling script parser function to parse the geometry and bondwire setup script
+        # calling script parser function to parse the geometry and bondwire setup script
         all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         # adding wire table info for each layer
         for layer in all_layers:
             self.wire_table[layer.name] = layer.wire_table
         self.structure_3D.layers=all_layers
         self.structure_3D.cs_type_map=cs_type_map
-        #populating 3D structure components
+        # populating 3D structure components
         self.structure_3D.via_connection_raw_info = via_connecting_layers
         if len(via_connecting_layers)>0:
             self.structure_3D.assign_via_connected_layer_info(info=via_connecting_layers)
@@ -666,18 +712,17 @@ class Cmd_Handler:
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
             layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
-            self.wire_table[layer.name]=layer.wire_table # for electriical model
+            self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.comp_dict[comp.layout_component_id] = comp # for electrical model
-        
         if len(via_connecting_layers)>0:
             for comp_name, component in self.comp_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:
                     component.via_type=via_type_assignment[comp_name.split('.')[0]]
 
-        
-        
+
+
         if len(self.structure_3D.layers)>1:
             all_patches=[]
             all_colors=['blue','red','green','yellow','pink','violet']
@@ -705,14 +750,21 @@ class Cmd_Handler:
                 ax2.add_patch(p)
             ax2.set_xlim(ax_lim[0])
             ax2.set_ylim(ax_lim[1])
-
+        
             ax2.set_aspect('equal')
             if self.fig_dir!=None:
                 plt.legend(bbox_to_anchor = (0.8, 1.005))
                 plt.savefig(self.fig_dir+'/initial_layout_all_layers.png')
             plt.close()
 
+        '''background = Image.open(self.pathToFigs + f"initial_layout_I1.png")
+        overlay = Image.open(self.pathToFigs + f"initial_layout_I2.png")
 
+        background = background.convert("RGBA")
+        overlay = overlay.convert("RGBA")
+
+        new_img = Image.blend(background, overlay, 0.5)
+        new_img.save(self.pathToFigs + "new.png","PNG")'''
         #No need to handle inter-layer constraints for now
         """
         # taking info for inter-layer constraints
@@ -739,13 +791,16 @@ class Cmd_Handler:
         #input()
         """
         self.structure_3D.create_module_data_info(layer_stack=self.layer_stack)
+        self.structure_3D.populate_via_objects()
         self.structure_3D.populate_initial_layout_objects_3D()
+        self.structure_3D.update_initial_via_objects()
 
         ##------------------------Debugging-----------------------------------------###
         debug=False
         if debug:
             print("Plotting 3D layout structure")
             solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
+            solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
             initial_solutions=[solution]
             
             
@@ -783,7 +838,7 @@ class Cmd_Handler:
     # --------------- API --------------------------------
 
 
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type =None):
+    def setup_electrical(self,mode='command',dev_conn={},frequency=None,meas_data={},type ='PowerSynthPEEC'):
         print("init api:", type)
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.comp_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
@@ -794,7 +849,7 @@ class Cmd_Handler:
             else:
                 self.e_api.rs_model = None
         elif type == 'FastHenry':
-            self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table)
+            self.e_api = FastHenryAPI(comp_dict = self.comp_dict, wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             self.e_api.rs_model = None
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
         elif type == 'LoopFHcompare':
@@ -807,16 +862,16 @@ class Cmd_Handler:
             self.measures += self.e_api.measurement_setup()
         elif mode == 'macro' and self.e_api!=None:
             print("macro mode")
-            
-            self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
-            self.e_api.get_frequency(frequency)
-            self.e_api.get_layer_stack(self.layer_stack)
-            if type =='LoopFHcompare':
-                self.e_api.e_mdl = "LoopFHcompare"
+            if type!=None:
+                self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
+                self.e_api.get_frequency(frequency)
+                self.e_api.get_layer_stack(self.layer_stack)
+                if type =='LoopFHcompare':
+                    self.e_api.e_mdl = "LoopFHcompare"
                 
 
-            self.measures += self.e_api.measurement_setup(meas_data)
-        if self.layout_ori_file != None and self.e_api!=None:
+                self.measures += self.e_api.measurement_setup(meas_data)
+        if self.layout_ori_file != None:
             #print("this is a test now")
             self.e_api.process_trace_orientation(self.layout_ori_file)
         #if self.output_option:
@@ -835,7 +890,12 @@ class Cmd_Handler:
 
         '''
         self.t_api = CornerStitch_Tmodel_API(comp_dict=self.comp_dict)
+        if settings.PARAPOWER_FOLDER!='':
+            self.t_api.pp_json_path=settings.PARAPOWER_FOLDER
+        else:
+            print("Parapower json folder not found")
         self.t_api.layer_stack=self.layer_stack
+        #print("PP_FOLDER",self.t_api.pp_json_path)
         if mode == 'command':
             self.measures += self.t_api.measurement_setup()
             self.t_api.set_up_device_power()
@@ -1083,7 +1143,7 @@ class Cmd_Handler:
                         continue
                     else:
                         #print("here",row[0],row[1],row[2])
-                        sol_data[row[0]] = ([float(row[2]), float(row[1])])
+                        sol_data[row[0]] = ([float(row[1]), float(row[2])])
             # sol_data = np.array(sol_data)
             #print (sol_data)
             if len(sol_data)>0:
@@ -1114,8 +1174,8 @@ class Cmd_Handler:
                 x_label = perf_names[0]
                 y_label = perf_names[1]
 
-                plt.xlim(min(data_x) - 2, max(data_x) + 2)
-                plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
+                #plt.xlim(min(data_x) - 2, max(data_x) + 2)
+                #plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
                 # naming the x axis
                 plt.xlabel(x_label)
                 # naming the y axis
@@ -1132,7 +1192,6 @@ class Cmd_Handler:
 
 
     def export_solution_params(self,fig_dir=None,sol_dir=None,solutions=None,opt=None,plot=False):
-
 
         data_x=[]
         data_y=[]
@@ -1151,12 +1210,14 @@ class Cmd_Handler:
 
         plt.cla()
         
-        '''print (data_x,data_y)
-        plt.scatter(data_x, data_y)
+        axes = self.solutionsFigure.gca()
+        #print (data_x,data_y)
+        axes.scatter(data_x, data_y, picker=True)
         for solution in solutions:
             labels=list(solution.parameters.keys())
             break
         #if len(labels)==2:
+        print(labels)
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
@@ -1169,6 +1230,7 @@ class Cmd_Handler:
         
         
         if plot:
+            
             plt.xlim(min(data_x)-2, max(data_x)+2)
             plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
@@ -1191,7 +1253,13 @@ class Cmd_Handler:
 
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
+
+    application = main.GUI()
+    application.run()
+
+    sys.exit()
+    '''
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
     cmd = Cmd_Handler(debug=False)
@@ -1250,4 +1318,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    
+    '''

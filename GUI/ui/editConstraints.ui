@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>965</width>
+    <height>412</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Edit Constraints</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Please edit the values in the constraints.csv file, then click continue.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="min_dimensions">
+      <attribute name="title">
+       <string>Min Dimensions</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_3">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidget">
+         <row>
+          <property name="text">
+           <string>MinWidth</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>MinLength</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>MinHorExtension</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>MinVerExtension</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="2">
+          <property name="text">
+           <string>0</string>
+          </property>
+         </item>
+         <item row="0" column="3">
+          <property name="text">
+           <string>3.0</string>
+          </property>
+         </item>
+         <item row="1" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="2">
+          <property name="text">
+           <string>0</string>
+          </property>
+         </item>
+         <item row="1" column="3">
+          <property name="text">
+           <string>3.0</string>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="2">
+          <property name="text">
+           <string>0</string>
+          </property>
+         </item>
+         <item row="2" column="3">
+          <property name="text">
+           <string>3.0</string>
+          </property>
+         </item>
+         <item row="3" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="2">
+          <property name="text">
+           <string>0</string>
+          </property>
+         </item>
+         <item row="3" column="3">
+          <property name="text">
+           <string>3.0</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="min_hor_enclosure">
+      <attribute name="title">
+       <string>MinHorEnclosure</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidget_2">
+         <row>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="min_ver_enclosure">
+      <attribute name="title">
+       <string>MinVerEnclosure</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidget_3">
+         <row>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="min_hor_spacing">
+      <attribute name="title">
+       <string>MinHorSpacing</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_4">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidget_4">
+         <row>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="min_ver_spacing">
+      <attribute name="title">
+       <string>MinVerSpacing</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout_5">
+       <item row="0" column="0">
+        <widget class="QTableWidget" name="tableWidget_5">
+         <row>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </row>
+         <row>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </row>
+         <column>
+          <property name="text">
+           <string>EMPTY</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_trace</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>bonding wire pad</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>power_lead</string>
+          </property>
+         </column>
+         <item row="0" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="0" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="1" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="2" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="0">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="1">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="2">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+         <item row="3" column="3">
+          <property name="text">
+           <string>1</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab">
+      <attribute name="title">
+       <string>Reliability Constraints</string>
+      </attribute>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btn_continue">
+       <property name="text">
+        <string>Continue</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

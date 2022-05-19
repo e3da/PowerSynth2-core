@@ -16,7 +16,7 @@ from core.model.electrical.meshing.MeshAlgorithm import MeshTable,MeshTableColle
 
 from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
-import _thread
+#import _thread
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy

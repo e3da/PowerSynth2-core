@@ -152,20 +152,20 @@ class CornerStitchSolution():
         
         conv_value= list(int(value[i:i + lv // 3], 16) for i in range(0, lv, lv // 3))
         return tuple([i/255 for i in conv_value])
-        
+    
     def plot_all_layers(self, all_patches= [],sol_ind=0, sol_path=None, ax_lim=[]):
-
+        
         ax2 = plt.subplots()[1]
         for p in all_patches:
             ax2.add_patch(p)
         ax2.set_xlim(ax_lim[0])
         ax2.set_ylim(ax_lim[1])
-
+    
         ax2.set_aspect('equal')
         #if self.fig_dir!=None:
         plt.legend(bbox_to_anchor = (0.8, 1.005))
         plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
-
+        
         plt.close()
 
     def layout_plot(self, layout_ind=0,layer_name=None, db=None, fig_dir=None, bw_type=None, all_layers=False, a= None, c= None,lab=None):
@@ -336,7 +336,7 @@ class CornerStitchSolution():
                         if row[-1]==" 'True'" and all_layers== True:
                             if row==all_layers_plot_rows[-1]:
                                 label=lab
-
+                                
                             else:
                                 label=None
                             if a<0.9:
@@ -345,8 +345,8 @@ class CornerStitchSolution():
                             else:
                                 linestyle='-'
                                 linewidth=order
-
-
+                            
+                            
                             P = matplotlib.patches.Rectangle(
                             (x, y),  # (x,y)
                             w,  # width
@@ -369,7 +369,7 @@ class CornerStitchSolution():
             ax1.set_xlim(x0, k1[0])
             ax1.set_ylim(y0, k1[1])
             ax1.set_aspect('equal')
-            plt.savefig(fig_dir+'/layout_'+str(layout_ind)+'_'+layer_name+'.png')
+            plt.savefig(fig_dir+'/layout_'+str(layout_ind)+'_'+layer_name+'.png', bbox_inches = 'tight', pad_inches = 0)
             #plt.savefig((fig_dir + '/layout_' + str(layout_ind) + '.svg'),dpi=1200, bbox_inches = 'tight',pad_inches = 0)
             # Try to release memory
             fig1.clf()
@@ -381,7 +381,7 @@ class CornerStitchSolution():
             y_lim=(y0, k1[1])
             return all_patches, [x_lim,y_lim]
         else:
-            return [None,None]
+            return None
 
 if __name__ == '__main__':
 
