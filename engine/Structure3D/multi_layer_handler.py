@@ -583,7 +583,7 @@ class Layer():
         
 
 
-        types_unsorted=[]
+        types_unsorted=['Type_0']
         for rect in self.input_rects:
             if rect.type not in types_unsorted:
                 types_unsorted.append(rect.type)
