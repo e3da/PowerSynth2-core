@@ -357,7 +357,9 @@ class Cmd_Handler:
                 
 
             elif run_option == 1:
+                '''
                 self.measures=[]
+                
                 if self.electrical_mode != None:
                     e_measure_data = {'name': e_name, 'type': type, 'source': source, 'sink': sink}
                     self.setup_electrical(mode='macro', dev_conn=dev_conn, frequency=frequency,
@@ -370,7 +372,7 @@ class Cmd_Handler:
                     self.setup_thermal(mode='macro', setup_data=t_setup_data,meas_data=t_measure_data,model_type=thermal_model)
 
 
-                
+                '''
                 solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
                 solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
                 initial_solutions=[solution]

@@ -57,7 +57,21 @@ class PSFeature(object):
         for printing each feature object (debugging purpose)
         '''
         print("Feature_name: {}, x: {}, y: {}, z: {}, width: {}, length: {}, height: {}, material_name: {}, power: {}, h_val: {}".format(self.name, self.x, self.y, self.z, self.width, self.length, self.height, self.material_name, self.power, self.h_val) )
-        
+    def __str__(self):
+        # overwrite default output string
+        return "Feature_name: {}, x: {}, y: {}, z: {}, width: {}, length: {}, height: {}, material_name: {}, power: {}, h_val: {}".format(self.name, self.x, self.y, self.z, self.width, self.length, self.height, self.material_name, self.power, self.h_val)
+    def itersect_3d(self,x,y,z,dx,dy,dz):
+        '''Check if this obj overlap with another'''
+        z_overlapped = not(z+dz < self.z or self.z+self.height < z)
+        xy_overlapped = not(y+dy < self.y or self.y+self.length < y or x+dx < self.x or self.x+self.width < x)
+        check = int(xy_overlapped) + int(z_overlapped)
+
+
+        if check <= 1:
+            return False
+        else:
+            return True
+
 
         
 class PSSolution(object):
@@ -259,8 +273,9 @@ class PSSolution(object):
                             f.width=min_width # dynamically changing dimension to support variable sized solution
                             f.length=min_length # dynamically changing dimension to support variable sized solution
                 if 'Baseplate' in f.name:
-                    f.width=min_width+10 # dynamically changing dimension to support variable sized solution
-                    f.length=min_length+10 # dynamically changing dimension to support variable sized solution
+                    if min_width != None and min_length != None:
+                        f.width=min_width+10 # dynamically changing dimension to support variable sized solution
+                        f.length=min_length+10 # dynamically changing dimension to support variable sized solution
                 '''if f.name=='Bottom_Metal':
                     f.width=min_width # dynamically changing dimension to support variable sized solution
                     f.length=min_length # dynamically changing dimension to support variable sized solution

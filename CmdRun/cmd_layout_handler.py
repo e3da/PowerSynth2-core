@@ -926,12 +926,12 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 end_random_eval=time.time()-start_random_eval
                 
         
-            end=time.time()
-            #print("Eval",eval_time)
+            #end=time.time()
+            #print("Eval",end_random_eval)
             #print("Gen_time",runtime)
             #print("Total_time",end-start)
-            #print("Random_generation",end_random)
-            #print("Random_eval",end_random_eval)
+            print("Random_generation",end_random)
+            print("Random_eval",end_random_eval)
                 
 
         else:
