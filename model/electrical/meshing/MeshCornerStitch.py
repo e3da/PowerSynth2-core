@@ -8,11 +8,11 @@ from core.model.electrical.meshing.MeshStructure import EMesh
 from core.general.data_struct.util import Rect, draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import T_Node
 from core.model.electrical.electrical_mdl.e_loop_element import form_skd
-from core.model.electrical.meshing.MeshAlgorithm import MeshTable
+from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh
 from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
 from core.general.data_struct.Tree import Tree
 import matplotlib.patches as patches
-from core.model.electrical.e_exceptions import *
+from core.model.electrical.e_exceptions import NeighbourSearchError
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -44,7 +44,10 @@ class EMesh_CS(EMesh):
             islands: A list of CS island object where all of the mesh points/element position can be updated
             layer_thickness: a dictionary to map between layer_id in CS to its thickness in MDK
         '''
-        EMesh.__init__(self, freq=freq, mdl=mdl,mdl_type=mdl_type)
+        EMesh.__init__(self)
+        self.mdl = mdl
+        self.freq = freq
+        self.mdl_type = mdl_type
         self.islands = islands
         self.hier_E = hier_E
         self.trace_ori = {}
@@ -53,6 +56,7 @@ class EMesh_CS(EMesh):
         self.contracted_node_dict = {} # node to contract to: [list of nodes on trace cell]
         self.contracted_map = {} # map of contracted node to anchor node
         self.measure = measure # use to get the src sink nets and contracted them
+    
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -753,7 +757,7 @@ class EMesh_CS(EMesh):
                         trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
                         self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
     def generate_planar_mesh_cells(self,island=None,z = 0):
-        mesh_table = MeshTable()
+        mesh_table = TraceIslandMesh()
         
         for element in island.elements:
             print(element)
@@ -1370,7 +1374,7 @@ class EMesh_CS(EMesh):
             else:
                 attempts += 1
                 continue
-        raise NeighbourSearchErr(direction)
+        raise NeighbourSearchError(direction)
 
     def plot_points(self, ax=None, plot=False, points=[]):
         xs = [pt[0] for pt in points]

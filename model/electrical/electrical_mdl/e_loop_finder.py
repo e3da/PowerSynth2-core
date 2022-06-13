@@ -12,7 +12,7 @@ from networkx.readwrite import edgelist
 import pandas as pd
 from matplotlib.pyplot import Arrow
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
-from core.model.electrical.meshing.MeshAlgorithm import MeshTable,MeshTableCollection
+from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh,LayerMesh
 
 from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
@@ -150,19 +150,19 @@ class LayoutLoopInterface():
         # STEP 2: Process mesh elements for each layer and each island
         for layer_id in self.layer_island_dict:
             print(self.layer_island_dict)
-            self.layer_mesh_table[layer_id] = MeshTableCollection()
+            self.layer_mesh_table[layer_id] = LayerMesh()
             
             print("forming graph for layer:", layer_id)
             z = z = self.hier.z_dict[layer_id]
             layer_name = 'Layer_{}'.format(layer_id)
             
             for island_name in self.layer_island_dict[layer_id]:
-                isl_mesh = MeshTable()
+                isl_mesh = TraceIslandMesh()
                 isl = isl_dict[island_name]
                 all_trace_copper = isl.elements
                 all_net_on_trace = isl.child
                 
-            # add trace to the MeshTable object
+            # add trace to the TraceIslandMesh object
                 for trace_data in all_trace_copper:
                     x,y,width,height =  trace_data[1:5]
                     t_cell =RectCell(int(x),int(y),int(width),int(height)) 

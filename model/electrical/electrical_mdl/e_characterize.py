@@ -632,10 +632,12 @@ def test_mutual_characterize_regression():
     
     N = 10
     if max(width) < 1:
+        dis = dis_close
         ws = np.logspace(0,1,num=5) * (width[1]-width[0])/10
         ds = np.logspace(0.1,1,num=5) * (dis[1]-dis[0])/10
         ls = np.logspace(0.1,1,num=5) * (length[1]-length[0])/10
     else:
+        dis = dis_far
         ws = np.linspace(width[0],width[1],N)
         ds =list(np.linspace(dis_close[0],dis_close[1],N)) #+ list(np.linspace(dis_far[0],dis_far[1],N))
         ds = list(set(ds))
@@ -644,13 +646,13 @@ def test_mutual_characterize_regression():
     x3d_scaled = []
     #for w in ws:
     w = 0.2
-    #for w in ws:
-    for d in ds:
-        for l in ls:
-            params = [w,l,0.2,w,l,0.2,0,0,d]
-            mutual_mat.append(params)
-            x3d.append([d,l])
-            x3d_scaled.append([d/max(dis_far),l/max(length)])
+    for w in ws:
+        for d in ds:
+            for l in ls:
+                params = [w,l,0.2,w,l,0.2,0,0,d]
+                mutual_mat.append(params)
+                x3d.append([w,d,l])
+                x3d_scaled.append([w/max(ws),d/max(dis_far),l/max(length)])
     mutual_mat = np.array(mutual_mat,dtype = 'float')
     # temp code
     run = True
@@ -730,14 +732,14 @@ def test_mutual_characterize_regression():
     
 def train_mutual_model_regression(xtrain,ytrain,x3d,x3d_scaled,mutual_mat,M_raw,mutual_func,max_M_val,train_freq,dis_far,dis_close,ws,ls,ds):
     poly_order =7
-    test = 'poly_lr'
+    test = 'mlp'
     train = True # if true, a cross validation search is run
     scaled =False
     
     if test == "mlp":
-        hidden = 100
-        max_iter = 10000
-        model = MLPRegressor(hidden_layer_sizes=(100,5),activation='relu', solver='adam', max_iter=max_iter,random_state=1,verbose=3,tol=1e-6,n_iter_no_change=int(max_iter/4) ).fit(xtrain,ytrain)
+        hidden = 20
+        max_iter = 1000
+        model = MLPRegressor(hidden_layer_sizes=(hidden,5),activation='relu', solver='adam', max_iter=max_iter,random_state=1,verbose=3,tol=1e-6,n_iter_no_change=int(max_iter/4) ).fit(xtrain,ytrain)
         print(model.n_layers_)
         print("mlp loss",model.best_loss_)
     elif test == "od_ls":
@@ -902,9 +904,9 @@ def run_single_mutual_eval(param):
     loop = LoopEval()
     t1 = ETrace()
     t2 = ETrace()
-    d,l = p
+    w,d,l = p
     
-    w1 = 0.2
+    w1 = w
     w2 = w1
     print(gr_width)
     x1 = gr_width/2 - d/2-w1
@@ -1063,13 +1065,13 @@ if __name__ == "__main__":
     
     #res =Z_broad_band_ansys(Rdc = 2.59e-3,Rac=15.08e-3,Ldc=24.75e-9,Lac=10.17e-9,fac=1e9,f=1e9)
     #print(res)
-    #test_mutual_characterize_regression()
+    test_mutual_characterize_regression()
     #x= [[8,10]]
     #test_model_sinlge(x=x)
     #print(Leq_wiley(w=1,l=25,t=0.2,h=0.64))
     #print(Meq_wiley(w=1,l=25,t=0.2,d=1))
     
-    test_trace_characterize_evaluation(file=test_file)
+    #test_trace_characterize_evaluation(file=test_file)
     #loop_based_mutual_eval(mutual_params=[[1,25]])
     #print(Lms(l=20,w=1,h=0.2))
     #print(generate_broadband_circuit(9e-9,15.57e-9,9.85e-3))

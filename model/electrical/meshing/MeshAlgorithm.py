@@ -23,7 +23,7 @@ import random
 import time
 
         
-class MeshTableCollection():
+class LayerMesh():
     # This is a per-layer mesh graph with edge and nodes. This will be later combined to form the final netgraph
     def __init__(self,z = 0,thick = 0,zid =0):
         self.all_tables = {}
@@ -32,7 +32,6 @@ class MeshTableCollection():
         self.layer_index = zid
         self.layer_mesh = EMesh()
         self.locs_to_net = {}
-        
         
     
     def add_net (self,x,y,name):
@@ -66,7 +65,7 @@ class MeshTableCollection():
                     net_name = ''
                 #if not (pt_xyz in self.layer_mesh.node_table): # handle overlap nodes
                 pt_name = "p{}_{}".format(self.layer_index,self.layer_mesh.node_id)
-                node_obj = MeshNode(pos = pt_xyz,name = pt_name,node_type = 'internal', net = net_name)
+                node_obj = MeshNode(pos = pt_xyz,name = pt_name,node_type = node_type, net = net_name)
                 self.layer_mesh.add_node(pt_xyz,node_obj)
             # Handle edge connection
             
@@ -85,9 +84,8 @@ class MeshTableCollection():
             mesh_table = self.all_tables[isl_name]
             mesh_table.plot_lev_1_mesh_island(name=isl_name,ax=ax)
         plt.autoscale()
-        plt.show()
         
-class MeshTable():
+class TraceIslandMesh():
     '''This method is used to quickly setup mesh neighbors for each island'''
 
     def __init__(self, island_name='', id = 0, Nx=0, Ny=0):
@@ -100,7 +98,7 @@ class MeshTable():
         self.components = []
         self.leads = []
         self.pads = []
-        self.small_pads = [] # just a list of points instead of cell
+        self.small_pads = {} # just a list of points instead of cell
         self.traces = []
         # table to keep track of net infomation
         self.comp_to_rect_cell = {} # Because in the layout we dont have the True net name (D1 only vs D1_Drain)
@@ -206,7 +204,8 @@ class MeshTable():
             xs.append(cell.right)
             ys.append(cell.bottom)
             ys.append(cell.top)
-        for point in self.small_pads: # convert center position to integer here
+        for p_name in self.small_pads: # convert center position to integer here
+            point = self.small_pads[p_name]
             xs.append(int(point[0]))
             ys.append(int(point[1]))
             
@@ -215,8 +214,8 @@ class MeshTable():
         xs.sort()
         ys.sort()
         # Remove small edges if its not boudary edge
-        y_lim = 1000 # um
-        x_lim = 1000 # um
+        y_lim = 100 # um
+        x_lim = 100 # um
         
         rm_y = []
         for iy in range(len(ys)-1):
@@ -284,7 +283,7 @@ class MeshTable():
         # Need a way to calculate this later
         cell_x = 1
         cell_y = 1
-        trace_cell_mesh = MeshTable()
+        trace_cell_mesh = TraceIslandMesh()
         grid_cell_table = {}
         for cell_id in self.cell_table:
             big_cell = self.cell_table[cell_id] # The big cell created by Hanan grid
@@ -332,11 +331,11 @@ class MeshTable():
 
     def form_hanan_network_X_mesh(self):
         self.graph = nx.Graph()
-        pos = {}
+        self.cell_pos = {}
         self.xy_to_cell_id = {}
         for cell_id in self.cell_table:
             cell = self.cell_table[cell_id]
-            pos[cell_id] = cell.center()
+            self.cell_pos[cell_id] = cell.center()
             self.xy_to_cell_id[(cell.x, cell.y)] = cell_id
             self.add_edge_between_two_cell(cell, cell.North)
             self.add_edge_between_two_cell(cell, cell.South)
@@ -401,8 +400,10 @@ class MeshTable():
             if self.corners_type[c] == 'concave':
                 plt.scatter(c[0], c[1], color='red', s=20)
         
+        
         for p in self.small_pads:
-            plt.scatter(p[0],p[1],color = 'red',s= 20)
+            plt.scatter(p[0],p[1],color = 'black',s= 20)
+        
             
         
     def plot_island_routing(self):
@@ -441,9 +442,9 @@ class MeshTable():
 # a function by itself so I can reuse it later
 def Hanan_grid(rect_cell_lists=[]):
     '''
-    This function create a MeshTable from a list of initial rectangle objects
+    This function create a TraceIslandMesh from a list of initial rectangle objects
     :param rect_cell_lists: list of rect cell list
-    :return: MeshTable objects
+    :return: TraceIslandMesh objects
     '''
     # list to collect all x y coordinates
     xs = []
@@ -461,7 +462,7 @@ def Hanan_grid(rect_cell_lists=[]):
     ys.sort()
 
     # now we loop through all xy to form the cells
-    hanan_grid = MeshTable()
+    hanan_grid = TraceIslandMesh()
     hanan_grid.form_mesh_table_on_grid(xs, ys)
 
     return hanan_grid
@@ -489,7 +490,7 @@ def test_electrical_meshing_level_1_layout1():
     cellB = RectCell(16, 4, 4, 16)
     cellC = RectCell(5, 16, 11, 4)
 
-    island = MeshTable()
+    island = TraceIslandMesh()
     island.traces = [cellA,cellB,cellC]
     start = time.time()
     island.form_hanan_mesh_table_on_island()
@@ -503,7 +504,7 @@ def test_electrical_meshing_level_1_layout2():
     cellB = RectCell(16, 4, 4, 16)
     cellC = RectCell(20, 16, 11, 4)
 
-    island = MeshTable()
+    island = TraceIslandMesh()
     island.traces = [cellA, cellB, cellC]
     start = time.time()
     island.form_hanan_mesh_table_on_island()
@@ -518,7 +519,7 @@ def test_electrical_meshing_level_1_layout3():
     cellC = RectCell(20, 16, 11, 4)
     cellD = RectCell(30, 0, 4, 16)
     cellE = RectCell(30, 11, 11, 4)
-    island = MeshTable()
+    island = TraceIslandMesh()
     island.traces = [cellA, cellB, cellC,cellD,cellE]
     start = time.time()
     island.form_hanan_mesh_table_on_island()
@@ -529,7 +530,7 @@ def test_electrical_meshing_planar():
     cellA = RectCell(0, 0, 25, 6)
     cellB = RectCell(5, 6, 15, 5)
     lead1 = RectCell(7,8,3,3)
-    island = MeshTable()
+    island = TraceIslandMesh()
     island.traces = [cellA, cellB,lead1] # We place all cell on same flat level then flag them based on x y loc
     island.leads = [lead1]
 

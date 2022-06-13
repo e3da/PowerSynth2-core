@@ -204,9 +204,12 @@ class ParaPowerInterface(object):
         md_json = json.dumps(self.to_dict())
         # temperature = matlab_engine.PowerSynthImport_V2(md_json)
         temperature = 5
-        #results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
-        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
+        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+        results_full = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
         results = json.loads(results)
+        results_full = json.loads(results_full)
+        for r in results_full:
+            print(r)
         #print(results)
         temperature = results['temperature'][-1]
         # self.eng.workspace['test_md'] = self.eng.ImportPSModuleDesign(json.dumps(self.to_dict()), nargout=1)

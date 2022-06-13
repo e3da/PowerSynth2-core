@@ -4,7 +4,7 @@ import csv
 import webbrowser
 from PySide2 import QtWidgets
 from matplotlib.figure import Figure
-from core.CmdRun.cmd import Cmd_Handler
+from core.CmdRun.cmd_interface import Cmd_Handler
 from core.GUI.py.openingWindow import Ui_Dialog as UI_opening_window
 from core.GUI.py.runMacro import Ui_Dialog as UI_run_macro
 from core.GUI.py.settings_info import Ui_Dialog as UI_settings
@@ -22,7 +22,7 @@ from core.GUI.solutionBrowser import showSolutionBrowser
 from core.GUI.createMacro import createMacro
 
 from core.general.settings import settings
-from core.CmdRun.cmd import read_settings_file
+from core.CmdRun.cmd_interface import read_settings_file
 
 class GUI():
     '''GUI Class -- Stores Important Information for the GUI'''

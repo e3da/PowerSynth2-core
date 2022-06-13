@@ -54,11 +54,11 @@ class EMesh(): # rewrite and clean up old EMesh
         self.node_id+=1
         self.mesh_graph.add_node(node_name)
     
-    def add_edge(self,xyz1,xyz2,trace_data,trace_type,ori):
+    def add_edge(self,xyz1,xyz2,dimension,trace_type,trace_ori):
         node_id_1 = self.xyz_to_id[xyz1]
         node_id_2 = self.xyz_to_id[xyz2]
         if not (self.mesh_graph.has_edge(node_id_1,node_id_2)):
-            self.edge_table[(node_id_1,node_id_2)] = (trace_data,trace_type)
+            self.edge_table[(node_id_1,node_id_2)] = (dimension,trace_type,trace_ori)
             self.mesh_graph.add_edge(node_id_1,node_id_2)
     
     def display_all_nodes(self,projection = '2d',display_node_id = False,display_node_net =True,fig = None,ax = None):
@@ -76,7 +76,7 @@ class EMesh(): # rewrite and clean up old EMesh
                 ax.text(pos[0],pos[1],s=net_name)
             if display_node_id:
                 ax.text(x=pos[0],y=pos[1],z=pos[2],s = node_name)
-            color = 'red' if node_type =='boundary' else 'blue'
+            color = 'blue' if node_type =='internal' else 'red'
             
             if projection == '3d':
                 ax.scatter([x],[y],[z],s=10,c = color)
@@ -93,8 +93,11 @@ class EMesh(): # rewrite and clean up old EMesh
             display=True        
         for e in self.edge_table:
             e_type = self.edge_table[e][1]
+            e_ori = self.edge_table[e][2]
+            
             if mode == 0: # view the cell rectangle
                 x,y,w,h = self.edge_table[e][0]
+                
                 if e_type == 'internal':
                     rect = Rectangle(xy=(x,y),width=w,height=h,ec='black',fc='blue',alpha = 0.3)
                 elif e_type == 'boundary':
@@ -111,6 +114,9 @@ class EMesh(): # rewrite and clean up old EMesh
                 
                 ax.add_line(line)
         ax.autoscale()
+        ax.set_xlabel("X (um)")
+        ax.set_ylabel("Y (um)")
+        
         if display:
             plt.show()
     
@@ -120,7 +126,6 @@ class EMesh(): # rewrite and clean up old EMesh
         ax = fig.add_subplot()
         self.display_all_nodes(fig=fig,ax = ax)
         self.display_edges_cells(fig=fig,ax= ax,mode = mode)
-        plt.show()
         
     def display_node_table(self):
         for pos in self.node_table:
@@ -128,6 +133,61 @@ class EMesh(): # rewrite and clean up old EMesh
             message = "Node:{} -- Pos: {}".format(node_name,pos)
             print(message)
     
+    def _handle_pins_connections(self,island_name = None):
+    
+        # First search through all sheet (device pins) and add their edges, nodes to the mesh
+        for sh in self.hier_E.sheets:
+            group = sh.parent.parent  # Define the trace island (containing a sheet)
+            sheet_data = sh.data
+            
+            if island_name == group.name:  # means if this sheet is in this island
+                if not (group in self.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group
+                    self.comp_nodes[group] = []
+            
+                comp = sh.data.component  # Get the component of a sheet.
+                # print "C_DICT",len(self.comp_dict),self.comp_dict
+                if comp != None and not (comp in self.comp_dict):
+                    comp.build_graph()
+                    conn_type = "hier"
+                    # Get x,y,z positions
+                    x, y = sheet_data.rect.center()
+                    z = sheet_data.z
+                    cp = [x, y, z]
+                    if not (sheet_data.net in self.comp_net_id):
+                        cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                        self.comp_net_id[sheet_data.net] = self.node_count
+                        self.add_node(cp_node)
+                        self.comp_nodes[group].append(cp_node)
+                        self.comp_dict[comp] = 1
+                    for n in comp.net_graph.nodes(data=True):  # node without parents
+                        sheet_data = n[1]['node']
+
+                        if sheet_data.node == None:  # floating net
+                            x, y = sheet_data.rect.center()
+                            z = sheet_data.z
+                            
+                            cp = [x, y, z]
+                            # print "CP",cp
+                            if not (sheet_data.net in self.comp_net_id):
+                                cp_node = MeshNode(pos=cp, type=conn_type, node_id=self.node_count, group_id=None)
+                                # print self.node_count
+                                self.comp_net_id[sheet_data.net] = self.node_count
+                                self.add_node(cp_node)
+                                self.comp_dict[comp] = 1
+
+                else:
+                    type = "hier"
+                    # Get x,y,z positions
+                    x, y = sheet_data.rect.center()
+                    z = sheet_data.z
+                    
+                    cp = [x, y, z]
+
+                    if not (sheet_data.net in self.comp_net_id):
+                        cp_node = MeshNode(pos=cp, type=type, node_id=self.node_count, group_id=None)
+                        self.comp_net_id[sheet_data.net] = self.node_count
+                        self.add_node(cp_node)
+                        self.comp_nodes[group].append(cp_node)
     
 class EMesh2():
     # Electrical Meshing for one selected layer

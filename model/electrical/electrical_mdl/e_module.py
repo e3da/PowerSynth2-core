@@ -6,6 +6,7 @@ import csv
 import math
 
 import numpy as np
+from core.MDK.LayerStack.layer_stack import LayerStack
 from core.general.data_struct.util import draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 import networkx as nx 
@@ -136,7 +137,7 @@ class EComp:
         self.type = type
         self.spice_type = spc_type
         self.update_nodes()
-        self.class_type ='comp'
+        self.class_type ='device'
         
     def update_nodes(self):
         for sh in self.sheet:
@@ -197,6 +198,8 @@ class EWires(EComp):
         self.circuit = circuit
         self.class_type ='wire'
         self.wire_dir = 'Z+'
+        self.start_net = start.net
+        self.stop_net = stop.net
         if wire_model == None:
             self.mode = 'analytical'
         else:
@@ -431,7 +434,7 @@ class EStack:
                 return i
 
 class EModule:
-    def __init__(self, sheet=[], plate=[], layer_stack=None, components=[]):
+    def __init__(self, sheets:dict, plates:dict, layer_stack: LayerStack, components:dict, wires:dict, vias:dict):
         '''
         Representation of a power module in multiple sheets and plates
         Args:
@@ -439,32 +442,36 @@ class EModule:
             plate: A data structure for conductor.
             layer_stack: A layer stack for material properties and thickness information
         '''
-        self.sheet = sheet  # list Sheet objects
-        self.sh_nets = [sh.net for sh in self.sheet]
-        self.plate = plate  # list of 3D plates
+        self.sheet = sheets  # list Sheet objects
+        self.sh_nets = list(sheets.keys())
+        self.plate = plates  # list of 3D plates
         self.layer_stack = layer_stack  # Will be used later to store layer info
         self.trace_island_group = OrderedDict()  # trace islands in any layer
+        self.wires = wires
+        self.vias = vias
         self.components = components
-        if self.components != []: # If the components have extra pins, which are not touching the traces
+        if self.components != {}: # If the components have extra pins, which are not touching the traces
             self.unpack_comp()
 
     def unpack_comp(self):
-        for comp in self.components:
+        for cp_name in self.components:
+            comp = self.components[cp_name]
             for sh in comp.sheet:
                 if not(sh.net in self.sh_nets): # prevent adding a sheet twice
                     if comp.type == "active":
                         sh.net_type = "external"
-                    self.sheet.append(sh)
+                    self.sheet[sh.net] = sh
 
     def form_group_cs_hier(self):
         name_to_group = {}
-        for p in self.plate:
-            name = p.group_id
+        for trace_name in self.plate:
+            trace = self.plate[trace_name]
+            name = trace.group_id
             if not (name in name_to_group):
-                self.trace_island_group[name] = [p]
+                self.trace_island_group[name] = [trace]
                 name_to_group[name] = 1
             else:
-                self.trace_island_group[name].append(p)
+                self.trace_island_group[name].append(trace)
 
 def test1():
     r1 = Rect(14, 10, 0, 10)

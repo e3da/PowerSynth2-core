@@ -245,9 +245,14 @@ class new_engine_opt:
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
                 type = measure.measure
+                #TODO: UPDATE LATER
+                bypassing = False # Set this True for electrical model maintainance
+                if bypassing:
+                    R,L = [-1,-1] # set -1 as default values to detect error
+                    result.append(-1)  
+                    continue
                 if not "compare" in self.e_api.e_mdl: # use this when there is no compare mode
                     self.e_api.init_layout_3D(module_data=module_data)
-                R,L = [-1,-1] # set -1 as default values to detect error
                 #self.e_api.type = 'Loop' # hardcodedß
                 #print ('API type', self.e_api.e_mdl)
                 id_select = None # specify a value for debug , None otherwise
@@ -321,11 +326,9 @@ class new_engine_opt:
 
             if isinstance(measure, ThermalMeasure):
                 # DISABLED ON QUANG's branch, if you see this line, you need to ENABLE ParaPower.
-                #solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
+                solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
-                #input()
-                #max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                max_t=300
+                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
                 result.append(max_t)
         return result
     

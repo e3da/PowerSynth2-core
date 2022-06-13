@@ -216,8 +216,8 @@ class RectCell(Rect):
     
     def get_cell_edges(self):
         # Return list of edges with center location
-        ratio = 1/3
-        edge_width = 2000
+        ratio = 1/2
+        edge_width = 500
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         pt_0 = (self.left,self.bottom)
@@ -282,7 +282,7 @@ class RectCell(Rect):
     def __str__(self):
         out = 'x: ' + str(self.x) + ' y: ' + str(self.y) + ' W: ' + str(self.W) + ' H: ' + str(self.H)
         return out
-    ''' Below methods are used in the MeshTable OBJECT'''
+    ''' Below methods are used in the TraceIslandMesh OBJECT'''
     
     def has_left(self):
         if self.West is None:
@@ -375,7 +375,7 @@ class RectCell(Rect):
         if self.West!=None and self.West.type!=0:
             self.center_node.West =  self.West.center_node
             self.West.center_node.East = self.center_node
-        #print(self.center_node)
+
     def explore_and_connect_trace_edges(self,z_level,cond,thick,graph):
         b_type = self.center_node.b_type
         min_width = 10 
@@ -444,6 +444,7 @@ class RectCell(Rect):
             edge = (self.center_node.node_id,self.center_node.East.node_id,edge_data)
             edges.append(edge)
         return edges
+    
 class MeshEdge:
     def __init__(self, m_type=None, nodeA=None, nodeB=None, data={}, width=1, length=1, z=0, thick=0.2, ori=None,
                  side=None,eval = True):
