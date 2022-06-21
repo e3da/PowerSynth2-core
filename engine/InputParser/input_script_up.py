@@ -42,12 +42,49 @@ class ScriptInputMethod():
         self.layer_info=[] # saves lines corresponding layer information in the input script
         self.via_connected_layer_info={} # dictionary to map via id and corresponding connected list of layers
         self.layout_info=[] # saves lines corresponding to layout_info in the input script
+        self.connection_table_info=[] # saves lines corresponding to connection table info from layout script
         self.cs_type_map=CS_Type_Map() # to store all component type names in the whole script
         self.all_route_info = {}  # saves a list of routing path objects corresponding to name of each routing path object as its key
         self.all_parts_info = {}  # saves a list of parts corresponding to name of each part as its key
         self.info_files = {}  # saves each part technology info file name
         self.all_components=[] # saves all component objects in tha layout script
 
+    def get_parts_wire_info(self): # to get necessary information about parts and wires from definitions/library
+        
+        parts_info=[]
+        wire_info=[]
+
+        if len(self.definition)>0:
+
+            for i in range(len(self.definition)):
+                part=self.definition[i]
+                
+                part_name= part[0]
+                file_name= part[1]
+                if 'Wire' not in part_name:
+                    
+                    element = Part(name=part_name,info_file=file_name)
+                    element.load_part()
+                    element.adjust_pin_order()
+                    parts_info.append(element)
+                else:
+                    
+                    wire=BondingWires(name=part_name,info_file=file_name)
+                    wire.load_wire()
+                    wire_info.append(wire)
+        else:
+            print("No Part/Wire Definition Found")
+
+        """
+        #------------------------for debugging--------------------------
+        for part in parts_info:
+            part.show_info()
+        for wire in wire_info:
+            wire.printWire()
+        input()
+        #------------------------for debugging---------------------------
+        """
+        return parts_info, wire_info
 
     # bond wire info script parser
     def read_bondwire_info(self, bondwire_info=None):
@@ -94,7 +131,8 @@ class ScriptInputMethod():
                 exit()
 
         
-        #print(bondwire_object_def)
+        #print(bondwire_object_def,table_info)
+        #input()
         return bondwire_object_def, table_info
     
     # creates bondwire connection table (a dictionary) from the information given by the user in a text file
@@ -274,9 +312,34 @@ class ScriptInputMethod():
         #raw_input()
         return wires
     """
+    def update_via_connected_layer_info(self):
+        '''
+        To convert via connected layer info dictionary where key is layer pair and value is list of vias into another dictionary where key is via and value is layer pair to make sure the compatibility with previous script/flow.
+        {('I1', 'I2'): ['V2', 'V3'], ('I2', 'I3'): ['V1'], ('I3', 'I4'): ['V4', 'V5']} --> {'V1': ['I2', 'I3', 'Through'], 'V2': ['I1', 'I2'], 'V3': ['I1', 'I2'], 'V4': ['I3', 'I4'], 'V5': ['I3', 'I4']}
+        '''
+        #print(self.via_connected_layer_info)
+        all_vias=[]
+        for layer_pair,via_list in self.via_connected_layer_info.items():
+            all_vias+=via_list
+        updated_connectivity_info={}
+        for via in all_vias:
+            updated_connectivity_info[via]=[]
+        for layer_pair,via_list in self.via_connected_layer_info.items():
+            for via in via_list:
+                if via in updated_connectivity_info:
+                    updated_connectivity_info[via].append(layer_pair[0])
+                    updated_connectivity_info[via].append(layer_pair[1])
+        for line in self.layout_info:
+            if 'Via' in line:
+                #print(line)
+                for via in all_vias:
+                    if via in line:
+                        if 'Through' not in updated_connectivity_info[via]:
+                            updated_connectivity_info[via].append('Through')
+                        
 
-
-
+        #print(updated_connectivity_info)
+        self.via_connected_layer_info=updated_connectivity_info
 
     # reads the input layout script and seperates four : definition of components, layer information, via connectivity information, and layout geometry information
     """
@@ -316,36 +379,46 @@ class ScriptInputMethod():
             line=lines[i].rstrip()
             line=re.sub(r'\t','. ',line)
             line=line.split(' ')
-            if '#' in line:
-                parts.append(i)
-            all_lines.append(line)
+
+            if not '%' in line[0]:
+                all_lines.append(line)
+                if '#' in line:
+                    parts.append(all_lines.index(line))
         parts.append(len(all_lines))
-        
-        #print("no_of_parts",parts)
+        '''for line in all_lines:
+            print(line)
+        print("no_of_parts",parts)
+        input()'''
+        via_connected_layers=[]
         for i in range(len(parts)-1):
             start=parts[i]
             end=parts[i+1]
             if all_lines[start][0]=='#' and all_lines[start][1]=='Definition':
                 self.definition=all_lines[start+1:end]
-            elif all_lines[start][0]=='#' and all_lines[start][1]=='Layer':
-                self.layer_info=all_lines[start+1:end]
+            #elif all_lines[start][0]=='#' and all_lines[start][1]=='Layer':
+                #self.layer_info=all_lines[start+1:end]
             elif all_lines[start][0]=='#' and all_lines[start][1]=='Via':
                 for j in range(start+1, end) :
                     line=all_lines[j]
-                    self.via_connected_layer_info[line[0]]=line[1:]
+                    #via_connected_layers.append(line)
+                    self.via_connected_layer_info[(line[0],line[1].strip(':'))]=line[2:]
             elif all_lines[start][0]=='#' and all_lines[start][1]=='Layout':
                 self.layout_info=all_lines[start+1:end]
+            elif all_lines[start][0] == '#' and all_lines[start][1]=='Connection':
+                self.connection_table_info=all_lines[start+1:end]
 
         '''
         print (self.definition)
-        print (self.layer_info)
         print (self.via_connected_layer_info)
+        #print(via_connected_layers)
         print (self.layout_info, len(self.layout_info))
+        print (self.connection_table_info)
         #--------for debugging------------------
         for i in self.layout_info:
             print (len(i),i)
         # --------for debugging------------------
         '''
+        
         return 
 
     def add_layer_id(self, layer_stack=None):
@@ -427,9 +500,11 @@ class ScriptInputMethod():
         '''
         
         for i in self.definition:
-            key = i[0]
-            self.all_parts_info.setdefault(key, [])
-            self.info_files[key] = i[1]
+            
+            if 'Wire' not in i[0]:
+                key = i[0]
+                self.all_parts_info.setdefault(key, [])
+                self.info_files[key] = i[1]
 
         # populating routing path objects and creating a dictionary with keys: 'trace', 'bonding wire pad'
         
@@ -473,6 +548,7 @@ class ScriptInputMethod():
 
         all_components_types =  self.cs_type_map.all_component_types  # set of all components considered so far
         #all_cs_types= c.type_name
+        print(all_components_types)
 
         for j in range (len(layout_info)):
             if len(layout_info[j])>2:
@@ -515,7 +591,7 @@ class ScriptInputMethod():
                             else:
                                 via_type=None
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
-                            element.vai_type=via_type
+                            element.via_type=via_type
                             element.load_part()
                             #print"Foot",element.footprint
                             self.all_parts_info[layout_info[j][k+1]].append(element)
@@ -946,7 +1022,13 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
     
     ScriptMethod = ScriptInputMethod(input_script)  # initializes the class with filename
     ScriptMethod.read_input_script()  # reads input script and create seperate sections accordingly
+    ScriptMethod.update_via_connected_layer_info() #converting via connected layer info 
     ScriptMethod.add_layer_id(layer_stack=layer_stack_info) # appends appropriate layer id to each geometry
+    parts_info, wire_info = ScriptMethod.get_parts_wire_info()
+    
+    for component in ScriptMethod.definition:
+        if 'Wire' in component[0]:
+            ScriptMethod.definition.remove(component)
     
 
     all_layers=[] # list of layer objects
@@ -965,6 +1047,19 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
 
     geometry_info=ScriptMethod.layout_info #the complete geometry info
     
+    # split the connection table info into layer wise information
+    table_info=ScriptMethod.connection_table_info
+    layer_wise_table={}
+    for i in range(len(table_info)):
+        if table_info[i][0][0] == 'I':
+            name = table_info[i][0]
+            layer_wise_table[name]=[]
+            continue
+        else:
+            for layer in all_layers:
+                if layer.name == name:
+                    layer_wise_table[name].append(table_info[i])
+
 
     for i in range(len(geometry_info)):
         if geometry_info[i][0][0]=='I':
@@ -981,7 +1076,77 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             for layer in all_layers:
                 if layer.name==name:
                     layer.input_geometry.append(geometry_info[i])
+    
+    '''for layer in all_layers:
+        for i in layer.input_geometry:
+            print(i)
+    input()'''
 
+    for layer in all_layers:
+        if layer.name in layer_wise_table:
+            table=layer_wise_table[layer.name]
+        else:
+            table=None
+        
+        layer.update_input_geometry(parts_info,wire_info,table)
+    
+    # assign via locations if necessary. Via locations need to be global and shared between connected layers
+    all_bw_via_data={}
+    all_via_data={}
+    for layer in all_layers:
+        all_bw_via_data[layer.name]=layer.bw_via_data
+        for key, value in layer.bw_via_data.items():
+            if key[0]=='V' and key[0] not in all_via_data:
+                all_via_data[key]=[value]
+            elif key[0]=='V' and key[0] in all_via_data:
+                all_via_data[key].append(value)
+    
+    for layer in all_layers:
+        for ls in (layer.new_lines.values()):
+            for line in ls:
+                #print(line)
+                index_=None
+                for j in all_via_data:
+                    if j in line:
+                        index_=line.index(j)
+                        break
+                if index_!=None:
+                    if line[index_+2]=='0': 
+                        line[index_+2]=all_via_data[j][0]['X']
+                    if line[index_+3]=='0':
+                        line[index_+3]=all_via_data[j][0]['Y']
+                    new_content={'Destination':j+'.'+line[-1],'destination_pad':j+'.'+line[-1]}
+                    if len(all_via_data[j])==1:
+                        all_via_data[j][0].update(new_content)
+        #print(layer.name)
+        #print(layer.new_lines)
+    
+    
+
+
+
+
+    # adding new lines and completing the geometry description script
+    
+    for layer in all_layers:
+        input_geometry_up=[]
+        for i in range(len(layer.input_geometry)):
+            input_geometry_up.append(layer.input_geometry[i])
+            if i in layer.new_lines:
+                #for j in range(len(layer.new_lines[i])):
+                    
+                input_geometry_up+=layer.new_lines[i]
+
+        #print(layer.name)
+        #print(input_geometry_up)
+        layer.input_geometry=input_geometry_up
+    
+    '''for layer in all_layers:
+        print(layer.name)
+        for line in layer.input_geometry:
+            print(line)
+    
+    input()'''
     # adding ending character
     for layer in all_layers:
         for i in range(1,len(layer.input_geometry)):
@@ -1005,22 +1170,97 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
     
     #----------------------------------------------------------------------#
 
-    if bond_wire_info != None:
-        # bondwire_objects_def=a dictionary of dictionary.{'Wire': {'info_file': 'C:\\Users\\ialrazi\\Desktop\\REU_Data_collection_input\\attachments\\bond_wire_info.wire'}}
-        # table_info=list of lists.[['I1],['BW1', 'Wire', 'D1_Source_B4', 'B1', '2', '0.1'],['I2'], ['BW5', 'Wire', 'D2_Source_B9', 'B11', '1', '0.1']]
-        bondwire_objects_def,table_info = ScriptMethod.read_bondwire_info(bondwire_info=bond_wire_info)
-        layer_wise_table={}
-        for i in range(len(table_info)):
-            if table_info[i][0][0] == 'I':
-                name = table_info[i][0]
-                layer_wise_table[name]=[]
-                continue
-            else:
-                for layer in all_layers:
-                    if layer.name == name:
-                        # bond wires population (wire dictionary)
-                        layer_wise_table[name].append(table_info[i])
-                    
+    for layer in all_layers:
+        
+        for i in layer.input_geometry:
+            if 'Via' in i:
+                for name,info in layer.bw_via_data.items():
+                    if name in i and name in all_via_data:
+                        if len(all_via_data[name])==2:
+                            content=all_via_data[name][1]
+                            new_content={'Destination':content['Source'],'destination_pad':content['source_pad']}
+                            layer.bw_via_data[name].update(new_content)
+                        else:
+                            pad_name=name+'.'+i[-2] # layer id
+                            if 'Destination' not in layer.bw_via_data[name] and pad_name!=layer.bw_via_data[name]['source_pad']:
+                                content={'Destination':pad_name, 'destination_pad':pad_name}
+                                layer.bw_via_data[name].update(content)
+
+        
+        
+        # handling trace to trace wire bond connections
+        for wire in layer.bw_info:
+            wire_info=layer.bw_info[wire]
+            if wire_info['Source']==None and wire_info['source_pad']!=None:
+                wire_info['Source']=wire_info['source_pad']
+            if wire_info['Destination']==None and wire_info['destination_pad']!=None:
+                wire_info['Destination']=wire_info['destination_pad']
+        # handling bw spacing constraints
+        for wire in layer.bw_info:
+            wire_info=layer.bw_info[wire]
+            if 'D' in wire_info['Source'] or 'D' in wire_info['Destination'] :
+                #print(wire_info['Source'],wire_info['num_wires'],wire_info['Destination'])
+                landing_pad1= wire_info['Source'].split('_')
+                landing_pad2= wire_info['Destination'].split('_')
+                
+                for part in parts_info:
+                    #print(part.name, part.pin_locs)
+                    if len(landing_pad1)>1:
+                        if landing_pad1[1] in part.pin_locs:
+                            num_wires=wire_info['num_wires']
+                            if part.rotate_angle== 1 or part.rotate_angle== 3: #0:0 degree, 1:90 degree, 2:180 degree, 3:270 degree
+                                width = part.pin_locs[landing_pad1[1]][3] # height becomes width
+                            else:
+                                width = part.pin_locs[landing_pad1[1]][2]
+                            if (float(width/num_wires))<0.1: # fixed constraint for wire bonding min spacing (0.1 mm)
+                                print("ERROR: Number of wire bonds won't be fit inside device pad with minimum spacing of 0.1 mm. Please reduce number of wire bonds on {}".format(wire_info['Source']))
+                                exit()
+                            else:
+                                spacing={'spacing':str((float(width/num_wires)))}
+                                wire_info.update(spacing)
+                        if len(landing_pad2)>1:
+                            if landing_pad2[1] in part.pin_locs:
+                                num_wires=wire_info['num_wires']
+                                if part.rotate_angle== 1 or part.rotate_angle== 3: #0:0 degree, 1:90 degree, 2:180 degree, 3:270 degree
+                                    width = part.pin_locs[landing_pad2[1]][3] # height becomes width
+                                else:
+                                    width = part.pin_locs[landing_pad2[1]][2]
+                                if (float(width/num_wires))<0.1: # fixed constraint for wire bonding min spacing (0.1 mm)
+                                    print("ERROR: Number of wire bonds won't be fit inside device pad with minimum spacing of 0.1 mm. Please reduce number of wire bonds on {}".format(wire_info['Source']))
+                                    exit()
+                                else:
+                                    spacing={'spacing':str((float(width/num_wires)))}
+                                    wire_info.update(spacing)
+
+
+
+        
+        layer.wire_table.update(layer.bw_info)
+    #print(layer.bw_via_data)
+    via_table={}
+    for j in range(len(all_via_data.keys())):
+        via_name=list(all_via_data.keys())[j]
+        connection_name='VC'+str(j+1)
+        for part in parts_info:
+            if part.name=='Via':
+                via_object=part
+                break
+        via_table[connection_name]={'Via_object':via_object,'Via_name':via_name}
+        for layer in all_layers:
+            for item in layer.bw_via_data:
+                if item[0]=='V':
+                    for con_name,info in via_table.items():
+                        if info['Via_name']==item:
+                            via_table[con_name].update(layer.bw_via_data[item])
+                            layer.via_table[con_name]=via_table[con_name]
+    
+    for layer in all_layers:
+        #print(layer.via_table)
+        #print(layer.bw_info)
+        layer.wire_table.update(layer.bw_info)
+        layer.wire_table.update(layer.via_table)
+    
+    #input()           
     all_layers_combined_geometry_info=[]
     for i in range(len(all_layers)):
         all_layers_combined_geometry_info+=all_layers[i].input_geometry
@@ -1069,14 +1309,15 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         #---------------------------------------------------------------------
         
 
-        
+        '''
         if all_layers[i].name in layer_wise_table:
             all_layers[i].wire_table=ScriptMethod.bond_wire_table(bw_objects_def=bondwire_objects_def,wire_table=layer_wise_table[all_layers[i].name])
-            print(all_layers[i].wire_table)
             
         
         else:
             all_layers[i].wire_table={}
+        '''
+        #print(all_layers[i].wire_table)
         
         
 
@@ -1098,6 +1339,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         removed_child=[] # removing extra child which are redundant for electrical model and only required for layout engine
         for  wire_id in range(len(bw_items)):
             wire=bw_items[wire_id]
+            print(wire)  
             if 'D' in wire['Source'] and ('B' in wire['source_pad'] or 'V' in wire['source_pad']) :
                 removed_child.append(wire['source_pad'])
             if 'D' in wire['Destination'] and ('B' in wire['destination_pad'] or 'B' in wire['destination_pad']):
@@ -1141,15 +1383,21 @@ if __name__ == '__main__':
     for island in initial_islands:
         island.print_island()
         print(island.element_names)'''
+    # /nethome/ialrazi/PS_2_test_Cases/tech_lib/Material/Materials.csv   
     from core.MDK.LayerStack.layer_stack import LayerStack
-    input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layout_geometry_script.txt'
-    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layer_stack.csv"
+    
+    #input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layout_geometry_script_new.txt'
+    input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/2D_case_0/halfbridge1_new.txt'
+    
+    #new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layer_stack.csv"
+    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/2D_case_0/layer_stack.csv"
+    input_geometry_script_old='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layout_geometry_script.txt'
     bondwire_info_file='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/bond_wires_script.txt'
     layer_stack = LayerStack(debug=False)
     layer_stack.import_layer_stack_from_csv(filename=new_layer_stack_file)
     all_layers,via_connected_layer_info,cs_type_map=script_translator(input_script=input_geometry_script,layer_stack_info=layer_stack,bond_wire_info=bondwire_info_file)
     try:
-        fig_dir = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test'
+        fig_dir = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2'
         if not os.path.isdir(fig_dir):
             fig_dir=None
     except:

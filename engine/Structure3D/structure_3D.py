@@ -512,6 +512,7 @@ class Structure_3D():
                             f.w=float(rect[ind+4])*dbunit
                             f.l=float(rect[ind+5])*dbunit
                         if f.z<0:
+                            
                             if layer.name in self.solder_attach_required:
                                 '''not_required=[]
                                 for comp in layer.all_components:
@@ -556,6 +557,28 @@ class Structure_3D():
                                     f.z=f1.z_level-f.h*dots
                                     f.z=round(f.z,3)
             
+            for island in layer.islands:
+                for rect in island.child_rectangles:
+                    if rect.name[0]=='B': # Bondwire objects
+                        name=rect.name
+                        x=rect.x
+                        y=rect.y
+                        z=None
+                        for obj_ in objects_3D:
+                            if rect.parent.name ==obj_.name:
+                                if island.direction=='Z+':
+                                    z=obj_.z+obj_.h # thickness
+                                else:
+                                    z=obj_.z
+                        width=500 # no width for wire bond (point connection)
+                        length=500 #no length for wire bond (point connection)
+                        height=0.1 # no height for wire bond (point connection)
+                        material = 'Al' # hardcoded
+                        
+                        cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
+                        objects_3D.append(cell_3D_object)
+
+            
             layer_x=self.module_data.layer_stack.all_layers_info[layer.id].x*dbunit
             layer_y=self.module_data.layer_stack.all_layers_info[layer.id].y*dbunit
             layer_z=self.module_data.layer_stack.all_layers_info[layer.id].z_level
@@ -578,8 +601,9 @@ class Structure_3D():
                     
                     layer.initial_layout_objects_3D.append(object_)
         
-        
-        #input()     
+        '''for object_ in objects_3D:
+            object_.print_cell_3D()
+        input() '''    
             
     def update_initial_via_objects(self):
         '''

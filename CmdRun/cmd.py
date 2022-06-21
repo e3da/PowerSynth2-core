@@ -14,7 +14,8 @@ from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
 from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
-from core.engine.InputParser.input_script import script_translator
+from core.engine.InputParser.input_script_up import script_translator as script_translator_up
+from core.engine.InputParser.input_script import script_translator as script_translator
 from core.engine.LayoutSolution.database import create_connection, insert_record, create_table
 from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
@@ -314,10 +315,11 @@ class Cmd_Handler:
         # Check if these files exist
         rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
         cont = check_file(self.layout_script) \
-               and check_file(self.bondwire_setup) \
                and check_file(self.layer_stack_file) \
                and rs_model_check\
                and check_file(self.constraint_file)
+        if self.bondwire_setup!=None:
+            cont=check_file(self.bondwire_setup)
         # make dir if they are not existed
         #print(("self.new_mode",self.new_mode))
         #print(("self.flex",self.flexible))
@@ -678,7 +680,11 @@ class Cmd_Handler:
         self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
 
         # calling script parser function to parse the geometry and bondwire setup script
-        all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+        if self.bondwire_setup!=None:
+            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+        else:
+            all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+       
         # adding wire table info for each layer
         for layer in all_layers:
             self.wire_table[layer.name] = layer.wire_table
@@ -795,7 +801,7 @@ class Cmd_Handler:
         self.structure_3D.update_initial_via_objects()
 
         ##------------------------Debugging-----------------------------------------###
-        debug=False
+        debug=True
         if debug:
             print("Plotting 3D layout structure")
             solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)

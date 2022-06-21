@@ -535,6 +535,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         solution.module_data=module_data #updated module data is in the solution
         
         for i in range(len(structure.layers)):
+            print(structure.layers[i].updated_cs_sym_info)
             structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[0][0]
             structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
 

@@ -14,6 +14,7 @@ class Island():
         self.elements_v=[]# list of elements in vertical corner stitch on an island
         self.rectangles=[] # list of elements in rectangle objects
         self.direction=None
+        self.child_rectangles=[] # list of child rectangle objects
         #self.points = []  # list of all points on an island
         #self.boundary_points = {'N': [], 'S': [], 'E': [],'W': []}  # dictionary of boundary points, where key= direction, value=list of points
 
