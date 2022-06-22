@@ -210,8 +210,23 @@ class Structure_3D():
         
         self.all_components=all_components
         self.all_components_cs_types=component_to_cs_type
+        spacings=[]
         
+        
+        
+        for layer in self.layers:
+            
+            if len(layer.bondwires)>0:
+                for wire in layer.bondwires:
+                    spacings.append(wire.spacing)
+                    
+        if len(spacings)>0:
+            min_enclosure=min(spacings)
+        else:
+            min_enclosure=1
+
         all_types=self.cs_type_map.types_name
+        all_component_types=self.cs_type_map.all_component_types
         
         Types = [0 for i in range(len(all_types))]
         for i in all_types:
@@ -291,12 +306,24 @@ class Structure_3D():
             space_rows=[]
             for i in range(len(Types)):
                 for k,v in list(component_to_cs_type.items()):
+                    
 
                     if v==Types[i]:
 
                         row=[k]
                         for j in range(len(Types)):
-                            row.append(1)
+                            
+                            if ('Diode' in k or 'MOS' in k or 'IGBT' in k) and (all_component_types[j]=='bonding wire pad'):
+                                #print("H",min_enclosure)
+                                row.append(min_enclosure)
+                            elif (k=='bonding wire pad' and all_component_types[j]=='bonding wire pad'):
+                                row.append(min_enclosure)
+                            elif (k=='bonding wire pad') and (all_component_types[j]=='Diode' or all_component_types[j]=='MOS' or all_component_types[j]=='IGBT'):
+                                
+                                row.append(min_enclosure)
+                            
+                            else:
+                                row.append(1)
                         space_rows.append(row)
                         all_rows.append(row)
         
@@ -570,9 +597,9 @@ class Structure_3D():
                                     z=obj_.z+obj_.h # thickness
                                 else:
                                     z=obj_.z
-                        width=500 # no width for wire bond (point connection)
-                        length=500 #no length for wire bond (point connection)
-                        height=0.1 # no height for wire bond (point connection)
+                        width=0 # no width for wire bond (point connection)
+                        length=0 #no length for wire bond (point connection)
+                        height=0 # no height for wire bond (point connection)
                         material = 'Al' # hardcoded
                         
                         cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)

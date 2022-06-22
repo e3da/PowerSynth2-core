@@ -171,19 +171,19 @@ class Layer():
                                     source_y = float(self.input_geometry[i][index_+2])+pin_locs['Emitter'][1]
                                 elif element.name == 'Diode':
                                     
-                                    source_x = float(self.input_geometry[i][index_+1])+pin_locs['Cathode'][0]
-                                    source_y = float(self.input_geometry[i][index_+2])+pin_locs['Cathode'][1]
+                                    source_x = float(self.input_geometry[i][index_+1])+pin_locs['Anode'][0]
+                                    source_y = float(self.input_geometry[i][index_+2])+pin_locs['Anode'][1]
 
                                 if len(bws) == 1 and len(vias)==0: # diode with wire bond
-                                    print(self.bw_info)
+                                    #print(self.bw_info)
                                     if self.bw_info[bws[0]]['Source'] == None:
-                                        layout_id=self.bw_info[bws[0]]['source_pad'] # cathode
+                                        layout_id=self.bw_info[bws[0]]['source_pad'] # Anode
                                         dev_id = self.input_geometry[i][index_-1]
-                                        self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # cathode
+                                        self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Anode
                                     else: # if the bw pad is on a device (another diode)
-                                        layout_id=self.bw_info[bws[0]]['destination_pad'] # cathode
+                                        layout_id=self.bw_info[bws[0]]['destination_pad'] # Anode
                                         dev_id = self.input_geometry[i][index_-1]
-                                        self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # cathode
+                                        self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Anode
 
                                     new_line= ['.','.','+', layout_id, 'power', str(source_x), str(source_y), '0.25', '0.25', layer_id] # 0.25 X 0.25 pad size is considered for demonstration. bw pad is a point connection in this version. So, no usage of those pad dimensions
                                     #self.input_geometry.insert(i+1,new_line)
@@ -196,7 +196,7 @@ class Layer():
                                     #self.input_geometry.insert(i+1,new_line)
                                     new_lines[i].append(new_line)
                                     dev_id = self.input_geometry[i][index_-1]
-                                    start_pad= dev_id+'_'+pins[0] # cathode
+                                    start_pad= dev_id+'_'+pins[0] # Anode
                                     bw_via_data[vias[0]]={'X': str(source_x), 'Y': str(source_y), 'Source':start_pad, 'source_pad':vias[0]+'.'+layer_id}
 
                                 elif len(bws) == 1 and len(vias) ==1: # SiC MOSFET/ Si IGBT gate and via (3D) for source  
@@ -465,13 +465,53 @@ class Layer():
 
 
 
-    def plot_layout(self,fig_data=None, fig_dir=None,name=None,dbunit=1000):
+    def plot_layout(self,fig_data=None, fig_dir=None,name=None,rects=None,dbunit=1000 ):
 
         '''
         plots initial layout with layout component id on each trace.
         :param: fig_data: patches created after corner stitch operation.
         '''
-        
+        if rects!=None:
+            types_unsorted=['Type_0']
+            for rect in self.input_rects:
+                if rect.type not in types_unsorted:
+                    types_unsorted.append(rect.type)
+
+            if len(self.bondwires)>0:
+                wire_type=self.bondwires[0].cs_type
+            else:
+                wire_type=None
+            if wire_type!=None:
+                types_unsorted.append(wire_type)
+
+            types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
+            types_sorted.sort()
+            types=['Type_'+str(i) for i in types_sorted]
+            
+            n = len(types)
+            all_colors=color_list_generator()
+            #print(self.name,all_colors)
+            colors=[all_colors[i] for i in range(n)]
+            #print(types)
+            self.all_cs_types=types
+            self.colors=colors
+
+            Patches = {}
+
+            for r in rects:
+                i = types.index(r.type)
+                P = matplotlib.patches.Rectangle(
+                    (r.x/dbunit, r.y/dbunit),  # (x,y)
+                    r.width/dbunit,  # width
+                    r.height/dbunit,  # height
+                    facecolor=colors[i],
+                    alpha=0.5,
+                    # zorder=zorders[i],
+                    edgecolor='black',
+                    linewidth=1,
+                )
+                Patches[r.name] = P
+            fig_data=Patches
 
         ax = plt.subplots()[1]
 
@@ -865,6 +905,8 @@ class Layer():
                     wire.num_of_wires=int(v['num_wires'])
                     wire.cs_type= self.component_to_cs_type['bonding wire pad']
                     wire.set_dir_type() #dsetting direction: Horizontal/vertical
+                    if'spacing' in v:
+                        wire.spacing=float(v['spacing'])
                     bondwire_objects.append(wire)
         
         self.bondwires=bondwire_objects
@@ -999,33 +1041,34 @@ class Layer():
         #print(self.bondwire_landing_info)
         #print(self.bondwires)
         #print(len(self.input_rects))
+        #print(self.bw_info)
+
+        if len(self.colors)==0:
+            types_unsorted=['Type_0']
+            for rect in self.input_rects:
+                if rect.type not in types_unsorted:
+                    types_unsorted.append(rect.type)
+
+            if len(self.bondwires)>0:
+                wire_type=self.bondwires[0].cs_type
+            else:
+                wire_type=None
+            if wire_type!=None:
+                types_unsorted.append(wire_type)
+
+            types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
+            types_sorted.sort()
+            types=['Type_'+str(i) for i in types_sorted]
+            n = len(types)
+            all_colors=color_list_generator()
+            #print(self.name,all_colors)
+            colors=[all_colors[i] for i in range(n)]
+            self.colors=colors
+            self.all_cs_types=types
+            
+
         
-
-
-        types_unsorted=['Type_0']
-        for rect in self.input_rects:
-            if rect.type not in types_unsorted:
-                types_unsorted.append(rect.type)
-
-        if len(self.bondwires)>0:
-            wire_type=self.bondwires[0].cs_type
-        else:
-            wire_type=None
-        if wire_type!=None:
-            types_unsorted.append(wire_type)
-
-        types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
-        types_sorted.sort()
-        types=['Type_'+str(i) for i in types_sorted]
         
-
-        n = len(types)
-        all_colors=color_list_generator()
-        #print(self.name,all_colors)
-        colors=[all_colors[i] for i in range(n)]
-        #print(types)
-        self.all_cs_types=types
-        self.colors=colors
         
 
         rectlist=[]
@@ -1036,7 +1079,7 @@ class Layer():
             try:
                 type_= rect.type
                 color_ind = types.index(type_)
-                color=colors[color_ind]
+                color=self.colors[color_ind]
             except:
                 print("Corner Sticth type couldn't find for atleast one component")
                 color='black'
@@ -1044,7 +1087,7 @@ class Layer():
         
             if rect.hier_level>max_hier_level:
                 max_hier_level=rect.hier_level
-            r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level]# x,y,w,h,cs_type,zorder
+            r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.name,rect.hier_level]# x,y,w,h,cs_type,zorder
             r2=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level,rect.name,rect.type]
             rect_list_all_layers.append(r2)
             rectlist.append(r)
@@ -1052,23 +1095,32 @@ class Layer():
         Patches = []
         Patches_all_layers=[]
         types_for_all_layers_plot=[]
+        if UI:
+            figure = Figure()
+            ax = figure.add_subplot()
+        else:
+            ax=plt.subplots()[1]
         
         if len(self.bondwires)>0:
+            
             wire_bonds=copy.deepcopy(self.bondwires)
             for wire in self.bondwires:
+                #wire.printWire()
 
 
                 if wire.num_of_wires>1:
+                    spacing=float(self.bw_info[wire.wire_id]['spacing'])*dbunit
                     for i in range(1,wire.num_of_wires):
                         wire1=copy.deepcopy(wire)
                         if wire1.dir_type==1: #vertical
-                            wire1.source_coordinate[0]+=(i*800)
-                            wire1.dest_coordinate[0]+=(i*800)
+                            wire1.source_coordinate[0]+=(i*spacing)
+                            wire1.dest_coordinate[0]+=(i*spacing)
 
                         if wire1.dir_type==0: #horizontal
-                            wire1.source_coordinate[1]+=(i*800)
-                            wire1.dest_coordinate[1]+=(i*800)
+                            wire1.source_coordinate[1]+=(i*spacing)
+                            wire1.dest_coordinate[1]+=(i*spacing)
                         wire_bonds.append(wire1)
+            done=[]
             for wire in wire_bonds:#self.bondwires:
                 source = [wire.source_coordinate[0]/dbunit, wire.source_coordinate[1]/dbunit]
                 dest = [wire.dest_coordinate[0]/dbunit, wire.dest_coordinate[1]/dbunit]
@@ -1080,9 +1132,13 @@ class Layer():
                 path = Path(verts, codes)
                 type_= wire.cs_type
                 color_ind = types.index(type_)
-                color=colors[color_ind]
+                color=self.colors[color_ind]
                 patch = matplotlib.patches.PathPatch(path, edgecolor=color, lw=0.5,zorder=max_hier_level+1)
                 Patches.append(patch)
+                if wire.wire_id not in done:
+                    ax.text(point1[0], point1[1], wire.wire_id,size='xx-small')
+                    done.append(wire.wire_id)
+                
 
         for r in rectlist:
             
@@ -1093,8 +1149,10 @@ class Layer():
                 facecolor=r[4],
                 zorder=r[-1],
                 linewidth=1,
+                edgecolor='black'
             )
             Patches.append(P)
+            ax.text(r[0], r[1], r[-2],size='xx-small') # name
         if all_layers==True:
             if a<0.9:
                 linestyle='--'
@@ -1113,7 +1171,7 @@ class Layer():
 
                 else:
                     label=None
-                if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V':
+                if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V' or r[-2][0] == 'L':
                     if r[-1] not in types_for_all_layers_plot:
                         types_for_all_layers_plot.append(r[-1])
                     P = patches.Rectangle(
@@ -1132,11 +1190,7 @@ class Layer():
                     Patches_all_layers.append(P)
 
 
-        if UI:
-            figure = Figure()
-            ax = figure.add_subplot()
-        else:
-            ax=plt.subplots()[1]
+        
             
         for p in Patches:
             ax.add_patch(p)

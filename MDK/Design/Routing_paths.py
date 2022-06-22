@@ -68,6 +68,7 @@ class BondingWires():
         self.dest_node_id=0 # nodeid of destination comp from node list
         self.dir_type=None # horizontal:0,vertical:1
         self.cs_type=None #corner stitch type to handle constraints
+        self.spacing=0.0 # spacing between wires
 
 
         

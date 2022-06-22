@@ -518,7 +518,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     k = (k[0] * dbunit, k[1] * dbunit)
                    
                     CS_SYM_Updated[k] = CS_SYM_information
-            cs_sym_info = [CS_SYM_Updated]  # mapped solution layout information to symbolic layout objects
+            cs_sym_info = [CS_SYM_Updated]  
             structure.layers[i].updated_cs_sym_info.append(cs_sym_info)
             structure.layers[i].layer_layout_rects.append(Layout_Rects)
 
@@ -535,7 +535,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         solution.module_data=module_data #updated module data is in the solution
         
         for i in range(len(structure.layers)):
-            print(structure.layers[i].updated_cs_sym_info)
+            
             structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[0][0]
             structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
 

@@ -548,7 +548,7 @@ class ScriptInputMethod():
 
         all_components_types =  self.cs_type_map.all_component_types  # set of all components considered so far
         #all_cs_types= c.type_name
-        print(all_components_types)
+        #print(all_components_types)
 
         for j in range (len(layout_info)):
             if len(layout_info[j])>2:
@@ -1339,7 +1339,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         removed_child=[] # removing extra child which are redundant for electrical model and only required for layout engine
         for  wire_id in range(len(bw_items)):
             wire=bw_items[wire_id]
-            print(wire)  
+            #print(wire)  
             if 'D' in wire['Source'] and ('B' in wire['source_pad'] or 'V' in wire['source_pad']) :
                 removed_child.append(wire['source_pad'])
             if 'D' in wire['Destination'] and ('B' in wire['destination_pad'] or 'B' in wire['destination_pad']):

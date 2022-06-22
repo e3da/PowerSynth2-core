@@ -177,7 +177,7 @@ class Part:
         if 'Gate' in self.pin_name and 'Emitter' in self.pin_name and 'Collector' in self.pin_name:
             self.pin_name=['Gate', 'Emitter', 'Collector']
         if 'Anode' in self.pin_name and 'Cathode' in self.pin_name:
-            self.pin_name=['Cathode','Anode']
+            self.pin_name=['Anode','Cathode']
     
     def rotate_90(self):
         # Rotate the part by 90 degree and update pin locations accordingly
