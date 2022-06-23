@@ -47,6 +47,7 @@ class Structure_3D():
         self.all_components_cs_types={} # mapped cs types for each component in all_components
         self.cs_type_map=None # CS_Type_Map object populated from input script parser
         self.constraint_df=None # constraint dataframe
+        self.min_enclosure_bw = 0.0 #making sure wire bond spacing is limited by the pad area of devices
         self.voltage_info=None # voltage information from the user for reliability awareness case
         self.current_info= None # current information from the user for reliability awareness case
         self.objects_3D =[] # duplicated 3D objects.
@@ -321,6 +322,7 @@ class Structure_3D():
                             elif (k=='bonding wire pad') and (all_component_types[j]=='Diode' or all_component_types[j]=='MOS' or all_component_types[j]=='IGBT'):
                                 
                                 row.append(min_enclosure)
+                                self.min_enclosure_bw=min_enclosure
                             
                             else:
                                 row.append(1)

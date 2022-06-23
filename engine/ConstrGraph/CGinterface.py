@@ -49,9 +49,10 @@ class CS_Type_Map():
 
 
 class CS_to_CG():
-    def __init__(self, cs_type_map=None):
+    def __init__(self, cs_type_map=None, min_enclosure_bw=0.0):
         '''
         : param: all_cs_types: list of corner stitch types
+        min_enclosure_bw: minimum spacing/enclosure of bw groups
         '''
         
         
@@ -59,6 +60,7 @@ class CS_to_CG():
         self.component_types = cs_type_map.all_component_types # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
         self.all_cs_types = cs_type_map.types_name # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
         self.types_index = cs_type_map.types_index
+        self.min_enclosure_bw=min_enclosure_bw
         if cs_type_map != None:
             self.constraints=[] # list of constraint objects initialized with names declared in 'Constraint_up.py'
             self.initialize_constraint_info()
@@ -400,9 +402,10 @@ class CS_to_CG():
         if bondwires != None:
             for wire in bondwires:
                 # wire2=BondingWires()
-                
+                #wire.printWire()
                 if wire.source_node_id != None and wire.dest_node_id != None:
                     wire2 = copy.deepcopy(wire)
+                    #wire2.printWire()
                     ##print wire.source_coordinate
                     # print wire.dest_coordinate
                     if wire.source_node_id in minx and wire.dest_node_id in minx:
@@ -434,6 +437,8 @@ class CS_to_CG():
                     # layout_rects.append(wire_2)
                     if wire.num_of_wires>1:
                         #print(wire.spacing)
+                        if wire.spacing>self.min_enclosure_bw and self.min_enclosure_bw>0.0:
+                            wire.spacing=self.min_enclosure_bw
                         for i in range(1,wire.num_of_wires):
                             if wire.dir_type==1: #vertical
                                 
@@ -454,7 +459,7 @@ class CS_to_CG():
             # raw_input()
         
         for k, v in list(sym_to_cs.items()):
-            #print (k,v)
+            
 
             coordinates = v[0]  # x1,y1,x2,y2 (bottom left and top right)
             left = coordinates[0]
@@ -490,19 +495,37 @@ class CS_to_CG():
             if wire.dest_comp[0] == 'B':
                 x = wire.dest_coordinate[0]
                 y = wire.dest_coordinate[1]
-                w = 1
-                h = 1
+                w = 250 # dummy values
+                h = 250 # dummy values
                 name = wire.dest_comp
                 type = wire.cs_type
                 cs_sym_info[name] = [type, x, y, w, h]
             if wire.source_comp[0] == 'B':
                 x = wire.source_coordinate[0]
                 y = wire.source_coordinate[1]
-                w = 1
-                h = 1
+                w = 250 #dummy_values
+                h = 250 #dummy_values
                 name = wire.source_comp
                 type = wire.cs_type
                 cs_sym_info[name] = [type, x, y, w, h]
+            if wire.source_bw_pad!=None:
+                if wire.source_bw_pad[0]=='B':
+                    x = wire.source_coordinate[0]
+                    y = wire.source_coordinate[1]
+                    w = 250 #dummy_values
+                    h = 250 #dummy_values
+                    name = wire.source_bw_pad
+                    type = wire.cs_type
+                    cs_sym_info[name] = [type, x, y, w, h]
+            if wire.dest_bw_pad!=None:
+                if wire.dest_bw_pad[0] == 'B':
+                    x = wire.source_coordinate[0]
+                    y = wire.source_coordinate[1]
+                    w = 250 #dummy_values
+                    h = 250 #dummy_values
+                    name = wire.dest_bw_pad
+                    type = wire.cs_type
+                    cs_sym_info[name] = [type, x, y, w, h]
 
         
         if minx[1][origin[0]]==sub_x and miny[1][origin[1]]==sub_y:
@@ -518,6 +541,7 @@ class CS_to_CG():
         #print(new_rect,origin,minx[1][origin[0]],miny[1][origin[1]],sub_x,sub_y)
         cs_sym_info['Substrate'] = substrate_rect
         layout_rects.append(new_rect)
+        
 
         return cs_sym_info, layout_rects
 

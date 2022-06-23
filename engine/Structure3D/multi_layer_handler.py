@@ -945,16 +945,21 @@ class Layer():
                     #print (k,v)
                     if '_' in v['Source']:
                         head, sep, tail = v['Source'].partition('_')
+                    
                         wire.source_comp = head  # layout component id for wire source location
+                        
                     else:
                         wire.source_comp = v['Source']
                     if '_' in v['Destination']:
                         head, sep, tail = v['Destination'].partition('_')
                         wire.dest_comp = head  # layout component id for wire source location
+                        wire.dest_bw_pad = tail # to pass bw landing pad on a device to Electrical API
                     else:
                         wire.dest_comp = v['Destination']
 
+                    
                     if v['source_pad'] in bondwire_landing_info:
+
 
                         wire.source_coordinate = [float(bondwire_landing_info[v['source_pad']][0]),
                                                 float(bondwire_landing_info[v['source_pad']][1])]
@@ -962,7 +967,8 @@ class Layer():
                         wire.dest_coordinate = [float(bondwire_landing_info[v['destination_pad']][0]),
                                                 float(bondwire_landing_info[v['destination_pad']][1])]
 
-
+                    wire.source_bw_pad = v['source_pad'] # to pass bw landing pad on a device to Electrical API
+                    wire.dest_bw_pad= v['destination_pad'] # to pass bw landing pad on a device to Electrical API
                     wire.source_node_id = None  # node id of source comp from nodelist
                     wire.dest_node_id = None  # nodeid of destination comp from node list
                     #wire.set_dir_type() # horizontal:0,vertical:1

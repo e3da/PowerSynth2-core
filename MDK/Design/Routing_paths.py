@@ -61,7 +61,9 @@ class BondingWires():
         self.num_of_wires=0
         self.wire_id=0 # wire id from wire table ('BW1', BW2,...)
         self.source_comp=None # layout component id for wire source location
+        self.source_bw_pad=None
         self.dest_comp=None # layout component id for wire destination location
+        self.dest_bw_pad= None
         self.source_coordinate=[] # coordinate for wire source location
         self.dest_coordinate=[] # coordinate for wire destination location
         self.source_node_id=0 # node id of source comp from nodelist
@@ -69,6 +71,7 @@ class BondingWires():
         self.dir_type=None # horizontal:0,vertical:1
         self.cs_type=None #corner stitch type to handle constraints
         self.spacing=0.0 # spacing between wires
+        
 
 
         
@@ -99,6 +102,8 @@ class BondingWires():
 
         print("src_comp:", self.source_comp)
         print("dest_comp:", self.dest_comp)
+        print("src_bw_pad:", self.source_bw_pad)
+        print("dest_bw_pad:", self.dest_bw_pad)
         print("src_coordinate:", self.source_coordinate)
         print("dest_coordinate:", self.dest_coordinate)
         print("src_nodeid:", self.source_node_id)

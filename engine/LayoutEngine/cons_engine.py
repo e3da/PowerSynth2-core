@@ -350,7 +350,7 @@ class New_layout_engine():
         :param init_islands: initial islands based on user input
         :return:
         '''
-
+        
         cs_islands=copy.deepcopy(cs_islands1)
 
         for island in cs_islands:
@@ -396,6 +396,8 @@ class New_layout_engine():
 
 
         updated_islands=copy.deepcopy(init_islands)
+        
+        
         for i in range(len(updated_islands)):
             island=updated_islands[i]
             updated_elements=[]
@@ -408,6 +410,7 @@ class New_layout_engine():
             island.elements=updated_elements
 
             if len(island.child)>0:
+                
                 updated_child=[]
                 for element in island.child:
                     if element[5] in cs_sym_info:
@@ -416,11 +419,13 @@ class New_layout_engine():
                         new_element = updated_info
                         updated_child.append(new_element)
                 island.child = updated_child
-
+                
             for island1 in cs_islands:
                 if island.name==island1.name:
                     island.mesh_nodes= copy.deepcopy(island1.mesh_nodes)
 
+        
+        
         return updated_islands
 
 
@@ -1118,7 +1123,7 @@ class New_layout_engine():
                     if self.flexible==False and shared==True: # need to handle properly
                         if rect[5][0]=='B':
                             for rect1 in child: #searching for parent device
-                                #print(rect1)
+                                
 
                                 if rect[1]>rect1[1] and rect[1]<rect1[1]+rect1[3] and rect[2]>rect1[2] and rect[2]<rect1[2]+rect1[4] and rect[-2]==rect1[-2]+1:
 
@@ -1135,8 +1140,12 @@ class New_layout_engine():
                                                 #input()
 
                                     r = [rect[0], rect[1], rect[2], rect[3], rect[4],node_id]  # type,x,y,width,height, hierarchy_level, parent nodeId
-
+                                    
                                     cs_child.append(r)
+                                    #cs_mapped_input[rect[5]] = [[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]],[node.id],rect[0], rect[8], i.rotation_index]
+                                    #cs_mapped_input[rect[5]] = [
+                                        #[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]], [node.id], rect[0],
+                                        #rect[8], 0]  # added to pass bw location on top of a device
                                     all_bond_wires.remove(rect)
 
                                     cs_island.child_names.append(rect[5])
@@ -1173,6 +1182,9 @@ class New_layout_engine():
                                 r = [rect[0], rect[1], rect[2], rect[3], rect[4],node_id]  # type,x,y,width,height, hierarchy_level, parent nodeId
                                 if r not in cs_child:
                                     cs_child.append(r)
+                                    #cs_mapped_input[rect[5]] = [
+                                        #[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]], [node.id], rect[0],
+                                        #rect[8], 0]  # added to pass bw location on top of a device
                                     
                                     all_bond_wires.remove(rect)
 
@@ -1194,7 +1206,8 @@ class New_layout_engine():
 
             cs_islands.append(cs_island)
 
-
+        #print(cs_mapped_input)
+        
         return cs_islands, cs_mapped_input
 
 
