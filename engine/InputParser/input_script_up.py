@@ -1120,10 +1120,50 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                         all_via_data[j][0].update(new_content)
         #print(layer.name)
         #print(layer.new_lines)
+        
     
     
+    layer_wise_continuity_map={}
+    for layer in all_layers:
+        continuity_map={}
+        for i in range(len(layer.input_geometry)):    
+            if layer.input_geometry[i][0]=='-' and i in layer.new_lines:
+                for j in range(i,len(layer.input_geometry)-1):
+                    if layer.input_geometry[j][0]=='-' and layer.input_geometry[j+1][0]=='-':
+                        continue
+                    else:
+                        break
+                if i!=j:
+                    continuity_map[i]=j
+        layer_wise_continuity_map[layer.name]=continuity_map
+    
+
+    for layer in all_layers:
+        if layer.name in layer_wise_continuity_map:
+            continuity_map=layer_wise_continuity_map[layer.name]
+            for line_index,content in layer.new_lines.items():
+                if line_index in continuity_map:
+                    new_index=continuity_map[line_index]
+
+                    if new_index in layer.new_lines:
+                        layer.new_lines[new_index]+=content
+                    else:
+                        layer.new_lines[new_index]=content
+
+    for layer in all_layers:
+        if layer.name in layer_wise_continuity_map:
+            continuity_map=layer_wise_continuity_map[layer.name]
+            for index_ in continuity_map:
+                if index_ in layer.new_lines and index_!=continuity_map[index_]:
+                    del layer.new_lines[index_]
 
 
+    '''
+    for layer in all_layers:
+        print(layer.new_lines)
+
+    input()
+    '''
 
 
     # adding new lines and completing the geometry description script
@@ -1134,8 +1174,11 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             input_geometry_up.append(layer.input_geometry[i])
             if i in layer.new_lines:
                 #for j in range(len(layer.new_lines[i])):
+                
                     
                 input_geometry_up+=layer.new_lines[i]
+                
+
 
         #print(layer.name)
         #print(input_geometry_up)
@@ -1221,6 +1264,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                         if len(landing_pad2)>1:
                             if landing_pad2[1] in part.pin_locs:
                                 num_wires=wire_info['num_wires']
+                                
                                 if part.rotate_angle== 1 or part.rotate_angle== 3: #0:0 degree, 1:90 degree, 2:180 degree, 3:270 degree
                                     width = part.pin_locs[landing_pad2[1]][3] # height becomes width
                                 else:
@@ -1386,18 +1430,18 @@ if __name__ == '__main__':
     # /nethome/ialrazi/PS_2_test_Cases/tech_lib/Material/Materials.csv   
     from core.MDK.LayerStack.layer_stack import LayerStack
     
-    #input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layout_geometry_script_new.txt'
-    input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/2D_case_0/halfbridge1_new.txt'
+    input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_8_new/layout_geometry_script.txt'
+    #input_geometry_script='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/2D_case_0/halfbridge1_new.txt'
     
     #new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layer_stack.csv"
-    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/2D_case_0/layer_stack.csv"
+    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_8_new/layer_stack.csv"
     input_geometry_script_old='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/layout_geometry_script.txt'
     bondwire_info_file='/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2/bond_wires_script.txt'
     layer_stack = LayerStack(debug=False)
     layer_stack.import_layer_stack_from_csv(filename=new_layer_stack_file)
     all_layers,via_connected_layer_info,cs_type_map=script_translator(input_script=input_geometry_script,layer_stack_info=layer_stack,bond_wire_info=bondwire_info_file)
     try:
-        fig_dir = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_2'
+        fig_dir = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Case_8_new'
         if not os.path.isdir(fig_dir):
             fig_dir=None
     except:

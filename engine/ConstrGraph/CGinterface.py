@@ -436,6 +436,7 @@ class CS_to_CG():
                         #print(wire.spacing)
                         for i in range(1,wire.num_of_wires):
                             if wire.dir_type==1: #vertical
+                                
                                 wire_sol2 = [wire_1[0]+i*wire.spacing, wire_1[1], wire_2[0]+i*wire.spacing, wire_2[1], wire_1[-3],
                                         wire_1[-2]]  # xA,yA,xB,yB,type,zorder
                                 layout_rects.append(wire_sol2)

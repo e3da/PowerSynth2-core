@@ -592,6 +592,7 @@ class Structure_3D():
                         y=rect.y
                         z=None
                         for obj_ in objects_3D:
+                            
                             if rect.parent.name ==obj_.name:
                                 if island.direction=='Z+':
                                     z=obj_.z+obj_.h # thickness
