@@ -343,10 +343,7 @@ class CornerStitch_Emodel_API:
         Returns:
 
         '''
-        for layer,island in module_data.islands.items():
-            print(layer)
-            for isl in island:
-                isl.print_island()
+        
 
         
         self.setup_layout_objects(module_data=module_data)
