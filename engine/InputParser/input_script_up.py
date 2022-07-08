@@ -1303,7 +1303,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         #print(layer.bw_info)
         layer.wire_table.update(layer.bw_info)
         layer.wire_table.update(layer.via_table)
-    
+        
+        
     #input()           
     all_layers_combined_geometry_info=[]
     for i in range(len(all_layers)):
@@ -1316,7 +1317,6 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
     for i in range(len(all_layers)):
         
         all_layers[i].size,all_layers[i].cs_info,all_layers[i].component_to_cs_type,all_layers[i].all_components=ScriptMethod.gather_layout_info(layout_info=all_layers[i].input_geometry,dbunit=dbunit)  # gathers layout info
-        
         
         # finding islands for a given layout
         all_layers[i].islands = all_layers[i].form_initial_islands() # list of island objects

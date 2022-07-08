@@ -314,12 +314,14 @@ class Cmd_Handler:
         check_dir = os.path.isdir
         # Check if these files exist
         rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
+        
         cont = check_file(self.layout_script) \
                and check_file(self.layer_stack_file) \
                and rs_model_check\
                and check_file(self.constraint_file)
         if self.bondwire_setup!=None:
             cont=check_file(self.bondwire_setup)
+        
         # make dir if they are not existed
         #print(("self.new_mode",self.new_mode))
         #print(("self.flex",self.flexible))
