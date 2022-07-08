@@ -1072,7 +1072,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         
         if all_layers[i].name in layer_wise_table:
             all_layers[i].wire_table=ScriptMethod.bond_wire_table(bw_objects_def=bondwire_objects_def,wire_table=layer_wise_table[all_layers[i].name])
-            print(all_layers[i].wire_table)
+            #print(all_layers[i].wire_table)
+            all_layers[i].bw_info=all_layers[i].wire_table
             
         
         else:

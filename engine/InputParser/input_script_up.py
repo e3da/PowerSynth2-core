@@ -1,4 +1,4 @@
-# intermediate input conversion file. Author @ Imam Al Razi (5-29-2019)
+# intermediate input conversion file for the latest input geometry script. Author @ Imam Al Razi 
 
 
 from pathlib import Path
