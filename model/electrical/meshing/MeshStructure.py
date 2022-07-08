@@ -24,7 +24,7 @@ from core.general.data_struct.util import Rect
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
     trace_inductance,trace_resistance_full,trace_ind_lm
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
+from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from core.model.electrical.electrical_mdl.e_module import EComp
 from core.model.electrical.electrical_mdl.e_loop_element import self_ind_py
 
@@ -35,11 +35,14 @@ class EMesh(): # rewrite and clean up old EMesh
     def __init__(self):
         self.name = ''
         self.all_node = []
-        self.node_table = {} # position map to node_obj
-        self.xyz_to_id = {}
+        self.map_xyz_node = {} # position map to node_obj
+        self.map_net_node = {} # net_name map to node_obj
+        self.map_xyz_id = {}
         self.id_to_xyz = {}
         
         self.edge_table = {} # edge between 2 node
+        self.node_table = {} # to acces node info during circuit formulation
+        
         self.node_id =0
         self.mesh_graph = nx.Graph()
     
@@ -47,16 +50,21 @@ class EMesh(): # rewrite and clean up old EMesh
     
     def add_node(self,pt_xyz,node_obj):
         node_name = "{}.{}".format(self.name,self.node_id)
-        self.node_table[pt_xyz] = node_obj
-        
-        self.xyz_to_id[pt_xyz] = node_name 
+        self.map_xyz_node[pt_xyz] = node_obj
+        self.map_xyz_id[pt_xyz] = node_name 
         self.id_to_xyz[node_name] = pt_xyz
+        self.node_table[node_name] =  node_obj
         self.node_id+=1
         self.mesh_graph.add_node(node_name)
     
-    def add_edge(self,xyz1,xyz2,dimension,trace_type,trace_ori):
-        node_id_1 = self.xyz_to_id[xyz1]
-        node_id_2 = self.xyz_to_id[xyz2]
+    def add_edge(self,node1,node2,dimension,trace_type,trace_ori):
+        '''
+        connect two nodes on the layout
+        '''
+        node_id_1 = self.map_xyz_id[node1.loc]
+        node_id_2 = self.map_xyz_id[node2.loc]
+        
+            
         if not (self.mesh_graph.has_edge(node_id_1,node_id_2)):
             self.edge_table[(node_id_1,node_id_2)] = (dimension,trace_type,trace_ori)
             self.mesh_graph.add_edge(node_id_1,node_id_2)
@@ -67,13 +75,13 @@ class EMesh(): # rewrite and clean up old EMesh
             fig = plt.figure()
             ax = fig.add_subplot()
             display = True
-        for pos in self.node_table:
-            node_name= self.node_table[pos].node_name
-            node_type = self.node_table[pos].node_type
-            net_name = self.node_table[pos].net_name
+        for pos in self.map_xyz_node:
+            node_name= self.map_xyz_node[pos].node_name
+            node_type = self.map_xyz_node[pos].node_type
+            net_name = self.map_xyz_node[pos].net_name
             x,y,z = pos
             if display_node_net:
-                ax.text(pos[0],pos[1],s=net_name)
+                ax.text(pos[0],pos[1],s=net_name,weight='bold')
             if display_node_id:
                 ax.text(x=pos[0],y=pos[1],z=pos[2],s = node_name)
             color = 'blue' if node_type =='internal' else 'red'
@@ -110,7 +118,7 @@ class EMesh(): # rewrite and clean up old EMesh
                 y_data = [pt1[1],pt2[1]]
                 
                 color = 'blue' if e_type == 'internal' else 'red'
-                line = lines.Line2D(x_data,y_data,lw=2,color =color)
+                line = lines.Line2D(x_data,y_data,lw=2,color =color,linestyle=(0,(2,2)))
                 
                 ax.add_line(line)
         ax.autoscale()
@@ -128,8 +136,8 @@ class EMesh(): # rewrite and clean up old EMesh
         self.display_edges_cells(fig=fig,ax= ax,mode = mode)
         
     def display_node_table(self):
-        for pos in self.node_table:
-            node_name= self.node_table[pos].node_name
+        for pos in self.map_xyz_node:
+            node_name= self.map_xyz_node[pos].node_name
             message = "Node:{} -- Pos: {}".format(node_name,pos)
             print(message)
     

@@ -6,6 +6,7 @@ import csv
 import math
 
 import numpy as np
+from pyrsistent import s
 from core.MDK.LayerStack.layer_stack import LayerStack
 from core.general.data_struct.util import draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
@@ -120,10 +121,10 @@ class Escript:
         print(data)
 
 class EComp:
-    def __init__(self, sheet=[], connections=[], val=[], type="active",spc_type='MOSFET',inst_name= ""):
+    def __init__(self, sheet={}, connections=[], val=[], type="active",spc_type='MOSFET',inst_name= ""):
         '''
         Args:
-            sheet: list of sheet for device's pins
+            sheet: dictionary of sheet for device's pins
             connections: list if sheet.nets pair that connected
             val: corresponded R,L,C value for each branch (a list of dictionary) {R: , L:, C: }
             type: passive or active.
@@ -136,7 +137,6 @@ class EComp:
         # else: this is a dict of {'R','L','C'}
         self.type = type
         self.spice_type = spc_type
-        self.update_nodes()
         self.class_type ='device'
         
     def update_nodes(self):
@@ -206,7 +206,7 @@ class EWires(EComp):
             self.mode = 'interpolated'
 
     def __str__(self):
-        return "{0} connection,radius {1} mm".format(self.class_type,self.r)
+        return "{0}: radius {1}, start_pt: {2}, end_pt: {3}".format(self.inst_name,self.r,self.start_net, self.stop_net)
 
     def gen_ribbon(self, start,stop):
         '''
@@ -286,12 +286,12 @@ class EWires(EComp):
                             M_val = wire_partial_mutual_ind(length, distance) * 1e-9
                             #print (L_val,M_val)
                             #input()
-                            self.circuit._graph_add_M(M_name, L1_name, L2_name, M_val)
+                            self.circuit.graph_add_M(M_name, L1_name, L2_name, M_val)
                 self.circuit.assign_freq(self.f)
                 self.circuit.graph_to_circuit_minimization()
 
                 self.circuit.indep_current_source(0, 1, val=1)
-                self.circuit.build_current_info()
+                self.circuit.handle_branch_current_elements()
                 try:
                     self.circuit.solve_iv(mode =2)
                     imp =self.circuit.results['v1']
@@ -388,15 +388,15 @@ class ESolderBalls(EComp):
                         distance = math.sqrt(dx ** 2 + dy ** 2)
                         M_name = 'M{0}{1}'.format(id1, id2)
                         M_val = ball_mutual_indutance(h=self.h, r=self.r, d=distance)
-                        self.circuit._graph_add_M(M_name, L1, L2, M_val)
+                        self.circuit.graph_add_M(M_name, L1, L2, M_val)
 
 
                     else:
                         continue
 
             self.circuit.assign_freq(self.f)
-            self.circuit.indep_voltage_source(1, 0, val=1)
-            self.circuit.build_current_info()
+            self.circuit.add_indep_voltage_src(1, 0, val=1)
+            self.circuit.handle_branch_current_elements()
             self.circuit.solve_iv()
             R, L = self.circuit._compute_imp2(1, 0)
             self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R, 'L': L, 'C': None})
@@ -456,11 +456,12 @@ class EModule:
     def unpack_comp(self):
         for cp_name in self.components:
             comp = self.components[cp_name]
-            for sh in comp.sheet:
-                if not(sh.net in self.sh_nets): # prevent adding a sheet twice
+            for sh_name in comp.sheet:
+                sh_obj = comp.sheet[sh_name]
+                if not(sh_obj.net in self.sh_nets): # prevent adding a sheet twice
                     if comp.type == "active":
-                        sh.net_type = "external"
-                    self.sheet[sh.net] = sh
+                        sh_obj.net_type = "external"
+                    self.sheet[sh_obj.net] = sh_obj
 
     def form_group_cs_hier(self):
         name_to_group = {}

@@ -4,7 +4,7 @@
 # A method to form trace islands after placement
 
 from core.general.data_struct.util import Rect
-
+from typing import Type
 class TraceCell(Rect):
     def __init__(self, **kwargs):
         if 'rect' in kwargs:  # init by keyword rect
@@ -117,8 +117,8 @@ class TraceCell(Rect):
         elif self.dir == 2:
             return abs(self.top-self.bottom)
 class MeshNode:
-    def __init__ (self,pos,name,node_type = 'internal',net = ''):
-        self.position = pos
+    def __init__ (self,loc,name,node_type = 'internal',net = ''):
+        self.loc = loc
         self.node_name = name
         self.node_type = node_type # internal or boundary
         self.net_name = net # only for leads, pads, and devices pin
@@ -197,6 +197,12 @@ class RectCell(Rect):
                           ,(self.left, self.top)     : 1
                           ,(self.right, self.top)    : 2
                           ,(self.right, self.bottom) : 3}
+    
+                    
+        
+        
+        
+    
     def get_cell_corners(self):
         # Return the xy locations of the cell and its type
         
@@ -216,8 +222,8 @@ class RectCell(Rect):
     
     def get_cell_edges(self):
         # Return list of edges with center location
-        ratio = 1/2
-        edge_width = 500
+        ratio = 1/3
+        edge_width = 1000
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         pt_0 = (self.left,self.bottom)

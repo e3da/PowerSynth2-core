@@ -218,7 +218,7 @@ class Cmd_Handler:
                     self.num_gen = int(info[1])
                 if info[0] == 'Export_AnsysEM_Setup:':
                     self.export_ansys_em = True
-                if info[0] == 'End_Export_AnsusEM_Setup.':
+                if info[0] == 'End_Export_AnsysEM_Setup.':
                     self.export_ansys_em = False
                 if info[0]== 'Thermal_Setup:':
                     self.thermal_mode = True
@@ -303,7 +303,7 @@ class Cmd_Handler:
                         self.electrical_models_info['sink']= info[1]
                     '''
                     if info[0] == 'Main_Loops:':
-                        self.electrical_models_info['main_loops'] = info[1]
+                        self.electrical_models_info['main_loops'] = info[1:]
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
         
@@ -479,8 +479,6 @@ class Cmd_Handler:
         '''
         This function defines all of the current direction, loops, LVS check, and circuit type
         '''
-        
-        
            
         # always init with a PEEC run to handle planar type traces
         self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = self.electrical_models_info['netlist'])
@@ -489,13 +487,21 @@ class Cmd_Handler:
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
+        self.e_api_init.layout_vs_schematic.check_circuit_type()
         # Some other data processing
         self.e_api_init.get_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.get_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
         module_data = self.single_layout_evaluation(init = True) # get the single element list of solution
 
         self.e_api_init.init_layout_3D(module_data=module_data[0]) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
-        self.e_api_init.start_meshing_process(module_data=module_data[0])
+        # Start the simple PEEC mesh        
+        self.e_api_init.form_initial_mesh()
+        # Go through every loop and ask for the device mode 
+        self.e_api_init.check_device_connectivity(main_loops=self.electrical_models_info['main_loops'])
+        #self.e_api_init.form_net_graph()
+        # Form circuits from the PEEC mesh 
+
+        self.e_api_init.generate_circuit_from_mesh()
 
         #self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn) # dev_conn need to be provided for each loop
  

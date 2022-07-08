@@ -65,7 +65,7 @@ class Circuit():
         self.df_circuit_info.loc[rowid, 'p node'] = pnode
         self.df_circuit_info.loc[rowid, 'n node'] = nnode
         self.df_circuit_info.loc[rowid, 'value'] = float(val)
-    def _graph_add_M(self,rowid,name,L1_name,L2_name,val):
+    def graph_add_M(self,rowid,name,L1_name,L2_name,val):
         self.df_circuit_info.loc[rowid, 'element'] = name
         self.df_circuit_info.loc[rowid, 'Lname1'] = L1_name
         self.df_circuit_info.loc[rowid, 'Lname2'] = L2_name
@@ -174,7 +174,7 @@ class Circuit():
             L1_name = 'L' + str(edge[0])
             L2_name = 'L' + str(edge[1])
             M_name='M'+'_'+L1_name+'_'+L2_name
-            self._graph_add_M(row_id,M_name,L1_name,L2_name,M_val)
+            self.graph_add_M(row_id,M_name,L1_name,L2_name,M_val)
             row_id+=1
         self.line_cnt=row_id
         #print self.line_cnt
@@ -185,12 +185,12 @@ class Circuit():
         self.df_circuit_info.loc[index, 'p node'] = pnode
         self.df_circuit_info.loc[index, 'n node'] = nnode
         self.df_circuit_info.loc[index, 'value'] = val
-    def indep_voltage_source(self, index, pnode=0, nnode=0, val=1000,el_name='Vs'):
+    def add_indep_voltage_src(self, index, pnode=0, nnode=0, val=1000,el_name='Vs'):
         self.df_circuit_info.loc[index, 'element'] = el_name
         self.df_circuit_info.loc[index, 'p node'] = pnode
         self.df_circuit_info.loc[index, 'n node'] = nnode
         self.df_circuit_info.loc[index, 'value'] = val
-    def build_current_info(self):
+    def handle_branch_current_elements(self):
         '''
         Update the current value from circuit component data frame
         # Build df2: consists of branches with current unknowns, used for C & D matrices
@@ -213,7 +213,7 @@ class Circuit():
         index = self.line_cnt
         # add current source to source_node
         source_net =self.node_dict[source_node]
-        self.indep_voltage_source(index, source_net,0,val=volt,el_name=vname)
+        self.add_indep_voltage_src(index, source_net,0,val=volt,el_name=vname)
         self.line_cnt+=1
 
 

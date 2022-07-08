@@ -10,8 +10,12 @@ print ("cur path",cur_path)
 sys.path.append(cur_path)
 print (sys.path[0])
 # get the 3 fold integral mutual equation.
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars,bar_ind
+from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind
+
+# Cython implementation:
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
+# Python multiproces:
+from core.model.electrical.parasitics.equations import update_mutual_mat_64_py
 #from core.model.electrical.visualization.view_matrix import matrix_view_autoscale
 import ctypes
 import numpy as np
@@ -70,29 +74,35 @@ def form_skd(width=2, N = 3):
 def CalVal2(k):
     val2 = 2e-7 * (np.log(np.sqrt(k**2+1) +k) - np.sqrt(1/k**2 +1) + 0.9054/k +0.25)
     return abs(val2)
-def self_ind_test_rs(w,l,f):
-    x_WL = [[w,l] ]
+
+def self_ind_test_rs(ws,ls,f,mdl_dir = "/nethome/qmle/response_surface_update/model_1_test1.rsmdl"):
+    x_WL = []
+    for w in ws:
+        for l in ls:
+            x_WL.append([w,l])
     x_WL = np.array(x_WL)
     poly = PolynomialFeatures(degree=5,interaction_only= False)
     xtrain_scaled = poly.fit_transform(x_WL)
-    model = joblib.load("/nethome/qmle/response_surface_update/model_1_test1.rsmdl")
+    model = joblib.load(mdl_dir)
     f_choose =1e20
     for f_c in list(model.keys()):
         if abs(f_c-f) < abs(f_choose-f):
             f_choose = f_c    
     
-    #print ('f_choose',f_choose)
+    
     L_model = model[f_choose]['L']
     R_model = model[f_choose]['R']
-    all_r = R_model.predict(xtrain_scaled)
-    all_l = L_model.predict(xtrain_scaled)
+    all_r = R_model.predict(xtrain_scaled)*1e-6
+    all_l = L_model.predict(xtrain_scaled)*1e-9
     if all_l[0]<0:
         print('negative',w,l)
         #input()
-    return all_r[0],all_l[0]
+    return all_r,all_l
 def self_ind_c_type(w,l,t):
     ''' THis is used to validate the python implementation, not best for speed right now'''
     return u0*self_ind(w,l,t)
+
+
 def self_ind_py(w,l,t):
     '''This function is from FastHenry Joelself.c might consider to rewrite this in C++ for speed up
     https://github.com/ediloren/FastHenry2/blob/master/src/fasthenry/joelself.c
@@ -118,7 +128,30 @@ def self_ind_py(w,l,t):
     #print (z*1e-6)
     return z * 4*PI*1e-7 # inductance in uH -> H
     
+def self_imp_py_mat(input_mat=[],f=1e8,type = 'trace',eval_type ='equation'):
+    mat_result = []
+    if eval_type == 'equation':
+        for i in range(len(input_mat)):
+            w,l,t = input_mat[i]
+            R = copper_res*l/(w*t)*1e6
+            r = sqrt(w**2+t**2)
+            k = l/r
+            if type == 'trace':
+                L = self_ind_py(w,l,t) *1e3 * 1e-9
+            elif type == 'wire':
+                L = l*1e-6*CalVal2(k)
+                
+            mat_result.append([R,L])
     
+    elif eval_type == 'regression':
+        print(input_mat)
+        ws = input_mat[:,0]
+        ls = input_mat[:,1]        
+                
+        all_R, all_L = self_ind_test_rs(ws/1000,ls/1000,f)
+        for i in range(len(all_R)):
+            mat_result.append([all_R[i],all_L[i]])
+    return mat_result    
 class ETrace():
     
     def __init__(self):
@@ -133,7 +166,6 @@ class ETrace():
         self.elements = []
         self.type = 1
         self.m_id = 0 # mesh id
-        self.m_id_gr=0 # mesh id for ground imp calculation later 
         self.g_id = 1
         self.dir = 1
         self.total_I=0
@@ -143,7 +175,7 @@ class ETrace():
         self.edge = -1
         self.frequency = 1e6
         self.struct = "trace" # trace, bw, via ... 
-    
+
     def form_mesh_uniform_width(self,start_id,filament_type='trace',fixed_width=200):
         # 200 um is the skindepth at 100kHz for copper
         mode = 'regression'
@@ -157,17 +189,19 @@ class ETrace():
                 self.nhinc = 1
             else:
                 self.nhinc = int(self.thick/fixed_width)
-                if self.nhinc ==0:
-                    self.nhinc = 3
             dws,dhs,id = self.form_mesh_uniform(start_id=start_id,filament_type='trace')
         #print(dws,dhs,id)
         return [dws,dhs,id]
     def form_mesh_uniform(self,start_id =0,filament_type = 'trace'):
         id = start_id
+        if filament_type =='wire':
+            self.nwinc = 3
+            self.nhinc = 3
         dw = int((self.width)/self.nwinc)
         dh = int((self.thick)/self.nhinc )
         dws = [dw for i in range(self.nwinc)]
         dhs = [dh for i in range(self.nhinc)]
+        
         if 0 in dws or 0 in dhs:
             print("error in MESHING")
             input()
@@ -182,7 +216,6 @@ class ETrace():
                 new_fil.end_pt = list(self.end_pt)
                 new_fil.id = id
                 new_fil.m_id = self.m_id
-                new_fil.m_id_gr = self.m_id_gr
                 new_fil.dir = self.dir
                 new_fil.frequency = self.frequency
                 if self.ori == 1:
@@ -218,7 +251,6 @@ class ETrace():
                 new_fil.end_pt = list(self.end_pt)
                 new_fil.id = id
                 new_fil.m_id = self.m_id
-                new_fil.m_id_gr = self.m_id_gr
                 new_fil.dir = self.dir
                 new_fil.frequency = self.frequency
                 
@@ -260,7 +292,7 @@ class ETrace():
             gap = (x_locs[i],x_locs[i+1])
             if not gap in x_ranges.keys():
                 dw = int((x_locs[i+1]-x_locs[i])/self.nwinc)
-                if dw ==0:
+                if dw <=0:
                     dw = 1
                 dws = [dw for i in range(self.nwinc)]
                 gr_dws+=dws
@@ -282,7 +314,6 @@ class ETrace():
                 new_fil.end_pt = list(self.end_pt)
                 new_fil.id = id
                 new_fil.m_id = self.m_id
-                new_fil.m_id_gr = self.m_id_gr
                 new_fil.dir = self.dir
                 if self.ori == 1:
                     new_fil.start_pt[0] += sum(gr_dws[:i])
@@ -320,7 +351,6 @@ class EFilament():
         self.thick = 0.2 # mm
         self.length = 0
         self.m_id =0
-        self.m_id_gr = 0 
         self.dir = 1 # +x,+y,+z direction by default
         self.Ival = 0 # current value of this filament
         self.filament_type = None
@@ -351,7 +381,14 @@ class EFilament():
             self.ori = 0
         self.type = int(input("1 for normal element 0 for return path"))
     
-    
+    def get_self_params(self,mode = 'regression'):
+        length = self.get_length()
+        width = self.width
+        thick = self.thick  # for equation mode only
+        if mode == 'equation':
+            return [width,length,thick]
+        elif mode == 'regression':
+            return [width,length] 
     def get_mutual_params(self,element):
         '''use for rheuli equation'''
         l1 = self.get_length()
@@ -385,6 +422,7 @@ class EFilament():
     
     def eval_self(self):
         # use eqs for simple wires 
+        # TODO: This method will be removed for performance purpose :) 
         
         if self.ori == 0:
             len = abs(self.end_pt[0] - self.start_pt[0])
@@ -393,6 +431,7 @@ class EFilament():
         self.length = len
         r = sqrt(self.width**2+self.thick**2)
         k = len/r
+        #print(self.filament_type)
         #Lval = len*1e-6*CalVal2(k)
         mode = 'regression'
         Rval_eq = copper_res*len/(self.width*self.thick)*1e6
@@ -406,7 +445,7 @@ class EFilament():
             if mode == 'equation':
                 Lval = Lval_eq
                 Rval = Rval_eq
-            elif mode == 'regression':
+            else:
                 Rval,Lval = self_ind_test_rs(self.width/1000,len/1000,f=self.frequency) 
                 correct_ratio = 3
                 if Rval <0 or Lval<0: # Linear approximation apply
@@ -532,18 +571,19 @@ class LoopEval():
         self.frequency_min = 1e6
         self.frequency_max = 1e9
         self.mutual_params = []
+        self.self_params = []
+        self.self_impedance_map = {}
         self.mutual_map = {}
+        self.self_params = []
         self.mesh_id = 0
-        self.ground_id = 0
+        self.ground_id = 1
         self.mesh_method = 'uniform'
         self.view_en = 'False'
         self.mesh_id_dict={}
         self.open_loop = True
         self.tc_to_id = {}
-        self.tc_to_id_gr = {} # use in extracted ground impedance mode
-        
         self.traces = {}
-        self.eval_ground_imp = True
+        self.eval_ground_imp = False
         self.mode = 'regression'
     def update_P(self):
         dimension = (len(self.all_filaments),len(self.all_filaments))
@@ -604,21 +644,24 @@ class LoopEval():
         dimension = (len(self.all_filaments),len(self.all_filaments))
         self.R_Mat =np.zeros(dimension,dtype =np.complex64)
         self.L_Mat = np.ones(dimension,dtype =np.complex64)
-        
+        # these 2 variables are used to count the number of distinguished mutual and self ids
         mutual_id = 0
+        self_id = 0 
         for i in range(len(self.all_filaments)):
             for k in range(len(self.all_filaments)):
                 if self.L_Mat[i,k] != 1 :
                     continue
                     
                 if i == k: # get the self-partial element
-                    R, L  = self.all_filaments[i].eval_self()
-                    if np.isnan(L) or np.isinf(L):
-                        print (R,L)
-                        print(self.all_filaments[i].width)
-                        input()
-                    self.R_Mat[i,k] = R 
-                    self.L_Mat[i,k] = L
+                    self_para = self.all_filaments[i].get_self_params(mode=self.mode)
+                    
+                    key = tuple(self_para)
+                    if not (key in self.self_impedance_map):
+                        self.self_params.append(self_para)  
+                        self.self_impedance_map[key] = self_id
+                        self_id+=1
+                    
+                    
                 else:
                     if self.all_filaments[i].ori == self.all_filaments[k].ori:
                         w1,l1,t1,w2,l2,t2,l3,p,E = self.all_filaments[i].get_mutual_params(self.all_filaments[k])
@@ -636,7 +679,6 @@ class LoopEval():
                     self.L_Mat[i,k] = 0 # mark as updated
                 self.L_Mat[k,i] = self.L_Mat[i,k]
         
-    
     def eval_mutual_rs(self):
         x = []
         for mdata in self.mutual_params:
@@ -650,19 +692,22 @@ class LoopEval():
         #    print(x[xi],results[xi])
         return results
     
-    def update_mutual_mat(self):
-        mutual_mat = np.array(self.mutual_params,dtype = 'float')
+    def update_mutual_mat(self,type='trace'):
+        mutual_mat = np.array(self.mutual_params,dtype = 'int')
         if self.frequency < 1e4:
             self.mode = 'equation'
-        else:    
-            self.mode ='regression'#'regression'
-        self.mode = 'regression'
     
-        if 'wire' in self.name:
+        if type == 'wire':
             self.mode = 'equation'
-        
         if self.mode == 'equation':
-            result_eq = np.asarray(mutual_mat_eval(mutual_mat, 12, 0)).tolist()
+            
+            #t  = time.perf_counter()
+            #result_eq_cython = np.asarray(mutual_mat_eval(mutual_mat, 12, 0)).tolist()
+            #print("cython time", time.perf_counter()-t)
+            t  = time.perf_counter()
+            result_eq = update_mutual_mat_64_py(mutual_mat)
+            print("python time with numba", time.perf_counter()-t)
+            
             result = result_eq
         elif self.mode =='regression':
             result = self.eval_mutual_rs()
@@ -692,7 +737,7 @@ class LoopEval():
                             #print("smallest distance for error", params[-1],params[1])
                             #print (M, result_eq[m_id])
                             min_d_for_err = params[-1]
-                        M=0#result_eq[m_id]/1000
+                        M=0
                     if np.isnan(M) or np.isinf(M):
                         print (params)
                         print ("cant calculate this value")
@@ -702,6 +747,17 @@ class LoopEval():
                     
                 self.L_Mat[k,i] = self.L_Mat[i,k]
     
+    def update_self_values(self,type):
+        self_mat = np.array(self.self_params)
+        imp_mat =  self_imp_py_mat(self_mat,f=self.frequency,type = type,eval_type =self.mode)
+        for i in range(len(self.all_filaments)):
+            self_para = self.all_filaments[i].get_self_params(mode=self.mode)
+            key = tuple(self_para)
+            index = self.self_impedance_map[key]
+            R,L = imp_mat[index]
+            self.R_Mat[i,i] = R
+            self.L_Mat[i,i] = L
+            
     def form_mesh_matrix(self,mesh_id_type = {}):
         '''
         mesh_id_type: used to form correct mesh for the loop case or full eval case (include)
@@ -713,11 +769,13 @@ class LoopEval():
         for k in mesh_id_type:
             if mesh_id_type[k] == 1:
                 self.num_sig+=1
-        #if not(self.eval_ground_imp): # This case we compute the complete signal-ground loop
-        dimension = (self.tot_els,self.num_sig)
-        #else: # we compute each trace group separatedly 
-        #    dimension = (self.tot_els,self.ground_id-1+self.num_sig)
-                      
+        if not(self.eval_ground_imp): # This case we compute the complete signal-ground loop
+            dimension = (self.tot_els,self.num_sig)
+            
+            
+        else: # we compute each trace group separatedly 
+            dimension = (self.tot_els,self.num_loops)
+                        
         self.M = np.zeros(dimension,dtype= np.complex64)
         for el in self.all_filaments:
             if el.type == 1:
@@ -773,39 +831,50 @@ class LoopEval():
         plt.show()
         '''
     
-    def form_u_mat(self):
+    def form_u_mat(self,mode=0,vout =0):
         u = np.ones((self.tot_els,1),dtype = np.complex64)
-        for el in self.all_filaments:
-            u[el.id] = 1
-                
+        if mode ==0: # for signals only
+            for el in self.all_filaments:
+                u[el.id] = 1
+        elif mode==1: # extract Z_gp
+            for el in self.all_filaments:
+                if el.type ==1:
+                    u[el.id] = 1-vout
+                else:
+                    u[el.id] = vout
         return u
 
     def solve_linear_systems(self,decoupled = False):
         #self.open_loop = True
-        print(self.open_loop)
-        if self.open_loop==True:
-            decoupled= False
-            
-        #print(self.num_sig)
         u = self.form_u_mat()
         if not(self.open_loop):
             y = solve(self.P,u) # direct solve
         
         v_dict = {}
         
-        x = np.linalg.solve(self.P,self.M)
-        self.I  = np.ones((self.tot_els,self.num_sig),dtype= np.complex64)
-        
-        for j in range(self.num_sig):
+        if decoupled:
+            M = np.zeros((self.tot_els,1))
+            for el in self.all_filaments:
+                if el.type == 1:
+                    M[el.id] = 1    
+            x = np.linalg.solve(self.P,M)
+            sum_Is = sum(x)
+            vout = sum_Is / sum(y)
+            self.I  = np.ones((self.tot_els,self.num_sig+1),dtype= np.complex64)
+        else:
+            x = np.linalg.solve(self.P,self.M)
+            self.I  = np.ones((self.tot_els,self.num_sig),dtype= np.complex64)
             
-            if not(self.open_loop):
-                sum_Is=sum(x[:,j])
-                vout = sum_Is / sum(y)
-                v_dict[j] = vout
-                self.I[:,[j]] = x[:,[j]] - vout * y
-            else:
-                self.I[:,[j]] = x[:,[j]]
-                v_dict[j] = 0 
+            for j in range(self.num_sig):
+                
+                if not(self.open_loop):
+                    sum_Is=sum(x[:,j])
+                    vout = sum_Is / sum(y)
+                    v_dict[j] = vout
+                    self.I[:,[j]] = x[:,[j]] - vout * y
+                else:
+                    self.I[:,[j]] = x[:,[j]]
+                    v_dict[j] = 0 
                 
         if not(decoupled):
             Z = self.eval_loop_impedance(mode = 1)
@@ -831,23 +900,25 @@ class LoopEval():
             I_tot = np.matmul(np.transpose(self.M),self.I)
             Z = np.linalg.inv(I_tot)
         if mode ==2: # in this mode we extract ground impedance as the third signal knowing Vout
-            num_ground = self.ground_id
-            print('number of ground return',num_ground)
-            Z = np.zeros((self.num_sig+num_ground,self.num_sig+num_ground),dtype = np.complex64)
-            M = np.zeros((self.tot_els,self.num_sig + num_ground)) # form a new mesh matrix
-            Vmat = np.zeros((self.tot_els,self.num_sig + num_ground),dtype = np.complex64)
+            Z = np.zeros((self.num_sig+1,self.num_sig+1),dtype = np.complex64)
+            M = np.zeros((self.tot_els,self.num_sig + 1)) # form a new mesh matrix
+            Vmat = np.zeros((self.tot_els,self.num_sig + 1),dtype = np.complex64)
             for el in self.all_filaments:
-                Vmat[el.id,el.m_id_gr] = 1
-                M[el.id,el.m_id_gr] = 1
+                if el.type == 1:
+                    Vmat[el.id,el.m_id] = 1-vout # signal
+
+                else:
+                    Vmat[el.id,el.m_id] =vout # ground-decoupled
+
+                M[el.id,el.m_id] = 1
+            
             self.I = solve(self.P,Vmat)
+            
             I_tot = np.matmul(np.transpose(M),self.I)
             Z = np.linalg.inv(I_tot)
-            for id in range(self.num_sig+num_ground):
-                if id <=self.num_sig:
-                    Z[id,:] = Z[id,:] #* vout
-                else:
-                    Z[id,:] = Z[id,:] #* vout
-            #Z[self.num_sig,:] = Z[self.num_sig,:] * (vout)
+            for id in range(self.num_sig):
+                Z[id,:] = Z[id,:] * (1-vout)
+            Z[self.num_sig,:] = Z[self.num_sig,:] * (vout)
             
             
                            
@@ -981,7 +1052,7 @@ class LoopEval():
             el_js.append((np.abs(el_current))/(el.width*el.thick)*1e12)
         norm = mpl.colors.Normalize(vmin=min(el_js), vmax=max(el_js))
         return norm,el_js   
-    '''     
+         
     def add_ETrace(self,trace_mesh=None,mesh_method = 'uniform'):
         trace_mesh.m_id = self.mesh_id
         if trace_mesh.start_pt[0] == trace_mesh.end_pt[0]:
@@ -1007,7 +1078,7 @@ class LoopEval():
             self.traces[-self.ground_id]=trace_mesh
             self.ground_id +=1 
             self.mesh_id +=1
-    '''        
+            
 
         
     def form_mesh_traces(self,mesh_method= 'uniform'):
@@ -1015,6 +1086,7 @@ class LoopEval():
             filament_type = 'wire'
         else:
             filament_type = 'trace'
+            
         trace_mesh_list = list(self.traces.values())
         if mesh_method == 'uniform_fixed_width':
             for trace_mesh in trace_mesh_list:
@@ -1090,7 +1162,6 @@ class LoopEval():
         trace_mesh.start_pt = [x for x in start_pt]#[x*1e-6 for x in start_pt]
         trace_mesh.end_pt = [x for x in end_pt]#[x*1e-6 for x in end_pt]
         trace_mesh.m_id = self.mesh_id
-        trace_mesh.m_id_gr = int(self.mesh_id+self.ground_id)
         trace_mesh.thick = tc.thick #* 1e-6
         trace_mesh.nwinc = int(nw)
         trace_mesh.nhinc = int(nh)
@@ -1100,26 +1171,17 @@ class LoopEval():
             self.num_loops+=1
             trace_mesh.type = 1
             self.tc_to_id[tc] = self.mesh_id # in cased of signal wire 
-            self.tc_to_id_gr[tc] = self.mesh_id+self.ground_id
-            self.traces[self.mesh_id+self.ground_id] = trace_mesh
+            self.traces[self.mesh_id] = trace_mesh
             self.mesh_id +=1
         else:
-            '''  original  
             self.tc_to_id[tc] = -1 # in cased of return wire
             self.open_loop = False
             trace_mesh.type = 0
             self.traces[-self.ground_id]=trace_mesh
             self.ground_id +=1 
-            ''' 
-            self.tc_to_id[tc] = -1 # in cased of return wire
-            self.tc_to_id_gr[tc] = self.mesh_id+self.ground_id
-            self.open_loop = False
-            trace_mesh.type = 0
-            self.traces[self.mesh_id+self.ground_id]=trace_mesh
-            self.ground_id +=1 
-            
         
         self.mesh_id_dict[trace_mesh.m_id] = trace_mesh.type
+        
         '''
         if self.mesh_method == 'uniform':
             end_id = trace_mesh.form_mesh_uniform(start_id=self.tot_els,filament_type=filament_type)

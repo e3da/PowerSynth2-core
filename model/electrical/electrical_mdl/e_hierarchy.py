@@ -50,7 +50,8 @@ class EHier():
         for comp_name in comp_dict:
             comp_obj = comp_dict[comp_name]
             self.comp_name_nets[comp_obj.inst_name] = []
-            for sh_obj in comp_obj.sheet:
+            for sh_name in comp_obj.sheet:
+                sh_obj = comp_obj.sheet[sh_name]
                 self.comp_name_nets[comp_obj.inst_name].append(sh_obj.net)
                 self.inst_z_id[sh_obj.net] = sh_obj.z_id
         for isl in self.module.trace_island_group:
@@ -71,9 +72,10 @@ class EHier():
         for sh_net in all_sheets_dict:
             sh_obj = all_sheets_dict[sh_net]
             if not(sh_net in self.on_trace_pin_map):
+                # Need 3D testcases to make sure the pins are connected to the corect island in 3D
                 self.off_trace_pin_map[sh_obj.net] = sh_obj
                 self.inst_z_id[sh_obj.net] = sh_obj.z_id    
-                
+              
                 
         #print(self.isl_name_traces) 
         #print(self.trace_island_nets)   

@@ -1,4 +1,6 @@
 # updated objects used for characterization purpose
+# This package should replace the need of the old response surface setup.
+
 import sys
 import os
 from numpy.lib.index_tricks import _fill_diagonal_dispatcher
@@ -19,7 +21,7 @@ from scipy.optimize import curve_fit
 import math
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval,ETrace,form_skd,self_ind_py
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance_saved import mutual_between_bars
+from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import Pipeline
@@ -558,7 +560,8 @@ class TraceCharacterize():
         
     
 
-
+#def store_data(file,info,x,y):
+    
 
 
 
@@ -621,8 +624,9 @@ def func_2(x,a11,b11,c11,d11,e11,f11,a1,b1,c1,d1,a2,b2,c2,d2,a22,b22,c22,d22,e22
     return s1+s2+s11+s22+const  
 
 def test_mutual_characterize_regression():
+    
     mutual_func = loop_based_mutual_eval
-    width = [0.1,1]
+    width = [1,10]
     length = [1,25]
     dis_close = [0.1, 25]
     dis_far = [10,20]
@@ -631,7 +635,7 @@ def test_mutual_characterize_regression():
     train_freq = 1e5
     
     N = 10
-    if max(width) < 1:
+    if max(width) <= 10:
         dis = dis_close
         ws = np.logspace(0,1,num=5) * (width[1]-width[0])/10
         ds = np.logspace(0.1,1,num=5) * (dis[1]-dis[0])/10
@@ -645,14 +649,15 @@ def test_mutual_characterize_regression():
     
     x3d_scaled = []
     #for w in ws:
-    w = 0.2
-    for w in ws:
-        for d in ds:
-            for l in ls:
-                params = [w,l,0.2,w,l,0.2,0,0,d]
-                mutual_mat.append(params)
-                x3d.append([w,d,l])
-                x3d_scaled.append([w/max(ws),d/max(dis_far),l/max(length)])
+
+    for w1 in ws:
+        for w2 in ws:
+            for d in ds:
+                for l in ls:
+                    params = [w1,l,0.2,w2,l,0.2,0,0,d]
+                    mutual_mat.append(params)
+                    x3d.append([w1,w2,d,l])
+                    x3d_scaled.append([w1/max(ws),w2/max(ws),d/max(dis_far),l/max(length)])
     mutual_mat = np.array(mutual_mat,dtype = 'float')
     # temp code
     run = True
@@ -675,71 +680,28 @@ def test_mutual_characterize_regression():
     #popt,pcov = curve_fit(f=Meq_wiley_form,xdata =x_lq,ydata= Mtrain)
     xtrain = np.array(x3d)
     print(xtrain.shape)
-    #print(pcov)
-    #M_est = Meq_wiley_form(x_lq,*popt)
-    #print (M_est)
-    '''
-    print (Mtrain)
-    param_dict3d = {
-    "method": ["ordinary3d", "universal3d"],
-    "variogram_model": ["linear", "power", "gaussian", "spherical"],
-    # "nlags": [4, 6, 8],
-    # "weight": [True, False]
-    }
-    run_CV = False
-    if run_CV:
-        estimator = GridSearchCV(Krige(), param_dict3d, verbose=True, return_train_score=True)
-        estimator.fit(xtrain,Mtrain)
-        if hasattr(estimator, "best_score_"):
-            print("best_score R² = {:.3f}".format(estimator.best_score_))
-        print("best_params = ", estimator.best_params_)
-
-        print("\nCV results::")
-        if hasattr(estimator, "cv_results_"):
-            for key in [
-                "mean_test_score",
-                "mean_train_score",
-                "param_method",
-                "param_variogram_model",
-            ]:
-                print(" - {} : {}".format(key, estimator.cv_results_[key]))
-    else:
-        model = uk3d(xtrain[:,0],xtrain[:,1],xtrain[:,2],Mtrain,variogram_model = 'spherical')
     
-    #Mtest = model.execute('points',xtrain[:,0],xtrain[:,1],xtrain[:,2])
-    Mtest = model.execute('points',1.0,0.01,10.0)
-    
-    print(Mtest)
-    #print(Mtrain)
-    #print(abs(Mtest-Mtrain)/Mtrain*100)
-    #err = np.abs(M_est - Mtrain)/Mtrain*100
-    #avg_err = np.average(err)
-    #print("average error",avg_err)
-    
-    #Mtrain = Mtrain.reshape(-1,1)
-    #print(Mtrain)
-    #xtrain=x3d
-    '''
-    scaled = False
+    scaled = True
     if scaled:
         xtrain = np.array(x3d_scaled)
         ytrain = Mtrain/max_M_val
     else:
         xtrain = x3d
         ytrain = Mtrain
+    
     train_mutual_model_regression(xtrain,ytrain,x3d,x3d_scaled,mutual_mat,M_raw,mutual_func,max_M_val,train_freq,dis_far,dis_close,ws,ls,ds)
     
     
 def train_mutual_model_regression(xtrain,ytrain,x3d,x3d_scaled,mutual_mat,M_raw,mutual_func,max_M_val,train_freq,dis_far,dis_close,ws,ls,ds):
     poly_order =7
-    test = 'mlp'
+    test = 'poly_lr'
     train = True # if true, a cross validation search is run
-    scaled =False
+    scaled =True
     
     if test == "mlp":
-        hidden = 20
+        hidden = 50
         max_iter = 1000
-        model = MLPRegressor(hidden_layer_sizes=(hidden,5),activation='relu', solver='adam', max_iter=max_iter,random_state=1,verbose=3,tol=1e-6,n_iter_no_change=int(max_iter/4) ).fit(xtrain,ytrain)
+        model = MLPRegressor(hidden_layer_sizes=(hidden,20),activation='tanh', solver='adam', max_iter=max_iter,random_state=1,verbose=3,tol=1e-6,n_iter_no_change=int(max_iter/4) ).fit(xtrain,ytrain)
         print(model.n_layers_)
         print("mlp loss",model.best_loss_)
     elif test == "od_ls":
@@ -832,7 +794,7 @@ def train_mutual_model_regression(xtrain,ytrain,x3d,x3d_scaled,mutual_mat,M_raw,
         y_pr = model.predict(x_test)
         M_pr = y_pr#*max_M_val
     print("prediction time {} :".format(test), time.time() - start)
-    errs = abs(M_pr-M_test)/M_test*100
+    errs = abs(M_pr-M_test)/M_test*100 # in %
     num10 = 0
     num20 = 0
     
@@ -904,11 +866,10 @@ def run_single_mutual_eval(param):
     loop = LoopEval()
     t1 = ETrace()
     t2 = ETrace()
-    w,d,l = p
+    w1,w2,d,l = p
     
-    w1 = w
-    w2 = w1
-    print(gr_width)
+    #w1 = w
+    #w2 = w1
     x1 = gr_width/2 - d/2-w1
     if x1<0:
         print('error error')
@@ -962,7 +923,7 @@ def run_single_mutual_eval(param):
     
     Z = loop.solve_linear_systems(decoupled = True)
     Z = Z.imag/2/math.pi/loop.frequency
-    M_eq = mutual_between_bars(w1,l,t,w1,l,t,0,0,d)
+    #M_eq = mutual_between_bars([w1,l,t,w1,l,t,0,0,d])
     M_bs = Z[0,1]*1e15
     L_eq = self_ind_py(w1*1e3,l*1e3,d*1e3)*1e3
     L_bs = Z[0,0]*1e15
@@ -975,25 +936,30 @@ def loop_based_mutual_eval(mutual_params, h = 0.64,t=0.2,f = 100e3,res =1.68 *1e
     t in mm
     '''
     tc = TraceCharacterize()
-    w=0.2
-    gr_width_eval = tc.eval_current_desity_range(w,h)
+    
     u = 4 * math.pi * 1e-7
     
     skindepth = math.sqrt(res/ (math.pi * f * u))*1e3
     print("skindepth value is {} mm at f= {} Hz".format(skindepth,f))
     M_res = []
-    num_cpu = int(multiprocessing.cpu_count()/2)
+    num_cpu = 40#int(multiprocessing.cpu_count()/2)
     print("number of cpu used: {}".format(num_cpu))
     results= []
+    total = len(mutual_params)
+    current = 0
     for pr in mutual_params:
         #params.append([pr,h,t,f,skindepth,gr_width])
-        gr_width = gr_width_eval+pr[0]+w*2
+        w1,w2,d,l = pr
+        gr_width_eval = tc.eval_current_desity_range((w1+w2)/2,h)
+        gr_width = gr_width_eval+d+w1+w2
         results.append(run_single_mutual_eval(param=[pr,h,t,f,skindepth,gr_width]))
+        current+=1
+        print(current,total)
         #results.append(-1)
     #with Pool(num_cpu) as p:
     #    results = p.map(run_single_mutual_eval,params)
     M_res = np.array(results)
-    print(M_res)
+    #print(M_res)
     return M_res  
 def generate_broadband_circuit(Lac,Ldc,Rdc,f):
     '''

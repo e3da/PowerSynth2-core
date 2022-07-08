@@ -179,7 +179,7 @@ class Circuit():
             #print self.df_circuit_info
 
             self._graph_add_comp(row_id,V_name,V_id,0,1)
-            self.build_current_info()
+            self.handle_branch_current_elements()
 
             #ckt_df.to_csv('netlist'+str(i)+'.csv')
             start=time.time()
@@ -423,7 +423,7 @@ class Circuit():
                 print(('nodes not in continuous order, node {:.0f} is missing'.format(p[i - 1] + 1)))
 
         return largest
-    def build_current_info(self):
+    def handle_branch_current_elements(self):
         '''
         Update the current value from circuit component data frame
         # Build df2: consists of branches with current unknowns, used for C & D matrices
@@ -468,7 +468,7 @@ class Circuit():
                 self.cpld_ind_sub_network(i)
             else:
                 print(("unknown element type in branch {:d}, {:s}".format(i, content[i])))
-        self.build_current_info()
+        self.handle_branch_current_elements()
 
         # count number of nodes
         num_nodes = self.count_nodes()

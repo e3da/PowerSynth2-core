@@ -34,20 +34,44 @@ class LayerMesh():
         self.locs_to_net = {}
         
     
-    def add_net (self,x,y,name):
-        self.locs_to_net[(x,y)] = name
+    def add_net (self,x_y:tuple,name:str):
+        self.locs_to_net[x_y] = name
         
     def add_table(self, name,mesh_table):
         self.all_tables[name]=mesh_table
     
-    def layer_nodes_generation(self):
+    def layer_on_trace_nodes_generation(self):
         # 1 Search through all cells on each island, assign the node name, net name.
-        self.layer_mesh.node_table = {}
         for island_name in self.all_tables: # for each island in the layer
             self.mesh_nodes_and_edges(mesh_table=self.all_tables[island_name])
-         
-        self.layer_mesh.display_nodes_and_edges(mode=1)
+        # In 2D case, we need to handle the device nets that doesnt have direct contact to the layer.
         
+        #self.layer_mesh.display_nodes_and_edges(mode=1)
+    
+    def add_floating_node(self,pt_xyz,net_name):
+        '''
+        this function will handle device, bondwire nets (if they are not directly connected to trace)
+        '''
+        pt_name = "p{}_{}".format(self.layer_index,self.layer_mesh.node_id)
+        node_obj = MeshNode(loc = pt_xyz,name = pt_name,node_type = 'device', net = net_name)
+        self.layer_mesh.add_node(pt_xyz,node_obj)
+        self.layer_mesh.map_net_node[net_name] = node_obj
+    
+    def handle_wire_and_via(self,net_objects,wire_via_table):
+        # First add net objects to the mesh 
+        # bondwire #bondwire connection #wires #vias
+        for net_data in net_objects:
+            rect_obj = net_data.rect
+            z_loc = net_data.z
+            net_cell =RectCell(rect_obj.left,rect_obj.bottom,rect_obj.width,rect_obj.height) 
+            center_pt = net_cell.center()
+            center_pt = [int(i) for i in center_pt]
+            center_pt.append(z_loc)
+            self.add_floating_node(tuple(center_pt),net_data.net)
+        for key in wire_via_table:
+            wv_object = wire_via_table[key]
+            print (wv_object)
+    
     def mesh_nodes_and_edges(self,mesh_table):
         self.layer_mesh.name = self.layer_index
         for trace_cell_id in mesh_table.trace_table:
@@ -55,24 +79,29 @@ class LayerMesh():
             pt_to_type_dict,pt_index = trace_cell.get_cell_corners()
             edges = trace_cell.get_cell_edges()
             
-            # Handle node connection
+            # Handle node on-trace connection
             for pt_xy in pt_to_type_dict:
                 node_type = pt_to_type_dict[pt_xy]
-                pt_xyz = (pt_xy[0],pt_xy[1],self.layer_z)
-                if pt_xy in self.locs_to_net:
-                    net_name = self.locs_to_net[pt_xy]
-                else:
-                    net_name = ''
-                #if not (pt_xyz in self.layer_mesh.node_table): # handle overlap nodes
+                pt_xyz = (int(pt_xy[0]),int(pt_xy[1]),int(self.layer_z))
+                
+                
                 pt_name = "p{}_{}".format(self.layer_index,self.layer_mesh.node_id)
-                node_obj = MeshNode(pos = pt_xyz,name = pt_name,node_type = node_type, net = net_name)
+                if pt_xy in self.locs_to_net:
+                    net_name = self.locs_to_net[(int(pt_xy[0]),int(pt_xy[1]))]
+                else:
+                    net_name = pt_name
+                    
+                node_obj = MeshNode(loc = pt_xyz,name = pt_name,node_type = node_type, net = net_name)
                 self.layer_mesh.add_node(pt_xyz,node_obj)
             # Handle edge connection
             
             for e in edges:
                 pt1 = (e[0][0],e[0][1],self.layer_z)
                 pt2 = (e[1][0],e[1][1],self.layer_z)
-                self.layer_mesh.add_edge(pt1,pt2,e[2],e[3],e[4])
+                node1 = self.layer_mesh.map_xyz_node[pt1]
+                node2 = self.layer_mesh.map_xyz_node[pt2]
+                
+                self.layer_mesh.add_edge(node1,node2,e[2],e[3],e[4])
                 
                     
                 
@@ -206,16 +235,16 @@ class TraceIslandMesh():
             ys.append(cell.top)
         for p_name in self.small_pads: # convert center position to integer here
             point = self.small_pads[p_name]
-            xs.append(int(point[0]))
-            ys.append(int(point[1]))
+            xs.append(point[0])
+            ys.append(point[1])
             
         xs = list(set(xs))
         ys = list(set(ys))
         xs.sort()
         ys.sort()
         # Remove small edges if its not boudary edge
-        y_lim = 100 # um
-        x_lim = 100 # um
+        y_lim = 0 # um
+        x_lim = 0 # um
         
         rm_y = []
         for iy in range(len(ys)-1):

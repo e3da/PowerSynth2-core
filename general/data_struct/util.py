@@ -187,6 +187,20 @@ class Rect:
         self.left = x
         self.right = x + width
 
+    def align_with_rect(self,rect) -> tuple:
+        '''
+        align this cell vs other, if possible we align them and use same x or y value (to reduce number of mesh element)
+        return a tuple of (bool, str) the str parameter is either 'H' or 'V'
+        '''
+        center_x = int(self.center_x())
+        center_y = int(self.center_y())
+        cell_center_x = int(rect.center_x())
+        cell_center_y = int(rect.center_y())
+        if (center_x <= rect.right and center_x >= rect.left) or (cell_center_x <= self.right and self.cell_center_x>= self.left):
+            return (True,'V')
+        elif (center_y <= rect.top and center_y >= rect.bottom) or (cell_center_y <= self.top and self.cell_center_y>= self.bottom):
+            return (True,'H')    
+    
     def intersects(self, rect):
         return not (
                     self.left > rect.right or rect.left > self.right or rect.bottom > self.top or self.bottom > rect.top)

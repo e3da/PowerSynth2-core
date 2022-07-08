@@ -1,5 +1,5 @@
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
-from powercad.electrical_mdl.spice_eval.rl_mat_eval import RL_circuit
+from powercad.electrical_mdl.spice_eval.mna_solver import ModifiedNodalAnalysis
 from powercad.electrical_mdl.e_mesh_direct import EMesh
 from powercad.electrical_mdl.e_mesh_corner_stitch import EMesh_CS
 #from corner_stitch.input_script import *
@@ -60,7 +60,7 @@ class CornerStitch_Emodel_API:
         self.width = 0
         self.height = 0
         self.measure = []
-        self.circuit = RL_circuit()
+        self.circuit = ModifiedNodalAnalysis()
         self.module_data =None# ModuleDataCOrnerStitch object for layout and footprint info
         self.hier = None
         self.trace_ori ={}
@@ -344,7 +344,7 @@ class CornerStitch_Emodel_API:
             spacing = float(wire_data['spacing'])
             wire = EWires(wire_radius=wire_obj.radius, num_wires=num_wires, wire_dis=spacing, start=s1, stop=s2,
                           wire_model=None,
-                          frequency=self.freq, circuit=RL_circuit())
+                          frequency=self.freq, circuit=ModifiedNodalAnalysis())
 
             self.wires.append(wire)
         #self.e_comps+=self.wires
@@ -413,7 +413,7 @@ class CornerStitch_Emodel_API:
         #print pt1,pt2
         #pt1=36
         #pt2=97
-        self.circuit = RL_circuit()
+        self.circuit = ModifiedNodalAnalysis()
         self.circuit._graph_read(self.emesh.graph)
         # CHECK IF A PATH EXIST
         if not(networkx.has_path(self.emesh.graph,pt1,pt2)):
@@ -425,8 +425,8 @@ class CornerStitch_Emodel_API:
         self.circuit.assign_freq(self.freq)
         self.circuit.indep_current_source(pt1, 0, 1)
         # print "src",pt1,"sink",pt2
-        self.circuit._add_termial(pt2)
-        self.circuit.build_current_info()
+        self.circuit.add_path_to_ground(pt2)
+        self.circuit.handle_branch_current_elements()
         self.circuit.solve_iv()
         vname = 'v' + str(pt1)
         #vname = vname.encode() # for python3 
@@ -457,8 +457,8 @@ class CornerStitch_Emodel_API:
         
 
         # print "src",pt1,"sink",pt2
-        self.circuit._add_termial(pt2)
-        self.circuit.build_current_info()
+        self.circuit.add_path_to_ground(pt2)
+        self.circuit.handle_branch_current_elements()
         self.circuit.solve_iv(mode=1)
         print self.circuit.results
         #netlist = ENetlist(self.module, self.emesh)
