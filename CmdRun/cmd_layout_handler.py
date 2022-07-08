@@ -514,16 +514,20 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     k = (k[0] * dbunit, k[1] * dbunit)
                    
                     CS_SYM_Updated[k] = CS_SYM_information
-            cs_sym_info = [CS_SYM_Updated]  # mapped solution layout information to symbolic layout objects
+            cs_sym_info = [CS_SYM_Updated]  
             structure.layers[i].updated_cs_sym_info.append(cs_sym_info)
             structure.layers[i].layer_layout_rects.append(Layout_Rects)
 
             cs_islands_up = structure.layers[i].new_engine.update_islands(CS_SYM_information, structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].new_engine.init_data[2],
                                                                           structure.layers[i].new_engine.init_data[3])
+            
+            
+            
             module_data.islands[structure.layers[i].name]=cs_islands_up
             module_data.footprint[structure.layers[i].name]=k # (wdith, height)
         module_data.solder_attach_info=structure.solder_attach_required
         md_data=[module_data]
+        
         Solutions = []
         #name='Solution_0'
         index=0
@@ -531,6 +535,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         solution.module_data=module_data #updated module data is in the solution
         
         for i in range(len(structure.layers)):
+            
             structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[0][0]
             structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
 
@@ -589,9 +594,10 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             sol.cs_solution=solution
-            #plot_solution_structure(sol)
-            #for f in sol.features_list:
-                #f.printFeature()
+            '''plot_solution_structure(sol)
+            
+            for f in sol.features_list:
+                f.printFeature()'''
             PS_solutions.append(sol)
 
         #------------------------for debugging---------------------------#
@@ -922,12 +928,12 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 end_random_eval=time.time()-start_random_eval
                 
         
-            end=time.time()
-            #print("Eval",eval_time)
+            #end=time.time()
+            #print("Eval",end_random_eval)
             #print("Gen_time",runtime)
             #print("Total_time",end-start)
-            #print("Random_generation",end_random)
-            #print("Random_eval",end_random_eval)
+            print("Random_generation",end_random)
+            print("Random_eval",end_random_eval)
                 
 
         else:
@@ -1191,7 +1197,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 def get_min_size_sol_info(structure=None, dbunit=1000):
     
-    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map)
+    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw)
     if structure.via_connected_layer_info!=None:
         for via_name, sub_root_node_list in structure.sub_roots.items():
             #print(via_name)

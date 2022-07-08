@@ -18,7 +18,7 @@ debug=False
 ###################################################
 class Rectangle(Rect):
     def __init__(self, type=None, x=None, y=None, width=None, height=None, name=None, Schar=None, Echar=None,
-                 hier_level=None, Netid=None, rotate_angle=None):
+                 hier_level=None, Netid=None, rotate_angle=None, parent=None):
         '''
 
         Args:
@@ -31,6 +31,10 @@ class Rectangle(Rect):
             name: component path_id (from sym_layout object)
             Schar: Starting character of each input line for input processing:'/'
             Echar: Ending character of each input line for input processing: '/'
+            hier_level: hierarchy level (integer)
+            Netid: integer for tracking connectivity
+            rotate_angle: :0 degree, 1:90 degree, 2:180 degree, 3:270 degree
+            parent: Rectangle type object. to track parent component
         '''
         # inheritence member variables
 
@@ -45,7 +49,7 @@ class Rectangle(Rect):
         self.name = name
         self.hier_level = hier_level
         self.rotate_angle = rotate_angle  # to handle rotation of components ):0 degree, 1:90 degree, 2:180 degree, 3:270 degree
-
+        self.parent=parent # for child elements in an island
         Rect.__init__(self, top=self.y + self.height, bottom=self.y, left=self.x, right=self.x + self.width)
 
     def __str__(self):
@@ -56,6 +60,11 @@ class Rectangle(Rect):
 
     def contains(self, b):
         return not (self.x1 > b.x2 or b.x1 > self.x2 or b.y1 > self.y2 or self.y1 > b.y2)
+    def contains_rect(self,rect2):
+        if self.x<=rect2.x and self.x+self.width>=rect2.x+rect2.width and self.y<=rect2.y and self.y+self.height>=rect2.y+rect2.height:
+            return True
+        else:
+            return False
 
     def getParent(self):
         return self.parent

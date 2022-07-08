@@ -47,6 +47,7 @@ class Structure_3D():
         self.all_components_cs_types={} # mapped cs types for each component in all_components
         self.cs_type_map=None # CS_Type_Map object populated from input script parser
         self.constraint_df=None # constraint dataframe
+        self.min_enclosure_bw = 0.0 #making sure wire bond spacing is limited by the pad area of devices
         self.voltage_info=None # voltage information from the user for reliability awareness case
         self.current_info= None # current information from the user for reliability awareness case
         self.objects_3D =[] # duplicated 3D objects.
@@ -210,8 +211,23 @@ class Structure_3D():
         
         self.all_components=all_components
         self.all_components_cs_types=component_to_cs_type
+        spacings=[]
         
+        
+        
+        for layer in self.layers:
+            
+            if len(layer.bondwires)>0:
+                for wire in layer.bondwires:
+                    spacings.append(wire.spacing)
+                    
+        if len(spacings)>0:
+            min_enclosure=min(spacings)
+        else:
+            min_enclosure=1
+
         all_types=self.cs_type_map.types_name
+        all_component_types=self.cs_type_map.all_component_types
         
         Types = [0 for i in range(len(all_types))]
         for i in all_types:
@@ -291,12 +307,25 @@ class Structure_3D():
             space_rows=[]
             for i in range(len(Types)):
                 for k,v in list(component_to_cs_type.items()):
+                    
 
                     if v==Types[i]:
 
                         row=[k]
                         for j in range(len(Types)):
-                            row.append(1)
+                            
+                            if ('Diode' in k or 'MOS' in k or 'IGBT' in k) and (all_component_types[j]=='bonding wire pad'):
+                                #print("H",min_enclosure)
+                                row.append(min_enclosure)
+                            elif (k=='bonding wire pad' and all_component_types[j]=='bonding wire pad'):
+                                row.append(min_enclosure)
+                            elif (k=='bonding wire pad') and (all_component_types[j]=='Diode' or all_component_types[j]=='MOS' or all_component_types[j]=='IGBT'):
+                                
+                                row.append(min_enclosure)
+                                self.min_enclosure_bw=min_enclosure
+                            
+                            else:
+                                row.append(1)
                         space_rows.append(row)
                         all_rows.append(row)
         
@@ -512,6 +541,7 @@ class Structure_3D():
                             f.w=float(rect[ind+4])*dbunit
                             f.l=float(rect[ind+5])*dbunit
                         if f.z<0:
+                            
                             if layer.name in self.solder_attach_required:
                                 '''not_required=[]
                                 for comp in layer.all_components:
@@ -556,6 +586,29 @@ class Structure_3D():
                                     f.z=f1.z_level-f.h*dots
                                     f.z=round(f.z,3)
             
+            for island in layer.islands:
+                for rect in island.child_rectangles:
+                    if rect.name[0]=='B': # Bondwire objects
+                        name=rect.name
+                        x=rect.x
+                        y=rect.y
+                        z=None
+                        for obj_ in objects_3D:
+                            
+                            if rect.parent.name ==obj_.name:
+                                if island.direction=='Z+':
+                                    z=obj_.z+obj_.h # thickness
+                                else:
+                                    z=obj_.z
+                        width=0 # no width for wire bond (point connection)
+                        length=0 #no length for wire bond (point connection)
+                        height=0 # no height for wire bond (point connection)
+                        material = 'Al' # hardcoded
+                        
+                        cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
+                        objects_3D.append(cell_3D_object)
+
+            
             layer_x=self.module_data.layer_stack.all_layers_info[layer.id].x*dbunit
             layer_y=self.module_data.layer_stack.all_layers_info[layer.id].y*dbunit
             layer_z=self.module_data.layer_stack.all_layers_info[layer.id].z_level
@@ -578,8 +631,9 @@ class Structure_3D():
                     
                     layer.initial_layout_objects_3D.append(object_)
         
-        
-        #input()     
+        '''for object_ in objects_3D:
+            object_.print_cell_3D()
+        input() '''    
             
     def update_initial_via_objects(self):
         '''

@@ -399,6 +399,7 @@ class CornerStitch_Emodel_API:
             _type_: trace-trace capacitance
         """        
         '''
+<<<<<<< HEAD
         I used epsilon of air for now, replace with your material
         '''
         l1,b1,w1,h1 = tc1[1:5]
@@ -428,6 +429,13 @@ class CornerStitch_Emodel_API:
             else:
                 cap = -1 # for no overlap
             return cap
+=======
+        for layer,island in module_data.islands.items():
+            print(layer)
+            for isl in island:
+                isl.print_island()
+
+>>>>>>> origin/E_API_Update
         
     
     def eval_trace_ground_cap(self,tc,iso_thick,epsilon = 8.854*1e-12):

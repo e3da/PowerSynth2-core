@@ -170,6 +170,15 @@ class Part:
             self.conn_dict[all_conn[i]]=all_parasitic[i]
         # self.show_info()
 
+    def adjust_pin_order(self):
+        # SiC/IGBT
+        if 'Gate' in self.pin_name and 'Source' in self.pin_name and 'Drain' in self.pin_name:
+            self.pin_name=['Gate', 'Source', 'Drain']
+        if 'Gate' in self.pin_name and 'Emitter' in self.pin_name and 'Collector' in self.pin_name:
+            self.pin_name=['Gate', 'Emitter', 'Collector']
+        if 'Anode' in self.pin_name and 'Cathode' in self.pin_name:
+            self.pin_name=['Anode','Cathode']
+    
     def rotate_90(self):
         # Rotate the part by 90 degree and update pin locations accordingly
         width = self.footprint[0]

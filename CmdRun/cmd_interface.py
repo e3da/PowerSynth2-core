@@ -9,7 +9,8 @@ from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
 from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
-from core.engine.InputParser.input_script import script_translator
+from core.engine.InputParser.input_script_up import script_translator as script_translator_up
+from core.engine.InputParser.input_script import script_translator as script_translator
 from core.engine.LayoutSolution.database import create_connection, insert_record, create_table
 from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
@@ -700,7 +701,11 @@ class Cmd_Handler:
         self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
 
         # calling script parser function to parse the geometry and bondwire setup script
-        all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+        if self.connectivity_setup!=None:
+            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+        else:
+            all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+       
         # adding wire table info for each layer
         for layer in all_layers:
             self.wire_table[layer.name] = layer.wire_table
@@ -720,22 +725,26 @@ class Cmd_Handler:
         
         
 
-        #updating constraint table
-        self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
-        self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
         
         for i in range(len(self.structure_3D.layers)):
             layer=self.structure_3D.layers[i]
             input_info = [layer.input_rects, layer.size, layer.origin]
             layer.populate_bondwire_objects()
             layer.new_engine.rel_cons=self.i_v_constraint
+            #layer.plot_layout(fig_data=None,fig_dir=self.fig_dir,name=all_layers[i].name,rects=layer.input_rects,dbunit=self.dbunit) # plots initial layout
+            #input()
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
-            layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
+            #layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
             self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
-                self.layout_obj_dict[comp.layout_component_id] = comp # for electrical model
+                self.comp_dict[comp.layout_component_id] = comp # for electrical model
+
+        #updating constraint table
+        self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
+        self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
+        
         if len(via_connecting_layers)>0:
             for comp_name, component in self.layout_obj_dict.items():
                 if comp_name.split('.')[0] in via_type_assignment:

@@ -554,7 +554,7 @@ class GUI():
             if ui.combo_layout_mode.currentText() == "minimum-sized solutions" or ui.combo_layout_mode.currentText() == "variable-sized solutions":
                 ui.floor_plan_x.setEnabled(False)
                 ui.floor_plan_y.setEnabled(False)
-                ui.combo_optimization_algorithm.setEnabled(False)
+                #ui.combo_optimization_algorithm.setEnabled(False)
                 if ui.combo_layout_mode.currentText() == "minimum-sized solutions":
                     ui.num_layouts.setText("1")
                     ui.num_layouts.setEnabled(False)
@@ -611,6 +611,7 @@ class GUI():
                     ui.num_layouts.setEnabled(True)
             else:
                 ui.num_layouts.setEnabled(True)
+                ui.combo_optimization_algorithm.setEnabled(True)
             ui.combo_layout_mode.currentIndexChanged.connect(floorplan_assignment)
             ui.btn_run_powersynth.setEnabled(True)
 

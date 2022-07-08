@@ -25,6 +25,10 @@ class Layer():
         self.width=0.0 # width of the layer
         self.height=0.0 # height of the layer
         self.input_geometry=[] # input geometry info from input script
+        self.bw_via_data={} # to incorporate layout script updated version, via location auto assignment is necessary for connector type via
+        self.new_lines={} # to incorporate layout script updated version, all additional lines will be populated
+        self.bw_info={} # to store wire source and destination, direction, number of wires info
+        self.via_table={} # to store via connectivity info
         self.initial_layout_objects_3D=[] # to store initial layout info as 3D objects
         self.all_parts_info={}
         self.info_files={}
@@ -64,14 +68,515 @@ class Layer():
         self.abstract_info={} # dictionary with solution name as a key and layout_symb_dict as a value
 
 
+    def update_input_geometry(self,parts_info=[],wire_info=[],connection_table=None,via_data={}):
+        '''
+        adds necessary components like vias/ bondwire landing points to the input geometry script
+        :param: parts_info: list of component (Part) objects like Device/leads/vias
+        :param: wire_info: list of wire objects
+        :param: layer_wise_table: dictionary of wire information for each layer (raw info from the layout script)
+        '''
+        
+        if connection_table!=None:
+            
+            bond_wires={}
+            for i in range(len(connection_table)):
+                con_table=connection_table[i]
+                
+                wire_name=con_table[0] # Raw wire name
+                for wire in wire_info:
+                    if wire.name==wire_name:
+                        wire_obj=wire
+                
+                if len(con_table)==4:
+                    
+                    start = int(con_table[1].strip('BW'))
+                    end = int(con_table[1].strip('BW'))
+                    direction = con_table[2]
+                    num_of_wires = int(con_table[3])
+                elif len(con_table)==5:
+                    
+                    start = int(con_table[1].strip('BW'))
+                    end = int(con_table[2].strip('BW'))
+                    direction = con_table[3]
+                    num_of_wires = int(con_table[4])
+                else:
+                    print("Not sufficient fields for populating wire bonds. Double Check Connection Table Info")
 
-    def plot_layout(self,fig_data=None, fig_dir=None,name=None,dbunit=1000):
+                #print(wire_name, start, end, direction, num_of_wires)
+                bw_points=[i for i in range(start*2-1,end*2+1)]
+                for j in range(start,end+1):
+                    wire_path={}
+                    wire_id='BW'+str(j)
+                    s=bw_points.pop(0)
+                    source='B'+str(s)
+                    d=bw_points.pop(0)
+                    destination='B'+str(d)
+                    bond_wires[wire_id]={'BW_object':wire_obj,'source_pad':source,'destination_pad':destination,'direction':direction,'num_wires':num_of_wires,'Source':None,'Destination':None}
+                    #bond_wires.append(wire_path)
+
+                #wires_vias[name]={'BW_object':j,'Source':source,'Destination':destination,'num_wires':table_info[i][4],'spacing':table_info[i][5],'source_pad':source_pad,'destination_pad':dest_pad}
+
+            #print(bond_wires)
+            self.bw_info=bond_wires
+
+        all_vias=[]
+        all_bws=[] 
+        new_lines={}
+        for i  in range(len(self.input_geometry)):
+            #print(i,self.input_geometry[i])
+            if len(self.input_geometry[i])>2 and 'Via' not in self.input_geometry[i] and 'B' not in self.input_geometry[i]:
+                
+                
+                
+                for item in self.input_geometry[i]:
+                    
+                    if 'BW' in item :
+                        all_bws.append(item)
+                        #self.input_geometry[i].remove(j)
+                        
+                    if 'V' in item and item!='Via':
+                        all_vias.append(item)
+                if len(all_bws)>0 or len(all_vias)>0:
+                    new_lines[i]=[]
+        #populate source and destination points based on the direction 
+        
+        bw_via_data={} # tracks source/destination point of wires to find destination/source point of wire
+        new_input_lines=0
+        while(new_input_lines)!=(len(all_bws)+len(all_vias)):
+            for i  in range(len(self.input_geometry)):
+                #print(i,self.input_geometry[i])
+                if len(self.input_geometry[i])>2 and 'Via' not in self.input_geometry[i] and 'B' not in self.input_geometry[i]:
+                    
+                    bws=[]
+                    vias=[]
+                    
+                    for item in self.input_geometry[i]:
+                        
+                        if 'BW' in item :
+                            bws.append(item)
+                            #self.input_geometry[i].remove(j)
+                            
+                        if 'V' in item and item!='Via':
+                            vias.append(item)
+                            #self.input_geometry[i].remove(j)
+                    #print(bws,vias)
+                    #'''
+                    
+                    #'''
+                    #print(bws,vias)
+                    
+                    if len(bws)>0 or len(vias)>0:
+                        
+                        
+                        
+                        if self.input_geometry[i][1][0]!='T':
+                            for element in parts_info:
+                                if element.name in self.input_geometry[i]:
+                                    el=copy.deepcopy(element)
+                                    if 'R90' in self.input_geometry[i]:
+                                        el.rotate_90()
+                                    if 'R180' in self.input_geometry[i]:
+                                        el.rotate_180()
+                                    if 'R270' in self.input_geometry[i]:
+                                        el.rotate_270()
+
+                                    footprint = el.footprint
+                                    pin_locs = el.pin_locs # Vertical devices are considered: only gate and source/emitter or Cathode are considered. Drain/Anode/Collector are considered as bottom pins. 
+                                    #print(pin_locs)
+                                    index_ = self.input_geometry[i].index(element.name)
+                                    pins = el.pin_name
+                                    layer_id = self.input_geometry[i][-1] # string   
+                                    if element.name=='MOS':
+                                        
+                                        gate_x = float(self.input_geometry[i][index_+1])+pin_locs['Gate'][0]
+                                        gate_y = float(self.input_geometry[i][index_+2])+pin_locs['Gate'][1]
+                                        source_x = float(self.input_geometry[i][index_+1])+pin_locs['Source'][0]
+                                        source_y = float(self.input_geometry[i][index_+2])+pin_locs['Source'][1]
+                                        source_x1 = float(self.input_geometry[i][index_+1])+pin_locs['Source'][2] # Source pad right boundary
+                                        source_y1 = float(self.input_geometry[i][index_+2])+pin_locs['Source'][3] # Source pad top boundary
+                                        
+                                        
+                                    elif element.name == 'IGBT':
+                                        gate_x = float(self.input_geometry[i][index_+1])+pin_locs['Gate'][0]
+                                        gate_y = float(self.input_geometry[i][index_+2])+pin_locs['Gate'][1]
+                                        source_x = float(self.input_geometry[i][index_+1])+pin_locs['Emitter'][0]
+                                        source_y = float(self.input_geometry[i][index_+2])+pin_locs['Emitter'][1]
+                                        source_x1 = float(self.input_geometry[i][index_+1])+pin_locs['Emitter'][2] # Emitter pad right boundary
+                                        source_y1 = float(self.input_geometry[i][index_+2])+pin_locs['Emitter'][3] # Emitter pad top boundary
+
+
+                                    elif element.name == 'Diode':
+                                        
+                                        source_x = float(self.input_geometry[i][index_+1])+pin_locs['Anode'][0]
+                                        source_y = float(self.input_geometry[i][index_+2])+pin_locs['Anode'][1]
+                                        source_x1 = float(self.input_geometry[i][index_+1])+pin_locs['Anode'][2]
+                                        source_y1 = float(self.input_geometry[i][index_+2])+pin_locs['Anode'][3]
+
+                                    if len(bws) == 1 and len(vias)==0: # diode with wire bond
+                                        #print(self.bw_info)
+                                        if self.bw_info[bws[0]]['Source'] == None:
+                                            layout_id=self.bw_info[bws[0]]['source_pad'] # Anode
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Anode
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id=self.bw_info[bws[0]]['destination_pad'] # Anode
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Anode
+                                        if self.bw_info[bws[0]]['direction'] == 'X':
+                                            source_x_coordinate=(source_x+source_x1)/2.0
+                                            source_y_coordinate=source_y
+                                        elif self.bw_info[bws[0]]['direction'] == 'Y':
+                                            source_x_coordinate=source_x
+                                            source_y_coordinate=(source_y+source_y1)/2.0
+                                        new_line= ['.','.','+', layout_id, 'power', str(source_x_coordinate), str(source_y_coordinate), '0.25', '0.25', layer_id] # 0.25 X 0.25 pad size is considered for demonstration. bw pad is a point connection in this version. So, no usage of those pad dimensions
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line not in new_lines[i]:
+                                            new_lines[i].append(new_line)
+                                            new_input_lines+=1
+                                        
+                                        bw_via_data[bws[0]]={'X': str(source_x_coordinate), 'Y': str(source_y_coordinate), 'type': 'power'}
+                                    
+                                    elif len(bws) == 0 and len(vias) == 1: # diode with via (3D)
+                                        new_line= ['.','.','+', vias[0], 'Via', str(source_x), str(source_y), layer_id]
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line not in new_lines[i]:
+                                            new_lines[i].append(new_line)
+                                            new_input_lines+=1
+                                        dev_id = self.input_geometry[i][index_-1]
+                                        start_pad= dev_id+'_'+pins[0] # Anode
+                                        bw_via_data[vias[0]]={'X': str(source_x), 'Y': str(source_y), 'Source':start_pad, 'source_pad':vias[0]+'.'+layer_id}
+
+                                    elif len(bws) == 1 and len(vias) ==1: # SiC MOSFET/ Si IGBT gate and via (3D) for source  
+                                        if self.bw_info[bws[0]]['Source'] == None:
+                                            layout_id=self.bw_info[bws[0]]['source_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Gate
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id=self.bw_info[bws[0]]['destination_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Gate
+
+
+                                        new_line1= ['.','.','+', layout_id, 'signal', str(gate_x), str(gate_y), '0.25', '0.25', layer_id]
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line1 not in new_lines[i]:
+                                            new_lines[i].append(new_line1)
+                                            new_input_lines+=1
+                                        bw_via_data[bws[0]]={'X': str(gate_x), 'Y': str(gate_y), 'type': 'signal'}
+                                        new_line= ['.','.','+', vias[0], 'Via', str(source_x), str(source_y), layer_id]
+                                        #self.input_geometry.insert(i+2,new_line)
+                                        
+                                        start_pad= dev_id+'_'+pins[1] 
+                                        if new_line not in new_lines[i]:
+                                            new_lines[i].append(new_line)
+                                            new_input_lines+=1
+                                        bw_via_data[vias[0]]={'X': str(source_x), 'Y': str(source_y),'Source':start_pad, 'source_pad':vias[0]+'.'+layer_id}
+
+                                    elif len(bws)==2 and len(vias)==0: # SiC MOSFET/ Si IGBT gate and source only 
+                                        if self.bw_info[bws[0]]['Source'] == None:
+                                            layout_id1=self.bw_info[bws[0]]['source_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Gate
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id1=self.bw_info[bws[0]]['destination_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Gate
+
+                                        new_line1= ['.','.','+', layout_id1, 'signal', str(gate_x), str(gate_y), '0.25', '0.25', layer_id]
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line1 not in new_lines[i]:
+                                            new_lines[i].append(new_line1)
+                                            new_input_lines+=1
+                                        bw_via_data[bws[0]]={'X': str(gate_x), 'Y': str(gate_y), 'type': 'signal'}
+                                        if self.bw_info[bws[1]]['Source'] == None:
+                                            layout_id2=self.bw_info[bws[1]]['source_pad'] # Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Source']= dev_id+'_'+pins[1] # Source
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id2=self.bw_info[bws[1]]['destination_pad'] # Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Destination']= dev_id+'_'+pins[1] # Source
+                                        #new_line= ['.','.','+', layout_id2, 'power', str(source_x), str(source_y), '0.25', '0.25', layer_id]
+                                        if self.bw_info[bws[1]]['direction']=='X':
+                                            source_x_coordinate=(source_x+source_x1)/2.0
+                                            new_line= ['.','.','+', layout_id2, 'power', str(source_x_coordinate), str(source_y), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(source_x_coordinate), 'Y': str(source_y), 'type': 'power'}
+                                        elif self.bw_info[bws[1]]['direction']=='Y':
+                                            source_y_coordinate=(source_y+source_y1)/2.0
+                                            new_line= ['.','.','+', layout_id2, 'power', str(source_x), str(source_y_coordinate), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(source_x), 'Y': str(source_y_coordinate), 'type': 'power'}
+                                    
+                                    elif len(bws)==2 and len(vias)==1: # SiC MOSFET/ Si IGBT gate and kelvin source + via (3D)
+                                        if self.bw_info[bws[0]]['Source'] == None:
+                                            layout_id1=self.bw_info[bws[0]]['source_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Gate
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id1=self.bw_info[bws[0]]['destination_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Gate
+
+                                        new_line1= ['.','.','+', layout_id1, 'signal', str(gate_x), str(gate_y), '0.25', '0.25', layer_id]
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line1 not in new_lines[i]:
+                                            new_lines[i].append(new_line1)
+                                            new_input_lines+=1
+                                        bw_via_data[bws[0]]={'X': str(gate_x), 'Y': str(gate_y), 'type': 'signal'}
+                                        
+                                        if self.bw_info[bws[1]]['Source'] == None:
+                                            layout_id2=self.bw_info[bws[1]]['source_pad'] # Kelvin Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Source']= dev_id+'_'+pins[1] # Kelvin Source
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id2=self.bw_info[bws[1]]['destination_pad'] # Kelvin Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Destination']= dev_id+'_'+pins[1] # Kelvin Source
+
+                                        if self.bw_info[bws[1]]['direction']=='X':
+                                            #source_y_coordinate = (source_y+source_y1)/2.0
+                                            new_line= ['.','.','+', layout_id2, 'signal', str(gate_x), str(source_y), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(gate_x), 'Y': str(source_y), 'type': 'signal'}
+                                        if self.bw_info[bws[1]]['direction']=='Y':
+                                            #source_x_coordinate = (source_x+source_x1)/2.0
+                                            new_line= ['.','.','+', layout_id2, 'signal', str(source_x), str(gate_y), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(source_x), 'Y': str(gate_y), 'type': 'signal'}
+
+                                        new_line2= ['.','.','+', vias[0], 'Via', str(source_x), str(source_y), layer_id]
+                                        #self.input_geometry.insert(i+3,new_line)
+                                        start_pad = dev_id+'_'+pins[1] 
+                                        if new_line2 not in new_lines[i]:
+                                            new_lines[i].append(new_line2)
+                                            new_input_lines+=1
+                                        bw_via_data[vias[0]]={'X': str(source_x), 'Y': str(source_y),'Source':start_pad, 'source_pad':vias[0]+'.'+layer_id}
+                                           
+
+                                    elif len(bws) == 3 and len(vias) ==0: # SiC MOSFET/ Si IGBT gate, kelvin source, and source
+
+                                        if self.bw_info[bws[0]]['Source'] == None:
+                                            layout_id1=self.bw_info[bws[0]]['source_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Source']= dev_id+'_'+pins[0] # Gate
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id1=self.bw_info[bws[0]]['destination_pad'] # Gate
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[0]]['Destination']= dev_id+'_'+pins[0] # Gate
+                                        new_line1= ['.','.','+', layout_id1, 'signal', str(gate_x), str(gate_y), '0.25', '0.25', layer_id]
+                                        #self.input_geometry.insert(i+1,new_line1)
+                                        if new_line1 not in new_lines[i]:
+                                            new_lines[i].append(new_line1)
+                                            new_input_lines+=1
+                                        bw_via_data[bws[0]]={'X': str(gate_x), 'Y': str(gate_y), 'type': 'signal'}
+                                        
+                                        if self.bw_info[bws[1]]['Source'] == None:
+                                            layout_id2=self.bw_info[bws[1]]['source_pad'] # Kelvin Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Source']= dev_id+'_'+pins[1] # Kelvin Source
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id2=self.bw_info[bws[1]]['destination_pad'] # Kelvin Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[1]]['Destination']= dev_id+'_'+pins[1] # Kelvin Source
+
+
+                                        if self.bw_info[bws[1]]['direction']=='Y':
+                                            new_line= ['.','.','+', layout_id2, 'signal', str(source_x), str(gate_y), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(source_x), 'Y': str(gate_y), 'type': 'signal'}
+                                        if self.bw_info[bws[1]]['direction']=='X':
+                                            new_line= ['.','.','+', layout_id2, 'signal', str(gate_x), str(source_y), '0.25', '0.25', layer_id] # assuming gate is in the center and around it there is source pad
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line not in new_lines[i]:
+                                                new_lines[i].append(new_line)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[1]]={'X': str(gate_x), 'Y': str(source_y) , 'type': 'signal'}
+                                        
+                                        if self.bw_info[bws[2]]['Source'] == None:
+                                            layout_id3=self.bw_info[bws[2]]['source_pad'] # Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[2]]['Source']= dev_id+'_'+pins[1] #  Source
+                                        else: # if the bw pad is on a device (another diode)
+                                            layout_id3=self.bw_info[bws[2]]['destination_pad'] # Source
+                                            dev_id = self.input_geometry[i][index_-1]
+                                            self.bw_info[bws[2]]['Destination']= dev_id+'_'+pins[1] # Source
+
+                                        new_line2= ['.','.','+', layout_id3, 'power', str(source_x), str(source_y), '0.25', '0.25', layer_id]
+                                        #self.input_geometry.insert(i+3,new_line)
+                                        if new_line2 not in new_lines[i]:
+                                            new_lines[i].append(new_line2)
+                                            new_input_lines+=1
+                                        bw_via_data[bws[2]]={'X': str(source_x), 'Y': str(source_y), 'type': 'power'}
+                                    
+                                    elif len(vias) == 2 and len(bws) ==0: # SiC MOSFET/ Si IGBT with wire bondless case (via only)
+                                        dev_id = self.input_geometry[i][index_-1]
+                                        new_line1= ['.','.','+', vias[0], str(gate_x), str(gate_y), layer_id]
+                                        #self.input_geometry.insert(i+1,new_line)
+                                        if new_line1 not in new_lines[i]:
+                                            new_lines[i].append(new_line1)
+                                            new_input_lines+=1
+                                        start_pad1=dev_id+'_'+pins[0] 
+                                        bw_via_data[vias[0]]={'X': str(gate_x), 'Y': str(gate_y),'Source':start_pad1, 'source_pad':vias[0]+'.'+layer_id}
+                                        new_line= ['.','.','+', vias[1], 'Via', str(source_x), str(source_y), layer_id]
+                                        #self.input_geometry.insert(i+2,new_line)
+                                        if new_line not in new_lines[i]:
+                                            new_lines[i].append(new_line)
+                                            new_input_lines+=1
+                                        start_pad2=dev_id+'_'+pins[1] 
+                                        bw_via_data[vias[1]]={'X': str(source_x), 'Y': str(source_y),'Source':start_pad2, 'source_pad':vias[1]+'.'+layer_id}
+                                
+                        else: # wires/vias on traces
+                            
+                            trace_x = float(self.input_geometry[i][3])
+                            trace_y = float(self.input_geometry[i][4])
+                            trace_width = float(self.input_geometry[i][5])
+                            trace_length = float(self.input_geometry[i][6])
+                            if self.direction == 'Z+':
+                                layer_id = int(self.input_geometry[i][-1])+1
+                            else:
+                                layer_id = self.input_geometry[i][-1]+'_'
+                            for k in range(len(bws)):
+                                bw = bws[k]
+                                
+                                if bw in bw_via_data: # on traces it can be either trace to trace connection or trace to device connection. If it's a trace to device, the device connection would be source.
+                                    
+                                    if self.bw_info[bw]['Source']!=None and self.bw_info[bw]['Destination']==None:
+                                        layout_id = self.bw_info[bw]['destination_pad']
+                                        self.bw_info[bw]['Destination']=layout_id
+                                    elif self.bw_info[bw]['Source']==None and self.bw_infos[bw]['Destination']!=None:
+                                        layout_id = self.bw_info[bw]['source_pad']
+                                        self.bw_info[bw]['Source']=layout_id
+                                    else:
+                                        layout_id = self.bw_info[bw]['source_pad']
+                                        self.bw_info[bw]['Source']=layout_id
+
+                                    direction = self.bw_info[bw]['direction']
+                                    type_ = bw_via_data[bw]['type']
+                                    if direction == 'Y':
+                                        x_coord = bw_via_data[bw]['X']
+                                        y = float(bw_via_data[bw]['Y'])
+                                        y1 = abs(y-trace_y)
+                                        y2 = abs(y-trace_y-trace_length)
+                                        if y1<=y2:
+                                            y_coord = str(trace_y+0.5)
+                                        else:
+                                            y_coord = str(trace_y+trace_length-0.5)
+                                        #print(x_coord,y_coord,y1,y2)
+                                    elif direction == 'X':
+                                        y_coord = bw_via_data[bw]['Y']
+                                        x = float(bw_via_data[bw]['X'])
+                                        x1 = abs(x-trace_x)
+                                        x2 = abs(x-trace_x-trace_width)
+                                        if x1<=x2:
+                                            x_coord = str(trace_x+0.5)
+                                        else:
+                                            x_coord = str(trace_x+trace_width-0.5)
+
+
+
+
+
+                                    new_line=['.','+',layout_id, type_, x_coord, y_coord, '0.25', '0.25', str(layer_id)]
+                                    if new_line not in new_lines[i]:
+                                        new_lines[i].append(new_line)
+                                        new_input_lines+=1
+
+                            for k in range(len(vias)):
+                                via= vias[k]
+                                #if via in bw_via_data:
+                                x_coord=str(0) #setting dummy values
+                                y_coord=str(0) #setting dummy values
+                                #bw_via_data[via]={'X': str(source_x), 'Y': str(source_y),'Destination':via+'.'+layer_id, 'destination_pad':via+'.'+layer_id}
+                                new_line= ['.','+', via, 'Via', x_coord, y_coord, str(layer_id)]
+                                if new_line not in new_lines[i]:
+                                    new_lines[i].append(new_line)
+                                    new_input_lines+=1
+                    
+                    for j in bws:
+                        if j in self.input_geometry[i] and len(new_lines[i])==len(bws)+len(vias):
+                            self.input_geometry[i].remove(j)
+                    for j in vias:
+                        if j in self.input_geometry[i] and len(new_lines[i])==len(bws)+len(vias):
+                            self.input_geometry[i].remove(j)
+                
+            '''for item in self.input_geometry:
+                print(item)'''
+            #print(new_lines)
+            #print(bw_via_data)
+            #print(new_input_lines)
+        self.bw_via_data=bw_via_data
+        self.new_lines=new_lines
+        
+        
+        
+
+
+
+
+
+    def plot_layout(self,fig_data=None, fig_dir=None,name=None,rects=None,dbunit=1000 ):
 
         '''
         plots initial layout with layout component id on each trace.
         :param: fig_data: patches created after corner stitch operation.
         '''
-        
+        if rects!=None:
+            types_unsorted=['Type_0']
+            for rect in self.input_rects:
+                if rect.type not in types_unsorted:
+                    types_unsorted.append(rect.type)
+
+            if len(self.bondwires)>0:
+                wire_type=self.bondwires[0].cs_type
+            else:
+                wire_type=None
+            if wire_type!=None:
+                types_unsorted.append(wire_type)
+
+            types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
+            types_sorted.sort()
+            types=['Type_'+str(i) for i in types_sorted]
+            
+            n = len(types)
+            all_colors=color_list_generator()
+            #print(self.name,all_colors)
+            colors=[all_colors[i] for i in range(n)]
+            #print(types)
+            self.all_cs_types=types
+            self.colors=colors
+
+            Patches = {}
+
+            for r in rects:
+                i = types.index(r.type)
+                P = matplotlib.patches.Rectangle(
+                    (r.x/dbunit, r.y/dbunit),  # (x,y)
+                    r.width/dbunit,  # width
+                    r.height/dbunit,  # height
+                    facecolor=colors[i],
+                    alpha=0.5,
+                    # zorder=zorders[i],
+                    edgecolor='black',
+                    linewidth=1,
+                )
+                Patches[r.name] = P
+            fig_data=Patches
 
         ax = plt.subplots()[1]
 
@@ -204,7 +709,7 @@ class Layer():
                             rotate_angle=element.rotate_angle
                             rect_info = [type, x, y, width, height, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
                             rects_info.append(rect_info)
-
+              
                 for k, v in list(self.all_route_info.items()):
                     for element in v:
                         if element.layout_component_id in layout_data[j]:
@@ -254,35 +759,46 @@ class Layer():
         for i in range(len(self.cs_info)):
             rect=self.cs_info[i]
             #print("RECT",rect)
+<<<<<<< HEAD
             if rect[5][0]=='T' or rect[-2]==0: #(only traces are allowed)or rect[-2]==0: #hier_level==0
                 rectangle = Rectangle(x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid)
+=======
+            #input()
+            if rect[-2]==0:#rect[5][0]=='T': #(only traces are allowed)or rect[-2]==0: #hier_level==0
+                rectangle = Rectangle(type=rect[0],x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid,hier_level=rect[-2])
+>>>>>>> origin/E_API_Update
                 all_rects.append(rectangle)
                 netid+=1
         for i in range (len(all_rects)):
             rect1=all_rects[i]
-            connected_rects = []
+            connected_rects = [rect1]
 
             for j in range(len(all_rects)):
+                
                 rect2=all_rects[j]
+                if rect1!=rect2:
 
-                #if (rect1.right == rect2.left or rect1.bottom == rect2.top or rect1.left == rect2.right or rect1.top == rect2.bottom)  :
-                if rect1.find_contact_side(rect2)!=-1 and rect1.intersects(rect2):
+                    #if (rect1.right == rect2.left or rect1.bottom == rect2.top or rect1.left == rect2.right or rect1.top == rect2.bottom)  :
+                    if rect1.find_contact_side(rect2)!=-1 and rect1.intersects(rect2):
 
-                    if rect1 not in connected_rects:
-                        connected_rects.append(rect1)
-
-                    connected_rects.append(rect2)
+                        if rect2 not in connected_rects and rect1.type==rect2.type: 
+                            connected_rects.append(rect2)
+                        
             if len(connected_rects)>1:
                 ids=[rect.Netid for rect in connected_rects]
-                id=min(ids)
+                
+                id_=min(ids)
+                
+                
                 for rect in connected_rects:
                     #print rect.Netid
-                    rect.Netid=id
-
-
-        #for rect in all_rects:
-            #print rect.left,rect.bottom,rect.right-rect.left,rect.top-rect.bottom,rect.name,rect.Netid
-
+                    rect.Netid=id_
+            
+            
+        '''
+        for rect in all_rects:
+            print (rect.name,rect.left,rect.bottom,rect.right-rect.left,rect.top-rect.bottom,rect.name,rect.Netid)
+        '''
         islands = []
         connected_rectangles={}
         ids = [rect.Netid for rect in all_rects]
@@ -339,6 +855,7 @@ class Layer():
                                     continue
                         if len(rectangles) != len(island.elements):
                             print("Check input script !! : Group of traces are not defined in proper way.")
+                            exit()
                         elements = island.elements
                         ordered_rectangle_names = [rect.name for rect in rectangles]
                         ordered_elements = []
@@ -356,11 +873,12 @@ class Layer():
                                         element[-3] = '+'
                                     ordered_elements.append(element)
                         island.elements = ordered_elements
+                        
                         island.element_names = ordered_rectangle_names
 
         return islands
 
-    # adds child elements to each island. Island elements are traces (hier_level=0), children are on hier_level=1 (Devices, Leads, Bonding wire pads)
+    # adds child elements to each island. Island elements are on hier_level=0, children are on hier_level=1 (Devices, Leads, Bonding wire pads)
     def populate_child(self,islands=None):
         '''
         :param islands: list of islands
@@ -392,14 +910,25 @@ class Layer():
             #print start,end
             for i in range(len(self.cs_info)):
                 rect = self.cs_info[i]
+                rectangle=Rectangle(type=rect[0],x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],hier_level=rect[-2])
                 if rect[5] in layout_component_ids and rect[5] in all_layout_component_ids:
                     continue
                 elif rect[5] not in all_layout_component_ids and i>start and i<end:
-                    #print rect
+                    island.child_rectangles.append(rectangle)
+                    if rectangle.hier_level==1: # child which are on top of traces
+                        for r in island.rectangles:
+                            
+                            if r.contains_rect(rectangle) and r.hier_level<rectangle.hier_level:
+                                rectangle.parent=r
+                    else:
+                        for rectangle_ in island.child_rectangles:
+                            if rectangle_.contains_rect(rectangle) and rectangle_.hier_level<rectangle.hier_level:
+                                rectangle.parent=rectangle_
                     island.child.append(rect)
+                    
                     island.child_names.append(rect[5])
             #print island.child_names
-
+            
         #--------------------------for debugging---------------------------------
         #for island in islands:
             #print island.print_island(plot=True,size=self.size)
@@ -418,19 +947,24 @@ class Layer():
             for k,v in list(bondwires.items()):
                 if 'BW_object' in v:
                     wire=copy.deepcopy(v['BW_object'])
-                    #print k,v
+                    #print (k,v)
                     if '_' in v['Source']:
                         head, sep, tail = v['Source'].partition('_')
+                    
                         wire.source_comp = head  # layout component id for wire source location
+                        
                     else:
                         wire.source_comp = v['Source']
                     if '_' in v['Destination']:
                         head, sep, tail = v['Destination'].partition('_')
                         wire.dest_comp = head  # layout component id for wire source location
+                        wire.dest_bw_pad = tail # to pass bw landing pad on a device to Electrical API
                     else:
                         wire.dest_comp = v['Destination']
 
+                    
                     if v['source_pad'] in bondwire_landing_info:
+
 
                         wire.source_coordinate = [float(bondwire_landing_info[v['source_pad']][0]),
                                                 float(bondwire_landing_info[v['source_pad']][1])]
@@ -438,14 +972,24 @@ class Layer():
                         wire.dest_coordinate = [float(bondwire_landing_info[v['destination_pad']][0]),
                                                 float(bondwire_landing_info[v['destination_pad']][1])]
 
-
+                    wire.source_bw_pad = v['source_pad'] # to pass bw landing pad on a device to Electrical API
+                    wire.dest_bw_pad= v['destination_pad'] # to pass bw landing pad on a device to Electrical API
                     wire.source_node_id = None  # node id of source comp from nodelist
                     wire.dest_node_id = None  # nodeid of destination comp from node list
                     #wire.set_dir_type() # horizontal:0,vertical:1
                     wire.wire_id=k
                     wire.num_of_wires=int(v['num_wires'])
                     wire.cs_type= self.component_to_cs_type['bonding wire pad']
-                    wire.set_dir_type() #dsetting direction: Horizontal/vertical
+                    try:
+                        wire.set_dir_type() #dsetting direction: Horizontal/vertical
+                    except:
+                        
+                        if v['direction']=='Y':
+                            wire.dir_type=1
+                        elif v['direction']=='X':
+                            wire.dir_type=0
+                    if'spacing' in v:
+                        wire.spacing=float(v['spacing'])
                     bondwire_objects.append(wire)
         
         self.bondwires=bondwire_objects
@@ -580,9 +1124,9 @@ class Layer():
         #print(self.bondwire_landing_info)
         #print(self.bondwires)
         #print(len(self.input_rects))
-        
+        #print(self.bw_info)
 
-
+        #if len(self.colors)==0:
         types_unsorted=['Type_0']
         for rect in self.input_rects:
             if rect.type not in types_unsorted:
@@ -598,15 +1142,16 @@ class Layer():
         types_sorted=[int(i.split('_')[1]) for i in types_unsorted]
         types_sorted.sort()
         types=['Type_'+str(i) for i in types_sorted]
-        
-
         n = len(types)
         all_colors=color_list_generator()
         #print(self.name,all_colors)
         colors=[all_colors[i] for i in range(n)]
-        #print(types)
-        self.all_cs_types=types
         self.colors=colors
+        self.all_cs_types=types
+            
+
+        
+        
         
 
         rectlist=[]
@@ -617,7 +1162,7 @@ class Layer():
             try:
                 type_= rect.type
                 color_ind = types.index(type_)
-                color=colors[color_ind]
+                color=self.colors[color_ind]
             except:
                 print("Corner Sticth type couldn't find for atleast one component")
                 color='black'
@@ -625,7 +1170,7 @@ class Layer():
         
             if rect.hier_level>max_hier_level:
                 max_hier_level=rect.hier_level
-            r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level]# x,y,w,h,cs_type,zorder
+            r=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.name,rect.hier_level]# x,y,w,h,cs_type,zorder
             r2=[rect.x/dbunit,rect.y/dbunit,rect.width/dbunit,rect.height/dbunit,color,rect.hier_level,rect.name,rect.type]
             rect_list_all_layers.append(r2)
             rectlist.append(r)
@@ -633,23 +1178,32 @@ class Layer():
         Patches = []
         Patches_all_layers=[]
         types_for_all_layers_plot=[]
+        if UI:
+            figure = Figure()
+            ax = figure.add_subplot()
+        else:
+            ax=plt.subplots()[1]
         
         if len(self.bondwires)>0:
+            
             wire_bonds=copy.deepcopy(self.bondwires)
             for wire in self.bondwires:
+                #wire.printWire()
 
 
                 if wire.num_of_wires>1:
+                    spacing=float(self.bw_info[wire.wire_id]['spacing'])*dbunit
                     for i in range(1,wire.num_of_wires):
                         wire1=copy.deepcopy(wire)
                         if wire1.dir_type==1: #vertical
-                            wire1.source_coordinate[0]+=(i*800)
-                            wire1.dest_coordinate[0]+=(i*800)
+                            wire1.source_coordinate[0]+=(i*spacing)
+                            wire1.dest_coordinate[0]+=(i*spacing)
 
                         if wire1.dir_type==0: #horizontal
-                            wire1.source_coordinate[1]+=(i*800)
-                            wire1.dest_coordinate[1]+=(i*800)
+                            wire1.source_coordinate[1]+=(i*spacing)
+                            wire1.dest_coordinate[1]+=(i*spacing)
                         wire_bonds.append(wire1)
+            done=[]
             for wire in wire_bonds:#self.bondwires:
                 source = [wire.source_coordinate[0]/dbunit, wire.source_coordinate[1]/dbunit]
                 dest = [wire.dest_coordinate[0]/dbunit, wire.dest_coordinate[1]/dbunit]
@@ -661,9 +1215,20 @@ class Layer():
                 path = Path(verts, codes)
                 type_= wire.cs_type
                 color_ind = types.index(type_)
-                color=colors[color_ind]
+                color=self.colors[color_ind]
                 patch = matplotlib.patches.PathPatch(path, edgecolor=color, lw=0.5,zorder=max_hier_level+1)
                 Patches.append(patch)
+                if wire.wire_id not in done:
+                    if wire.dir_type==0 or wire.dir_type==1: 
+                        loc_x=(point1[0]+point2[0])/2
+                        loc_y=(point1[1]+point2[1])/2
+                        ax.text(loc_x, loc_y, wire.wire_id,size='xx-small')
+                        done.append(wire.wire_id)
+                    
+                    else:
+                        ax.text(point1[0], point1[1], wire.wire_id,size='xx-small')
+                        done.append(wire.wire_id)
+                
 
         for r in rectlist:
             
@@ -674,8 +1239,10 @@ class Layer():
                 facecolor=r[4],
                 zorder=r[-1],
                 linewidth=1,
+                edgecolor='black'
             )
             Patches.append(P)
+            ax.text(r[0], r[1], r[-2],size='small') # name
         if all_layers==True:
             if a<0.9:
                 linestyle='--'
@@ -694,7 +1261,7 @@ class Layer():
 
                 else:
                     label=None
-                if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V':
+                if r[-2][0]=='T' or r[-2][0]=='D' or r[-2][0] =='V' or r[-2][0] == 'L':
                     if r[-1] not in types_for_all_layers_plot:
                         types_for_all_layers_plot.append(r[-1])
                     P = patches.Rectangle(
@@ -713,11 +1280,7 @@ class Layer():
                     Patches_all_layers.append(P)
 
 
-        if UI:
-            figure = Figure()
-            ax = figure.add_subplot()
-        else:
-            ax=plt.subplots()[1]
+        
             
         for p in Patches:
             ax.add_patch(p)
