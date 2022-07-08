@@ -759,14 +759,9 @@ class Layer():
         for i in range(len(self.cs_info)):
             rect=self.cs_info[i]
             #print("RECT",rect)
-<<<<<<< HEAD
-            if rect[5][0]=='T' or rect[-2]==0: #(only traces are allowed)or rect[-2]==0: #hier_level==0
-                rectangle = Rectangle(x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid)
-=======
             #input()
             if rect[-2]==0:#rect[5][0]=='T': #(only traces are allowed)or rect[-2]==0: #hier_level==0
                 rectangle = Rectangle(type=rect[0],x=rect[1], y=rect[2], width=rect[3], height=rect[4],name=rect[5],Netid=netid,hier_level=rect[-2])
->>>>>>> origin/E_API_Update
                 all_rects.append(rectangle)
                 netid+=1
         for i in range (len(all_rects)):

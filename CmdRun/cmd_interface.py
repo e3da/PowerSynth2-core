@@ -702,9 +702,9 @@ class Cmd_Handler:
 
         # calling script parser function to parse the geometry and bondwire setup script
         if self.connectivity_setup!=None:
-            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         else:
-            all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.bondwire_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+            all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
        
         # adding wire table info for each layer
         for layer in all_layers:
