@@ -170,7 +170,7 @@ class CornerStitch_Emodel_API:
         self.e_plates = []  # list of electrical components
         self.e_sheets = []  # list of sheets for connector presentaion
         self.e_comps = []  # list of all components
-        self.net_to_sheet = {}  # quick look up table to find the sheet object based of the net_name
+        self.e_sheets = {}  # quick look up table to find the sheet object based of the net_name
         islands = self.module_data.islands[0]
 
         #for island in islands:
@@ -215,13 +215,13 @@ class CornerStitch_Emodel_API:
                     self.e_sheets.append(pin)
                     # need to have a more generic way in the future
 
-                    self.net_to_sheet[name] = pin
+                    self.e_sheets[name] = pin
                 elif isinstance(obj, Part):
                     if obj.type == 0:  # If this is lead type:
                         new_rect = Rect(top=(y + h) / 1000.0, bottom=y / 1000.0, left=x / 1000.0, right=(x + w) / 1000.0)
                         pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=(0, 0, 1), z=self.get_z_loc(
                             z_id))
-                        self.net_to_sheet[name] = pin
+                        self.e_sheets[name] = pin
                         self.e_sheets.append(pin)
                     elif obj.type == 1:  # If this is a component
                         dev_name = obj.layout_component_id
@@ -242,7 +242,7 @@ class CornerStitch_Emodel_API:
                             right = x / 1000.0 + (px + pwidth)
                             rect = Rect(top=top, bottom=bot, left=left, right=right)
                             pin = Sheet(rect=rect, net_name=net_name, z=z)
-                            self.net_to_sheet[net_name] = pin
+                            self.e_sheets[net_name] = pin
                             dev_pins.append(pin)
                         # Todo: need to think of a way to do this only once
                         dev_conns = self.conn_dict[dev_name]  # Access the connection table
@@ -337,10 +337,10 @@ class CornerStitch_Emodel_API:
             num_wires = int(wire_data['num_wires'])
             start = wire_data['Source']
             stop = wire_data['Destination']
-            #print self.net_to_sheet
+            #print self.e_sheets
 
-            s1 = self.net_to_sheet[start]
-            s2 = self.net_to_sheet[stop]
+            s1 = self.e_sheets[start]
+            s2 = self.e_sheets[stop]
             spacing = float(wire_data['spacing'])
             wire = EWires(wire_radius=wire_obj.radius, num_wires=num_wires, wire_dis=spacing, start=s1, stop=s2,
                           wire_model=None,

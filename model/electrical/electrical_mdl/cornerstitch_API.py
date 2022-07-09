@@ -96,11 +96,13 @@ class CornerStitch_Emodel_API:
     
 
         # orgnaize the layout objects into different types
-        self.trace_dict = {k:self.layout_obj_dict[k] for k in self.layout_obj_dict if k[0] == 'T'}  # Trace
-        self.lead_dict = {k:self.layout_obj_dict[k] for k in self.layout_obj_dict if k[0] == 'L'}  # Lead
-        self.device_dict = {k:self.layout_obj_dict[k] for k in self.layout_obj_dict if k[0] == 'D'}  # Device
-        self.pad_dict = {k:self.layout_obj_dict[k] for k in self.layout_obj_dict if k[0] == 'B'}  # Small pads (points)
+        self.trace_dict = {}  # Trace
+        self.lead_dict = {}  # Lead
+        self.device_task = {} # map the device name to there pins for later connection in the connectivity table
+        self.passive_dict = {} # To handle passive such as resistor or capacitor
+        self.pad_dict = {}  # Small pads (points)
     
+
         # self-impedance and mutual-impedance handler:
         self.name_edge_param_map = {} # map generated component name to its geometry info
         self.mutual_edge_params = {} # map 2 components to their calculated x,y,z distances
@@ -198,35 +200,52 @@ class CornerStitch_Emodel_API:
         elif extension == '.lmmdl':
             self.mdl_type = 1
         self.rs_model = load_mdl(file=mdl_file)
-
-    def convert_layout_to_electrical_objects(self, islands = None, layer_id = None):
-        '''
-        For each layer, get the islands layout data and convert to electrical model objects. Layer_id can be used in case vias are use to distinguish 
-        connections on each layer
-        '''
+    
+    def convert_layout_to_electrical_objects(self, islands = None,feature_map = None):
+        """
+        This function was originally used to convert the 2D objects from CornerStitch to 3D objects for electrical evaluation.
+        All of the connectivity has been done through layer_based and 2D.
+        Note1: A feature_map has been added for 3D objects ... In the feature, this function should use the feature_map only.
+        Note2: All of the dimensions are converted to um and converted to integer based system for more robust calculation 
+        Args:
+            islands (_type_, optional): _description_. Defaults to None. # 2D map for layout hierachy
+            feature_map (_type_, optional): _description_. Defaults to None. # 3D map between feature name and objects (unit in mm)
+        """
+        # Loop through all 2D objects in the ilsands to get the traces 
         for isl in islands:
             isl_dir = isl.direction
             for trace in isl.elements: # get all trace in isl
                 name = trace[5]
-                if not('C' in name[0] or 'R' in name[0]):
+                if not('C' in name[0] or 'R' in name[0]): 
                     z_id = int(name.split(".")[1])
-                    z = int(self.get_z_loc(z_id))
-                    dz = int(self.get_thick(z_id))
-                    x,y,w,h = trace[1:5]
-                    new_rect = Rect(top=(y + h)
-                                    , bottom=y, left=x, right=(x + w))
-                    p = E_plate(rect=new_rect, z=z, dz=dz,z_id = z_id)
-                    #print ("trace height", p.z)
-                    #print ("trace thickness", p.dz)
+                    trace_feature = feature_map[name] # get the feature map to double check
+                    z_feature = int(trace_feature.z*1000)
+                    x_feature = int(trace_feature.x*1000)
+                    y_feature = int(trace_feature.y*1000)
+                    width = int(trace_feature.width*1000)
+                    height = int(trace_feature.length*1000)
+                    dz = int(trace_feature.height) # in the feature, height is dz careful for confusion
+                    new_rect = Rect(top=(y_feature + height)
+                                    , bottom=y_feature, left=x_feature, right=(x_feature + width))
+                    p = E_plate(rect=new_rect, z=z_feature, dz=dz,z_id = z_id)
                     p.group_id=isl.name
                     p.name=trace[5]
                     self.e_traces[p.name] = p
                 else:
+                    # ToDo: Handle the capacitor and resistor here, they are included in the trace list because they share the same hierarchy. 
+                    # In the case of the capacitor, we should let the user to define the loop between the two pins
+                    # At this moment these objects are ignored from feature_map. -- Future students should find a better way for this
+                    x,y,w,h = trace[1:5]
+                    # ToDo: Need a method to create simple pins for the capacitor, the macro script doesnt handle capacitor smartly
+                    # Might have to be the task for Future Students
+                    
                     continue
             for comp in isl.child: # get all components in isl
-                x, y, w, h = comp[1:5]
                 name = comp[5] # get the comp name from layout script
-                
+                comp_feature = feature_map[name]
+                x_feature, y_feature,z_feature = [int(dim*1000) for dim in [comp_feature.x,comp_feature.y,comp_feature.z]]
+                height = int(comp_feature.length*1000)
+                width = int(comp_feature.width*1000)
                 if isl_dir == 'Z+':
                     N_v = (0,0,1) 
                 elif isl_dir =='Z-':
@@ -234,41 +253,24 @@ class CornerStitch_Emodel_API:
                 obj = self.layout_obj_dict[name] # Get object type based on the name
                 type = name[0]
                 z_id = obj.layer_id
-              
                 if isinstance(z_id,str):
                     if "_" in z_id:
                         z_id = int(z_id[0:-1])
                     else:
                         z_id = int(z_id)
-               
-                z=int(self.get_z_loc(z_id))
-                
                 if isinstance(obj, RoutingPath):  # If this is a routing object Trace or Bondwire "Pad"
                     # reuse the rect info and create a sheet
-                    
-                        
-                    if type == 'B': # Handling bondwires
-                    # ToDO: For new wire implementation, need to send a Point data type instead a Rect data type
-                    # TODo: treat them as very small rects with width height of 1(layout units) for now.
-                        #new_rect = Rect(top=y / 1000 + h, bottom=y / 1000, left=x / 1000, right=x / 1000 + w) # Expected
-                        # This is a temp before CS can send correct bw info
-                        # Try to move the center point to exact same bondwire landing location, assuming all w,h =1
-                        new_rect = Rect(top=y + 500, bottom=y - 500, left=x -500, right=x +500)
-                        #ToDO: After POETS, fix the info sent to electrical model
-                    #print(name,z_id)
-                    pin = Sheet(rect=new_rect, net_name=name, net_type='internal', n=N_v, z=z)
-
-                    self.e_sheets[name] = pin
-                    # need to have a more generic way in the future
-
-                    self.net_to_sheet[name] = pin
+                    if type == 'B': # Check for all bondwire land paths
+                        # Create a bounding box of 10um around the center point sent from layout
+                        new_rect = Rect(top=y_feature + 10, bottom=y_feature - 10, left=x_feature -10, right=x_feature +10)
+                    pin = Sheet(rect=new_rect, net_name=name, net_type='internal', n=N_v, z=z_feature)
+                    self.e_sheets[name] = pin 
                 elif isinstance(obj, Part):
                     if obj.type == 0:  # If this is lead type:
                         if name in self.src_sink_dir:
                             self.src_sink_dir[name] = isl_dir
-
-                        new_rect = Rect(top=(y + h), bottom=y, left=x, right=(x + w))
-                        pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z)
+                        new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
+                        pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z_feature)
                         if type == 'V': # Handling Vias type
                             via_name = name.split(".")[0]
                             if not(via_name in self.via_dict): # if this group is not formed
@@ -276,84 +278,37 @@ class CornerStitch_Emodel_API:
                             if len(self.via_dict[via_name]) < 2:# cannot find all connections
                                 self.via_dict[via_name].append(pin)
                             pin.via_type = obj.via_type
-
-                        self.net_to_sheet[name] = pin
                         self.e_sheets[name] = pin
-                    elif obj.type == 1:  # If this is a component
-                        dev_name = obj.layout_component_id
-                        # define spice type here for later extraction 
-                        # the definition through user specify name is not good
-                        # either define in the part object or define in the user manual
-                        # HARDCODED
+                    elif obj.type == 1:  # If this is a component 
+                        dev_name = obj.layout_component_id 
                         if "MOS" in obj.name:
                             spc_type = 'MOSFET'
                         elif "DIODE" in obj.name:
-                            spc_type = 'DIODE'
-                        elif "CAP" in obj.name:
-                            spc_type = 'CAP'
-                        else: 
-                            spc_type = 'INTERNAL_PIN' 
-                        # HARDCODED
-                        
-                        print("DEVICE NAME",dev_name)
+                            spc_type = 'DIODE' 
                         dev_pins = {}  # all device pins
-                        dev_conn_list = []  # list of device connection pairs
-                        dev_para = []  # list of device connection internal parasitic for corresponded pin
-                        # Init the pad with blank for now. 
-                        '''
-                        for pin_name in obj.pin_locs:
+                        net_to_connect = {} # Flag each net with 0: no sheet is creted, 1: a sheet is created
+                        for pin_name in obj.pin_locs: 
+                            # We only store the net info here and map them back to the bondwire pins later
+                            # Then remove these bondwire pins and replaced with the device pins names
                             net_name = dev_name + '_' + pin_name
-                            dev_pins[net_name] = None
-                            self.net_to_sheet[net_name] = None
-                        '''
-                        # The code is the old method which used center location of the pin
-                        
-                        for pin_name in obj.pin_locs:
-                            net_name = dev_name + '_' + pin_name
-                            locs = obj.pin_locs[pin_name]
-                            px, py, pwidth, pheight, side = locs
-                            if side == 'B':  # if the pin on the bottom side of the device
-                                    z = int(self.get_z_loc(z_id))
-                            if isl_dir == 'Z+':
-                                if side == 'T':  # if the pin on the top side of the device
-                                    z = int(self.get_z_loc(z_id) + obj.thickness*1000)
-                            elif isl_dir == 'Z-': 
-                                if side == 'T':  # if the pin on the bottom side of the device
-                                    z = int(self.get_z_loc(z_id) - obj.thickness*1000)
-                                
-                            top = y + int((py + pheight) * 1000)
-                            bot = y + int(py *1000)
-                            left = x + int(px *1000)
-                            right = x + int((px + pwidth)*1000)
-
-                            rect = Rect(top=top, bottom=bot, left=left, right=right)
-                            pin = Sheet(rect=rect, net_name=net_name, z=z,n=N_v)
-                            self.e_sheets[net_name] = pin
-                            self.net_to_sheet[net_name] = pin
-                            dev_pins[net_name]= pin
-                        # Todo: need to think of a way to do this only once
-                        #dev_conns = self.conn_dict[dev_name]  # Access the connection table
-                        '''
-                        
-                        for conn in dev_conns:
-                            if dev_conns[conn] == 1:  # if the connection is selected
-                                pin1 = dev_name + '_' + conn[0]
-                                pin2 = dev_name + '_' + conn[1]
-                                dev_conn_list.append([pin1, pin2])  # update pin connection
-                                dev_para.append(obj.conn_dict[conn])  # update intenal parasitics values
-                        '''
-                        
-                        dev_conn_list = [] # Init this to blank, dynamically change this list depending on the list under analysis
-                        comp = EComp(inst_name =dev_name, sheet=dev_pins, connections=dev_conn_list, val=dev_para,spc_type=spc_type)
-                        print("component", comp)
-                        self.e_comps[dev_name] = comp  # Update the component
-        #for m in self.measure:
-        #    m.src_dir = self.src_sink_dir[m.source]
-        #    m.sink_dir = self.src_sink_dir[m.sink]
+                            if obj.material_id in ['SiC']: # Add more vertical device to this list to handle them 
+                                # We have to handle the Drain pin here cause it is a vertical device
+                                # Now the Device_Drain will be same with the device z
+                                if 'Drain' in net_name:
+                                    new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
+                                    pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z_feature)
+                                    self.e_sheets[net_name] = pin
+                                    dev_pins[net_name]= pin
+                                    net_to_connect[net_name] = 1
+                                else: # other pins
+                                    net_to_connect[net_name] = 0
+                            else: # Connectivity must be made through Via or Bondwires, so we handle them later
+                                net_to_connect[net_name] = 0
+                        self.device_task[dev_name] = [net_to_connect,obj] # Store the tasks in here so we know which dev_pin to update
             
 
     
-    def setup_layout_objects(self,module_data = None):
+    def setup_layout_objects(self,module_data = None,feature_map = None):
         # get all layer IDs
         layer_ids = list(module_data.islands.keys())
         
@@ -368,7 +323,6 @@ class CornerStitch_Emodel_API:
         self.e_traces = {}  # dictionary of electrical components
         self.e_sheets = {}  # dictionary of sheets for connector presentaion
         self.e_comps = {}   # dictionary of all components, initially, all of the component edges will be disconnected 
-        self.net_to_sheet = {}  # quick look up table to find the sheet object based of the net_name
         self.via_dict = {} # a dictionary to maintain via connecitons
         self.wires  = {}
         self.vias ={}
@@ -381,9 +335,9 @@ class CornerStitch_Emodel_API:
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             
-            self.convert_layout_to_electrical_objects(islands=island_data,layer_id =l_key)
+            self.convert_layout_to_electrical_objects(islands=island_data,feature_map = feature_map)
         # handle bondwire group 
-        self.map_wire_and_via()
+        self.handle_components_connectivity()
     # TEMPORARY CODE ONLY DONT MERGE TO MAIN ...
     def eval_trace_trace_cap(self,tc1,tc2,iso_thick=0, mode = 1 ,epsilon = 8.854*1e-12 ):
         """Eval trace to trace capacitance for each trace is a rectangular object from island
@@ -703,13 +657,14 @@ class CornerStitch_Emodel_API:
     
     
     
-    def init_layout_3D(self,module_data = None):
+    def init_layout_3D(self,module_data = None, feature_map = None):
         '''
 
         Args:
             module_data : layout information from layout engine
+            new ---feature_map: to acess 3D locs
         '''
-        self.setup_layout_objects(module_data=module_data)
+        self.setup_layout_objects(module_data=module_data,feature_map = feature_map)
         # Update module object
         self.module = EModule(plates=self.e_traces, sheets=self.e_sheets, wires=self.wires, components= self.e_comps, vias =self.vias,layer_stack=self.layer_stack)
         self.module.form_group_cs_hier()
@@ -809,7 +764,7 @@ class CornerStitch_Emodel_API:
             wire_table = self.wires
             self.layer_id_to_lmesh[layer_id].handle_wire_and_via(net_objects,wire_table)
             
-            debug = False # True will make it slow, cause the figure are quite huge
+            debug = True # True will make it slow, cause the figure are quite huge
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
@@ -1177,10 +1132,17 @@ class CornerStitch_Emodel_API:
             target_sh.rect.left = allign_sh.rect.left
             target_sh.rect.right = allign_sh.rect.right
         return sh1,sh2
-    def map_wire_and_via(self):
-        #first form via connection for trace to trace case
-        #self.form_t2t_via_connections()
+    def handle_components_connectivity(self):
+        """_summary_
+        This function will handle the connectivity of the devices, wires and vias
+        """
+        
         self.device_pins = {} # This dictionary map the device_net to the corresponded pin location
+        # UPDATE DEVICE FLOATING PINS HERE !!!
+        
+        
+             
+        device_wire_map = {d:[] for d in self.device_task} # map a wire to its device to connect them later
         
         for wire_table in list(self.wire_dict.values()):
             for inst_name in wire_table:
@@ -1190,31 +1152,30 @@ class CornerStitch_Emodel_API:
                     num_wires = int(wire_data['num_wires'])
                     start_net_name = wire_data['Source']
                     stop_net_name = wire_data['Destination']
-                    #print self.net_to_sheet
                     start_pin_name = wire_data['source_pad'] 
                     stop_pin_name = wire_data['destination_pad'] 
-                    #if 'D' in start_net_name:
-                    #    start_net_obj = self.layout_obj_dict[start_pin_name]
-                    #elif 'D' in stop_net_name:
-                    #    stop_net_obj = self.layout_obj_dict[start_pin_name]
+                    update_net_1 = False
+                    update_net_2 = False                    
+                                        
+                    # Has to to this twice, to prepare for case we have a jumping bondwire between MOS and DIode
+                    if 'D' in start_net_name: 
+                        dv_name = start_net_name.split('_')
+                        dv_name = dv_name[0]
+                        device_wire_map[dv_name].append(wire_data)
+                        update_net_1 = True                    
                             
-                    # update the z location for these pins
-                    
-                    if start_pin_name in self.net_to_sheet: # Means there is an update for z location
-                        self.net_to_sheet[start_pin_name].z = self.net_to_sheet[start_net_name].z
-                    if stop_pin_name in self.net_to_sheet: # Means there is an update for z location
-                        self.net_to_sheet[stop_pin_name].z = self.net_to_sheet[stop_net_name].z
-                    
-                    # This is a temporary approach to allign 2 pin 
-                    s1 = self.net_to_sheet[start_net_name]
-                    s2 = self.net_to_sheet[stop_net_name]
-                    
-                    '''
-                    s1,s2 = self.allign_two_sheet(self.net_to_sheet[start_net_name],self.net_to_sheet[stop_net_name])
-                    self.e_sheets[start_net_name] = s1
-                    self.e_sheets[stop_net_name] = s2
-                    '''
-                    
+                    if 'D' in stop_net_name:
+                        dv_name = start_net_name.split('_')
+                        dv_name = dv_name[0]
+                        device_wire_map[dv_name].append(wire_data)
+                        update_net_2 = True                    
+                        
+                    s1 = self.e_sheets[start_pin_name]
+                    if update_net_1:
+                        self.e_sheets[start_pin_name].net = start_net_name
+                    s2 = self.e_sheets[stop_pin_name]
+                    if update_net_2:
+                        self.e_sheets[stop_pin_name].net = stop_net_name
                     if sum(s1.n) == -1:
                         wdir = 'Z-' 
                     else:
@@ -1229,16 +1190,27 @@ class CornerStitch_Emodel_API:
                 else: # NEED TO DEFINE A VIA OBJECT, THIS IS A BAD ASSUMTION
                     via_start = wire_data['Source']
                     via_stop = wire_data['Destination']
-                    s1 = self.net_to_sheet[via_start]
-                    s2 = self.net_to_sheet[via_stop]
+                    s1 = self.e_sheets[via_start]
+                    s2 = self.e_sheets[via_stop]
                     via_name = 'v_{}_{}'.format(via_start,via_stop)
 
                     via = EVia(start=s1,stop=s2,via_name = inst_name)
                     if s1.via_type != None:
                         via.via_type = s1.via_type
                     self.vias[via_name] = via
-                    
-        #print(self.e_sheets)    
+        for device in self.device_task:
+            net_to_update, dev_obj = self.device_task[device]           
+            dev_pins = []
+            dev_conn_list = []
+            dev_para = []
+            spc_type = 'MOSFET'
+            for n in net_to_update:
+                print(n)
+            
+            comp = EComp(inst_name =device, sheet=dev_pins, connections=dev_conn_list, val=dev_para,spc_type=spc_type)
+            #self.e_comps[dev_name] = comp  # Update the component
+            print (device_wire_map[device])
+    
     
     def plot_3d(self):
         fig = plt.figure(1)

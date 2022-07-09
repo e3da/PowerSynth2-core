@@ -176,19 +176,22 @@ class EVia(EComp):
 
 class EWires(EComp):
     def __init__(self, wire_radius=0, num_wires=0, wire_dis=0, start=None, stop=None, wire_model=None, frequency=10e3,
-                 p=2.65e-8, circuit=None,inst_name =""):
-        '''
+                 p=2.65e-8, circuit=None,inst_name ="",conn_type="trace-trace"):
+        """_summary_
 
         Args:
-            wire_radius: radius of each wire
-            wire_dis: wire distance in mm
-            num_wires: number of wires
-            start: start sheet
-            stop: stop sheet
-            wire_model: if this is an interpolated model
-            frequency: frequency of operation
-            p: material resistivity (default: Al)
-        '''
+            wire_radius (int, optional):  radius of each wire. Defaults to 0.
+            num_wires (int, optional): number of wires. Defaults to 0.
+            wire_dis (int, optional): wire distance in um. Defaults to 0.
+            start (_type_, optional): start sheet. Defaults to None.
+            stop (_type_, optional): stop sheet. Defaults to None.
+            wire_model (_type_, optional): _description_. Defaults to None.
+            frequency (_type_, optional): _description_. Defaults to 10e3.
+            p (_type_, optional): material resistivity (default: Al). Defaults to 2.65e-8.
+            circuit (_type_, optional): _description_. Defaults to None.
+            inst_name (str, optional): _description_. Defaults to "".
+            conn_type (str, optional): trace-trace, dev-dev, dev-trace. Defaults to "trace-trace".
+        """
         EComp.__init__(self, sheet=[start, stop], connections=[[start.net, stop.net]], type="wire_group",inst_name=inst_name)
         self.num_wires = num_wires
         self.f = frequency

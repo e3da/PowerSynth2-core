@@ -80,7 +80,7 @@ class EMesh(): # rewrite and clean up old EMesh
             node_type = self.map_xyz_node[pos].node_type
             net_name = self.map_xyz_node[pos].net_name
             x,y,z = pos
-            if display_node_net:
+            if display_node_net and not('p' in net_name):
                 ax.text(pos[0],pos[1],s=net_name,weight='bold')
             if display_node_id:
                 ax.text(x=pos[0],y=pos[1],z=pos[2],s = node_name)

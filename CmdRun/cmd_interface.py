@@ -333,12 +333,12 @@ class Cmd_Handler:
             check_dir = os.path.isdir
             if not (check_file(self.layout_script)):
                 print((self.layout_script, "is not a valid file path"))
-            elif not(check_file(self.connectivity_setup)):
-                print((self.connectivity_setup, "is not a valid file path"))
+            #elif not(check_file(self.connectivity_setup)):
+            #    print((self.connectivity_setup, "is not a valid file path"))
             elif not (check_file(self.layer_stack_file)):
                 print((self.layer_stack_file, "is not a valid file path"))
-            elif not (check_file(self.rs_model_file)):
-                print((self.rs_model_file, "is not a valid file path"))
+            #elif not (check_file(self.rs_model_file)):
+            #    print((self.rs_model_file, "is not a valid file path"))
             elif not (check_dir(self.fig_dir)):
                 print((self.fig_dir, "is not a valid directory"))
             elif not (check_dir(self.db_dir)):
@@ -376,7 +376,7 @@ class Cmd_Handler:
             PS_solutions.append(sol)
         
         if init: # IF the electrical init is running, rerturn the initial module data for single eval
-            return md_data
+            return md_data,sol
 
         measure_names=[None,None]
         if len(self.measures)>0:
@@ -426,12 +426,13 @@ class Cmd_Handler:
         check_dir = os.path.isdir
         self.rs_model_file = 'default'
         rs_model_check = True
+            
         cont = check_file(self.layout_script) \
-               and check_file(self.connectivity_setup) \
                and check_file(self.layer_stack_file) \
                and rs_model_check\
                and check_file(self.constraint_file)
-     
+        if self.connectivity_setup != None:
+            cont = check_file(self.connectivity_setup)
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
@@ -482,7 +483,12 @@ class Cmd_Handler:
         '''
            
         # always init with a PEEC run to handle planar type traces
-        self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = self.electrical_models_info['netlist'])
+        if not 'netlist' in self.electrical_models_info:
+            print("No netlist provided, no LVS will be run")
+            netlist = ''
+        else:
+            netlist = self.electrical_models_info['netlist'] 
+        self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
@@ -492,9 +498,13 @@ class Cmd_Handler:
         # Some other data processing
         self.e_api_init.get_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.get_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
-        module_data = self.single_layout_evaluation(init = True) # get the single element list of solution
-
-        self.e_api_init.init_layout_3D(module_data=module_data[0]) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
+        module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
+        features = ps_sol.features_list
+        obj_name_feature_map = {}
+        for f in features:
+            obj_name_feature_map[f.name] = f
+            
+        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh        
         self.e_api_init.form_initial_mesh()
         # Go through every loop and ask for the device mode 
@@ -739,7 +749,7 @@ class Cmd_Handler:
             self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
-                self.comp_dict[comp.layout_component_id] = comp # for electrical model
+                self.layout_obj_dict[comp.layout_component_id] = comp # for electrical model
 
         #updating constraint table
         self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
@@ -1307,7 +1317,8 @@ if __name__ == "__main__":
                    {qmle_nethome:"Unit_Test_Cases/with_vias/Via_Case_5/macro_script.txt"},\
                    {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_3D_Case_Single_Substrate/macro_script.txt'},\
-                    {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'}]
+                    {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'}]
 
 
         for tc in tc_list:
