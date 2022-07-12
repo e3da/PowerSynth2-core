@@ -89,6 +89,7 @@ class Cmd_Handler:
         self.new_mode=1 # 1: constraint table setup required, 0: constraint file will be reloaded
         self.flexible=False # bondwire connection is flexible or strictly horizontal and vertical
         self.plot=False # flag for plotting solution layouts
+        self.model_char_path = "" # Required from PowerSynth 2.0 to organize all the output files
         # Data storage
         self.db_file = None  # A file to store layout database
         self.solutionsFigure = Figure()
@@ -117,6 +118,7 @@ class Cmd_Handler:
         self.thermal_mode = None
         self.electrical_mode = None
         self.export_ansys_em = None
+        self.num_gen = 0
         self.export_task = []
         self.export_ansys_em_info = {}
         self.thermal_models_info = {}
@@ -177,6 +179,8 @@ class Cmd_Handler:
                         self.rs_model_file = 'default'
                 if info[0] == "Fig_dir:":
                     self.fig_dir = os.path.abspath(info[1])
+                if info[0] == "Model_char:": # Require # all model characterization/ device-states/ Analysis Ouput/ Debug
+                    self.model_char_path = os.path.abspath(info[1])
                 if info[0] == "Solution_dir:":
                     self.db_dir = os.path.abspath(info[1])
                 if info[0] == "Constraint_file:":
@@ -314,13 +318,16 @@ class Cmd_Handler:
             
             self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented1 out
-            self.setup_models() # setup electrothermal models, the e_t apis are initiated anyway for AnsysEm and Solidworks extraction purpose
+            
             self.init_export_tasks(self.run_option)
 
 
             if self.run_option == 0: # layout generation only, no need initial evaluation
                 self.run_options() # Start the tool here...
             else:
+                self.setup_models(mode=0) # setup thermal model
+                #self.setup_models(mode=1) # setup electrical model
+                
                 self.electrical_init_setup() # init electrical loop model
                 self.run_options() # Run options with the initial loop model ready
 
@@ -433,12 +440,22 @@ class Cmd_Handler:
                and check_file(self.constraint_file)
         if self.connectivity_setup != None:
             cont = check_file(self.connectivity_setup)
+        
+        
+        # Making Output Dirs for Figure
         if not (check_dir(self.fig_dir)):
             try:
                 os.mkdir(self.fig_dir)
             except:
-                print ("cant make directory for figures")
+                print ("Cant make directory for figures")
                 cont =False
+        # Making Output Dirs for Model Char
+        if not(check_dir(self.model_char_path)):
+            try:
+                os.mkdir(self.model_char_path)
+            except:
+                print("Cant make directory for model characterization")
+        # Making Output Dirs for DataBase
         if not(check_dir(self.db_dir)):
             try:
                 os.mkdir(self.db_dir)
@@ -481,7 +498,6 @@ class Cmd_Handler:
         '''
         This function defines all of the current direction, loops, LVS check, and circuit type
         '''
-           
         # always init with a PEEC run to handle planar type traces
         if not 'netlist' in self.electrical_models_info:
             print("No netlist provided, no LVS will be run")
@@ -492,30 +508,45 @@ class Cmd_Handler:
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
+        self.e_api_init.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
         self.e_api_init.layout_vs_schematic.check_circuit_type()
         # Some other data processing
-        self.e_api_init.get_frequency(self.electrical_models_info['frequency'])
-        self.e_api_init.get_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
+        self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
+        self.e_api_init.workspace_path = self.model_char_path
+        self.e_api_init.set_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
+        self.e_api_init.measure = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
-            
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh        
-        self.e_api_init.form_initial_mesh()
+        self.e_api_init.form_initial_trace_mesh()
+        # Setup wire connection
         # Go through every loop and ask for the device mode 
-        self.e_api_init.check_device_connectivity(main_loops=self.electrical_models_info['main_loops'])
+        self.e_api_init.check_device_connectivity()
         #self.e_api_init.form_net_graph()
-        # Form circuits from the PEEC mesh 
-
-        self.e_api_init.generate_circuit_from_mesh()
-
-        #self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn) # dev_conn need to be provided for each loop
- 
+        # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+        # Eval R, L , M without backside consideration
+        self.e_api_init.generate_circuit_from_trace_mesh()
+        self.e_api_init.add_wires_to_circuit()
+        #self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+        self.e_api_init.eval_and_update_trace_RL_analytical()
+        self.e_api_init.eval_and_update_trace_M_analytical()
+        # EVALUATION PROCESS 
+        # Loop through all loops provided by the user       
+        self.e_api_init.eval_single_loop_impedances()
+        
+        #evalRL_flat_level_no_response_surface
+        #evalM_flat_level_no_response_surface
+        # Now once the base circuit is created, we go ahead and evaluate each loop and analyze them
+        
+        
+        # If user want to user PEEC or we need to extract all braches robustly, we need to use PEEC. Otherwise, attempt for Loop-based
+        
 
         if self.electrical_mode==None:
             if self.export_ansys_em:
@@ -712,8 +743,10 @@ class Cmd_Handler:
 
         # calling script parser function to parse the geometry and bondwire setup script
         if self.connectivity_setup!=None:
+            self.script_mode = 'Old' 
             all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         else:
+            self.script_mode = 'New' 
             all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
        
         # adding wire table info for each layer
@@ -897,14 +930,14 @@ class Cmd_Handler:
         #print mode
         if mode == 'command':
             self.e_api.form_connection_table(mode='command')
-            self.e_api.get_frequency()
+            self.e_api.set_solver_frequency()
             # self.measures += self.e_api.measurement_setup() # MUST SETUP USING LOOPS
         elif mode == 'macro' and self.e_api!=None:
             print("macro mode")
             if type!=None:
                 self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
-                self.e_api.get_frequency(frequency)
-                self.e_api.get_layer_stack(self.layer_stack)
+                self.e_api.set_solver_frequency(frequency)
+                self.e_api.set_layer_stack(self.layer_stack)
                 if type =='LoopFHcompare':
                     self.e_api.e_mdl = "LoopFHcompare"
                 

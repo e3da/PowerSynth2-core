@@ -119,7 +119,7 @@ class LtSpice_layout_to_schematic():
         self.schem_flag_dict = {}
     def set_up_comp_locations(self):
         # get per_layer_components
-        comps = self.E_API.e_comps
+        comps = self.E_API.e_devices
         for comp in comps: # need to determine device type later 
             print (comp.spice_type,comp.inst_name)
             if comp.spice_type =='MOSFET':

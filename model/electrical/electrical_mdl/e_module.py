@@ -131,6 +131,7 @@ class EComp:
         '''
         self.inst_name = inst_name
         self.sheet = sheet
+        self.nets = []
         self.net_graph = nx.Graph()
         self.connections = connections  # based on net name of the sheets
         self.passive = val  # value of each edge, if -1 then 2 corresponding node in graph will be merged
@@ -138,21 +139,12 @@ class EComp:
         self.type = type
         self.spice_type = spc_type
         self.class_type ='device'
+        self.conn_order = {} # To map with the pin connectivity order provided in the device.part file
         
-    def update_nodes(self):
-        for sh in self.sheet:
-            self.net_graph.add_node(sh.net, node=sh)
-            sh.component = self
-
-    def update_edges(self):
-        for c, v in zip(self.conn, self.passive):
-            self.net_graph.add_edge(c[0], c[1], edge_data=v)
-
-    def build_graph(self, mode =0):
-        self.update_edges()
     def __str__(self) -> str:
         message = "device_type:" + str(self.type) + " spice type "+str(self.spice_type)
         return message
+    
 class EVia(EComp):
     def __init__(self, start=None, stop=None,via_name= ""):
         '''
@@ -166,17 +158,15 @@ class EVia(EComp):
         EComp.__init__(self, sheet=[start, stop], connections=[[start.net, stop.net]], type="via",inst_name= via_name)
         self.class_type ='via'
         self.via_type = 'f2f'
-    def build_graph(self, mode =0):
-        # perfect conductor. will add function for via evaluation later 
-        R_val = 1e-6
-        L_val = 1e-11
-        self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R_val, 'L': L_val, 'C': None})
-        
+        self.via_grid = []
+        self.via_rad = []
+        self.v_v_distance = 10
+        self.parent_comp = '' #if not exist, this is a trace-trace via type    
      
 
 class EWires(EComp):
-    def __init__(self, wire_radius=0, num_wires=0, wire_dis=0, start=None, stop=None, wire_model=None, frequency=10e3,
-                 p=2.65e-8, circuit=None,inst_name ="",conn_type="trace-trace"):
+    def __init__(self, wire_radius=0, num_wires=0, wire_dis=0, start=None, stop=None , frequency=10e3,
+                 p=2.65e-8, circuit=None,inst_name =""):
         """_summary_
 
         Args:
@@ -203,11 +193,11 @@ class EWires(EComp):
         self.wire_dir = 'Z+'
         self.start_net = start.net
         self.stop_net = stop.net
-        if wire_model == None:
-            self.mode = 'analytical'
-        else:
-            self.mode = 'interpolated'
-
+        self.parent_comp = '' #if not exist, this is a trace-trace wire type
+        # Using dictionary as table for evaluated R, L, and M value
+        self.imp_map = {}
+        self.mutual_map = {}
+        
     def __str__(self):
         return "{0}: radius {1}, start_pt: {2}, end_pt: {3}".format(self.inst_name,self.r,self.start_net, self.stop_net)
 
@@ -248,80 +238,36 @@ class EWires(EComp):
             top = max([c_s[1],c_e[1]])
             ori = 2
         return [left,right,top,bottom,average_thickness,average_z,ori] # send the ribbon representation to loop model
-    def add_simple_edges(self):
-        self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': 1e-12, 'L': 1e-12, 'C': None})
-    def  update_wires_parasitic(self):
-        '''
-        Update the parasitics of a wire group. Return single R,L,C result
-
-        '''
+    
+    def update_wires_parasitic(self):
+        """From a wire group, this function will evaluae the R, L, M value of each wire and wire-wire
+        length of the bondwires in reality are usually longer due to different bonding techinque, for JEDEC
+        https://awrcorp.com/download/faq/english/docs/Elements/BWIRES.htm
+        first divide the wire in 3 section and assume alpha,beta to be 30 degree
+        length = length/3 + 4*length/math.sqrt(3)/3
+        """
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
-        length = math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2) /1000.0 # using integer input
-        
-        print ("wire group length",length)
-        # length of the bondwires in reality are usually longer due to different bonding techinque, for JEDEC
-        # https://awrcorp.com/download/faq/english/docs/Elements/BWIRES.htm
-        # first divide the wire in 3 section and assume alpha,beta to be 30 degree
-        #length = length/3 + 4*length/math.sqrt(3)/3
-         
-        start = 1
-        end = 0
-        if self.mode == 'analytical':
-            group = {}  # all mutual inductance pair
-            R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
-            L_val = wire_inductance(r=self.r, l=length) * 1e-9
-            branch_val = 1j * L_val + R_val
-            #print("wire",L_val)
-            if self.num_wires>1: # CASE 1 we need to care about mutual between wires
-                for i in range(self.num_wires):
-                    RLname = 'B{0}'.format(i)
-                    self.circuit._graph_add_comp(name=RLname, pnode=start, nnode=end, val=branch_val)
-                for i in range(self.num_wires):
-                    for j in range(self.num_wires):
-                        if i != j and not ((i, j) in group):
-                            group[(i, j)] = None  # save new key
-                            group[(j, i)] = None  # save new key
-                            distance = abs(j - i) * self.d
-                            L1_name = 'B{0}'.format(i)
-                            L2_name = 'B{0}'.format(j)
-                            M_name = 'M' + '_' + L1_name + '_' + L2_name
-                            M_val = wire_partial_mutual_ind(length, distance) * 1e-9
-                            #print (L_val,M_val)
-                            #input()
-                            self.circuit.graph_add_M(M_name, L1_name, L2_name, M_val)
-                self.circuit.assign_freq(self.f)
-                self.circuit.graph_to_circuit_minimization()
-
-                self.circuit.indep_current_source(0, 1, val=1)
-                self.circuit.handle_branch_current_elements()
-                try:
-                    self.circuit.solve_iv(mode =2)
-                    imp =self.circuit.results['v1']
-                    R = abs(np.real(imp))
-                    L = abs(np.imag(imp) / (2 * np.pi * self.f))
-                except:
-                    #print "Error occur, fast estimation used"
-                    debug = False
-                    if debug:
-                        print(("num wires" ,self.num_wires))
-                        print(("connections", self.conn))
-                    R=R_val/self.num_wires
-                    L=L_val/self.num_wires
-                #print("length",length)
-                print("wire R,L", R, L)
-                self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R, 'L': L, 'C': None})
-            else : # No mutual eval needed, fast evaluation
-                self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R_val, 'L': L_val, 'C': None})
-
-            # print self.net_graph.edges(data=True)
-
-    def build_graph(self,mode = 0):
-        #print "update wires para"
-        if mode == 0: # in PEEC mode, need to evaluate the inductance of each wire
-            self.update_wires_parasitic()
-        else: # simply add the edge 
-            self.add_simple_edges()
+        length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))/1000 # using integer input
+        group = {}  # all mutual inductance pair
+        R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
+        L_val = wire_inductance(r=self.r, l=length) * 1e-9
+        branch_val = 1j * L_val + R_val
+        if self.num_wires>1: # CASE 1 we need to care about mutual between wires
+            for i in range(self.num_wires):
+                RLname = 'Z{0}_{1}'.format(self.inst_name,i)
+                self.imp_map[RLname] = branch_val
+            for i in range(self.num_wires):
+                for j in range(self.num_wires):
+                    if i != j and not ((i, j) in group):
+                        group[(i, j)] = None  # save new key
+                        group[(j, i)] = None  # save new key
+                        distance = abs(j - i) * self.d
+                        L1_name = 'Z{0}_{1}'.format(self.inst_name,i)
+                        L2_name = 'Z{0}_{1}'.format(self.inst_name,j)
+                        #M_name = 'M' + '_' + L1_name + '_' + L2_name
+                        M_val = wire_partial_mutual_ind(length, distance) * 1e-9
+                        self.mutual_map[(L1_name,L2_name)] = M_val
 
 
 class ESolderBalls(EComp):
@@ -370,8 +316,6 @@ class ESolderBalls(EComp):
                     if self.grid[r, c] == 1:  # if there is a solder ball in this location
                         R_name = 'R{0}{1}'.format(r, c)
                         L_name = 'L{0}{1}'.format(r, c)
-                        self.circuit._graph_add_comp(name=R_name, pnode=start, nnode=mid, val=R_val)
-                        self.circuit._graph_add_comp(name=L_name, pnode=mid, nnode=end, val=L_val)
                         names.append('L{0}{1}'.format(r, c))
                         id.append((r, c))
                     else:
@@ -391,20 +335,11 @@ class ESolderBalls(EComp):
                         distance = math.sqrt(dx ** 2 + dy ** 2)
                         M_name = 'M{0}{1}'.format(id1, id2)
                         M_val = ball_mutual_indutance(h=self.h, r=self.r, d=distance)
-                        self.circuit.graph_add_M(M_name, L1, L2, M_val)
 
 
                     else:
                         continue
 
-            self.circuit.assign_freq(self.f)
-            self.circuit.add_indep_voltage_src(1, 0, val=1)
-            self.circuit.handle_branch_current_elements()
-            self.circuit.solve_iv()
-            R, L = self.circuit._compute_imp2(1, 0)
-            self.net_graph.add_edge(self.sheet[0].net, self.sheet[1].net, edge_data={'R': R, 'L': L, 'C': None})
-            # print self.net_graph.edges(data=True)
-            #print((R, L))
 
     def build_graph(self):
         self.update_sb_parasitic()

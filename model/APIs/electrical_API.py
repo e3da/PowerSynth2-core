@@ -108,7 +108,7 @@ class CornerStitch_Emodel_API:
                             states[conns] = dev_conn[name][list(comp.conn_dict.keys()).index(conns)]
                         self.conn_dict[name] = states
         #print self.conn_dict
-    def get_frequency(self, frequency=None):
+    def set_solver_frequency(self, frequency=None):
         if frequency == None:
             freq = eval(input("Frequency for the extraction in kHz:"))
             self.freq = float(freq)
@@ -169,7 +169,7 @@ class CornerStitch_Emodel_API:
         self.height/=1000.0
         self.e_plates = []  # list of electrical components
         self.e_sheets = []  # list of sheets for connector presentaion
-        self.e_comps = []  # list of all components
+        self.e_devices = []  # list of all components
         self.e_sheets = {}  # quick look up table to find the sheet object based of the net_name
         islands = self.module_data.islands[0]
 
@@ -253,11 +253,11 @@ class CornerStitch_Emodel_API:
                                 dev_conn_list.append([pin1, pin2])  # update pin connection
                                 dev_para.append(obj.conn_dict[conn])  # update intenal parasitics values
 
-                        self.e_comps.append(
+                        self.e_devices.append(
                             EComp(sheet=dev_pins, conn=dev_conn_list, val=dev_para))  # Update the component
         self.make_wire_table()
         # Update module object
-        self.module = EModule(plate=self.e_plates, sheet=self.e_sheets, components=self.wires + self.e_comps)
+        self.module = EModule(plate=self.e_plates, sheet=self.e_sheets, components=self.wires + self.e_devices)
         self.module.form_group_cs_hier()
         #'''
         if self.hier == None:
@@ -347,7 +347,7 @@ class CornerStitch_Emodel_API:
                           frequency=self.freq, circuit=ModifiedNodalAnalysis())
 
             self.wires.append(wire)
-        #self.e_comps+=self.wires
+        #self.e_devices+=self.wires
     def plot_3d(self):
         fig = plt.figure(1)
         ax = a3d.Axes3D(fig)

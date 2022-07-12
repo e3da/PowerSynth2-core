@@ -532,14 +532,14 @@ class Cmd_Handler:
         #print mode
         if mode == 'command':
             self.e_api.form_connection_table(mode='command')
-            self.e_api.get_frequency()
+            self.e_api.set_solver_frequency()
             self.measures += self.e_api.measurement_setup()
         elif mode == 'macro':
             print("macro mode")
             
             self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
-            self.e_api.get_frequency(frequency)
-            self.e_api.get_layer_stack(self.layer_stack)
+            self.e_api.set_solver_frequency(frequency)
+            self.e_api.set_layer_stack(self.layer_stack)
             self.measures += self.e_api.measurement_setup(meas_data)
         if self.layout_ori_file != None:
             print("this is a test now")

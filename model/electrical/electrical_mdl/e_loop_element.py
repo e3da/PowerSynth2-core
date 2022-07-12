@@ -10,12 +10,12 @@ print ("cur path",cur_path)
 sys.path.append(cur_path)
 print (sys.path[0])
 # get the 3 fold integral mutual equation.
-from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind
+from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind # 
 
 # Cython implementation:
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
 # Python multiproces:
-from core.model.electrical.parasitics.equations import update_mutual_mat_64_py
+from core.model.electrical.parasitics.equations import update_mutual_mat_64_py # JIT compoler based
 #from core.model.electrical.visualization.view_matrix import matrix_view_autoscale
 import ctypes
 import numpy as np
@@ -33,125 +33,17 @@ from collections import OrderedDict
 from memory_profiler import profile
 import joblib
 from sklearn.preprocessing import PolynomialFeatures
-# Math function to be used
+from core.model.electrical.parasitics.equations import self_ind_py # Trace indcutance for a rectangular bar w,l,t
+from core.model.electrical.parasitics.equations import form_skd,self_imp_py_mat, CalVal2
+
+
 u0 = 4* np.pi * 1e-7
 copper_res = 1.72*1e-8
 asinh = math.asinh
 atan = math.atan
 sqrt = math.sqrt
 PI = np.pi
-def form_skd(width=2, N = 3):
-    '''
-    Gotta make sure that N is always an odd number such as 1 3 5 7 ...
-    '''
-    #skind_depth = math.sqrt(1 / (math.pi * freq * u * cond * 1e6))
-    #print (freq)
-    d_mult =[]
-    if N%2 ==0:
-        for i in range(N):
-            if i < N/2:
-                num = 2**i
-            else:
-                num = 2**(N-i-1)
-            d_mult.append(num)
-    else:
-        for i in range(N):
-            if i < N/2:
-                num = 2**i
-            else:
-                num = 2**(N-1-i)
-            d_mult.append(num)
-        mid = int((N-1)/2)
-        d_mult[mid] = d_mult[mid-1]*2
-    d_min = width / sum(d_mult)
-    d_mult = np.array(d_mult)
-    d = d_mult*d_min
-    d = [int(math.ceil(i)) for i in d] # set min to 1um 
-    #print("freq_dependent",d)
 
-    return d
-'''Equation for different cases -- move these to a different location. '''  
-def CalVal2(k):
-    val2 = 2e-7 * (np.log(np.sqrt(k**2+1) +k) - np.sqrt(1/k**2 +1) + 0.9054/k +0.25)
-    return abs(val2)
-
-def self_ind_test_rs(ws,ls,f,mdl_dir = "/nethome/qmle/response_surface_update/model_1_test1.rsmdl"):
-    x_WL = []
-    for w in ws:
-        for l in ls:
-            x_WL.append([w,l])
-    x_WL = np.array(x_WL)
-    poly = PolynomialFeatures(degree=5,interaction_only= False)
-    xtrain_scaled = poly.fit_transform(x_WL)
-    model = joblib.load(mdl_dir)
-    f_choose =1e20
-    for f_c in list(model.keys()):
-        if abs(f_c-f) < abs(f_choose-f):
-            f_choose = f_c    
-    
-    
-    L_model = model[f_choose]['L']
-    R_model = model[f_choose]['R']
-    all_r = R_model.predict(xtrain_scaled)*1e-6
-    all_l = L_model.predict(xtrain_scaled)*1e-9
-    if all_l[0]<0:
-        print('negative',w,l)
-        #input()
-    return all_r,all_l
-def self_ind_c_type(w,l,t):
-    ''' THis is used to validate the python implementation, not best for speed right now'''
-    return u0*self_ind(w,l,t)
-
-
-def self_ind_py(w,l,t):
-    '''This function is from FastHenry Joelself.c might consider to rewrite this in C++ for speed up
-    https://github.com/ediloren/FastHenry2/blob/master/src/fasthenry/joelself.c
-    '''
-    w1 = w/l
-    t1 = t/l
-    r = sqrt(w1*w1 + t1*t1)
-    aw = sqrt(w1*w1 + 1)
-    at = sqrt(t1*t1 + 1)
-    ar = sqrt(w1*w1 +t1*t1 +1)
-    z = 0.25 * ((1/w1) * asinh(w1/at) + (1/t1) * asinh(t1/aw) + asinh(1/r)) # checked
-
-    z += (1/24.0) * ((t1*t1/w1) * asinh(w1/(t1*at*(r+ar))) +(w1*w1/t1) *asinh(t1/(w1*aw*(r+ar))) +\
-         ((t1*t1)/(w1*w1))* asinh(w1*w1/(t1*r*(at+ar)))+ ((w1*w1)/(t1*t1))* asinh(t1*t1/(w1*r*(aw+ar))) +\
-         (1.0/(w1*t1*t1))*asinh(w1*t1*t1/(at*(aw+ar)))+ (1.0/(t1*w1*w1)*asinh(t1*w1*w1/(aw*(at+ar)))))
-    z -= (1.0/6.0) * ((1.0/(w1*t1))*atan((w1*t1)/ar) + (t1/w1)* atan(w1/(t1*ar))+(w1/t1)*atan(t1/(w1*ar))) 
-    z -= (1.0/60.0) *(((ar +r+t1+at)*t1*t1)/((ar+r)*(r+t1)*(t1+at)*(at+ar))\
-                    + ((ar +r+w1+aw)*(w1*w1))/((ar+r)*(r+w1)*(w1+aw)*(aw+ar))\
-                    + (ar+aw+1+at)/((ar+aw)*(aw+1)*(at+1)*(at+ar))) # checked
-    z -= (1.0/20.0) * (1.0/(r+ar) + 1.0/(aw+ar) + 1.0/(at+ar)) 
-    z *= (2.0/PI) 
-    z *= l
-    #print (z*1e-6)
-    return z * 4*PI*1e-7 # inductance in uH -> H
-    
-def self_imp_py_mat(input_mat=[],f=1e8,type = 'trace',eval_type ='equation'):
-    mat_result = []
-    if eval_type == 'equation':
-        for i in range(len(input_mat)):
-            w,l,t = input_mat[i]
-            R = copper_res*l/(w*t)*1e6
-            r = sqrt(w**2+t**2)
-            k = l/r
-            if type == 'trace':
-                L = self_ind_py(w,l,t) *1e3 * 1e-9
-            elif type == 'wire':
-                L = l*1e-6*CalVal2(k)
-                
-            mat_result.append([R,L])
-    
-    elif eval_type == 'regression':
-        print(input_mat)
-        ws = input_mat[:,0]
-        ls = input_mat[:,1]        
-                
-        all_R, all_L = self_ind_test_rs(ws/1000,ls/1000,f)
-        for i in range(len(all_R)):
-            mat_result.append([all_R[i],all_L[i]])
-    return mat_result    
 class ETrace():
     
     def __init__(self):
@@ -270,6 +162,7 @@ class ETrace():
                 self.elements.append(new_fil)
                 id +=1
         return [dws,dhs,id]
+
     def form_mesh_ground_plane(self,trace_shadows = {},start_id =0):
         # Nw will be applied for unifor mesh with no trace-shadow
         dhs = form_skd(self.thick,N=self.nhinc)
@@ -336,8 +229,6 @@ class ETrace():
         '''
         return [gr_dws,dhs,id]
 
-   
-        
 class EFilament():
     def __init__(self):
         self.ori = 0  # 0 - horizontal 1-vertical 2-vertical 3-diagonal
@@ -459,8 +350,7 @@ class EFilament():
             #if Lval <0:
             #    Lval = Lval_eq
             #print('compare',Lval,Lval_eq)
-        #Lval = self_ind_c_type(self.width,len,self.thick) # input values in cm
-        #print ("lapprox-lreal",Lval1,Lval)
+        
         
         self.R = Rval
         self.L = Lval
@@ -501,9 +391,6 @@ class EFilament():
             return delta,m,n
         else: # Vertical case
             print ("code me") # same as above        
-            
-            
-    
           
     def eval_mutual(self,element):
         gmd = self.eval_distance(element)
@@ -515,7 +402,6 @@ class EFilament():
             if m == n and m == delta:
                 k = m/gmd
                 M = m*CalVal2(k)
-                
             else:
                 l1 = delta + m +n
                 k1 = l1/gmd
@@ -526,7 +412,6 @@ class EFilament():
                 l4 = delta +n 
                 k4 = l4/gmd
                 M = l1*CalVal2(k1) + l2*CalVal2(k2) - l3*CalVal2(k3) - l4*CalVal2(k4)
-               
             return M
     
     def eval_mutual3(self,element):
