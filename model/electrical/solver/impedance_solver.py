@@ -331,7 +331,7 @@ def gnp_random_connected_net_graph(min_id =0 , max_id = 2, p=0.2):
 def example2():
     # generate a simple mesh graph to test as input from CornerStitch API
     # create 4 random graphs (not connected) and combine them
-    total_nodes = 600
+    total_nodes = 50
     firstset = int(total_nodes/4)
     nodes = [1,firstset,2*firstset,3*firstset,4*firstset] # node_id , ignore 0 for ground net
     net_graph1 = gnp_random_connected_net_graph(nodes[0],nodes[1],0.2)

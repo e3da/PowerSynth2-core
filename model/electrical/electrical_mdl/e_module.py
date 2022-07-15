@@ -153,17 +153,31 @@ class EVia(EComp):
         Args:
             start: start sheet
             stop: stop sheet
-            
+        TODO: merge this with solder ball array    
         '''
         EComp.__init__(self, sheet=[start, stop], connections=[[start.net, stop.net]], type="via",inst_name= via_name)
         self.class_type ='via'
         self.via_type = 'f2f'
         self.via_grid = []
         self.via_rad = []
-        self.v_v_distance = 10
+        self.start_net = start.net
+        self.stop_net = stop.net
         self.parent_comp = '' #if not exist, this is a trace-trace via type    
-     
-
+        self.imp_map = {}
+        self.p = 2.65e-8 # Al
+    
+    def update_via_parasitics(self):
+        """Evaluate via R L using wire equation.
+        If you can find a better equation, replace them here
+        """
+        RLname = 'Z{0}'.format(self.inst_name)
+        dz = abs(self.sheet[0].z -self.sheet[1].z)
+        dx = self.sheet[0].rect.width
+        dy = self.sheet[0].rect.height
+        r = np.sqrt(dx**2 +dy**2)/2
+        R_val = wire_resistance(f=1e6, r=r, p=self.p, l=dz) * 1e-3
+        L_val = wire_inductance(r=r, l=dz) * 1e-9     
+        self.imp_map[RLname] = R_val + 1j*L_val # Place holder if we want to handle solderball array    
 class EWires(EComp):
     def __init__(self, wire_radius=0, num_wires=0, wire_dis=0, start=None, stop=None , frequency=10e3,
                  p=2.65e-8, circuit=None,inst_name =""):
@@ -249,6 +263,8 @@ class EWires(EComp):
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))/1000 # using integer input
+        length = length/3 + 4*length/math.sqrt(3)/3
+        
         group = {}  # all mutual inductance pair
         R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
         L_val = wire_inductance(r=self.r, l=length) * 1e-9

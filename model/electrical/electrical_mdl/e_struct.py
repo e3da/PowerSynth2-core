@@ -4,21 +4,22 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 from core.MDK.Design.library_structures import Lead
 
-
-
-
-
 class E_plate:
     def __init__(self, rect=None, z=1, dz=1, n=(0, 0, 1),z_id = 0):
-        '''
+        """Initially used to represent traces in the previous PowerSynth version, this might 
+        have some similarity with the PSfeature object, Future Student: should inherit the PSFeature 
+        object to make the code cleaner
+        This object represents a conductor with thickness and will be used to form the electrical hierachy or layer-layer mesh
 
         Args:
-                z: height based on n
-                dz: thickness based on n
-                n: define the normal vector of the plane (only 6 options)
-                z_id: current layer_id in layerstack
-                
-        '''
+            rect (Rectangle): 2D rectangle. Defaults to None.
+            z (int): z location of the plate. Defaults to 1.
+            dz (int): thickness of the plate. Defaults to 1.
+            n (tuple): In the 2D version, this was initially used to define which 
+                        side the devices and components are connected
+                        Might need to rethink for full 3D . Defaults to (0, 0, 1).
+            z_id (int): layer id according to the layerstack input. Defaults to 0.
+        """
         self.rect = rect
         self.n = n
         self.dz = dz * sum(self.n)
@@ -39,21 +40,20 @@ class E_plate:
             self.z = rect.left
             self.x = rect.bottom
             self.y = z #* sum(self.n)
-
         # Used these to save edges and nodes information
         self.mesh_nodes=[]
         self.name =None # String to represent object name (serve for hierarchy later)
         self.node = None  # node reference to Tree
         self.group_id = None # if we know the group to begin with.
+        
     def include_sheet(self,sheet):
-        '''
+        """Check whether a sheet(Sheet) object form a connection with a trace 
 
         Args:
-            sheet: a sheet object
-
-        Returns: True if the sheet is within the E_plate faces. False otherwise
-
-        '''
+            sheet (Sheet): read the description in the class
+        Returns:
+            bool : True if connected False otherwise
+        """
         # Assume 2 sheets on same plane xy and same z, check if trace enclose sheet
         #print self.n, -1*sheet.n, self.z ,sheet.z,self.dz
         if (self.n == sheet.n and (self.z +self.dz) == sheet.z) or (sum(self.n) == -1*sum(sheet.n) and self.z == sheet.z): #upper and lower faces of a trace
@@ -81,21 +81,20 @@ class E_plate:
         # update the layout info
         self.rect=rect
 
-
 class Sheet(E_plate):
-    ''' Special plate with zero thickness'''
 
     def __init__(self, rect=None, net_name=None, type='point', net_type='internal', n=(0, 0, 1), z=0):
-        '''
-            Args:
-                Rect: A rectangle sheet in 3D
-                A rectangle is define by left,right,top, and bottom coordinates (depends on the plane its on)
-                type: 'point' if small enough for approximation
-                n: orientation in 3D
-                net_type: "internal", "external"
-                net_name: a string for net_name name
-
-        '''
+        """ A Sheet object is used to represent zero thickness objects such as Via(start/stop pins), Bondwire pad, 
+        Device pins, Lead (intterface). 
+        Args:
+            rect (Rectangle): 2D rectangle of the interface. Defaults to None.
+            net_name (String): Net name of the pin. Defaults to None.
+            type (string): Need to double check for the usage, might not need this anymore. Defaults to 'point'.
+            net_type (string): 'internal' or 'external'. external pins are exposed in the netlist output
+            n (tuple, optional): this is the face vector of the sheet, this is used to
+                                distinguished between the trace's top/bottom connectivity. Defaults to (0, 0, 1).
+            z (float): z location of the pin in um. Defaults to 0
+        """
         E_plate.__init__(self, rect=rect, dz=0, n=n,z=z)
         self.net = net_name
         self.zorder = 10
@@ -104,6 +103,7 @@ class Sheet(E_plate):
         self.component=None
         self.node = None  # node reference to Tree
         self.via_type = None
+        
     def get_center(self):
         return self.rect.center()
 
@@ -115,7 +115,6 @@ def plot_rect3D(rect2ds=None, ax=None):
         ax: matplotlib ax to plot on
 
     Returns: a figure for 3 D layout
-
     '''
     for obj in rect2ds:
         alpha =0.5

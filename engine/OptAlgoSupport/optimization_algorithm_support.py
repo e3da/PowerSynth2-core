@@ -223,7 +223,41 @@ class new_engine_opt:
         schem = LtSpice_layout_to_schematic(e_api)
         #schem.set_up_relative_locations()
 
-    def eval_3D_layout(self,module_data=None,solution=None,init = False,sol_len=1):
+
+    def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
+        result = []
+        measures=[None,None]
+        for measure in self.measures:
+            if isinstance(measure,ElectricalMeasure):
+                measures[0]=measure
+            if isinstance(measure,ThermalMeasure):
+                measures[1]=measure
+        for i in range(len(self.measures)):
+            measure=self.measures[i]
+            # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
+            if isinstance(measure, ElectricalMeasure):
+                ps_sol = solution
+                features = ps_sol.features_list
+                obj_name_feature_map = {}
+                for f in features:
+                    obj_name_feature_map[f.name] = f
+                self.e_api.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) 
+                bypassing = False # Set this True for electrical model maintainance
+                self.e_api.form_initial_trace_mesh()
+                # Setup wire connection
+                # Go through every loop and ask for the device mode # run one time
+                self.e_api_init.check_device_connectivity(False)
+                # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+                # Eval R, L , M without backside consideration
+                self.e_api.generate_circuit_from_trace_mesh()
+                self.e_api.add_wires_to_circuit()
+                self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+                self.e_api.eval_and_update_trace_RL_analytical()
+                self.e_api.eval_and_update_trace_M_analytical()
+                # EVALUATION PROCESS 
+                # Loop through all loops provided by the user       
+                self.e_api.eval_single_loop_impedances()  
+    def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 
         solution: single PS_Solution object for thermal evaluation (ParaPower API)
@@ -968,7 +1002,9 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         solution = CornerStitchSolution(index=index)
         module_data=copy.deepcopy(structure.module_data)
         for i in range(len(structure.layers)):
-            structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[k][0]
+            sol_layer_i =structure.layers[i]
+            cs_updated_info = sol_layer_i.updated_cs_sym_info[k][0]
+            sol_layer_i.layout_info= cs_updated_info
             structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
 
             layer_sol=LayerSolution(name=structure.layers[i].name)

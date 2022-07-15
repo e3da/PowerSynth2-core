@@ -70,7 +70,7 @@ class LayerMesh():
             self.add_floating_node(tuple(center_pt),net_data.net)
         for key in wire_via_table:
             wv_object = wire_via_table[key]
-            print (wv_object)
+            #print (wv_object)
     
     def mesh_nodes_and_edges(self,mesh_table):
         self.layer_mesh.name = self.layer_index

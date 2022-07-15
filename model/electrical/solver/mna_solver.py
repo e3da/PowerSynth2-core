@@ -1,3 +1,4 @@
+from termios import PENDIN
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
@@ -84,13 +85,14 @@ class ModifiedNodalAnalysis():
         self.src_pnode = {}
         self.src_nnode = {}
         self.src_value = {}
+        self.equiv_dict = {}    
 
         # Counting number of elements
         self.L_count = 0
         self.R_count = 0
         self.C_count = 0
         self.M_count = 0
-        
+        self.mode = 'RL'
         # to print or not
         self.verbose =0 
     # The functions below will handle circuit elements for the analysis
@@ -101,6 +103,22 @@ class ModifiedNodalAnalysis():
         self.freq = freq
         self.s = 2 * freq * np.pi * 1j
 
+    def add_z_component(self,name,pnode,nnode,val):
+        """to quickly add R and L at the same time
+
+        Args:
+            name (_type_): _description_
+            pnode (_type_): _description_
+            nnode (_type_): _description_
+            val (_type_): _description_
+        """
+        int_node = '{}_{}'.format(pnode,nnode)
+        Rname = 'R' + name.strip('Z')
+        Lname = 'L' + name.strip('Z')
+        self.add_component(Rname,pnode,int_node,np.real(val))
+        self.add_component(Lname,int_node,nnode,np.imag(val))
+        
+    
     def add_component(self,name, pnode, nnode, val):
         '''
         Add a circuit component to the MNA solver
@@ -146,7 +164,7 @@ class ModifiedNodalAnalysis():
         del self.src_nnode[name]
         del self.src_value[name]
       
-    def add_indep_voltage_src(self, pnode=0, nnode=0, val=1000, name='Vs',series_imp = 0):
+    def add_indep_voltage_src(self, pnode=0, nnode=0, val=1000, name='Vs'):
         '''
         Add an independent voltage source between 2 nets
         '''
@@ -228,21 +246,20 @@ class ModifiedNodalAnalysis():
         
         '''
         self.cur_element=[]
-        
+        cur_id = 0
         for i in range(len(self.element)):
             # process all the elements creating unknown currents
             el = self.element[i]
             x = self.element[i][0]  # get 1st letter of element name
-            if (x == 'Z'or x=='V'): # add this for current through source or (x == 'V'):
+            if (x == 'L'or x=='V'): # add this for current through source or (x == 'V'):
                 self.cur_element.append(el)
                 self.cur_pnode[el] = self.pnode[el]
                 self.cur_nnode[el] = self.nnode[el]
                 self.cur_value[el] = self.value[el]
-                if x =='Z':
-                    self.L_id[el]=i
+                if x =='L':
+                    self.L_id[el]=cur_id
+                cur_id+=1
 
-    def equiv(self,net1,net2,name = ''):
-        self.add_component(pnode= net1, nnode = net2,val=1e-12,name = name)
 
 
     def find_vname(self, name):
@@ -269,13 +286,19 @@ class ModifiedNodalAnalysis():
                 n1 = self.net_name_to_net_id[self.pnode[el]]
                 n2 = self.net_name_to_net_id[self.nnode[el]]
 
-            if (x == 'C'):
-                g = s * self.value[el]
+            if (x == 'C' or x == 'R'):
+                if x == 'C':
+                    g = self.s*self.value[el]
+                if x == 'R':
+                    g = 1/self.value[el]
                 # If neither side of the element is connected to ground
                 # then subtract it from appropriate location in matrix.
                 if (n1 != 0) and (n2 != 0):
                     self.G[n1 - 1, n2 - 1] += -g
                     self.G[n2 - 1, n1 - 1] += -g
+                    self.G[n2 - 1, n2 - 1] += g
+                    self.G[n1 - 1, n1 - 1] += g
+                    
 
                 # If node 1 is connected to ground, add element to diagonal of matrix
                 if n1 == 0:
@@ -307,10 +330,10 @@ class ModifiedNodalAnalysis():
 
                 sn += 1  # increment source count
 
-            if x == 'Z':
+            if x == 'L':
 
                 if num_branch > 1:  # is Z greater than 1 by n?, L
-                    imp = -s * np.imag(self.value[el]) - np.real(self.value[el])
+                    imp = -s * np.imag(self.value[el]) #- np.real(self.value[el])
                     self.D[sn, sn] += imp
                     
 
@@ -323,7 +346,7 @@ class ModifiedNodalAnalysis():
                         self.M_t[sn, n2 - 1] = -1
 
                 else:
-                    self.D[sn] += -s * np.imag(self.value[el]) - np.real(self.value[el])
+                    self.D[sn] += -s * np.imag(self.value[el])# - np.real(self.value[el])
 
                     if n1 != 0:
                         self.M[n1 - 1] = 1
@@ -418,15 +441,33 @@ class ModifiedNodalAnalysis():
         second_row = np.concatenate((self.M_t, self.D), axis=1)  # form [M_t , D]
         self.A = np.concatenate((first_row,second_row),axis=0)
     
+    def process_all_nets(self):
+        # Process the equiv net first
+        for k in self.pnode:
+            net = self.pnode[k]
+            if net in self.equiv_dict:
+                self.pnode[k] = self.equiv_dict[net]
+        for k in self.nnode:
+            net = self.nnode[k]
+            if net in self.equiv_dict:
+                self.nnode[k] = self.equiv_dict[net]
+        
+        all_net = list(set(list(self.nnode.values()) + list(self.pnode.values()))) # set of all nets
+        if 'Gate' in all_net:
+            print("Failed to remove gate")
+        return all_net
+    def equiv_nets(self,net1,net2):
+        self.equiv_dict[net1] = net2
+    
     def graph_to_circuit_minimization(self):
         # This function will search for all equiv nets in the Graph to minimize the maxtrix size
         # Check whether the circuit formulation is correct and map the nets into integers
-        all_net = list(set(list(self.nnode.values()) + list(self.pnode.values()))) # set of all nets
+        all_net = self.process_all_nets()
         if not 0 in all_net:
             if self.verbose:
                 print("NO GROUND, ADD A GROUND INTO CIRCUIT, ADDING A GROUND NODE")
         else:
-            all_net.remove(0)
+            all_net.remove(0) # Dont write KCL equation for reference node
         self.num_nodes = len(all_net)# exclude ground
         # 2 way
         self.net_name_to_net_id = {}
@@ -442,7 +483,7 @@ class ModifiedNodalAnalysis():
         # Z = [I,E]
         # X = [V, J] 
         # Forming matrices
-        self.add_gmin()
+        #self.add_gmin()
         self.V = np.chararray((self.num_nodes,1), itemsize=20)
         self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex_)
         self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
@@ -464,13 +505,19 @@ class ModifiedNodalAnalysis():
     #precision = 10
     #fp = open('memory_profiler_basic_mean.log', 'w+')
     #@profile(precision=precision, stream=fp)
-    def add_gmin(self, cmin = 1e-15):
+    
+        
+    
+    def add_gmin(self, cmin = 1e-12):
         '''
         add a small capacitance value for every node
         this would resolve the singular matrix issue
         '''
         for net_name in self.net_name_to_net_id:
-            self.add_component('C{}'.format(net_name),net_name,0,val=cmin)
+            if net_name ==0:
+                continue
+            if 'p' in net_name:
+                self.add_component('C{}'.format(net_name),net_name,0,val=cmin)
     
     def solve_MNA(self):
         '''
@@ -481,9 +528,9 @@ class ModifiedNodalAnalysis():
         Z = self.Z
         A = self.A
         t = perf_counter()
-        #convergence = 0
-        #self.results = scipy.sparse.linalg.spsolve(A,Z)
-        self.results,convergence = scipy.sparse.linalg.gmres(A,Z)
+        convergence = 0
+        self.results = scipy.sparse.linalg.spsolve(A,Z)
+        #self.results,convergence = scipy.sparse.linalg.gmres(A,Z)
         if convergence!=0:
             if self.verbose:
                 print("the GMRES simulation did not converge for given tolerance")
@@ -494,10 +541,41 @@ class ModifiedNodalAnalysis():
             self.results_dict[self.X[i,0].decode()]=self.results[i]
             
         self.results=self.results_dict
+    
+    
+    
+    def check_all_zeroes(self,matrix):
+        """For debugging purpose to check if matrix A has all zeroes row.
+
+        Args:
+            matrix (_type_): _description_
+        """
+        rows,cols = matrix.shape
+        # Check all zeroes rows
+        for r in range(rows):
+            r_all_zero = True
+            for c in range(cols):
+                val = matrix[r,c]
+                if np.abs(val)!=0:
+                    r_all_zero = False
+            if r_all_zero:
+                print("The unknown at this row is: {}".format( self.X[r]))
+                input("Row {} has all zeroes, singular matrix".format(r))        
+
+        # Check all zeroes Collumns   
+        for c in range(cols):
+            c_all_zero = True
+            for r in range(rows):
+                val = matrix[r,c]
+                if np.abs(val)!=0:
+                    c_all_zero = False
+            if c_all_zero:
+                print("The unknown at this row is: {}".format( self.X[c]))
+                input("Collumn {} has all zeroes, singular matrix".format(c))        
         
     def solve_iv(self,mode = 2,method =1):
         ''' old code for testing, will be removed later'''
-        debug=False
+        debug=True
         self.matrix_init()
         if mode ==0:
             case = "no_current"
@@ -517,8 +595,15 @@ class ModifiedNodalAnalysis():
             A = self.D
 
         t = perf_counter()
-        #self.debug_singular_mat_issue(A)
+        if debug: # for debug and time analysis
+            print('matrix rank')
+            self.debug_singular_mat_issue(A)
 
+            #print (Matrix(A).rank())
+            #print(A.shape)
+            print(('RL', np.shape(A)))
+            self.check_all_zeroes(self.A)
+            
 
         if method ==1:
             self.results= scipy.sparse.linalg.spsolve(A,Z)
@@ -534,22 +619,11 @@ class ModifiedNodalAnalysis():
         #print(("solve", time.time() - t, "s"))
         #print np.shape(self.A)
         #print "RESULTS",self.results
-        if debug: # for debug and time analysis
-            print('matrix rank')
-            #print (Matrix(A).rank())
-            #print(A.shape)
-            print(('RL', np.shape(A)))
-            np.savetxt("M.csv", self.M_t, delimiter=",")
-            np.savetxt("Mt.csv", self.M, delimiter=",")
-            np.savetxt("D.csv", self.D, delimiter=",")
-            print((self.J))
-            print((self.V))
-            print((self.Z))
-
-            np.savetxt("M.csv", self.M_t, delimiter=",")
-            np.savetxt("A.csv", self.A, delimiter=",")
-            np.savetxt("Z.csv", Z, delimiter=",")
-            print(("solve", perf_counter() - t, "s"))
+        
+        print(("solve", perf_counter() - t, "s"))
+        
+        
+        
         self.results_dict={}
         rlmode=True
 
@@ -690,10 +764,19 @@ def test_ModifiedNodalAnalysis4():
 def test_ModifiedNodalAnalysis5(): # mutual wire group
     circuit = ModifiedNodalAnalysis()
 
-    circuit.add_component('B1', 1, 0, 1 + 18.2e-9j)
-    circuit.add_component('B2', 1, 0, 1 + 18.2e-9j)
-    circuit.add_mutual_term('M23', 'B1', 'B2', 14.4e-9)
-    circuit.add_indep_current_src(0, 1, 1)
+    #circuit.add_z_component('Z1', 1, 0, 1 + 18.2e-9j)
+    #circuit.add_z_component('Z2', 1, 0, 1 + 18.2e-9j)
+    circuit.add_component('R5', 'bw1', 0, 1e-6 ) 
+    circuit.add_component('R3', 'bw1', 1, 1 )
+    circuit.add_component('L4', 1, 'bw2', 1e-9j)
+    circuit.add_component('R2', 'bw1', 2, 1 )
+    circuit.add_component('L5', 2, 'bw2', 1e-9j)
+    circuit.add_component("Rds",'bw2',4,25e-3)
+    circuit.add_component("L9",4,5,1e-9)
+    circuit.add_component("Rfloat", 'f1','f2',1)
+    circuit.add_component("Lfloat", 'f2',0,1e-9)
+    circuit.add_mutual_term('M23', 'L4', 'Lfloat', 14.4e-9)
+    circuit.add_indep_current_src(0, 'bw2', 1)
     circuit.assign_freq(1e9)
     circuit.graph_to_circuit_minimization()
 
@@ -701,7 +784,7 @@ def test_ModifiedNodalAnalysis5(): # mutual wire group
     circuit.solve_iv(method = 2)
     print((circuit.results))
 
-    imp = (circuit.results['v1']) 
+    imp = (circuit.results['V(bw2)']) 
     print((np.real(imp), np.imag(imp) / circuit.s))
     
 
@@ -713,9 +796,9 @@ def test_ModifiedNodalAnalysis5(): # mutual wire group
     
     
     
-    
 if __name__ == "__main__":
     #validate_solver_simple()
     #validate_solver_2()
+    test_ModifiedNodalAnalysis5()
     stime= perf_counter()
     print("solving time",perf_counter()-stime,'s')

@@ -50,12 +50,13 @@ class EMesh(): # rewrite and clean up old EMesh
     
     def add_node(self,pt_xyz,node_obj):
         node_name = "{}.{}".format(self.name,self.node_id)
-        self.map_xyz_node[pt_xyz] = node_obj
-        self.map_xyz_id[pt_xyz] = node_name 
-        self.id_to_xyz[node_name] = pt_xyz
-        self.node_table[node_name] =  node_obj
-        self.node_id+=1
-        self.mesh_graph.add_node(node_name)
+        if not pt_xyz in self.map_xyz_node:
+            self.map_xyz_node[pt_xyz] = node_obj
+            self.map_xyz_id[pt_xyz] = node_name 
+            self.id_to_xyz[node_name] = pt_xyz
+            self.node_table[node_name] =  node_obj
+            self.node_id+=1
+            self.mesh_graph.add_node(node_name)
     
     def add_edge(self,node1,node2,dimension,trace_type,trace_ori):
         '''
@@ -80,7 +81,7 @@ class EMesh(): # rewrite and clean up old EMesh
             node_type = self.map_xyz_node[pos].node_type
             net_name = self.map_xyz_node[pos].net_name
             x,y,z = pos
-            if display_node_net and not('p' in net_name):
+            if display_node_net: #and not('p' in net_name):
                 ax.text(pos[0],pos[1],s=net_name,weight='bold')
             if display_node_id:
                 ax.text(x=pos[0],y=pos[1],z=pos[2],s = node_name)

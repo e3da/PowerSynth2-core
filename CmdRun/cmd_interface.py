@@ -126,6 +126,7 @@ class Cmd_Handler:
         self.UI_active = False
         self.data_x = None
         self.data_y = None
+        self.e_model_choice = 'PEEC'
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -326,9 +327,10 @@ class Cmd_Handler:
                 self.run_options() # Start the tool here...
             else:
                 self.setup_models(mode=0) # setup thermal model
-                #self.setup_models(mode=1) # setup electrical model
                 
                 self.electrical_init_setup() # init electrical loop model
+                self.setup_models(mode=1) # setup electrical model
+                
                 self.run_options() # Run options with the initial loop model ready
 
             # Export figures, ANsysEM, Netlist etc.     
@@ -470,7 +472,7 @@ class Cmd_Handler:
         mode = 0 to setup thermal
         mode = 1 to setup electrical
         '''
-        self.measures = []
+        
 
         if self.thermal_mode!=None and mode ==0:
             t_setup_data = {'Power': self.thermal_models_info['devices_power'],\
@@ -482,17 +484,14 @@ class Cmd_Handler:
             self.setup_thermal(mode='macro', setup_data=t_setup_data,\
                                 meas_data=t_measure_data,
                                 model_type=self.thermal_models_info['model'])
-
         if self.electrical_mode!=None and mode ==1:
             e_measure_data = {'name':self.electrical_models_info['measure_name']\
                         ,'type':self.electrical_models_info['measure_type']\
                         ,'main_loops': self.electrical_models_info['main_loops']}
-
-            self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
+            self.setup_electrical()
+            """self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
                 ,frequency=self.electrical_models_info['frequency'], meas_data=e_measure_data,\
-                 type = self.electrical_models_info['model_type'], netlist = self.electrical_models_info['netlist'])
-    
-    
+                 type = self.electrical_models_info['model_type'], netlist = self.electrical_models_info['netlist'])"""
     
     def electrical_init_setup(self):
         '''
@@ -508,14 +507,19 @@ class Cmd_Handler:
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
-        self.e_api_init.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
+        
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
         self.e_api_init.layout_vs_schematic.check_circuit_type()
         # Some other data processing
+        # API requires info
+        self.e_api_init.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
+        
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
         self.e_api_init.set_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
+        
+        # EVALUATION STEPS BELOW:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
         self.e_api_init.measure = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
@@ -526,32 +530,20 @@ class Cmd_Handler:
         # Start the simple PEEC mesh        
         self.e_api_init.form_initial_trace_mesh()
         # Setup wire connection
-        # Go through every loop and ask for the device mode 
+        # Go through every loop and ask for the device mode # run one time
         self.e_api_init.check_device_connectivity()
-        #self.e_api_init.form_net_graph()
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
         self.e_api_init.generate_circuit_from_trace_mesh()
         self.e_api_init.add_wires_to_circuit()
-        #self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+        self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
         self.e_api_init.eval_and_update_trace_RL_analytical()
         self.e_api_init.eval_and_update_trace_M_analytical()
         # EVALUATION PROCESS 
         # Loop through all loops provided by the user       
         self.e_api_init.eval_single_loop_impedances()
+        self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
-        #evalRL_flat_level_no_response_surface
-        #evalM_flat_level_no_response_surface
-        # Now once the base circuit is created, we go ahead and evaluate each loop and analyze them
-        
-        
-        # If user want to user PEEC or we need to extract all braches robustly, we need to use PEEC. Otherwise, attempt for Loop-based
-        
-
-        if self.electrical_mode==None:
-            if self.export_ansys_em:
-                print("Need Electrical Setup for bondwires connection in ANSYSEM")
-                print("The tool will attempt to extract Ansysem design without bondwires connection")
     # ------------------ Export Features ---------------------------------------------
     def init_export_tasks(self,run_option=0):
         '''Start ANSYSEM, and others export features'''
@@ -909,8 +901,12 @@ class Cmd_Handler:
     
     # --------------- API --------------------------------
 
-
-    def setup_electrical(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
+    def setup_electrical(self):
+        if self.e_model_choice == 'PEEC':
+            # Should setup rs model somewhere here
+            self.e_api = copy.deepcopy(self.e_api_init) # copy the inital PEEC model
+            
+    def setup_electrical_old(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
 
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
@@ -1351,7 +1347,8 @@ if __name__ == "__main__":
                    {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_3D_Case_Single_Substrate/macro_script.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
-                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'}]
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
+                    {qmle_nethome:'/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'}]
 
 
         for tc in tc_list:
