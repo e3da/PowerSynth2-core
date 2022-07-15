@@ -962,7 +962,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                                                                 structure.layers[i].bondwires,origin=structure.layers[i].origin,
                                                                 s=dbunit)
 
-
+            
 
             cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
             CS_SYM_info = {}

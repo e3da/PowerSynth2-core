@@ -510,6 +510,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             
             CS_SYM_information, Layout_Rects = cg_interface.update_min(structure.layers[i].min_location_h, structure.layers[i].min_location_v, structure.layers[i].new_engine.init_data[1], structure.layers[i].bondwires,structure.layers[i].origin,dbunit)
             
+            
             cur_fig_data = plot_fig_data(Layout_Rects, mode,bw_type=bw_type)
 
             CS_SYM_Updated = {}

@@ -32,10 +32,12 @@ class LayerSolution():
                     #print(name,object_.name)
                     if object_.name!='Substrate':
                         if object_.name==name :
+                            #print(name,object_.name,rect_object)
                             object_.x=rect_object.x 
                             object_.y=rect_object.y
                             object_.w=rect_object.width
                             object_.l=rect_object.height
+
                     else:
                         #print(name,rect_object.x,rect_object.y)
                         object_.x=rect_object.x 

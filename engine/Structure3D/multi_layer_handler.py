@@ -1356,6 +1356,7 @@ class Layer():
 
         #for rect_dict in dict_list:
         for k,v in list(rect_dict.items()):
+            
             if not isinstance(v,Rectangle):
                 x=v[1]
                 y=v[2]
@@ -1366,7 +1367,7 @@ class Layer():
                 layout_rect_dict[k] = Rectangle(x=x, y=y, width=width, height=height, type=type)
             else:
                 layout_rect_dict[k]=v
-
+        #print(layout_rect_dict)
 
 
         layout_symb_dict[self.name] = {'rect_info': layout_rect_dict, 'Dims': [W, H]}
