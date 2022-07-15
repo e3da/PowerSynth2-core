@@ -1088,6 +1088,8 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         sol.cs_solution=solution
         #plot_solution_structure(sol)
+        for f in sol.features_list:
+            f.printFeature()
         PS_solutions.append(sol)
 
 
