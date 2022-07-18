@@ -112,11 +112,11 @@ class ModifiedNodalAnalysis():
             nnode (_type_): _description_
             val (_type_): _description_
         """
-        int_node = '{}_{}'.format(pnode,nnode)
+        int_node = 'in{}_{}'.format(pnode,nnode)
         Rname = 'R' + name.strip('Z')
         Lname = 'L' + name.strip('Z')
         self.add_component(Rname,pnode,int_node,np.real(val))
-        self.add_component(Lname,int_node,nnode,np.imag(val))
+        self.add_component(Lname,int_node,nnode,np.imag(val)*1j)
         
     
     def add_component(self,name, pnode, nnode, val):
@@ -360,14 +360,15 @@ class ModifiedNodalAnalysis():
                 # check source count
 
             if x == 'M':  # M in H
-                Mname = 'M' + el[1:]
+                Mname = el
                 try:
                     ind1_index = self.L_id[self.Lname1[el]]
                     ind2_index = self.L_id[self.Lname2[el]]
                 except:
                     print (Mname)
-                    print (self.L_id)
+                    #print (self.L_id)
                     print("cant find element")
+                    Mval = 0
                     #input()
 
                 Mval = self.value[el]
@@ -740,25 +741,21 @@ def test_ModifiedNodalAnalysis3():
 def test_ModifiedNodalAnalysis4():
     circuit = ModifiedNodalAnalysis()
 
-    circuit.add_component('B1', 'a', 'b', 1 )
-    circuit.add_component('B2', 'a', 'b', 1 )
-    circuit.add_component('B3', 'b', 0, 1 )
-    circuit.add_component('B4', 'b', 0, 1 )
+    circuit.add_z_component('Z1', 'a', 'b', 1 +10e-9j)
+    circuit.add_z_component('Z2', 'a', 'b', 1 +10e-9j)
+    
     circuit.add_indep_voltage_src('a', 0, 1)
+    circuit.add_component('R1','b',0, 1e-6)
+    
+    
     circuit.assign_freq(1e9)
-    #circuit.read_circuit()
     circuit.graph_to_circuit_minimization()
 
     circuit.handle_branch_current_elements()
-    circuit.matrix_init()
-    print (circuit.net_map)
-    print (circuit.Z)
-    print (circuit.X)
-    print (circuit.A)
-    circuit.solve_iv(method=2)
+    circuit.solve_MNA()
     print (circuit.results)
 
-    input()
+    #input()
 
 
 def test_ModifiedNodalAnalysis5(): # mutual wire group
@@ -799,6 +796,6 @@ def test_ModifiedNodalAnalysis5(): # mutual wire group
 if __name__ == "__main__":
     #validate_solver_simple()
     #validate_solver_2()
-    test_ModifiedNodalAnalysis5()
+    test_ModifiedNodalAnalysis4()
     stime= perf_counter()
     print("solving time",perf_counter()-stime,'s')

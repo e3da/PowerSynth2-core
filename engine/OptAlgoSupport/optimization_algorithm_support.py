@@ -236,27 +236,43 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                ps_sol = solution
-                features = ps_sol.features_list
-                obj_name_feature_map = {}
-                for f in features:
-                    obj_name_feature_map[f.name] = f
-                self.e_api.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) 
-                bypassing = False # Set this True for electrical model maintainance
-                self.e_api.form_initial_trace_mesh()
-                # Setup wire connection
-                # Go through every loop and ask for the device mode # run one time
-                self.e_api_init.check_device_connectivity(False)
-                # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
-                # Eval R, L , M without backside consideration
-                self.e_api.generate_circuit_from_trace_mesh()
-                self.e_api.add_wires_to_circuit()
-                self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-                self.e_api.eval_and_update_trace_RL_analytical()
-                self.e_api.eval_and_update_trace_M_analytical()
-                # EVALUATION PROCESS 
-                # Loop through all loops provided by the user       
-                self.e_api.eval_single_loop_impedances()  
+                if solution.solution_id != -1: # Can be use for debugging, in case a solution id throws some weird resultss
+                    ps_sol = solution
+                    features = ps_sol.features_list
+                    obj_name_feature_map = {}
+                    for f in features:
+                        obj_name_feature_map[f.name] = f
+                    self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
+                    #self.e_api.print_and_debug_layout_objects_locations()
+                    self.e_api.form_initial_trace_mesh()
+                    # Setup wire connection
+                    # Go through every loop and ask for the device mode # run one time
+                    self.e_api.check_device_connectivity(False)
+                    # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+                    # Eval R, L , M without backside consideration
+                    self.e_api.generate_circuit_from_trace_mesh()
+                    self.e_api.add_wires_to_circuit()
+                    self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+                    self.e_api.eval_and_update_trace_RL_analytical()
+                    self.e_api.eval_and_update_trace_M_analytical()
+                    # EVALUATION PROCESS 
+                    # Loop through all loops provided by the user       
+                    R, L = self.e_api.eval_single_loop_impedances()
+                    if abs(R)>1:
+                        print("ID:",solution.solution_id)
+                        input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                        
+                    result.append(np.imag(L))  
+                else:
+                    result.append(0)
+            if isinstance(measure, ThermalMeasure):
+                #t_sol = copy.deepcopy(solution)
+                #t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
+                #print(self.t_api.matlab_engine)
+                #max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
+                #result.append(max_t)
+                result.append(1)
+        return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 

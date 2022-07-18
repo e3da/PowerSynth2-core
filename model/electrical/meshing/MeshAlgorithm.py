@@ -242,20 +242,20 @@ class TraceIslandMesh():
         ys = list(set(ys))
         xs.sort()
         ys.sort()
-        # Remove small edges if its not boudary edge
-        y_lim = 0 # um
-        x_lim = 0 # um
+        # Adding a very small gap between locations that are very closed to each other to prevent numerical issue
+        y_lim = 100# um
+        x_lim = 100 # um
         
         rm_y = []
         for iy in range(len(ys)-1):
             dy = ys[iy+1] - ys[iy]
             if dy <= y_lim and iy!=0:
-                rm_y.append(ys[iy])
+                ys[iy+1] += y_lim
         rm_x = []
         for ix in range(len(xs)-1):
             dx = xs[ix+1] - xs[ix]
             if dx <= x_lim and ix!=0:
-                rm_x.append(xs[ix])
+                xs[ix+1] += x_lim
         y_mesh = [y for y in ys if not(y in rm_y)]
         x_mesh = [x for x in xs if not(x in rm_x)]
         

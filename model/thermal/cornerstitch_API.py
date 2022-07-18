@@ -20,6 +20,7 @@ from core.model.thermal.fast_thermal import DieThermalFeatures, SublayerThermalF
 from core.model.thermal.fast_thermal import ThermalGeometry, TraceIsland, DieThermal, solve_TFSM
 from core.general.data_struct.util import Rect
 from core.general.settings.save_and_load import load_file, save_file
+import copy
 import numpy as np
 import os
 import pickle
@@ -38,7 +39,7 @@ class ThermalMeasure(object):
     def __init__(self, devices=None, name=None):
         self.devices = devices
         self.name = name
-
+        self.mode = 1 # 0 for maxtemp, 1 for thermal resistance
 
 #class Thermal_data_collect_main():
     #def __init__(self):
@@ -116,6 +117,7 @@ class CornerStitch_Tmodel_API:
         return t_bp, layer, devices
 
     def dev_result_table_eval(self, module_data=None,solution=None):
+        solution = copy.deepcopy(solution) # Has to add this to prevent some removes functions
         if self.model == 0:
             # Collect trace islands data, which is inside module_data
             islands = []
@@ -415,16 +417,49 @@ class CornerStitch_Tmodel_API:
             self.measure.append(ThermalMeasure(devices=devices, name=name))
             return self.measure
 
-    def eval_max_temp(self, module_data=None, solution=None):
+    def eval_thermal_performance(self, module_data = None , solution = None, mode = 1):
+        """_summary_
 
+        Args:
+            module_data (_type_, optional): 2D data (mostly used for old thermal model). Defaults to None.
+            solution (_type_, optional): layout PSSolution object. Defaults to None.
+            mode (int, optional): select between maxtemp 0 , thermal resistance 1 Defaults to 0.
+        """
+        if mode == 0:
+            result = self.eval_max_temp(module_data,solution)
+        if mode == 1:
+            result = self.eval_thermal_resistance(module_data,solution)
+                
+        return result
+
+    def eval_max_temp(self, module_data=None, solution=None):
+        """
+        Find Max Temperauture
+        """  
         module_data.layer_stack = self.layer_stack
         self.dev_result_table_eval(module_data,solution)
-        print ("RES",self.temp_res)
-        if self.temp_res=={}:
-            self.temp_res={'D1':400}
-        return max(list(self.temp_res.values()))
-
-
+        self.temp_res = {'D1': 400} if self.temp_res=={} else self.temp_res # Failed to run ParaPower
+        max_temp = max(list(self.temp_res.values())) 
+        return max_temp
+        
+    def eval_thermal_resistance(self,module_data = None, solution = None):
+        # Need to modify the solution with 1 W as power loss
+        """_summary_
+        return maximum thermal resistance 
+        """
+        features = solution.features_list        
+        for f in features:
+            if 'D' == f.name[0]: # device:
+                f.power = 1 # set to 1W so we have thermal resistance
+        # Normalized all power to 1 W to extract thermal resistance
+        module_data.layer_stack = self.layer_stack
+        self.dev_result_table_eval(module_data,solution)
+        self.temp_res = {'D1': 400} if self.temp_res=={} else self.temp_res # Failed to run ParaPower
+        # Because thermal resistance is measured between heatsink and device
+        rth_dict = {d:(self.temp_res[d]-273.5-27) for d in self.temp_res}
+        rth_max = max(list(rth_dict.values()))
+        print("RTH:{}".format(rth_max))
+        return rth_max
 
 
 

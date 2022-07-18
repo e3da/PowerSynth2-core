@@ -246,7 +246,7 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
             Rval = edge_data['res']
             Lval = edge_data['ind']
             branch_val = 1j*Lval+Rval
-            self.add_component("Z{0}{1}".format(n1,n2), n1, n2, branch_val)
+            self.add_z_component("Z{0}{1}".format(n1,n2), n1, n2, branch_val)
 
     def m_graph_read(self,m_graph,debug =False):
         '''
@@ -278,25 +278,25 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
 def example1():
     # this case have 3 ports with a grid RL mesh and a single RL wire
     solver = ImpedanceSolver()
-    solver.add_component('Z1', 1, 2, 1e-3 + 1e-9j)
-    solver.add_component('Z2', 1, 3, 1e-3 + 1e-9j)
-    solver.add_component('Z3', 3, 4, 1e-3 + 1e-9j)
-    solver.add_component('Z4', 2, 4, 1e-3 + 1e-9j)
-    solver.add_component('Z5', 4, 6, 1e-3 + 1e-9j)
-    solver.add_component('Z6', 5, 6, 1e-3 + 1e-9j)
-    solver.add_component('Z7', 3, 5, 1e-3 + 1e-9j)
-    solver.add_component('Z8', 7, 8, 1e-3 + 1e-9j)
-    solver.add_component('Z9', 7, 8, 1e-3 + 1e-9j)
-    solver.add_mutual_term('M16', 'Z1', 'Z6', 0.1e-9)
-    solver.add_mutual_term('M36', 'Z3', 'Z6', 0.1e-9)
-    solver.add_mutual_term('M13', 'Z1', 'Z3', 0.1e-9)
-    solver.add_mutual_term('M24', 'Z2', 'Z4', 0.1e-9)
-    solver.add_mutual_term('M75', 'Z7', 'Z5', 0.1e-9)
-    solver.add_mutual_term('M48', 'Z4', 'Z8', 0.1e-9)
-    solver.add_mutual_term('M28', 'Z2', 'Z8', 0.1e-9)
-    solver.add_mutual_term('M78', 'Z7', 'Z8', 0.1e-9)
-    solver.add_mutual_term('M58', 'Z5', 'Z8', 0.1e-9)
-    solver.add_mutual_term('M89', 'Z8', 'Z9', 0.1e-9)
+    solver.add_z_component('Z1', 1, 2, 1e-3 + 1e-9j)
+    solver.add_z_component('Z2', 1, 3, 1e-3 + 1e-9j)
+    solver.add_z_component('Z3', 3, 4, 1e-3 + 1e-9j)
+    solver.add_z_component('Z4', 2, 4, 1e-3 + 1e-9j)
+    solver.add_z_component('Z5', 4, 6, 1e-3 + 1e-9j)
+    solver.add_z_component('Z6', 5, 6, 1e-3 + 1e-9j)
+    solver.add_z_component('Z7', 3, 5, 1e-3 + 1e-9j)
+    solver.add_z_component('Z8', 7, 8, 1e-3 + 1e-9j)
+    solver.add_z_component('Z9', 7, 8, 1e-3 + 1e-9j)
+    solver.add_mutual_term('M16', 'L1', 'L6', 1e-9)
+    solver.add_mutual_term('M36', 'L3', 'L6', 1e-9)
+    solver.add_mutual_term('M13', 'L1', 'L3', 1e-9)
+    solver.add_mutual_term('M24', 'L2', 'L4', 1e-9)
+    solver.add_mutual_term('M75', 'L7', 'L5', 1e-9)
+    solver.add_mutual_term('M48', 'L4', 'L8', 1e-9)
+    solver.add_mutual_term('M28', 'L2', 'L8', 1e-9)
+    solver.add_mutual_term('M78', 'L7', 'L8', 1e-9)
+    solver.add_mutual_term('M58', 'L5', 'L8', 1e-9)
+    solver.add_mutual_term('M89', 'L8', 'L9', 1e-9)
     #solver.short_circuit(3,5)
     loops = [['ZD1',1,4],['ZD2',1,6],['ZG3',7,8]]
     
@@ -361,13 +361,19 @@ def example2():
     return solver,loops
 
 def eval_multi_src_sink_manual():
-    solver = example1()
+    solver,loops = example1()
     # Since this is manual this test only works with example 1
     m14,m16,m78 = [1,0,0]
     if m14:
-        solver.add_indep_voltage_src(1,4,1,'Vs14')
-        solver.add_indep_current_src(1,6,0,'Is16')
-        solver.add_indep_current_src(7,8,0,'Is78')
+        solver.add_indep_voltage_src(1,0,1,'Vs14')
+        solver.add_indep_current_src(0,1,0,'Is16')
+        solver.add_indep_current_src(0,7,0,'Is78')
+        solver.add_component('RVs14',4,0,1e-6)
+        solver.add_component('RIs16',6,0,1e-6)
+        solver.add_component('RIs78',8,0,1e-6)
+        
+        
+    
     if m16:
         solver.add_indep_voltage_src(1,6,1,'Vs16')
         solver.add_indep_current_src(1,4,0,'Is14')
@@ -390,7 +396,10 @@ def eval_multi_src_sink_manual():
     
     if m14:
         I = r['I(Vs14)']
-        Z1414 = 1/s/I
+        print(r['V(1)'])
+        print(r['V(4)'])
+        
+        Z1414 = np.real(1/I) + np.imag(1/I/s)*1j
         Z1614 = (r['V(1)'] - r['V(6)'])/I/s
         Z7814 = (r['V(7)'] - r['V(8)'])/I/s
         print(Z1414) 
@@ -426,5 +435,5 @@ def eval_multi_src_sink_automate():
     
     
 if __name__ == '__main__':
-   #eval_multi_src_sink_manual() 
-   eval_multi_src_sink_automate()
+   eval_multi_src_sink_manual() 
+   #eval_multi_src_sink_automate()

@@ -509,7 +509,7 @@ class CS_to_CG():
                 type = wire.cs_type
                 cs_sym_info[name] = [type, x, y, w, h]
             if wire.source_bw_pad!=None:
-                if wire.source_bw_pad[0]=='B':
+                if wire.source_bw_pad[0]=='B' and wire.source_bw_pad not in cs_sym_info:
                     x = wire.source_coordinate[0]
                     y = wire.source_coordinate[1]
                     w = 250 #dummy_values
@@ -518,7 +518,7 @@ class CS_to_CG():
                     type = wire.cs_type
                     cs_sym_info[name] = [type, x, y, w, h]
             if wire.dest_bw_pad!=None:
-                if wire.dest_bw_pad[0] == 'B':
+                if wire.dest_bw_pad[0] == 'B' and wire.dest_bw_pad not in cs_sym_info:
                     x = wire.source_coordinate[0]
                     y = wire.source_coordinate[1]
                     w = 250 #dummy_values

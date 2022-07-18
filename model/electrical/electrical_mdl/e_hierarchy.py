@@ -28,17 +28,36 @@ class EHier():
         self.off_trace_pin_map = {}
         
         
-    def __del__(self): 
+    #def __del__(self): 
         
-        print ("delete hier object")
+    #    print ("delete hier object")
         
     def update_module(self,new_module):
         #form new hierarchy.
         self.module=new_module
         
-    
-    
-    
+    def print_hypergraph(self):
+        #print(self.isl_name_traces) 
+        #print(self.trace_island_nets)   
+        # Form hyper-graphs for visualization purpose only. The info is organized in dictionary format
+        self.hyper_net_graph = hnx.Hypergraph(self.trace_island_nets)
+        self.hyper_comp_graph = hnx.Hypergraph(self.comp_name_nets)
+        self.hyper_trace_graph = hnx.Hypergraph(self.isl_name_traces)
+        # create a lvs hypergraph for checking
+        
+        for isl in self.trace_island_nets:
+            print ("Island: {} -- Nets: {}".format(isl,self.trace_island_nets[isl]))
+        view = False
+        if view:
+            plt.figure(1)
+            hgraph = hmod.precompute_attributes(self.hyper_net_graph)
+            hnx.drawing.draw(hgraph)
+            plt.figure(2)
+            hnx.drawing.draw(self.hyper_net_graph.dual())
+            plt.figure(3)
+            hnx.drawing.draw(self.hyper_comp_graph)
+            plt.show()
+
     def form_hypergraph(self): 
         '''
         For each layout form a hypernet object to store all net connections.
@@ -75,26 +94,7 @@ class EHier():
                 # Need 3D testcases to make sure the pins are connected to the corect island in 3D
                 self.off_trace_pin_map[sh_obj.net] = sh_obj
                 self.inst_z_id[sh_obj.net] = sh_obj.z_id    
-              
-                
-        #print(self.isl_name_traces) 
-        #print(self.trace_island_nets)   
-        # Form hyper-graphs for visualization purpose only. The info is organized in dictionary format
-        self.hyper_net_graph = hnx.Hypergraph(self.trace_island_nets)
-        self.hyper_comp_graph = hnx.Hypergraph(self.comp_name_nets)
-        self.hyper_trace_graph = hnx.Hypergraph(self.isl_name_traces)
-        # create a lvs hypergraph for checking
         
-        for isl in self.trace_island_nets:
-            print ("Island: {} -- Nets: {}".format(isl,self.trace_island_nets[isl]))
-        view = False
-        if view:
-            plt.figure(1)
-            hgraph = hmod.precompute_attributes(self.hyper_net_graph)
-            hnx.drawing.draw(hgraph)
-            plt.figure(2)
-            hnx.drawing.draw(self.hyper_net_graph.dual())
-            plt.figure(3)
-            hnx.drawing.draw(self.hyper_comp_graph)
-            plt.show()
-        
+        debug = False
+        if debug:      
+            self.print_hypergraph() 

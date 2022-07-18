@@ -316,7 +316,7 @@ class Cmd_Handler:
         proceed = self.check_input_files() # only proceed if all input files are good. 
 
         if proceed:
-            
+            self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
             self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented1 out
             
@@ -330,7 +330,8 @@ class Cmd_Handler:
                 
                 self.electrical_init_setup() # init electrical loop model
                 self.setup_models(mode=1) # setup electrical model
-                
+                self.structure_3D = Structure_3D() # Clean it up
+                self.init_cs_objects(run_option=run_option)
                 self.run_options() # Run options with the initial loop model ready
 
             # Export figures, ANsysEM, Netlist etc.     
@@ -364,7 +365,7 @@ class Cmd_Handler:
                                     optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
                                     floor_plan=self.floor_plan,dbunit=self.dbunit)
 
-    def single_layout_evaluation(self, init = True):
+    def single_layout_evaluation(self, init = False):
         '''Evaluate the user initial layout input
         1. create a signle solution in solutions list
         2. update single solution
@@ -404,6 +405,10 @@ class Cmd_Handler:
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
                                         floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=self.algorithm,num_gen=self.num_gen,dbunit=self.dbunit)
+        
+        """self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
+                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
+                                         floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)"""
 
         self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,self.layout_mode,plot = self.plot)
 
@@ -416,7 +421,7 @@ class Cmd_Handler:
         2 -- layout optimization
         '''
     
-        if self.run_option == 0:
+        if self.run_option == 0: 
             self.layout_generation_only()
         elif self.run_option == 1:
             self.single_layout_evaluation()
@@ -488,7 +493,7 @@ class Cmd_Handler:
             e_measure_data = {'name':self.electrical_models_info['measure_name']\
                         ,'type':self.electrical_models_info['measure_type']\
                         ,'main_loops': self.electrical_models_info['main_loops']}
-            self.setup_electrical()
+            self.setup_electrical(measure_data = e_measure_data)
             """self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
                 ,frequency=self.electrical_models_info['frequency'], meas_data=e_measure_data,\
                  type = self.electrical_models_info['model_type'], netlist = self.electrical_models_info['netlist'])"""
@@ -521,13 +526,14 @@ class Cmd_Handler:
         
         # EVALUATION STEPS BELOW:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
-        self.e_api_init.measure = self.electrical_models_info['main_loops']
+        self.e_api_init.loop = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
-        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
-        # Start the simple PEEC mesh        
+        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
+        # Start the simple PEEC mesh     
+        #self.e_api_init.print_and_debug_layout_objects_locations()
         self.e_api_init.form_initial_trace_mesh()
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time
@@ -542,6 +548,7 @@ class Cmd_Handler:
         # EVALUATION PROCESS 
         # Loop through all loops provided by the user       
         self.e_api_init.eval_single_loop_impedances()
+        #self.e_api_init.eval_multi_loop()
         self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
     # ------------------ Export Features ---------------------------------------------
@@ -731,7 +738,6 @@ class Cmd_Handler:
         :return:
         '''
         self.dbunit=1000 # in um
-        self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
 
         # calling script parser function to parse the geometry and bondwire setup script
         if self.connectivity_setup!=None:
@@ -901,10 +907,23 @@ class Cmd_Handler:
     
     # --------------- API --------------------------------
 
-    def setup_electrical(self):
+    def setup_electrical(self,measure_data = {}):
+        """Setup the electrical model for measurement
+
+        Args:
+            measure_data (dict, optional): _description_. Defaults to {}.
+        """
         if self.e_model_choice == 'PEEC':
             # Should setup rs model somewhere here
-            self.e_api = copy.deepcopy(self.e_api_init) # copy the inital PEEC model
+            self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
+            self.e_api.freq = self.e_api_init.freq
+            self.e_api.input_netlist = self.e_api_init.input_netlist
+            self.e_api.loop = self.e_api_init.loop
+            self.e_api.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
+            self.e_api.workspace_path = self.model_char_path
+            self.e_api.layer_stack = self.e_api_init.layer_stack
+            self.e_api.loop_dv_state_map = self.e_api_init.loop_dv_state_map # copy the inital PEEC model
+            self.measures += self.e_api.measurement_setup(measure_data)
             
     def setup_electrical_old(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
 
