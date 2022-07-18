@@ -233,6 +233,8 @@ class TraceIslandMesh():
             xs.append(cell.right)
             ys.append(cell.bottom)
             ys.append(cell.top)
+        #remember the location in case we have small update
+        
         for p_name in self.small_pads: # convert center position to integer here
             point = self.small_pads[p_name]
             xs.append(point[0])
@@ -247,15 +249,23 @@ class TraceIslandMesh():
         x_lim = 100 # um
         
         rm_y = []
+        y_rp_map = {}
         for iy in range(len(ys)-1):
             dy = ys[iy+1] - ys[iy]
             if dy <= y_lim and iy!=0:
-                ys[iy+1] += y_lim
+                rm_y.append(ys[iy+1])
+                y_rp_map[ys[iy+1]] = ys[iy]
         rm_x = []
+        x_rp_map = {}
         for ix in range(len(xs)-1):
             dx = xs[ix+1] - xs[ix]
             if dx <= x_lim and ix!=0:
-                xs[ix+1] += x_lim
+                rm_x.append(xs[ix+1])
+                x_rp_map[xs[ix+1]] = xs[ix] 
+        
+        
+        
+        # Then update the mesh without the removed ys or xs                    
         y_mesh = [y for y in ys if not(y in rm_y)]
         x_mesh = [x for x in xs if not(x in rm_x)]
         
@@ -294,7 +304,7 @@ class TraceIslandMesh():
                 self.corners_type[corner] = 'concave'  # convex
             else:
                 continue
-
+        return x_rp_map, y_rp_map # maps for xy locs that are replaced            
     def place_devices_and_components(self):
         dev_and_comp = self.leads + self.components + self.pads
         # Here we map the original layout RectCell to the splitted tracecell for nets management

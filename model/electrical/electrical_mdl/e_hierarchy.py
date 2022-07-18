@@ -95,6 +95,6 @@ class EHier():
                 self.off_trace_pin_map[sh_obj.net] = sh_obj
                 self.inst_z_id[sh_obj.net] = sh_obj.z_id    
         
-        debug = False
+        debug = True
         if debug:      
             self.print_hypergraph() 

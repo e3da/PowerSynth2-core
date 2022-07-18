@@ -222,8 +222,8 @@ class RectCell(Rect):
     
     def get_cell_edges(self):
         # Return list of edges with center location
-        ratio = 1/3
-        edge_width = 100
+        ratio = 1/2
+        edge_width = 20
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         pt_0 = (self.left,self.bottom)

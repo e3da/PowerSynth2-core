@@ -257,12 +257,14 @@ class new_engine_opt:
                     self.e_api.eval_and_update_trace_M_analytical()
                     # EVALUATION PROCESS 
                     # Loop through all loops provided by the user       
+
                     R, L = self.e_api.eval_single_loop_impedances()
-                    if abs(R)>1:
+                    R_abs = abs(R)
+                    L_abs = abs(np.imag(L))
+                    if abs(R_abs)>1e3:
                         print("ID:",solution.solution_id)
                         input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                        
-                    result.append(np.imag(L))  
+                    result.append(L_abs)  
                 else:
                     result.append(0)
             if isinstance(measure, ThermalMeasure):

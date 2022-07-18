@@ -487,6 +487,7 @@ class CornerStitch_Emodel_API:
         self.width = {k: footprints[k][0] for k in layer_ids }
         self.height = {k: footprints[k][1] for k in layer_ids }
         
+        
         # init lists for parasitic model objects
         self.e_traces = {}  # dictionary of electrical components
         self.e_sheets = {}  # dictionary of sheets for connector presentaion
@@ -728,8 +729,10 @@ class CornerStitch_Emodel_API:
             max_res = max(res)
             #self.circuit.solve_iv(mode =2)
             results = self.circuit.results
+            # Test look up these lists, can be used for future reliability study
             I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
             I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
+            I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
             #imp = 1 / results['I(Vs)']
             imp = (results['V({0})'.format(src_net)] )/100#/results['I(Vs)']
             R = np.real(imp)
@@ -944,6 +947,7 @@ class CornerStitch_Emodel_API:
                 start_net = pin1.net
                 stop_net = pin2.net
                 via_obj = EVia(start = pin1, stop = pin2)
+                via_obj.inst_name = via_name + '_f2f'
                 via_obj.update_via_parasitics()
                 
             for v in via_obj.imp_map:
@@ -1083,8 +1087,8 @@ class CornerStitch_Emodel_API:
             for island_name in self.layer_island_dict[layer_id]:
                 #if island_name!= 'island_4.4':
                 #    continue
-                if island_name in ['island_10.4','island_9.4','island_4.4','island_5.4']:
-                    continue
+                #if island_name in ['island_10.4','island_9.4','island_4.4','island_5.4']:
+                    #continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
                 all_trace_copper = [] 
                 all_net_on_trace = []
@@ -1093,7 +1097,6 @@ class CornerStitch_Emodel_API:
                     all_trace_copper.append(self.hier.trace_map[trace_name])
                 for net_name in self.hier.trace_island_nets[island_name]:
                     all_net_on_trace.append(self.hier.on_trace_pin_map[net_name])
-                    
                 
                 # add traces to the TraceIslandMesh object
                 for trace_data in all_trace_copper:
@@ -1128,7 +1131,16 @@ class CornerStitch_Emodel_API:
                         elif "V" in name:
                             isl_mesh.small_pads[name]= center_pt
                         self.layer_id_to_lmesh[layer_id].add_net(center_pt,name)
-                isl_mesh.form_hanan_mesh_table_on_island()
+                x_rp, y_rp = isl_mesh.form_hanan_mesh_table_on_island()
+                original_locs = list(self.layer_id_to_lmesh[layer_id].locs_to_net.keys()) 
+                for loc_x_y in original_locs:
+                    net = self.layer_id_to_lmesh[layer_id].locs_to_net[loc_x_y]
+                    x0, y0 = loc_x_y # original
+                    x1 = x_rp[x0] if x0 in x_rp else x0
+                    y1 = y_rp[y0] if y0 in y_rp else y0
+                    if x0 == x1 and y0 == y1:
+                        continue
+                    self.layer_id_to_lmesh[layer_id].locs_to_net[(x1,y1)] = net 
                 isl_mesh.place_devices_and_components()
                 self.layer_id_to_lmesh[layer_id].add_table(island_name,isl_mesh)
             # Handle all nodes that are connected to the layer first
@@ -1146,10 +1158,10 @@ class CornerStitch_Emodel_API:
             debug = 0
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
-                self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/mesh_with_dimensions.png')
+                #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
+                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/mesh_with_dimensions_{}.png'.format(layer_id))
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=1)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/Wire_mesh_only.png')
+                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/Wire_mesh_only_{}.png'.format(layer_id))
                     
         
     def check_device_connectivity(self, init = True):
