@@ -310,6 +310,8 @@ class Cmd_Handler:
                     '''
                     if info[0] == 'Main_Loops:':
                         self.electrical_models_info['main_loops'] = info[1:]
+                    if info[0] == 'Multiport:':
+                        self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
         
@@ -528,8 +530,8 @@ class Cmd_Handler:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
         self.e_api_init.loop = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
-        mode = int(input("initialize multiloop: 0 , single loop: 1"))    
-
+        mode = self.electrical_models_info['multiport']    
+        print("Initialize Multiport Setup") if mode else print("Single Loop Setup")
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
@@ -550,7 +552,7 @@ class Cmd_Handler:
         # EVALUATION PROCESS 
         # Loop through all loops provided by the user   
         # Test evaluation for multiloop:
-        if mode == 1:
+        if mode == 0: # not multiport
             self.e_api_init.eval_single_loop_impedances()
         else:
             self.e_api_init.eval_multi_loop_impedances()
