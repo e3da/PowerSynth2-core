@@ -705,6 +705,24 @@ class CornerStitch_Emodel_API:
         # Now we can check it ?
         self.layout_vs_schematic.lvs_check(self.hypergraph_layout)
 
+    def eval_multi_loop_impedances(self):
+        """Evaluate multiloop impedance using PEEC
+            Assume they all have same device state
+        """
+        # Apply same device states for all loop
+        dev_states = list(self.loop_dv_state_map.values())[0]
+        self.setup_device_states(dev_states)
+        all_loops = []
+        for loop in self.loop: 
+            loop = loop.replace('(','')
+            loop = loop.replace(')','')
+            src,sink = loop.split(',')
+            all_loops.append([loop,src,sink]) 
+        self.circuit.add_loops(all_loops)
+        self.circuit.init_impedance_matrix()
+        self.circuit.eval_impedance_matrix(freq= 1e6)
+        self.circuit.display_inductance_results()
+
     def eval_single_loop_impedances(self):
         for loop in self.loop_dv_state_map:
             dev_states = self.loop_dv_state_map[loop]     
@@ -730,9 +748,10 @@ class CornerStitch_Emodel_API:
             #self.circuit.solve_iv(mode =2)
             results = self.circuit.results
             # Test look up these lists, can be used for future reliability study
-            I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
-            I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
-            I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
+            #TODO:
+            self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
+            self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
+            self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
             #imp = 1 / results['I(Vs)']
             imp = (results['V({0})'.format(src_net)] )/100#/results['I(Vs)']
             R = np.real(imp)
@@ -1164,9 +1183,11 @@ class CornerStitch_Emodel_API:
                 plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/Wire_mesh_only_{}.png'.format(layer_id))
                     
         
-    def check_device_connectivity(self, init = True):
+    def check_device_connectivity(self, init = True, mode = 0):
         '''
         For each device in each loop, ask the user to setup the path by setting device status
+        init: True of False, is this being run at the begining (True) or during layout optimization (False)
+        mode: 0 -- multiloop, 1 -- single loop
         '''
         #TODO: create the table using panda for different device state scenarios
         # Initialize different device state connectivity for each measurement
@@ -1196,6 +1217,7 @@ class CornerStitch_Emodel_API:
                     
                 return 
         # Loop through each loop, each device, and each device-edge
+        
         for loop in self.loop_dv_state_map:
             dev_conn_index = {d:[] for d in self.e_devices}
             msg = "Setup device state for loop: {} ".format(loop)
@@ -1213,6 +1235,8 @@ class CornerStitch_Emodel_API:
                         states.append(int(s))
                 dev_conn_index[dev] = states 
             self.loop_dv_state_map[loop] = dev_conn_index
+            if mode ==1 and len(self.loop_dv_state_map) == 1:
+                break # only need 1 time
         print("Device state setup finished, saving to workspace")
         with open(self.dev_conn_file, 'w') as f:
             json.dump(self.loop_dv_state_map,f)

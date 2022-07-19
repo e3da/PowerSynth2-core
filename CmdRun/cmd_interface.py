@@ -528,6 +528,8 @@ class Cmd_Handler:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
         self.e_api_init.loop = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
+        mode = int(input("initialize multiloop: 0 , single loop: 1"))    
+
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
@@ -537,7 +539,7 @@ class Cmd_Handler:
         self.e_api_init.form_initial_trace_mesh()
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time
-        self.e_api_init.check_device_connectivity()
+        self.e_api_init.check_device_connectivity(mode = mode)
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
         self.e_api_init.generate_circuit_from_trace_mesh()
@@ -546,8 +548,12 @@ class Cmd_Handler:
         self.e_api_init.eval_and_update_trace_RL_analytical()
         self.e_api_init.eval_and_update_trace_M_analytical()
         # EVALUATION PROCESS 
-        # Loop through all loops provided by the user       
-        self.e_api_init.eval_single_loop_impedances()
+        # Loop through all loops provided by the user   
+        # Test evaluation for multiloop:
+        if mode == 1:
+            self.e_api_init.eval_single_loop_impedances()
+        else:
+            self.e_api_init.eval_multi_loop_impedances()
         #self.e_api_init.eval_multi_loop()
         self.e_model_choice = self.e_api_init.process_and_select_best_model()
         

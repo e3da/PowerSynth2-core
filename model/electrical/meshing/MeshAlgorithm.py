@@ -100,7 +100,7 @@ class LayerMesh():
                 pt2 = (e[1][0],e[1][1],self.layer_z)
                 node1 = self.layer_mesh.map_xyz_node[pt1]
                 node2 = self.layer_mesh.map_xyz_node[pt2]
-                
+                # What if we want to mesh more edges ? 
                 self.layer_mesh.add_edge(node1,node2,e[2],e[3],e[4])
                 
                     

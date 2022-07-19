@@ -268,11 +268,11 @@ class new_engine_opt:
                 else:
                     result.append(0)
             if isinstance(measure, ThermalMeasure):
-                #t_sol = copy.deepcopy(solution)
-                #t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
-                #print(self.t_api.matlab_engine)
-                #max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                #result.append(max_t)
+                t_sol = copy.deepcopy(solution)
+                t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
+                print(self.t_api.matlab_engine)
+                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
+                result.append(max_t)
                 result.append(1)
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):

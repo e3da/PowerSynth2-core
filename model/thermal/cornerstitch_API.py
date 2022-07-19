@@ -1,3 +1,4 @@
+# @author: qmle, ialrazi, tmevans
 # for corner stitch need to use analytical model since the layout size can be changed
 #from PySide.QtGui import QFileDialog
 import sys
@@ -217,10 +218,10 @@ class CornerStitch_Tmodel_API:
                 ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")
-            temp=ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
+            self.temp_res =ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
             #temp=400
-            for k in self.devices:
-                self.temp_res[k] = temp
+            #for k in self.devices:
+            #    self.temp_res[k] = temp
             return
     
 
@@ -448,9 +449,12 @@ class CornerStitch_Tmodel_API:
         return maximum thermal resistance 
         """
         features = solution.features_list        
+        # Set up a one hot thermal resistance extraction. 
+        # Each device will be applied a 1W power while others devices 
         for f in features:
             if 'D' == f.name[0]: # device:
                 f.power = 1 # set to 1W so we have thermal resistance
+
         # Normalized all power to 1 W to extract thermal resistance
         module_data.layer_stack = self.layer_stack
         self.dev_result_table_eval(module_data,solution)

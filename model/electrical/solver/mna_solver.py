@@ -7,7 +7,8 @@ import warnings
 import sys
 from sympy import Matrix
 import networkx as nx 
-
+from multiprocessing import Pool
+import multiprocessing 
 warnings.filterwarnings("ignore")
 
 
@@ -85,7 +86,9 @@ class ModifiedNodalAnalysis():
         self.src_pnode = {}
         self.src_nnode = {}
         self.src_value = {}
-        self.equiv_dict = {}    
+        self.equiv_dict = {}
+        self.imp_value = {} # to compute the s multiplication outside to speed up the matrix formation
+            
 
         # Counting number of elements
         self.L_count = 0
@@ -134,7 +137,7 @@ class ModifiedNodalAnalysis():
         '''
         self.element.remove(name)
         del self.pnode[name]
-        del self.node[name]
+        del self.nnode[name]
         del self.value[name]
 
     def add_mutual_term(self,name,Z1_name,Z2_name,val):
@@ -216,6 +219,7 @@ class ModifiedNodalAnalysis():
         self.cn_node = {}
         self.vout = {}
         self.value = {}
+        self.imp_value = {} # to compute the s multiplication outside to speed up the matrix formation
         self.Vname = {}
         # Handle Mutual inductance
         self.Lname1 = {}
@@ -272,11 +276,97 @@ class ModifiedNodalAnalysis():
 
         print('failed to find matching branch element in find_vname')
 
+    def mod_R_direct(self,name, net1, net2,val,add=True):
+        """Modify the G matrix directly with the same given net-name - net-id map
 
+        Args:
+            name (str): resistor name
+            net1 (_type_): name of net1 in string
+            net2 (_type_): name of net2 in string
+            val (_type_): value of the adde
+        """
+        self.add_component(name,net1,net2,val) if add else self.remove_component(name)
+        n1 = self.net_name_to_net_id[net1]
+        n2 = self.net_name_to_net_id[net2]
+        self.handle_G_mat_element(n1,n2,name)
+        
+    
+    def handle_G_mat_element(self,n1,n2,el_name):
+        """Handle the G value with given net id so we dont need to rewrite them
+
+        Args:
+            n1 (_type_): _description_
+            n2 (_type_): _description_
+            g (_type_): _description_
+        """
+        # If neither side of the element is connected to ground
+        # then subtract it from appropriate location in matrix.
+        
+        g = self.imp_value[el_name]
+            
+        if (n1 != 0) and (n2 != 0):
+            self.G[n1 - 1, n2 - 1] += -g
+            self.G[n2 - 1, n1 - 1] += -g
+            self.G[n2 - 1, n2 - 1] += g
+            self.G[n1 - 1, n1 - 1] += g
+            
+
+        # If node 1 is connected to ground, add element to diagonal of matrix
+        if n1 == 0:
+            self.G[n2 - 1, n2 - 1] += g
+
+        # same for for node 2
+        if n2 == 0:
+            self.G[n1 - 1, n1 - 1] += g
+      
+    
+    def process_elements_impedances(self,s,x,elval):
+        """Perform the s*L 1/R and s*C calculation outside of the loop for fast matrix formation
+        Using Pool.star_map and map the values only, so it wont have collisions in the memory access
+        """
+        
+        if x =='C':
+            g = s*elval
+        elif x == 'R':
+            g = 1/elval
+        elif x == 'L':
+            g = -s * np.imag(elval)
+        elif x == 'M':
+            g= -s * elval
+        else:
+            return 0
+        return g
+        
+            
+    def sequential_process_impednaces(self):
+        el_vals = [self.value[self.element[i]] for i in range(len(self.element))] 
+        el_types = [el[0] for el in self.element]
+        results = []
+        for i in range(len(self.element)):
+            results.append(self.process_elements_impedances(self.s,el_types[i],el_vals[i]))
+            
+        self.imp_value = {self.element[i]:results[i] for i in range(len(self.element))}
+                    
+        
+    def parallel_process_elements_impedances(self):
+        """I have tried this and found the multiprocessing is actually slower.
+        This is because the multiplication using numpy is not quite optimized.
+        The processes are vying for the same CPU instead of using all the resources.
+        Need to have further look into this if the matrix setup is slowe. 
+        For now the sequencetial is probably fast enought 
+        """
+        num_cpu = multiprocessing.cpu_count()
+        # making the list types to map
+        el_vals = [self.value[self.element[i]] for i in range(len(self.element))] 
+        el_types = [el[0] for el in self.element]
+        s_list = [self.s for i in range(len(self.element))]
+        with Pool(num_cpu) as p:
+            results = p.starmap(self.process_elements_impedances,zip(s_list,el_types,el_vals))
+        self.imp_value = {self.element[i]:results[i] for i in range(len(self.element))}
     def matrix_formation(self, num_branch):
-        s = self.s
         sn =0
-
+        t = perf_counter()
+        self.sequential_process_impednaces()
         for i in range(len(self.element)):
             el = self.element[i]
 
@@ -287,26 +377,8 @@ class ModifiedNodalAnalysis():
                 n2 = self.net_name_to_net_id[self.nnode[el]]
 
             if (x == 'C' or x == 'R'):
-                if x == 'C':
-                    g = self.s*self.value[el]
-                if x == 'R':
-                    g = 1/self.value[el]
-                # If neither side of the element is connected to ground
-                # then subtract it from appropriate location in matrix.
-                if (n1 != 0) and (n2 != 0):
-                    self.G[n1 - 1, n2 - 1] += -g
-                    self.G[n2 - 1, n1 - 1] += -g
-                    self.G[n2 - 1, n2 - 1] += g
-                    self.G[n1 - 1, n1 - 1] += g
-                    
-
-                # If node 1 is connected to ground, add element to diagonal of matrix
-                if n1 == 0:
-                    self.G[n2 - 1, n2 - 1] += g
-
-                # same for for node 2
-                if n2 == 0:
-                    self.G[n1 - 1, n1 - 1] += g
+                
+                self.handle_G_mat_element(n1,n2,el)
             # B  C MATRIX
 
             if x == 'V':
@@ -327,13 +399,11 @@ class ModifiedNodalAnalysis():
                     if n2 != 0:
                         self.M[n2 - 1] = -1
                         self.M_t[n2 - 1] = -1
-
                 sn += 1  # increment source count
 
             if x == 'L':
-
                 if num_branch > 1:  # is Z greater than 1 by n?, L
-                    imp = -s * np.imag(self.value[el]) #- np.real(self.value[el])
+                    imp = self.imp_value[el]
                     self.D[sn, sn] += imp
                     
 
@@ -346,7 +416,7 @@ class ModifiedNodalAnalysis():
                         self.M_t[sn, n2 - 1] = -1
 
                 else:
-                    self.D[sn] += -s * np.imag(self.value[el])# - np.real(self.value[el])
+                    self.D[sn] += self.imp_value[el]# - np.real(self.value[el])
 
                     if n1 != 0:
                         self.M[n1 - 1] = 1
@@ -370,20 +440,14 @@ class ModifiedNodalAnalysis():
                     print("cant find element")
                     Mval = 0
                     #input()
-
                 Mval = self.value[el]
-
-
                 self.Mutual[Mname] = Mval
                 #print Mval,'nH'
-                self.D[ind1_index, ind2_index] += -s * Mval
-                self.D[ind2_index, ind1_index] += -s * Mval
+                self.D[ind1_index, ind2_index] += self.imp_value[el]
+                self.D[ind2_index, ind1_index] += self.imp_value[el]
 
-        # ERR CHECK
-        if sn != num_branch:
-            print(('source number, sn={:d} not equal to num_branch={:d} in matrix B and C'.format(sn, num_branch)))
-
-
+        
+        print("Set up D Matrix",perf_counter() - t)
     def V_mat(self, num_nodes):
         # generate the V matrix
         for i in range(num_nodes):
@@ -453,7 +517,7 @@ class ModifiedNodalAnalysis():
             if net in self.equiv_dict:
                 self.nnode[k] = self.equiv_dict[net]
         
-        all_net = list(set(list(self.nnode.values()) + list(self.pnode.values()))) # set of all nets
+        all_net = list(set(list(self.nnode.values()) + list(self.pnode.values())+ list(self.src_pnode.values())+ list(self.src_nnode.values()))) # set of all nets
         if 'Gate' in all_net:
             print("Failed to remove gate")
         return all_net
@@ -478,6 +542,12 @@ class ModifiedNodalAnalysis():
         for net_id in range(1,self.num_nodes+1):
             self.net_name_to_net_id[all_net[net_id-1]] = net_id # map a net in the netlist with an integer in the matrix
             self.net_id_to_net_name[net_id] = all_net[net_id-1]
+    
+    
+    
+    
+    
+    
     def matrix_init(self):
         # initialize some symbolic matrix with zeros
         # A is formed by [[G, M] [M_t, D]]
@@ -524,14 +594,16 @@ class ModifiedNodalAnalysis():
         '''
         Solve the MNA for current and voltage results
         '''
+        t = perf_counter()
         self.matrix_init()
+        print("Matrix Init", perf_counter() - t)
         
         Z = self.Z
         A = self.A
-        t = perf_counter()
         convergence = 0
         self.results = scipy.sparse.linalg.spsolve(A,Z)
-        #self.results,convergence = scipy.sparse.linalg.gmres(A,Z)
+        
+        #self.results,convergence = scipy.sparse.linalg.gmres(A,Z,maxiter = 1000)
         if convergence!=0:
             if self.verbose:
                 print("the GMRES simulation did not converge for given tolerance")
@@ -542,7 +614,7 @@ class ModifiedNodalAnalysis():
             self.results_dict[self.X[i,0].decode()]=self.results[i]
             
         self.results=self.results_dict
-    
+
     
     
     def check_all_zeroes(self,matrix):
