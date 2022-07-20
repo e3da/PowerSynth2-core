@@ -1022,7 +1022,7 @@ class CornerStitch_Emodel_API:
             R_name = 'R'+name
             L_name  = 'L' +name
             self.circuit.value[R_name] = R 
-            self.circuit.value[L_name] = 1j*L*0.6 
+            self.circuit.value[L_name] = 1j*L
     
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.
