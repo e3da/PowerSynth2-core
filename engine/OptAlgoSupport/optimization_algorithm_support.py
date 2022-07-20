@@ -218,12 +218,26 @@ class new_engine_opt:
         self.fh_api = None
         # List of measure object
         self.measures = measures
-    
+        self.multiport_result = {}
     def extract_3D_loop_schematic_beta(self,e_api = None):
         schem = LtSpice_layout_to_schematic(e_api)
         #schem.set_up_relative_locations()
 
-
+    def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
+        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
+        #self.e_api.print_and_debug_layout_objects_locations()
+        self.e_api.form_initial_trace_mesh(id)
+        # Setup wire connection
+        # Go through every loop and ask for the device mode # run one time
+        self.e_api.check_device_connectivity(False)
+        # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+        # Eval R, L , M without backside consideration
+        self.e_api.generate_circuit_from_trace_mesh()
+        self.e_api.add_wires_to_circuit()
+        self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+        self.e_api.eval_and_update_trace_RL_analytical()
+        self.e_api.eval_and_update_trace_M_analytical()
+        
     def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
         result = []
         measures=[None,None]
@@ -242,31 +256,24 @@ class new_engine_opt:
                     obj_name_feature_map = {}
                     for f in features:
                         obj_name_feature_map[f.name] = f
-                    self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
-                    #self.e_api.print_and_debug_layout_objects_locations()
-                    self.e_api.form_initial_trace_mesh()
-                    # Setup wire connection
-                    # Go through every loop and ask for the device mode # run one time
-                    self.e_api.check_device_connectivity(False)
-                    # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
-                    # Eval R, L , M without backside consideration
-                    self.e_api.generate_circuit_from_trace_mesh()
-                    self.e_api.add_wires_to_circuit()
-                    self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-                    self.e_api.eval_and_update_trace_RL_analytical()
-                    self.e_api.eval_and_update_trace_M_analytical()
+                    self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
                     # EVALUATION PROCESS 
-                    # Loop through all loops provided by the user       
-
-                    R, L = self.e_api.eval_single_loop_impedances()
-                    R_abs = abs(R)
-                    L_abs = abs(np.imag(L))
-                    if abs(R_abs)>1e3:
-                        print("ID:",solution.solution_id)
-                        input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                    result.append(L_abs)  
-                else:
-                    result.append(0)
+                    if measure.multiport:
+                        multiport_result = self.e_api.eval_multi_loop_impedances()
+                        print(solution.solution_id,multiport_result)
+                        self.multiport_result[solution.solution_id] = multiport_result
+                        # if possible, we can collect the data for a balancing layout optimization.
+                        # 1 Balancing
+                        # 2 Using the full matrix (without mutual for now) to estimate thermal performance
+                        result.append(0)    
+                    else:
+                        R, L = self.e_api.eval_single_loop_impedances()
+                        R_abs = abs(R)
+                        L_abs = abs(np.imag(L))
+                        if abs(R_abs)>1e3:
+                            print("ID:",solution.solution_id)
+                            input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                        result.append(L_abs)  
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint

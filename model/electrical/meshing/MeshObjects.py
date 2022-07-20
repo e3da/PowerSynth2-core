@@ -236,7 +236,7 @@ class RectCell(Rect):
         # 0 --- 1 
         if not(self.has_left()):
             trace_left = self.left 
-            trace_width = edge_width if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width = edge_width #if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
             edge_type = 'boundary'
         else:
             trace_left = self.left - int(self.West.width*ratio)
@@ -246,7 +246,7 @@ class RectCell(Rect):
         e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
         # 2 --- 3
         if not(self.has_right()):
-            trace_width = edge_width if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width = edge_width#if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
             trace_left = self.right - trace_width
             edge_type = 'boundary'
             
@@ -259,7 +259,7 @@ class RectCell(Rect):
         # Handle horizontal traces 
         # 1 -- 2
         if not(self.has_top()):
-            trace_height = edge_width if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height = edge_width #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
             trace_bottom = self.top -trace_height
             edge_type = 'boundary'
             
@@ -271,7 +271,7 @@ class RectCell(Rect):
         e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
         # 0 -- 3
         if not(self.has_bot()):
-            trace_height = edge_width if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height = edge_width #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
             trace_bottom = self.bottom
             edge_type = 'boundary'
             

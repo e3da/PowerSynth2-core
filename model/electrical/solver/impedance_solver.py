@@ -2,7 +2,6 @@
 # The equaitons options includes: theoretical equations (in C or Py) and Characterized model (Py)
 
 
-from email.errors import InvalidMultipartContentTransferEncodingDefect
 from core.model.electrical.solver.mna_solver import ModifiedNodalAnalysis
 import numpy as np
 import networkx as nx
@@ -10,9 +9,8 @@ import matplotlib.pyplot as plt
 import random
 from itertools import combinations, groupby
 import time
-import scipy
 class Port:
-    def __init__(self, pnode:int,nnode:int, index:int, MNA_obj= ModifiedNodalAnalysis()) -> None:
+    def __init__(self, pnode:int,nnode:int, index:int, MNA_obj) -> None:
         '''
         A Port object with different status to modify the MNA circuit.
         '''
@@ -24,35 +22,32 @@ class Port:
         self.z_i_mode = 0 # zero current set
         self.s = self.solver.freq*2*np.pi
         self.index = index # use to map this port impedance to the matrix
-        self.v_source = None
-        self.i_sources = []
+        
     def set_voltage(self):
         ''' Add a voltage source of 1 V between port + and -'''
-        self.solver.add_component('Rstim', 'Stim', self.pnode,1e-6)
-        self.solver.imp_value['Rstim'] = 1e6
-        self.solver.mod_R_direct('Rstim', 'Stim', self.pnode,1e-6, True) # add a wire between Stim and src node
+        self.solver.add_indep_voltage_src(self.pnode,0,1,'V_{}'.format(self.name))
+        self.solver.add_component('R_'+self.name, self.nnode, 0 , 1e-12) # add a small impedance to ground
         self.v_mode = 1
     
-    def set_zero_current(self,isrc_net = '',rsrc_name=''):
+    def set_zero_current(self):
         ''' Add a current source of 0 A between port + and - '''
-        self.solver.add_component(rsrc_name, isrc_net, self.pnode,1e-6)
-        self.solver.imp_value['Rstim'] = 1e6
-        self.solver.mod_R_direct(rsrc_name, isrc_net, self.pnode,1e-6, True) # add a wire between Isrc pin and src node
-        
+        self.solver.add_indep_current_src(self.pnode,0,0,'I_{}'.format(self.name))    
+        self.solver.add_component('R_'+self.name, self.nnode, 0 , 1e-12) # add a small impedance to ground
         self.z_i_mode = 1
     
-    def reset_port(self,isrc_net = '',rsrc_name=''):
+    def reset_port(self):
         ''' Remove the current and voltage stimulation for next run'''
         if self.v_mode:
-            self.solver.mod_R_direct('Rstim', 'Stim', self.pnode,1e-6, False) # remove a wire between Stim and src node
-            self.v_mode = 0
+            self.solver.remove_voltage_src(name= 'V_{}'.format(self.name))
+            self.v_mode=0
         elif self.z_i_mode:
-            self.solver.mod_R_direct(rsrc_name, isrc_net, self.pnode,1e-6, False) # remove a wire between Isrc pin and src node
-            self.z_i_mode = 1
-            
+            self.solver.remove_current_src(name = 'I_{}'.format(self.name))
+            self.z_i_mod=0
+        self.solver.remove_component(name ='R_'+self.name)   
+
     def get_Iv(self):
         ''' get the current through the voltage source when this port is stimulate'''
-        IVname = 'I({})'.format('Vstim') 
+        IVname = 'I(V_{})'.format(self.name) 
         return self.solver.results[IVname]
     
     def eval_self(self):
@@ -105,23 +100,12 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
         '''
         Setup net-map, 
         '''
-        """t_net = time.perf_counter()
         self.graph_to_circuit_minimization()
-        print("net name managment:", time.perf_counter() - t_net)
-        t_net = time.perf_counter()
         self.handle_branch_current_elements()  
-        print("branch current handling", time.perf_counter() - t_net)"""
+        self.solve_MNA()  
         
-        t_net = time.perf_counter()
-        Z = self.Z
-        A = self.A
-        convergence = 0
-        results = scipy.sparse.linalg.spsolve(A,Z)
-        print("MNA solver time:", time.perf_counter() - t_net)
-        self.results={}
-        for i in range(len(self.X)):
-            self.results[self.X[i,0].decode()]=results[i]
         
+               
     def init_impedance_matrix(self):
         num_loops = len(self.loops)
         self.imp_mat = np.zeros((num_loops,num_loops),dtype = np.complex)
@@ -135,48 +119,22 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
         ports = []
         self.assign_freq(freq)
         print("start evaluation")
-        total_analysis = 0
         t = time.perf_counter()
         for l_name in self.loops:
             src, sink =self.loops[l_name]
             index = self.map_loop_name_index[l_name]
             ports.append(Port(src,sink,index,self))
         num_ports = len(ports)
-        self.add_indep_voltage_src('Stim',0, 1,'Vstim')
-       
-        #for i in range(num_ports-1):
-        #    self.add_indep_current_src( 0, Isrc_pins[i] , 0, Isrc_names[i])
-        for i in range(num_ports):  # connect all sinks to ground
-            p = ports[i]
-            self.add_component('Rsink_{}'.format(i),p.nnode,0,1e-9)
-        t_net = time.perf_counter()
-        self.graph_to_circuit_minimization()
-        print("net name managment:", time.perf_counter() - t_net)
-        t_net = time.perf_counter()
-        self.handle_branch_current_elements()  
-        print("branch current handling", time.perf_counter() - t_net)
-        t_net = time.perf_counter()
-        self.matrix_init() # init the matrix here only once
-        print("matrix_init", time.perf_counter() - t_net)
-        
         for i in range(num_ports):
             #print("stimulate port {}".format(ports[i].index))
             p_ana = ports[i] # port with voltage stimulation
             p_ana.set_voltage()
-            # remake the A matrix
-            num_branch = len(self.cur_element)
-            self.A_mat(self.num_nodes, num_branch)
             # set zero current for other ports
             z_ports = [ports[j] for j in range(num_ports) if i!=j]
+            for p in z_ports:
+                p.set_zero_current() 
             
-            #for i in range(num_ports-1):
-            #    p = z_ports[i]
-            #    isrc_pin = Isrc_pins[i]
-            #    rz = R_zeros[i]
-            #    p.set_zero_current(isrc_net = isrc_pin,rsrc_name=rz)
-            t_ana = time.perf_counter()
             self.run_analysis()
-            total_analysis += time.perf_counter() - t_ana
             # evaluate this port self impedance
             Rii, Lii = p_ana.eval_self()
             Ivsrc = p_ana.get_Iv() 
@@ -188,28 +146,35 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
                    self.imp_mat[pz.index,p_ana.index] = Rij + 1j*Lij
                                
             # reset all ports (remove all current and voltage stimulation for next analysis)
-            p_ana.reset_port()
-            """for i in range(num_ports-1):
-                p = z_ports[i]
-                isrc_pin = Isrc_pins[i]
-                rz = R_zeros[i]
-                p.reset_port(isrc_net = isrc_pin,rsrc_name=rz) """
-        print("total analysis time",total_analysis)
-        print("total setup and analysis time", time.perf_counter() - t)   
-            
+            for k in range(num_ports):
+                ports[k].reset_port() 
+        print("total evaluation time", time.perf_counter() - t)   
+     
+    
+    def map_self_idncutances_to_loop_name(self):
+        """Map the loop inductances specified by the user to the matrix calcuation 
+
+        Returns:
+            _type_: _description_
+        """
+        l_name = list(self.loops.keys())
+        res = {}
+        for i in range(len(self.loops)):
+            k = l_name[i]
+            val = np.round(np.imag(self.imp_mat[i,i]),3)
+            res[k] = val 
+        return res
+        
+
     def display_inductance_results(self):
-        loop_name_map = {}
         for row_id in (range(len(self.loops))):
             row_str = ""
             for col_id in (range(len(self.loops))):
                 L =np.round(np.imag(self.imp_mat[row_id,col_id]),3)
                 row_str+= " L{}{}: {}".format(row_id,col_id,L)
                 row_str+= " "
-                if row_id == col_id:
-                    name = list(self.loops.keys())[row_id]
-                    loop_name_map[name] = "L{}{}".format(row_id,col_id)
-            print(row_str)     
-        print(loop_name_map) 
+            print(row_str)
+             
     def graph_read_PEEC_Loop(self,msh_obj):
         # This is used to compared between loop and PEEC method
         for edge in msh_obj.PEEC_graph.edges(data=True):

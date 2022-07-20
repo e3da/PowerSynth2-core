@@ -494,7 +494,8 @@ class Cmd_Handler:
         if self.electrical_mode!=None and mode ==1:
             e_measure_data = {'name':self.electrical_models_info['measure_name']\
                         ,'type':self.electrical_models_info['measure_type']\
-                        ,'main_loops': self.electrical_models_info['main_loops']}
+                        ,'main_loops': self.electrical_models_info['main_loops']\
+                        ,'multiport': self.electrical_models_info['multiport']   }
             self.setup_electrical(measure_data = e_measure_data)
             """self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
                 ,frequency=self.electrical_models_info['frequency'], meas_data=e_measure_data,\
@@ -538,10 +539,10 @@ class Cmd_Handler:
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
-        self.e_api_init.form_initial_trace_mesh()
+        self.e_api_init.form_initial_trace_mesh('init')
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time
-        self.e_api_init.check_device_connectivity(mode = mode)
+        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
         self.e_api_init.generate_circuit_from_trace_mesh()

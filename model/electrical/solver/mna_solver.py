@@ -447,7 +447,7 @@ class ModifiedNodalAnalysis():
                 self.D[ind2_index, ind1_index] += self.imp_value[el]
 
         
-        print("Set up D Matrix",perf_counter() - t)
+        #print("Set up D Matrix",perf_counter() - t)
     def V_mat(self, num_nodes):
         # generate the V matrix
         for i in range(num_nodes):
@@ -594,9 +594,10 @@ class ModifiedNodalAnalysis():
         '''
         Solve the MNA for current and voltage results
         '''
-        t = perf_counter()
         self.matrix_init()
-        print("Matrix Init", perf_counter() - t)
+
+        t = perf_counter()
+        #print("Matrix Init", perf_counter() - t)
         
         Z = self.Z
         A = self.A

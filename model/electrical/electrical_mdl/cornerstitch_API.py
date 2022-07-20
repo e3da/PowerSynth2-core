@@ -4,6 +4,7 @@
 # Description:
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 
+from audioop import mul
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 from core.model.electrical.meshing.MeshStructure import EMesh
@@ -54,7 +55,7 @@ class ElectricalMeasure():
 
     # UNIT_CAP = ('pF', 'picoFarad')
 
-    def __init__(self, measure, name='', main_loops = '', source='', sink=''):
+    def __init__(self, measure, name='', main_loops = '', source='', sink='',multiport =0):
         
         self.name = name
         self.measure = measure
@@ -62,8 +63,8 @@ class ElectricalMeasure():
         self.sink = sink     # Old for single loop eval only
         self.src_dir = 'Z+' 
         self.sink_dir = 'Z+'
-        self.mode =0 # 0 means single loop, 1 means an [NxN] matrix with multiple loop
-
+        self.multiport =multiport # 0 means single loop, 1 means an [NxN] matrix with multiple loop
+        
 
 
 class CornerStitch_Emodel_API:
@@ -711,7 +712,7 @@ class CornerStitch_Emodel_API:
         """
         # Apply same device states for all loop
         dev_states = list(self.loop_dv_state_map.values())[0]
-        self.setup_device_states(dev_states)
+        #self.setup_device_states(dev_states) 
         all_loops = []
         for loop in self.loop: 
             loop = loop.replace('(','')
@@ -721,8 +722,9 @@ class CornerStitch_Emodel_API:
         self.circuit.add_loops(all_loops)
         self.circuit.init_impedance_matrix()
         self.circuit.eval_impedance_matrix(freq= 1e6)
-        self.circuit.display_inductance_results()
-
+        #self.circuit.display_inductance_results()
+        result = self.circuit.map_self_idncutances_to_loop_name()
+        return result 
     def eval_single_loop_impedances(self):
         for loop in self.loop_dv_state_map:
             dev_states = self.loop_dv_state_map[loop]     
@@ -771,7 +773,8 @@ class CornerStitch_Emodel_API:
         for d in self.e_devices:
             dev_obj = self.e_devices[d]
             para = dev_obj.conn_order # get the connection order
-            rds = para[('Drain','Source')]['R'] # TODO: This must be added to the Manual
+            if dev_obj.spice_type == 'MOSFET':
+                rds = para[('Drain','Source')]['R'] # TODO: This must be added to the Manual
             #print("Device name {}, rdson {}".format(d,rds))
             connections = list(para.keys())
             for i in range(len(connections)):
@@ -865,7 +868,7 @@ class CornerStitch_Emodel_API:
             print("solve MNA")
         '''    
 
-    def generate_circuit_from_trace_mesh(self):
+    def generate_circuit_from_trace_mesh(self,):
         '''
         From the initial generated mesh, this function init the R and L elements and collect their geometrical data. 
         '''
@@ -903,27 +906,40 @@ class CornerStitch_Emodel_API:
         pair_map ={} # just to keep track of which mutual pair we havent check.
         keys = list(self.edge_param_map.keys())
         for c1 in keys:
+            c1_data = self.edge_param_map[c1]
+            ori1 = c1_data['orientation']
             for c2 in keys:
+                c2_data = self.edge_param_map[c2]
+                ori2 = c2_data['orientation']
                 pair_map[c2] = c1 # means we checked this pair.
+                
                 if c1==c2:
                     continue
                 if pair_map[c1] == c2:
                     continue
-                c1_data = self.edge_param_map[c1]
-                c2_data = self.edge_param_map[c2]
-                if c1_data['orientation'] != c2_data['orientation']:
+
+                if ori1 != ori2:
                     continue # we dont care about trace pieces in parallel.
                 key = (c1,c2) # create a key first
-                w1 = c1_data['dimension'][2]
-                l1 = c1_data['dimension'][3]
+                if ori1 == 0:
+                    w1 = c1_data['dimension'][3]
+                    l1 = c1_data['dimension'][2]
+                    w2 = c2_data['dimension'][3]
+                    l2 = c2_data['dimension'][2]
+                    dy = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
+                    dx = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
+                elif ori1 ==1:
+                    w1 = c1_data['dimension'][2]
+                    l1 = c1_data['dimension'][3]
+                    w2 = c2_data['dimension'][2]
+                    l2 = c2_data['dimension'][3]
+                    dx = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
+                    dy = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
                 t1 = c1_data['thickness']
-                w2 = c2_data['dimension'][2]
-                l2 = c2_data['dimension'][3]
                 t2 = c1_data['thickness']
- 
-                dx = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
-                dy = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
                 dz = abs(c1_data['z_level']-c2_data['z_level'])
+                
+
                 self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'dx':dx,'dy':dy,'dz':dz} 
 
     def add_wires_to_circuit(self):                     
@@ -1032,7 +1048,9 @@ class CornerStitch_Emodel_API:
         #print("JIT compilation for a single parameter list")
         #mutual_result = update_mutual_mat_64_py(m_mat[0:1])
         #print("JIT evaluation for the full matrix")  
+        t = time.perf_counter()
         mutual_result = update_mutual_mat_64_py(m_mat)
+        print("M eval time",time.perf_counter()-t)
         mutual_result= [m*1e-12 for m in mutual_result]
         #print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
         for i in range(len(mutual_result)):
@@ -1072,7 +1090,7 @@ class CornerStitch_Emodel_API:
         if lvs_check:
             self.generate_layout_lvs()
         
-    def form_initial_trace_mesh(self):
+    def form_initial_trace_mesh(self,sol_id):
         """Loop through each layer_id of the layout hierachy and generate a trace mesh for each layer.
         Using the generated circuit hierachy to define the circuit connectivity 
         """
@@ -1178,9 +1196,9 @@ class CornerStitch_Emodel_API:
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/mesh_with_dimensions_{}.png'.format(layer_id))
+                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/sol_{}_mesh_with_dimensions_{}.png'.format(sol_id,layer_id))
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=1)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/Wire_mesh_only_{}.png'.format(layer_id))
+                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/sol_{}_wire_mesh_only_{}.png'.format(sol_id,layer_id))
                     
         
     def check_device_connectivity(self, init = True, mode = 0):
@@ -1219,24 +1237,34 @@ class CornerStitch_Emodel_API:
         # Loop through each loop, each device, and each device-edge
         
         for loop in self.loop_dv_state_map:
+            if loop == '':
+                continue
             dev_conn_index = {d:[] for d in self.e_devices}
             msg = "Setup device state for loop: {} ".format(loop)
             print(msg)
-            for dev in self.e_devices:
-                print("setup connections for device: {} in loop: {}".format(dev,loop))
-                states =[]
-                dev_obj = self.e_devices[dev]
-                for conn in dev_obj.conn_order:                    
-                    s = int(input("Setup connection between {}, input 1 if connected, 0 if not. Your input: ".format(conn)))
-                    if s!=0 and s!=1:
-                        print("Unexpected Input")
-                        quit()
-                    else:
-                        states.append(int(s))
-                dev_conn_index[dev] = states 
-            self.loop_dv_state_map[loop] = dev_conn_index
-            if mode ==1 and len(self.loop_dv_state_map) == 1:
-                break # only need 1 time
+            if mode == 0: # Single loop opt setup
+                for dev in self.e_devices:
+                    print("setup connections for device: {} in loop: {}".format(dev,loop))
+                    states =[]
+                    dev_obj = self.e_devices[dev]
+                    for conn in dev_obj.conn_order:                    
+                        s = int(input("Setup connection between {}, input 1 if connected, 0 if not. Your input: ".format(conn)))
+                        if s!=0 and s!=1:
+                            print("Unexpected Input")
+                            quit()
+                        else:
+                            states.append(int(s))
+                    dev_conn_index[dev] = states 
+            
+            if mode ==1: # Multiloop setup
+                
+                for dev in self.e_devices:
+                    dev_obj = self.e_devices[dev]
+                    
+                    states = [0 for conn in dev_obj.conn_order]
+                    dev_conn_index[dev] = states 
+
+            self.loop_dv_state_map[loop] = dev_conn_index    
         print("Device state setup finished, saving to workspace")
         with open(self.dev_conn_file, 'w') as f:
             json.dump(self.loop_dv_state_map,f)
@@ -1673,12 +1701,16 @@ class CornerStitch_Emodel_API:
         e_measures = []
         type = meas_data['type']
         main_loops = meas_data['main_loops']
-        
-        for loop in main_loops:
-            src, sink = loop.split(',')
-            source = src.strip('(')
-            sink = sink.strip(')')
-            e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink))
+        multiport = meas_data['multiport']
+        if multiport == 0:
+            for loop in main_loops:
+                src, sink = loop.split(',')
+                source = src.strip('(')
+                sink = sink.strip(')')
+                e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink,multiport=multiport))
+        else:
+            name = 'multiport'
+            e_measures.append(ElectricalMeasure(measure=type, name=name, source='', sink='',multiport=multiport))
         return e_measures
 
     def extract_RL_1(self,src=None,sink =None):

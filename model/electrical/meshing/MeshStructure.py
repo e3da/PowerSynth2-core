@@ -45,6 +45,7 @@ class EMesh(): # rewrite and clean up old EMesh
         
         self.node_id =0
         self.mesh_graph = nx.Graph()
+        self.edge_flag = {}
     
     # display_methods   
     
