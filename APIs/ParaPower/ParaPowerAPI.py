@@ -140,9 +140,9 @@ class ParaPowerInterface(object):
         self.PottingMaterial = 0
         self.temperature = None
         self.matlab_engine = matlab_engine
-        # self.path = matlab_path
+        self.path = pp_json_path
         # TODO: Save location is hardcoded 
-        self.path = "/nethome/qmle//ParaPower/JSON_output"
+        #self.path = "/nethome/qmle//ParaPower/JSON_output"
 		#self.path="/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
         #self.eng = self.init_matlab()
         self.solution_name = solution_name

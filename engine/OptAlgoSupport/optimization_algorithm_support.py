@@ -246,6 +246,7 @@ class new_engine_opt:
                 measures[0]=measure
             if isinstance(measure,ThermalMeasure):
                 measures[1]=measure
+        self.measures=measures
         for i in range(len(self.measures)):
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
@@ -270,6 +271,7 @@ class new_engine_opt:
                         R, L = self.e_api.eval_single_loop_impedances()
                         R_abs = abs(R)
                         L_abs = abs(np.imag(L))
+                        print("L",L_abs)
                         if abs(R_abs)>1e3:
                             print("ID:",solution.solution_id)
                             input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
@@ -277,10 +279,12 @@ class new_engine_opt:
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
-                print(self.t_api.matlab_engine)
+                #print(self.t_api.matlab_engine)
+                measure.mode = 0 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
+                #print("T",max_t)
                 result.append(max_t)
-                result.append(1)
+                #result.append(1)
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''

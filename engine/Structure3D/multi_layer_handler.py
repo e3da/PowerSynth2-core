@@ -417,12 +417,35 @@ class Layer():
                                             dev_id = self.input_geometry[i][index_-1]
                                             self.bw_info[bws[2]]['Destination']= dev_id+'_'+pins[1] # Source
 
-                                        new_line2= ['.','.','+', layout_id3, 'power', str(source_x), str(source_y), '0.25', '0.25', layer_id]
+
+                                        if self.bw_info[bws[2]]['direction']=='X':
+                                            source_x_coordinate=(source_x+source_x1)/2.0
+                                            new_line2= ['.','.','+', layout_id3, 'power', str(source_x_coordinate), str(source_y), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line2 not in new_lines[i]:
+                                                new_lines[i].append(new_line2)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[2]]={'X': str(source_x_coordinate), 'Y': str(source_y), 'type': 'power'}
+                                        elif self.bw_info[bws[2]]['direction']=='Y':
+                                            source_y_coordinate=(source_y+source_y1)/2.0
+                                            new_line2= ['.','.','+', layout_id3, 'power', str(source_x), str(source_y_coordinate), '0.25', '0.25', layer_id]
+                                            #self.input_geometry.insert(i+2,new_line)
+                                            if new_line2 not in new_lines[i]:
+                                                new_lines[i].append(new_line2)
+                                                new_input_lines+=1
+                                            bw_via_data[bws[2]]={'X': str(source_x), 'Y': str(source_y_coordinate), 'type': 'power'}
+
+
+
+                                        """if self.bw_info[bws[1]]['direction']=='X':
+                                            source_x_coordinate=(source_x+source_x1)/2.0
+
+                                        new_line2= ['.','.','+', layout_id3, 'power', str(source_x_coordinate), str(source_y), '0.25', '0.25', layer_id]
                                         #self.input_geometry.insert(i+3,new_line)
                                         if new_line2 not in new_lines[i]:
                                             new_lines[i].append(new_line2)
                                             new_input_lines+=1
-                                        bw_via_data[bws[2]]={'X': str(source_x), 'Y': str(source_y), 'type': 'power'}
+                                        bw_via_data[bws[2]]={'X': str(source_x), 'Y': str(source_y), 'type': 'power'}"""
                                     
                                     elif len(vias) == 2 and len(bws) ==0: # SiC MOSFET/ Si IGBT with wire bondless case (via only)
                                         dev_id = self.input_geometry[i][index_-1]
