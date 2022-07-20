@@ -558,7 +558,9 @@ class Cmd_Handler:
         else:
             self.e_api_init.eval_multi_loop_impedances()
         #self.e_api_init.eval_multi_loop()
-        self.e_model_choice = self.e_api_init.process_and_select_best_model()
+        #self.e_model_choice = self.e_api_init.process_and_select_best_model()
+        
+        
         
     # ------------------ Export Features ---------------------------------------------
     def init_export_tasks(self,run_option=0):

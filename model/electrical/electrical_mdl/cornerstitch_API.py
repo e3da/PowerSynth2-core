@@ -936,11 +936,11 @@ class CornerStitch_Emodel_API:
                     dx = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
                     dy = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
                 t1 = c1_data['thickness']
-                t2 = c1_data['thickness']
+                t2 = c2_data['thickness']
                 dz = abs(c1_data['z_level']-c2_data['z_level'])
                 
 
-                self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'dx':dx,'dy':dy,'dz':dz} 
+                self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'E':dx,'l3':dy,'p':dz} 
 
     def add_wires_to_circuit(self):                     
         """
@@ -1022,7 +1022,7 @@ class CornerStitch_Emodel_API:
             R_name = 'R'+name
             L_name  = 'L' +name
             self.circuit.value[R_name] = R 
-            self.circuit.value[L_name] = 1j*L 
+            self.circuit.value[L_name] = 1j*L
     
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.
@@ -1035,8 +1035,8 @@ class CornerStitch_Emodel_API:
         
         for m_pair in self.mutual_edge_params:
             di = self.mutual_edge_params[m_pair]
-            val_list = [ di[k] for k in ['w1','l1','t1','w2','l2','t2','dx',
-                                         'dy','dz']] # Note: for python > 3.7 probably do not need to do this.
+            val_list = [ di[k] for k in ['w1','l1','t1','w2','l2','t2','l3',
+                                         'p','E']] # Note: for python > 3.7 probably do not need to do this.
                                                      # This is to make sure the dictionary object is ordered   
             m_mat.append(val_list)
             m_pairs.append(m_pair)
