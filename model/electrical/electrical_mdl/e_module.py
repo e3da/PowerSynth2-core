@@ -263,11 +263,10 @@ class EWires(EComp):
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))/1000 # using integer input
-        length = length/3 + 4*length/math.sqrt(3)/3
-        
+        #length = length/3 + 4*length/math.sqrt(3)/3
         group = {}  # all mutual inductance pair
         R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
-        L_val = wire_inductance(r=self.r, l=length) * 1e-9
+        L_val =  wire_inductance(r=self.r, l=length) * 1e-9
         branch_val = 1j * L_val + R_val
         if self.num_wires>1: # CASE 1 we need to care about mutual between wires
             for i in range(self.num_wires):
@@ -282,7 +281,7 @@ class EWires(EComp):
                         L1_name = 'Z{0}_{1}'.format(self.inst_name,i)
                         L2_name = 'Z{0}_{1}'.format(self.inst_name,j)
                         #M_name = 'M' + '_' + L1_name + '_' + L2_name
-                        M_val = wire_partial_mutual_ind(length, distance) * 1e-9
+                        M_val =  wire_partial_mutual_ind(length, distance) * 1e-9
                         self.mutual_map[(L1_name,L2_name)] = M_val
 
 
