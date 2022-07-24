@@ -8,6 +8,8 @@ from audioop import mul
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 from core.model.electrical.meshing.MeshStructure import EMesh
+from core.general.settings.save_and_load import load_file
+
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 from core.MDK.Design.parts import Part
@@ -21,6 +23,8 @@ from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh,LayerMes
 from core.model.electrical.electrical_mdl.e_layout_versus_shcematic import LayoutVsSchematic
 from core.model.electrical.parasitics.equations import self_imp_py_mat
 from core.model.electrical.parasitics.equations import update_mutual_mat_64_py
+from core.model.electrical.parasitics.equations import unpack_and_eval_RL_Krigg
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -996,6 +1000,7 @@ class CornerStitch_Emodel_API:
         mat = []
         name_list = [] # Have to add this for this function to work correctly accross different Python version
         # dictionary objects are not ordered < Python3.7 
+        min_len = 10000
         for imp_name in self.edge_param_map:
             data = self.edge_param_map[imp_name]
             dim = data['dimension']
@@ -1007,16 +1012,26 @@ class CornerStitch_Emodel_API:
             else: #1 
                 trace_width = dim[2]  
                 trace_len = dim[3]
+            if trace_len < min_len:
+                min_len = trace_len
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        RL_mat = self_imp_py_mat(input_mat = mat) # trace by default
-        
+        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
+        self.rs_model = None
+        RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
+        #print(min_len)
+        if self.rs_model == None:
+            RL_mat = self_imp_py_mat(input_mat = mat) # trace by default
+            #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000)*1e-9 for m in mat]
+        else: 
+            np_mat = np.array(mat)
+            RL_mat = unpack_and_eval_RL_Krigg(f = self.freq,w = np_mat[:,0]/1000, l = np_mat[:,1]/1000,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         for i in range(len(name_list)):
-            R, L = RL_mat[i]
-            if L<0:
-                print("negative")
+            R, L = RL_mat_theory[i]
+            #R, L = RL_mat[i]
+            
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
@@ -1143,8 +1158,6 @@ class CornerStitch_Emodel_API:
                 # For the nets, we want to reduce the number of H or V lines
                 # L and D if share same horizontal or vertical lines
                 
-                
-                
                 for net_data in all_net_on_trace:
                     rect_obj = net_data.rect
                     name = net_data.net
@@ -1157,11 +1170,14 @@ class CornerStitch_Emodel_API:
                             #isl_mesh.leads.append(net_cell)
                             #isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]=center_pt
+                            isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.top)
+                            isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.bottom)
+
                         elif "B" in name:
                             isl_mesh.small_pads[name]=center_pt
                         elif "D" in name:
                             #isl_mesh.components.append(net_cell)
-                            #isl_mesh.traces.append(net_cell)
+                            isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]= center_pt
                             device_name = name.split('_')
                             layer_components.append(device_name[0])
@@ -1192,13 +1208,13 @@ class CornerStitch_Emodel_API:
            
             
             #debug = int(input("plot mesh ?")) # True will make it slow, cause the figure are quite huge
-            debug = 0
+            debug = 1
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/sol_{}_mesh_with_dimensions_{}.png'.format(sol_id,layer_id))
+                plt.savefig(self.workspace_path+'/sol_{}_mesh_with_dimensions_{}.png'.format(sol_id,layer_id))
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=1)
-                plt.savefig('/nethome/qmle/PowerSynth_V2_git/core/Fig_Temp/sol_{}_wire_mesh_only_{}.png'.format(sol_id,layer_id))
+                plt.savefig(self.workspace_path+'/sol_{}_wire_mesh_only_{}.png'.format(sol_id,layer_id))
                     
         
     def check_device_connectivity(self, init = True, mode = 0):

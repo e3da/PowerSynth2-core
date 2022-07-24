@@ -310,8 +310,8 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
         if opt_problem != None:  # Evaluatio mode
 
             results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions))
-            df = pd.DataFrame.from_dict(opt_problem.multiport_result)
-            df.to_csv("/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/Characterization/multiport_res.csv")
+            #df = pd.DataFrame.from_dict(opt_problem.multiport_result)
+            #df.to_csv("/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/Characterization/multiport_res.csv")
         else:
             results = perf_results[i]
 

@@ -152,3 +152,87 @@ def self_ind_test_rs(ws,ls,f,mdl_dir = "/nethome/qmle/response_surface_update/mo
         print('negative',w,l)
         #input()
     return all_r,all_l
+
+def unpack_and_eval_RL_Krigg(f=1e6,w =[],l=[],mdl=None):
+    """Unpack the fasthenry-built model to get RL values, with integer inputs from layout engine
+    Args:
+        f (float): Frequency in kHz
+        w (float): trace_width in um
+        l (float): trace_length in um
+        mdl (multilevel dictionary): a multilevel dictionary containing curve fit model for each frequency
+    """
+
+    freqquencies = [fl_mdl['f'] for fl_mdl in mdl['L'] ] # Get all of the frequency data stored in the model
+
+    freq_dif = [abs(f-fl_mdl['f']) for fl_mdl in mdl['L'] ] # Get all of the frequency data stored in the model
+    freq_id = freq_dif.index(min(freq_dif)) # Get the closest frequency
+    ind_mdl = mdl['L'][freq_id]['mdl']
+    res_mdl = mdl['R'][freq_id]['mdl']
+    print('f=',freqquencies[freq_id])
+    L = ind_mdl.model[0].execute('points',w,l)
+    R = res_mdl.model[0].execute('points',w,l)
+    R = list(R[0])
+    L = list(L[0])
+    RL = [[r*1e-3,l*1e-9] for r,l in zip(R,L)]
+
+    return(RL)
+
+def trace_inductance(w, l, t=0.2, h=0.64):
+    # Corrected by Brett Shook 2/26/2013
+    # w: mm (trace width, perpendicular to current flow)
+    # l: mm (trace length, parallel to current flow)
+    # t: mm (trace thickness)
+    # h: mm (height of trace above ground plane)
+
+    # if this condition is broken,
+    # the isolated bar inductance
+    # problem will give bad results
+    # In this case, lengthen the piece,
+    # and return a larger worst case value.
+    
+    #if w > l * LOWEST_ASPECT_IND:
+    #    w = l * LOWEST_ASPECT_IND
+
+    w1 = w * 1e-3  # transfer to unit in m;
+    h1 = h * 1e-3  # transfer to unit in m;
+    t1 = t * 1e-3  # transfer to unit in m;
+    l1 = l * 1e-3  # transfer to unit in m;
+    c = 3.0e8  # speed of light;
+    u_r = 1.0  # relative permeability of the isolation material; hardcoded (sxm)
+    u_0 = 4.0 * math.pi * 1e-7  # permeability of vaccum;
+    e_r = 8.8  # relative permittivity of the isolation material; # hardcoded (sxm)
+    e_0 = 8.85 * 1e-12  # permittivity of vaccum;
+
+    # effective dielectric permittivity and effective width:
+    w_e = w1 + 0.398 * t1 * (1.0 + math.log(2.0 * h1 / t1))
+    e_eff = ((e_r + 1.0) / 2.0) + ((e_r - 1.0) / 2.0) * math.pow(1.0 + 12.0 * h1 / w_e, -0.5) - 0.217 * (
+    e_r - 1.0) * t1 / (math.sqrt(w_e * h1))
+
+    # micro-strip impedance:
+    C_a = e_0 * (w_e / h1 + 1.393 + 0.667 * math.log(w_e / h1 + 1.444))
+    z0 = math.sqrt(e_0 * u_0 / e_eff) * (1 / C_a)
+
+    # inductance calculation of microstrip:
+    Ind_0 = l1 * z0 * math.sqrt(u_r * e_eff) / c
+    Ind_0 *= 1e9  # unit in nH
+
+    # inductance calculation of isolated rectangular bar trace
+    try:
+        Ind_1 = u_0 * l1 / (2.0 * math.pi) * (math.log(2.0 * l1 / (w1 + t1)) + 0.5 + (2.0 / 9.0) * (w1 + t1) / l1)
+        Ind_1 *= 1e9  # unit in nH
+    except:
+        Ind = 1000
+        return Ind
+    # averaged model for inductance calculation:
+    Ind = 0.5 * (Ind_0 + Ind_1)
+
+    if Ind <= 0.0:
+        if Ind_0 > 0.0:
+            Ind = Ind_0
+        elif Ind_1 > 0.0:
+            Ind = Ind_1
+        else:
+            Ind = 1e-6
+
+    # returns inductance in nano-Henries
+    return Ind
