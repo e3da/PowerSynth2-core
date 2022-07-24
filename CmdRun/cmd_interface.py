@@ -317,46 +317,8 @@ class Cmd_Handler:
         
         proceed = self.check_input_files() # only proceed if all input files are good. 
 
-<<<<<<< HEAD:CmdRun/cmd_interface.py
         if proceed:
             self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
-=======
-        check_file = os.path.isfile
-        check_dir = os.path.isdir
-        # Check if these files exist
-        rs_model_check = check_file(self.rs_model_file) or self.rs_model_file=='default'
-        
-        cont = check_file(self.layout_script) \
-               and check_file(self.layer_stack_file) \
-               and rs_model_check\
-               and check_file(self.constraint_file)
-        if self.bondwire_setup!=None:
-            cont=check_file(self.bondwire_setup)
-        
-        # make dir if they are not existed
-        #print(("self.new_mode",self.new_mode))
-        #print(("self.flex",self.flexible))
-        if not (check_dir(self.fig_dir)):
-            try:
-                os.mkdir(self.fig_dir)
-            except:
-                print ("cant make directory for figures")
-                cont =False
-        if not(check_dir(self.db_dir)):
-            try:
-                os.mkdir(self.db_dir)
-            except:
-                print ("cant make directory for database")
-                cont =False
-
-        if cont:
-            if self.layout_ori_file!=None:
-                print ("Trace orientation is included, mesh acceleration for electrical evaluation is activated")
-            else:
-                print ("Normal meshing algorithm is used")
-
-            print ("run the optimization")
->>>>>>> origin/E_API_Update:CmdRun/cmd.py
             self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented1 out
             
@@ -554,6 +516,7 @@ class Cmd_Handler:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
         
+        
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
         self.e_api_init.layout_vs_schematic.check_circuit_type()
@@ -577,6 +540,8 @@ class Cmd_Handler:
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
+        self.e_api_init.start_meshing_process(module_data=module_data)
+        
         self.e_api_init.form_initial_trace_mesh('init')
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time

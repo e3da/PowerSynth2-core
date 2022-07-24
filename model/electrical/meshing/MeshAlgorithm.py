@@ -219,6 +219,18 @@ class TraceIslandMesh():
 
                 self.cell_table[(i_x, i_y)] = new_cell
     
+    
+    def form_oriented_mesh_on_island(self):
+        """Assume the general direction of a trace and mesh it 
+        """
+        ori_map = {}
+        for cell in self.traces:
+            if cell.width > cell.height:
+                ori_map[cell] = 'H'
+            if cell.heiht > cell.width:
+                ori_map[cell] = 'V'
+    
+
     def form_hanan_mesh_table_on_island(self):
         # Given a list of trace cells as member variables:
         # 1 generate the hanan grid

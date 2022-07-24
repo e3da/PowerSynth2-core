@@ -391,8 +391,8 @@ if __name__ == '__main__':
     #print((c1+c2,c3))
     
     mdl = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
-    w = np.linspace(1,5,100)
-    l = np.linspace(10,20,100)
+    w = np.linspace(1,10,100)
+    l = np.linspace(1,10,100)
     t = 0.2
     mat = []
     for i in range(100):
@@ -405,14 +405,20 @@ if __name__ == '__main__':
     RL_mat_eq = self_imp_py_mat(mat)
 
     err = []
-    for i in range(100):
+    rat = []
+    for i in range(len(mat)):
         r_eq,l_eq = RL_mat_eq[i]    
         r_rs,l_rs = RL_mat_rs[i]
         if l_rs>0:
             err.append(l_eq-l_rs)
+            rat.append(l_eq/l_rs)
         else:
+            print(mat[i])
             continue
+    plt.figure(1)
     plt.plot(err)
+    plt.figure(2)
+    plt.plot(rat)
     plt.show()
     '''
     mdl_dir='D:\Testing\Py_Q3D_test\All rs models'

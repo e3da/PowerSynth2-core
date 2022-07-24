@@ -771,7 +771,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     
     data  = model_input.DOE.tolist()
     i=0
-    rerun = True
+    rerun = False
     
     # Parallel run fasthenry
     while i < len(data):
@@ -1433,8 +1433,8 @@ def test_build_trace_model_fh():
     freq = 1e8
     sd_met = math.sqrt(1 / (math.pi * freq * u * metal_cond )) *1000
 
-    Width = [0.1,10]
-    Length = [10,20]
+    Width = [1,5]
+    Length = [1,20]
     #freq = [0.01, 100000, 100] # in kHz
     freq = [1,7,10]
     form_fasthenry_trace_response_surface(layer_stack=ls, Width=Width, Length=Length, freq=freq, wdir=w_dir,

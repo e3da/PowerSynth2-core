@@ -742,7 +742,7 @@ class CornerStitch_Emodel_API:
             src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
             sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
             self.circuit.verbose = 1
-            self.circuit.add_indep_current_src(0,src_net,100,'Is')
+            self.circuit.add_indep_current_src(0,src_net,1,'Is')
             self.circuit.add_component('Rsink',sink_net,0,1e-6)
             #self.circuit.add_component(sink_net,0,'Zsink',1e-12)            
             self.circuit.assign_freq(self.freq)
@@ -759,7 +759,7 @@ class CornerStitch_Emodel_API:
             self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
             self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
             #imp = 1 / results['I(Vs)']
-            imp = (results['V({0})'.format(src_net)] )/100#/results['I(Vs)']
+            imp = (results['V({0})'.format(src_net)] )#/results['I(Vs)']
             R = np.real(imp)
             L = np.imag(imp) / self.circuit.s
             print("R: {}, L: {}".format(R,L))
@@ -812,17 +812,15 @@ class CornerStitch_Emodel_API:
         # Combine all islands group for all layer
         islands = []
         
-        for isl_group in list(module_data.islands.values()):
+        for isl_group in list(module_data[0].islands.values()):
             islands.append(isl_group)
         # Mesh for PEEC to initialize, if loop model is used we can apply the reduction later
-        self.form_initial_trace_mesh()
+        #self.form_initial_trace_mesh()
         # Generate a circuit from the given mesh
-        self.generate_circuit_from_trace_mesh()
+        #self.generate_circuit_from_trace_mesh()
         
-        
-        '''
         if self.e_mdl == "PowerSynthPEEC" or self.e_mdl == "FastHenry": # Shared layout info convertion 
-            self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
+            self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure =None)
             self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
             if self.trace_ori == {}:
                 self.emesh.mesh_init(mode =0)
@@ -870,7 +868,7 @@ class CornerStitch_Emodel_API:
             print("graph constraction and combined")
             #self.emesh.graph_to_circuit_transfomation()
             print("solve MNA")
-        '''    
+        
 
     def generate_circuit_from_trace_mesh(self,):
         '''
@@ -1017,7 +1015,7 @@ class CornerStitch_Emodel_API:
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
+        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
         self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
@@ -1026,12 +1024,16 @@ class CornerStitch_Emodel_API:
             #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000)*1e-9 for m in mat]
         else: 
             np_mat = np.array(mat)
-            RL_mat = unpack_and_eval_RL_Krigg(f = self.freq,w = np_mat[:,0]/1000, l = np_mat[:,1]/1000,mdl = self.rs_model) # PS 1.9 and before.
+            RL_mat = unpack_and_eval_RL_Krigg(f = self.freq,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         for i in range(len(name_list)):
             R, L = RL_mat_theory[i]
             #R, L = RL_mat[i]
-            
+            #if L>L_t:
+            #    L = L_t * 0.8
+                #if mat[i][0] < mat[i][1]:
+                    #print(mat[i])
+                    #print(mat[i][0]/mat[i][1])
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
@@ -1104,7 +1106,13 @@ class CornerStitch_Emodel_API:
         # We generate the hypergraph net connection from the layout hierachy using DFS then compare it against input netlist
         if lvs_check:
             self.generate_layout_lvs()
-        
+
+
+    def form_optimzied_trace_mesh(self,sol_id):
+        """
+        Using the old method in PS 1.9 to form H and V type elements
+        """ 
+
     def form_initial_trace_mesh(self,sol_id):
         """Loop through each layer_id of the layout hierachy and generate a trace mesh for each layer.
         Using the generated circuit hierachy to define the circuit connectivity 
@@ -1170,14 +1178,14 @@ class CornerStitch_Emodel_API:
                             #isl_mesh.leads.append(net_cell)
                             #isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]=center_pt
-                            isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.top)
-                            isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.bottom)
+                            #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.top)
+                            #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.bottom)
 
                         elif "B" in name:
                             isl_mesh.small_pads[name]=center_pt
                         elif "D" in name:
                             #isl_mesh.components.append(net_cell)
-                            isl_mesh.traces.append(net_cell)
+                            #isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]= center_pt
                             device_name = name.split('_')
                             layer_components.append(device_name[0])
