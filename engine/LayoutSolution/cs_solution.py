@@ -45,7 +45,7 @@ class LayerSolution():
         #for object_ in self.objects_3D:
             #object_.print_cell_3D()
     def export_layer_info(self,sol_path=None,id=None):
-
+        #print(self.abstract_infos)
         item = 'solution_'+str(id)+'_'+self.name
         file_name = sol_path + '/' + item + '.csv'
         with open(file_name, 'w') as my_csv:
@@ -58,7 +58,8 @@ class LayerSolution():
             #data = [Size, Perf_1, Perf_2]
             #csv_writer.writerow(data)
             csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
-            for k, v in self.abstract_infos[item]['rect_info'].items():
+            for k, v in self.abstract_infos[self.name]['rect_info'].items():
+                
                 k=k.split('.')[0]
                 layout_data = [k, v.x, v.y, v.width, v.height]
                 csv_writer.writerow(layout_data)

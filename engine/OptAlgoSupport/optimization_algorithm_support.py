@@ -218,6 +218,9 @@ class new_engine_opt:
         self.fh_api = None
         # List of measure object
         self.measures = measures
+        self.solutions = []
+        self.sol_gen_runtime = 0
+        self.eval_time = 0
         self.multiport_result = {}
     def extract_3D_loop_schematic_beta(self,e_api = None):
         schem = LtSpice_layout_to_schematic(e_api)
@@ -275,7 +278,7 @@ class new_engine_opt:
                         if abs(R_abs)>1e3:
                             print("ID:",solution.solution_id)
                             input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                        result.append(L_abs)  
+                        result.append(L_abs/1e-9)  
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
@@ -1042,6 +1045,8 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
+            if plot:
+                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
             module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]

@@ -547,7 +547,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-            #layer_sol.export_layer_info(sol_path=sol_dir,id=index)
+            layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
        
@@ -787,6 +787,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 layer_sol.abstract_infos=structure.layers[i].abstract_info
                 layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
                 layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
+                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
                 layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
                 solution.layer_solutions.append(layer_sol)
                 module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]
@@ -920,6 +921,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 PS_solutions=opt_problem.solutions
                 runtime=opt_problem.sol_gen_runtime
                 eval_time=opt_problem.eval_time
+                print("Gen_time",runtime)
+                print("Eval",eval_time)
             else:
                 strt_random=time.time()
                 structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
@@ -929,14 +932,16 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 start_random_eval=time.time()
                 Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
                 end_random_eval=time.time()-start_random_eval
+                print("Eval",end_random_eval)
+                print("Random_generation",end_random)
                 
         
             #end=time.time()
             #print("Eval",end_random_eval)
             #print("Gen_time",runtime)
             #print("Total_time",end-start)
-            print("Random_generation",end_random)
-            print("Random_eval",end_random_eval)
+            #print("Random_generation",end_random)
+            #print("Random_eval",end_random_eval)
                 
 
         else:

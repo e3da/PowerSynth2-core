@@ -1178,6 +1178,8 @@ class Cmd_Handler:
 
                 
                     self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
+                    
+                        
             elif opt == 'quit':
                 cont = False
 
@@ -1379,7 +1381,10 @@ if __name__ == "__main__":
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
                     {qmle_nethome:'/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'},
-                    {imam_nethome2: 'macro_script_40X50.txt'}]
+                    {imam_nethome2: 'macro_script.txt'},
+                    {imam_nethome2: 'macro_script_40X50.txt'},
+                    {imam_nethome2: 'macro_script_40X45_R.txt'},
+                    {imam_nethome2: 'macro_script_50X50_R.txt'}]
 
 
         for tc in tc_list:
