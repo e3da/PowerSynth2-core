@@ -1015,8 +1015,8 @@ class CornerStitch_Emodel_API:
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
-        self.rs_model = None
+        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal.rsmdl')
+        #self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
         if self.rs_model == None:
@@ -1024,11 +1024,11 @@ class CornerStitch_Emodel_API:
             #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000)*1e-9 for m in mat]
         else: 
             np_mat = np.array(mat)
-            RL_mat = unpack_and_eval_RL_Krigg(f = self.freq,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
+            RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         for i in range(len(name_list)):
-            R, L = RL_mat_theory[i]
-            #R, L = RL_mat[i]
+            #R, L = RL_mat_theory[i]
+            R, L =RL_mat[i]
             #if L>L_t:
             #    L = L_t * 0.8
                 #if mat[i][0] < mat[i][1]:
@@ -1038,8 +1038,8 @@ class CornerStitch_Emodel_API:
             name = name.strip('Z')
             R_name = 'R'+name
             L_name  = 'L' +name
-            self.circuit.value[R_name] = R 
-            self.circuit.value[L_name] = 1j*L
+            self.circuit.value[R_name] = R /1000
+            self.circuit.value[L_name] = 1j*L/1000
     
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.

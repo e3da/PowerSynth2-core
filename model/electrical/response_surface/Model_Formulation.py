@@ -750,7 +750,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minL, maxL]])
     model_input.set_name(mdl_name)
-    mesh_size=10
+    mesh_size=20
     model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
     #model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
     model_input.generate_fname()
@@ -764,14 +764,14 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
             ax.scatter(w,l,s=100)
         plt.show()
     
-    num_cpus = 20  # multiprocessing.cpu_count()
+    num_cpus = 40  # multiprocessing.cpu_count()
     if num_cpus>10:
         num_cpus=int(num_cpus)
     print ("Number of available CPUs",num_cpus)
     
     data  = model_input.DOE.tolist()
     i=0
-    rerun = False
+    rerun = True
     
     # Parallel run fasthenry
     while i < len(data):
@@ -983,7 +983,7 @@ def build_and_run_trace_sim(**kwags):
             [cond,width,length,thick,z_loc,nhinc,e_type] = info
             nhinc = 5
             if e_type == 'G':
-                #continue # test trace only
+                continue # test trace only
                 script += GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
             elif e_type == 'S':
                 skindepth = math.sqrt(1 / (math.pi * fmax * u * cond * 1e6))
@@ -1105,7 +1105,7 @@ def form_fasthenry_corner_correction(layer_stack, Width=[1.2, 40], freq=[10, 100
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minW, maxW]])
     model_input.set_name(mdl_name)
-    mesh_size = 10
+    mesh_size = 5
     model_input.create_uniform_DOE([mesh_size, mesh_size], True)
     # model_input.create_DOE(0, 10)
     model_input.generate_fname()
@@ -1558,7 +1558,8 @@ if __name__ == "__main__":
     #test_corner_ind_correction(10, 4, 4)
     #test_corner_ind_correction(10, 4, 10)
     # test_build_corner_correction()
-    create_large_scale_model_to_prevent_numerical_issues()
+    #create_large_scale_model_to_prevent_numerical_issues()
+    test_build_trace_model_fh(width_range= [0.5,40],length_range= [0.5,40],generic_name= 'modle_rerun_journal', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
     #test_build_trace_mdl_q3d()
     #test_build_trace_cornermodel_fh()
     #test_corner_ind_correction_fh(f,8,8)
