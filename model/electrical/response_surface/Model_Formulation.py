@@ -793,7 +793,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
                     done = False
                     break
             print("sleep for 1 s, waiting for simulation to finish")
-            #time.sleep(1)   
+            time.sleep(1)   
         if rerun:
             for cpu in range(num_cpus): 
                 [w,l] =data[i+cpu]
@@ -1034,8 +1034,8 @@ def process_output(**kwags):
                 r_list.append(float(row[0]))            # resistance in ohm
                 l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
 
-    r_list=np.array(r_list)*1e3 # convert to mOhm
-    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
+    r_list=np.array(r_list)*1e6 # convert to uOhm
+    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e12 # convert to pH unit
     f_list = np.array(f_list)*1e-3
     ''' Fit the data to simple math functions for more data prediction in the given range '''
     try:
