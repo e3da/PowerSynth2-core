@@ -1363,7 +1363,7 @@ if __name__ == "__main__":
     debug = True
     qmle_nethome = "/nethome/qmle/testcases"
     imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
-    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2/Journal_Case_2p5D_Up"
+    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2"
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
@@ -1384,7 +1384,7 @@ if __name__ == "__main__":
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
                     {qmle_nethome:'/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'},
-                    {imam_nethome2: 'macro_script.txt'},
+                    {imam_nethome2: 'Journal_3D/macro_script.txt'},
                     {imam_nethome2: 'macro_script_40X50.txt'},
                     {imam_nethome2: 'macro_script_40X45_R.txt'},
                     {imam_nethome2: 'macro_script_50X50_R.txt'}]
