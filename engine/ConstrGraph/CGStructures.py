@@ -903,6 +903,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                         new_edge=Edge(source=out_dest, dest=ref_vert, constraint=w2, index=edge.index, type='non-fixed', weight=2*w2,comp_type=edge.comp_type)
                                         new_edges.append(new_edge)
                                 else:
+                                    
+                                    #print(out_dest.coordinate, edge.constraint, fixed_dim, edge.source.coordinate, edge.dest.coordinate)
                                     if out_dest.index==ref_vert.index and abs(edge.constraint)>=fixed_dim:
                                         removable_edges.append(edge)
                                     elif out_dest.index==ref_vert.index and abs(edge.constraint)<fixed_dim:

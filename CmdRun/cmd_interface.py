@@ -516,6 +516,7 @@ class Cmd_Handler:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
         
+        
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
         self.e_api_init.layout_vs_schematic.check_circuit_type()
@@ -539,6 +540,8 @@ class Cmd_Handler:
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
+        self.e_api_init.start_meshing_process(module_data=module_data)
+        
         self.e_api_init.form_initial_trace_mesh('init')
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time

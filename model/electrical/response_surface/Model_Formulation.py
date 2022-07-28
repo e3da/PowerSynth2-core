@@ -16,7 +16,7 @@ sys.path.append(cur_path)
 from core.general.data_struct.Unit import Unit
 #from powercad.general.settings.Error_messages import InputError, Notifier
 from core.general.settings.save_and_load import save_file
-from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file,Element,Run,Init
+from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, GroundPlane, Velement, write_to_file,Element,Run,Init
 from core.APIs.FastHenry.fh_layers import *
 from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
 from core.MDK.LayerStack.layer_stack import LayerStack
@@ -750,7 +750,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minL, maxL]])
     model_input.set_name(mdl_name)
-    mesh_size=5
+    mesh_size=10
     model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
     #model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
     model_input.generate_fname()
@@ -764,14 +764,14 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
             ax.scatter(w,l,s=100)
         plt.show()
     
-    num_cpus = multiprocessing.cpu_count()
+    num_cpus = 20  # multiprocessing.cpu_count()
     if num_cpus>10:
         num_cpus=int(num_cpus)
     print ("Number of available CPUs",num_cpus)
     
     data  = model_input.DOE.tolist()
     i=0
-    rerun = True
+    rerun = False
     
     # Parallel run fasthenry
     while i < len(data):
@@ -793,7 +793,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
                     done = False
                     break
             print("sleep for 1 s, waiting for simulation to finish")
-            time.sleep(1)   
+            #time.sleep(1)   
         if rerun:
             for cpu in range(num_cpus): 
                 [w,l] =data[i+cpu]
@@ -803,8 +803,8 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
         os.system("rm out*")
         i+=num_cpus
     #print(model_input.generic_fnames)
-    buildRL = False
-    buildL = True
+    buildRL = True
+    buildL = False
     if buildRL:
         package = build_RS_model(frange = frange, wdir = wdir, model_input = model_input)
         try:
@@ -955,7 +955,8 @@ def build_and_run_trace_sim(**kwags):
     if not(rerun):
         if os.path.exists(fname):
             return
-    fasthenry_option = "-sludecomp -S "  + str(cpu)
+    fasthenry_option = '-siterative -mmulti -pcube -S ' + str(cpu)
+    #fasthenry_option = "-sludecomp -S "  + str(cpu)
     
     if ps_vers==1: # Fix layerstack
         nwinc = int(math.ceil((math.log(w * 1e-3 / sd_met / 3) / math.log(2) * 2 + 3)/3))
@@ -977,7 +978,7 @@ def build_and_run_trace_sim(**kwags):
         for i in layer_dict:
             info = layer_dict[i]
             [cond,width,length,thick,z_loc,nhinc,e_type] = info
-            nhinc = 20
+            nhinc = 5
             if e_type == 'G':
                 #continue # test trace only
                 script += GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
@@ -987,7 +988,7 @@ def build_and_run_trace_sim(**kwags):
                 nwinc =1
                 if nwinc <= 0:
                     nwinc = 1
-                nwinc = 20
+                nwinc = 5
                 script += Element.format(l / 2,z_loc,w,thick,cond,nwinc,nhinc)
                 #print("mesh", nwinc,nhinc)
 
@@ -1411,8 +1412,8 @@ def test_build_trace_model_fh():
     else:
         fh_env_dir = "/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry"
         read_output_dir = "/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/ReadOutput"
-        #mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
-        mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_no_bp.csv"
+        mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
+        #mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_no_bp.csv"
         
         w_dir = "/nethome/qmle/RS_Build/WS"
         mdl_dir = "/nethome/qmle/RS_Build/Model"
@@ -1432,13 +1433,13 @@ def test_build_trace_model_fh():
     freq = 1e8
     sd_met = math.sqrt(1 / (math.pi * freq * u * metal_cond )) *1000
 
-    Width = [0.5,40]
-    Length = [0.5,40]
+    Width = [1,5]
+    Length = [1,20]
     #freq = [0.01, 100000, 100] # in kHz
-    freq = [1,7,100]
+    freq = [1,7,10]
     form_fasthenry_trace_response_surface(layer_stack=ls, Width=Width, Length=Length, freq=freq, wdir=w_dir,
                                           savedir=mdl_dir
-                                          , mdl_name='simple_trace_40_50', env=env, doe_mode=2,mode='log',ps_vers=2)
+                                          , mdl_name='simple_trace_40_50_it', env=env, doe_mode=2,mode='log',ps_vers=2)
 
 
 def test_build_trace_model_fh1():

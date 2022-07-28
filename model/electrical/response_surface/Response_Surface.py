@@ -338,7 +338,8 @@ class RS_model:
             
             not_ready=True
         self.DOE =self.test_data    
-    def build_RS_mdl(self,mode='UnKrigg',func=None,type=None):
+
+    def build_RS_mdl(self,mode='OrKrigg',func=None,type=None):
         '''
         type: 'R', 'L', 'C'
         Build all RS_mdl based on user specified inputs and outputs.
@@ -449,7 +450,7 @@ class RS_model:
 
                     print(best_variogram[i])
                     OK=ok(data[:, 0], data[:, 1], self.input[i], variogram_model=best_variogram[i],
-                         verbose=True, enable_plotting=False)
+                         verbose=False, enable_plotting=False)
                     print('score: ', best_score[i], 'best_v: ', best_variogram[i])
 
                 else:
@@ -459,7 +460,7 @@ class RS_model:
                 self.model[i] = OK
         elif mode == 'UnKrigg':
             variogram = ['linear', 'power', 'gaussian', 'spherical', 'exponential']
-            #variogram = ['power']
+            variogram = ['power']
 
             best_score = [1000 for i in range(len(self.input))]
             best_variogram = ['' for i in range(len(self.input))]

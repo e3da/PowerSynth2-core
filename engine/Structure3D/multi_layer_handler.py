@@ -182,7 +182,8 @@ class Layer():
 
                                     footprint = el.footprint
                                     pin_locs = el.pin_locs # Vertical devices are considered: only gate and source/emitter or Cathode are considered. Drain/Anode/Collector are considered as bottom pins. 
-                                    #print(pin_locs)
+                                    
+                                    
                                     index_ = self.input_geometry[i].index(element.name)
                                     pins = el.pin_name
                                     layer_id = self.input_geometry[i][-1] # string   
@@ -416,8 +417,8 @@ class Layer():
                                             layout_id3=self.bw_info[bws[2]]['destination_pad'] # Source
                                             dev_id = self.input_geometry[i][index_-1]
                                             self.bw_info[bws[2]]['Destination']= dev_id+'_'+pins[1] # Source
-
-
+                                        
+                                        
                                         if self.bw_info[bws[2]]['direction']=='X':
                                             source_x_coordinate=(source_x+source_x1)/2.0
                                             new_line2= ['.','.','+', layout_id3, 'power', str(source_x_coordinate), str(source_y), '0.25', '0.25', layer_id]
@@ -434,9 +435,9 @@ class Layer():
                                                 new_lines[i].append(new_line2)
                                                 new_input_lines+=1
                                             bw_via_data[bws[2]]={'X': str(source_x), 'Y': str(source_y_coordinate), 'type': 'power'}
-
-
-
+                                        
+                                        
+                                        
                                         """if self.bw_info[bws[1]]['direction']=='X':
                                             source_x_coordinate=(source_x+source_x1)/2.0
 

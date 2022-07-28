@@ -6,7 +6,7 @@ from math import fabs
 
 import matplotlib.pyplot as plt
 import numpy as np
-
+from core.model.electrical.parasitics.equations import self_imp_py_mat,unpack_and_eval_RL_Krigg
 from core.general.settings.save_and_load import load_file
 from core.model.electrical.response_surface.RS_build_function import f_ms
 LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 Quang as stated in Brett's thesis
@@ -115,7 +115,7 @@ def trace_resistance_full(f, w, l, t, h, p=1.724e-8):
     return r
 
 
-def trace_inductance(w, l, t, h):
+def trace_inductance(w, l, t=0.2, h=0.64):
     # Corrected by Brett Shook 2/26/2013
     # w: mm (trace width, perpendicular to current flow)
     # l: mm (trace length, parallel to current flow)
@@ -318,6 +318,9 @@ def trace_ind_krige1(f,w,l,mdl):
     l=mdl.sweep_function(f,params[0],params[1])
     return l
 
+
+
+
 def trace_ind_krige(f,w,l,mdl, mode='Krigg'):
     # unit is nH
     # f in kHz
@@ -380,12 +383,43 @@ def trace_90_corner_ind(f,w1,w2,mdl):
         return l
 
 if __name__ == '__main__':
-    c1=trace_capacitance(5,8,0.035,0.2,4.4,True)
-    c2=trace_capacitance(3,15, 0.035, 0.2, 4.4, True)
-    c3 = trace_capacitance(2, 20, 0.035, 0.2, 4.4, True)
+    #c1=trace_capacitance(5,8,0.035,0.2,4.4,True)
+    #c2=trace_capacitance(3,15, 0.035, 0.2, 4.4, True)
+    #c3 = trace_capacitance(2, 20, 0.035, 0.2, 4.4, True)
     #c4 = trace_capacitance(0.035, 20, 1, 1, 1, False)
 
-    print((c1+c2,c3))
+    #print((c1+c2,c3))
+    
+    mdl = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
+    w = np.linspace(1,10,100)
+    l = np.linspace(1,10,100)
+    t = 0.2
+    mat = []
+    for i in range(100):
+        mat.append([w[i]*1000,l[i]*1000,t*1000])
+    
+
+
+    #trace_ind_krige(f = 1e6,w=w,l=l,mdl=mdl)
+    RL_mat_rs = unpack_and_eval_RL_Krigg(f=1e6, w=w,l=l, mdl = mdl)
+    RL_mat_eq = self_imp_py_mat(mat)
+
+    err = []
+    rat = []
+    for i in range(len(mat)):
+        r_eq,l_eq = RL_mat_eq[i]    
+        r_rs,l_rs = RL_mat_rs[i]
+        if l_rs>0:
+            err.append(l_eq-l_rs)
+            rat.append(l_eq/l_rs)
+        else:
+            print(mat[i])
+            continue
+    plt.figure(1)
+    plt.plot(err)
+    plt.figure(2)
+    plt.plot(rat)
+    plt.show()
     '''
     mdl_dir='D:\Testing\Py_Q3D_test\All rs models'
     mdl_dir='C:\\Users\qmle\Desktop\Testing\Py_Q3D_test\All rs models'
