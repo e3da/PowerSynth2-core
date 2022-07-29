@@ -84,6 +84,7 @@ class Layer():
                 
                 wire_name=con_table[0] # Raw wire name
                 for wire in wire_info:
+                    #print(wire.name,wire_name)
                     if wire.name==wire_name:
                         wire_obj=wire
                 
