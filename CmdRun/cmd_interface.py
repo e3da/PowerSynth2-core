@@ -1381,7 +1381,9 @@ if __name__ == "__main__":
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_3D_Case_Single_Substrate/macro_script.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
-                    {qmle_nethome:'/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'}]
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'},
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_DMC/macro_script.txt'},
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Journal_3D/macro_script.txt'}]
 
 
         for tc in tc_list:

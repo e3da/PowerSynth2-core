@@ -257,8 +257,8 @@ class TraceIslandMesh():
         xs.sort()
         ys.sort()
         # Adding a very small gap between locations that are very closed to each other to prevent numerical issue
-        y_lim = 100# um
-        x_lim = 100 # um
+        y_lim = 0# um
+        x_lim = 0 # um
         
         rm_y = []
         y_rp_map = {}

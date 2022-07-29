@@ -981,7 +981,7 @@ def build_and_run_trace_sim(**kwags):
         for i in layer_dict:
             info = layer_dict[i]
             [cond,width,length,thick,z_loc,nhinc,e_type] = info
-            nhinc = 5
+            nhinc = 7
             if e_type == 'G':
                 continue # test trace only
                 script += GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
@@ -991,7 +991,7 @@ def build_and_run_trace_sim(**kwags):
                 nwinc =1
                 if nwinc <= 0:
                     nwinc = 1
-                nwinc = 5
+                nwinc = 7
                 script += Element.format(l / 2,z_loc,w,thick,cond,nwinc,nhinc)
                 #print("mesh", nwinc,nhinc)
 
@@ -1034,8 +1034,8 @@ def process_output(**kwags):
                 r_list.append(float(row[0]))            # resistance in ohm
                 l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
 
-    r_list=np.array(r_list)*1e6 # convert to uOhm
-    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e12 # convert to pH unit
+    r_list=np.array(r_list)*1e3 # convert to uOhm
+    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to pH unit
     f_list = np.array(f_list)*1e-3
     ''' Fit the data to simple math functions for more data prediction in the given range '''
     try:
@@ -1404,7 +1404,7 @@ def test_build_bw_group_model_fh(f=100,num_wire=2,bw_pad_width=None,radius=0.276
     print("total characterization time", time.time()-start)
 
 
-def test_build_trace_model_fh(freq_range = [1,7,10], width_range = [] , length_range = [], generic_name = '', mdk_dir = ''):
+def test_build_trace_model_fh(freq_range = [1,9,10], width_range = [] , length_range = [], generic_name = '', mdk_dir = ''):
     # Hardcoded path to fasthenry executable.
     if platform.system=='windows':
         fh_env_dir = "C://Users//qmle//Desktop//Testing//FastHenry//Fasthenry3_test_gp//WorkSpace//fasthenry.exe"
@@ -1559,7 +1559,7 @@ if __name__ == "__main__":
     #test_corner_ind_correction(10, 4, 10)
     # test_build_corner_correction()
     #create_large_scale_model_to_prevent_numerical_issues()
-    test_build_trace_model_fh(width_range= [0.5,40],length_range= [0.5,40],generic_name= 'modle_rerun_journal', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
+    test_build_trace_model_fh(width_range= [0.1,40],length_range= [0.1,40],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
     #test_build_trace_mdl_q3d()
     #test_build_trace_cornermodel_fh()
     #test_corner_ind_correction_fh(f,8,8)

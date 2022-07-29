@@ -222,10 +222,18 @@ class RectCell(Rect):
     
     def get_cell_edges(self):
         # Return list of edges with center location
+        # Look at this to visulize the edges
+        # 1--------------2
+        # |              |
+        # |              |
+        # |              |
+        # 0------------- 3    
         ratio = 1/2
-        edge_width = 100
+        min_rs = 100 # This value depends on the most accurate we can have using RS model
+        edge_width = 500 
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
+        # Or look at this to know 0,1,2,3 locations
         pt_0 = (self.left,self.bottom)
         pt_1 = (self.left,self.top)
         pt_2 = (self.right,self.top)
@@ -236,7 +244,7 @@ class RectCell(Rect):
         # 0 --- 1 
         if not(self.has_left()):
             trace_left = self.left 
-            trace_width = edge_width #if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width = edge_width if int(cell_width*ratio) <= min_rs else int(cell_width*ratio)#edge_width
             edge_type = 'boundary'
         else:
             trace_left = self.left - int(self.West.width*ratio)
@@ -246,7 +254,7 @@ class RectCell(Rect):
         e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
         # 2 --- 3
         if not(self.has_right()):
-            trace_width = edge_width #if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width = edge_width if int(cell_width*ratio) <= min_rs else int(cell_width*ratio)#edge_width
             trace_left = self.right - trace_width
             edge_type = 'boundary'
             
@@ -259,7 +267,7 @@ class RectCell(Rect):
         # Handle horizontal traces 
         # 1 -- 2
         if not(self.has_top()):
-            trace_height = edge_width #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height = edge_width if int(cell_height*ratio) <= min_rs else int(cell_height*ratio)#edge_width
             trace_bottom = self.top -trace_height
             edge_type = 'boundary'
             
@@ -271,7 +279,7 @@ class RectCell(Rect):
         e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
         # 0 -- 3
         if not(self.has_bot()):#
-            trace_height = edge_width  #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height = edge_width  if int(cell_height*ratio) <= min_rs else int(cell_height*ratio)#edge_width
             trace_bottom = self.bottom
             edge_type = 'boundary'
             
@@ -282,6 +290,42 @@ class RectCell(Rect):
              
         e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
         
+
+
+        """# Edge width calibration
+        # We check 2 parallel edges, there must be cases where one is boudary and one is internal. 
+        # Then the differences in trace width must be corrected to fill most of the copper
+        # See the begining of the function to locate the edge
+        # Check the vertical pairs first:
+        e_0_1_type = e_0_1[3]
+        e_2_3_type = e_2_3[3]
+        if e_0_1_type == 'boundary' and e_2_3_type == 'internal': 
+            # modify e_2_3 left to e_0_1_right
+            e_0_1_right = e_0_1[2][0] + e_0_1[2][2] # left + width
+            l,b,w,h = e_2_3[2] # updating...
+            print(e_0_1_type,e_2_3_type)
+            print(l,e_0_1_right)
+            e_2_3 = [pt_2,pt_3,(e_0_1_right,b,w,h),e_2_3_type,1] # update the data
+
+        if e_0_1_type == 'internal' and e_2_3_type == 'boundary': 
+            # modify e_2_3 right to e_0_1_left
+
+            l,b,w,h = e_0_1[2] # updating...
+            l1,b1,w1,h1 = e_2_3[2] # updating...
+
+            trace_width = l1-l
+            print(e_0_1_type,e_2_3_type)
+            print(w,trace_width)
+            e_0_1 = [pt_0,pt_1,(l,b,trace_width,h),e_0_1_type,1]"""
+
+            
+    
+
+
+
+
+
+
         return(e_0_1,e_2_3,e_1_2,e_0_3)
         
 

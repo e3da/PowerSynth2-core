@@ -5,6 +5,8 @@
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 
 from audioop import mul
+
+from pandas import DataFrame
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 from core.model.electrical.meshing.MeshStructure import EMesh
@@ -44,6 +46,9 @@ import numpy as np
 import copy
 import os
 import time
+import pandas as pd
+
+
 #import objgraph
 
 
@@ -320,16 +325,16 @@ class CornerStitch_Emodel_API:
                                 net2 = "B_{}".format(pin2) 
                                 # We create 2 pins that connected to the trace at .left,.right,.top,or .bot location of the cap
                                 # Assume that we only have .top .bot or .left .right scenario for now
-                                if '.top' in m and '.bot' in m:    
-                                    rect1 = Rect(top=y +h +2000, bottom=y +h, left=x, right=x + w)
-                                    sh1 = Sheet(rect=rect1, net_name=net1, net_type='external', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
-                                    rect2 = Rect(top=y, bottom=y-2000, left=x, right=x + w)
-                                    sh2 = Sheet(rect=rect2, net_name=net2, net_type='external', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
+                                if '.top' in m and '.bot' in m:     # Need to mannualy adding the gap for the measurement case validation, dont know where is capacitor connected
+                                    rect1 = Rect(top=y +h + 1000, bottom=y +h, left=x, right=x + w)
+                                    sh1 = Sheet(rect=rect1, net_name=net1, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
+                                    rect2 = Rect(top=y, bottom=y-1000, left=x, right=x + w)
+                                    sh2 = Sheet(rect=rect2, net_name=net2, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
                                 if '.left' in m and '.right' in m:    
-                                    rect1 = Rect(top=(y +h), bottom=y, left=x-2000, right=x)
-                                    sh1 = Sheet(rect=rect1, net_name=net1, net_type='external', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
-                                    rect2 = Rect(top=(y +h), bottom=y, left=x+w, right=x + w+2000)
-                                    sh2 = Sheet(rect=rect2, net_name=net2, net_type='external', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
+                                    rect1 = Rect(top=(y +h), bottom=y, left=x-4000, right=x)
+                                    sh1 = Sheet(rect=rect1, net_name=net1, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
+                                    rect2 = Rect(top=(y +h), bottom=y, left=x+w, right=x + w+4000)
+                                    sh2 = Sheet(rect=rect2, net_name=net2, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
                                 self.e_sheets[net1] = sh1
                                 self.e_sheets[net2] = sh2
                                 # We have to add special pins B_C*.top and B_C*.bot     
@@ -1012,11 +1017,13 @@ class CornerStitch_Emodel_API:
                 trace_len = dim[3]
             if trace_len < min_len:
                 min_len = trace_len
+            
+
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal.rsmdl')
-        #self.rs_model = None
+        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
+        self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
         if self.rs_model == None:
@@ -1026,21 +1033,28 @@ class CornerStitch_Emodel_API:
             np_mat = np.array(mat)
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
-        for i in range(len(name_list)):
-            #R, L = RL_mat_theory[i]
+        wrong_case = []
+        print('num_element',len(name_list))
+        for i in range(len(name_list)): 
+            R_t, L_t = RL_mat_theory[i]
             R, L =RL_mat[i]
-            #if L>L_t:
-            #    L = L_t * 0.8
-                #if mat[i][0] < mat[i][1]:
-                    #print(mat[i])
-                    #print(mat[i][0]/mat[i][1])
+            R = R_t
+            L = L_t
+            if L>L_t: # means numerical error has occured
+                print('error')
+                
+                wrong_case.append([mat[i][0],mat[i][1],L,L_t])
+                #print(mat[i][0]/mat[i][1])
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
             L_name  = 'L' +name
             self.circuit.value[R_name] = R /1000
             self.circuit.value[L_name] = 1j*L/1000
-    
+        if wrong_case!=[]:
+            df = pd.DataFrame(wrong_case)
+            df.to_csv('/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/need_to_double_check.csv')
+            input("check numerical err")
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.
         """
@@ -1145,10 +1159,11 @@ class CornerStitch_Emodel_API:
             layer_components = [] # to verify which components are on this layer
             
             for island_name in self.layer_island_dict[layer_id]:
-                #if island_name!= 'island_4.4':
+                
+                #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
                 #    continue
-                #if island_name in ['island_10.4','island_9.4','island_4.4','island_5.4']:
-                    #continue
+                if island_name in ['island_9.4','island_4.4']:
+                    continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
                 all_trace_copper = [] 
                 all_net_on_trace = []
@@ -1202,7 +1217,7 @@ class CornerStitch_Emodel_API:
                     if x0 == x1 and y0 == y1:
                         continue
                     self.layer_id_to_lmesh[layer_id].locs_to_net[(x1,y1)] = net 
-                isl_mesh.place_devices_and_components()
+                #isl_mesh.place_devices_and_components()
                 self.layer_id_to_lmesh[layer_id].add_table(island_name,isl_mesh)
             # Handle all nodes that are connected to the layer first
             self.layer_id_to_lmesh[layer_id].layer_on_trace_nodes_generation()
@@ -1224,7 +1239,6 @@ class CornerStitch_Emodel_API:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=1)
                 plt.savefig(self.workspace_path+'/sol_{}_wire_mesh_only_{}.png'.format(sol_id,layer_id))
                     
-        
     def check_device_connectivity(self, init = True, mode = 0):
         '''
         For each device in each loop, ask the user to setup the path by setting device status

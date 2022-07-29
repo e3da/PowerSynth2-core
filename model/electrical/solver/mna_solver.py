@@ -602,7 +602,12 @@ class ModifiedNodalAnalysis():
         Z = self.Z
         A = self.A
         convergence = 0
-        self.results = scipy.sparse.linalg.spsolve(A,Z)
+        #self.results = scipy.sparse.linalg.spsolve(A,Z)
+        try:
+            self.results = scipy.linalg.solve(A, Z)
+        except:
+            print("check the mesh, RL values...")
+            input()
         
         #self.results,convergence = scipy.sparse.linalg.gmres(A,Z,maxiter = 1000)
         if convergence!=0:
