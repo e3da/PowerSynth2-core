@@ -750,7 +750,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minL, maxL]])
     model_input.set_name(mdl_name)
-    mesh_size=20
+    mesh_size= 50
     model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
     #model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
     model_input.generate_fname()
@@ -1404,7 +1404,7 @@ def test_build_bw_group_model_fh(f=100,num_wire=2,bw_pad_width=None,radius=0.276
     print("total characterization time", time.time()-start)
 
 
-def test_build_trace_model_fh(freq_range = [1,9,10], width_range = [] , length_range = [], generic_name = '', mdk_dir = ''):
+def test_build_trace_model_fh(freq_range = [1,9,5], width_range = [] , length_range = [], generic_name = '', mdk_dir = ''):
     # Hardcoded path to fasthenry executable.
     if platform.system=='windows':
         fh_env_dir = "C://Users//qmle//Desktop//Testing//FastHenry//Fasthenry3_test_gp//WorkSpace//fasthenry.exe"
@@ -1559,7 +1559,7 @@ if __name__ == "__main__":
     #test_corner_ind_correction(10, 4, 10)
     # test_build_corner_correction()
     #create_large_scale_model_to_prevent_numerical_issues()
-    test_build_trace_model_fh(width_range= [0.1,40],length_range= [0.1,40],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
+    test_build_trace_model_fh(width_range= [0.1,50],length_range= [0.1,50],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
     #test_build_trace_mdl_q3d()
     #test_build_trace_cornermodel_fh()
     #test_corner_ind_correction_fh(f,8,8)

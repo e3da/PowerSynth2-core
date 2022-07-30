@@ -218,6 +218,9 @@ class new_engine_opt:
         self.fh_api = None
         # List of measure object
         self.measures = measures
+        self.solutions = []
+        self.sol_gen_runtime = 0
+        self.eval_time = 0
         self.multiport_result = {}
     def extract_3D_loop_schematic_beta(self,e_api = None):
         schem = LtSpice_layout_to_schematic(e_api)
@@ -246,11 +249,12 @@ class new_engine_opt:
                 measures[0]=measure
             if isinstance(measure,ThermalMeasure):
                 measures[1]=measure
+        self.measures=measures
         for i in range(len(self.measures)):
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id == 4: # Can be use for debugging, in case a solution id throws some weird resultss
+                if solution.solution_id == 8: # Can be use for debugging, in case a solution id throws some weird resultss
                     ps_sol = solution
                     features = ps_sol.features_list
                     obj_name_feature_map = {}
@@ -271,17 +275,25 @@ class new_engine_opt:
                         R, L = self.e_api.eval_single_loop_impedances()
                         R_abs = abs(R)
                         L_abs = abs(np.imag(L))
+                        R_abs = R_abs[0]
+                        L_abs = L_abs[0]
+
+                        #print("L",L_abs)
                         if abs(R_abs)>1e3:
                             print("ID:",solution.solution_id)
-                            input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                            print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                            print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
+
                         result.append(L_abs)  
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
-                print(self.t_api.matlab_engine)
+                #print(self.t_api.matlab_engine)
+                measure.mode = 0 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
+                #print("T",max_t)
                 result.append(max_t)
                 #result.append(1)
         return result
@@ -1041,6 +1053,8 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
+            if plot:
+                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
             module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]

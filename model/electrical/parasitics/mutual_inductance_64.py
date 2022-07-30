@@ -87,7 +87,8 @@ def mutual_between_bars(params):
     w1,l1,t1,w2,l2,t2,l3,p,E = params
     '''
     This function is used to compute the mutual inductance value between 2 rectangular bars in space.
-    all dimension are in mm
+    all dimension are in um
+    and return nH
 
     :param w1: first bar 's width
     :param l1: first bar 's length
@@ -100,22 +101,22 @@ def mutual_between_bars(params):
     :param E: distance between 2 bars'
     :return: Mutual inductance of 2 bars in nH
     '''
-    w1 = w1 * 0.1
-    l1 = l1 * 0.1
-    t1 = t1 * 0.1
+    w1 = w1 
+    l1 = l1 
+    t1 = t1 
 
-    w2 = w2 * 0.1
-    l2 = l2 * 0.1
-    t2 = t2 * 0.1
+    w2 = w2 
+    l2 = l2 
+    t2 = t2 
 
-    l3 = l3 * 0.1
-    p = p * 0.1
-    E = E*0.1
+    l3 = l3 
+    p = p 
+    E = E
     Const = 0.001 / (w1 * t1 * w2 * t2)
     add_val = outer_addition(E - w1, E + w2 - w1, E + w2, E, p - t1, p + t2 - t1, p + t2, p, l3 - l1, l3 + l2 - l1, l2 + l3, l3)
 
     Mb = Const *  add_val
-    return Mb * 1000  # in nH
+    return Mb   # in nH
 
 @njit()
 def outer_addition(q1, q2, q3, q4, r1, r2, r3, r4, s1, s2, s3, s4):
@@ -215,7 +216,7 @@ def Test_Mutual():
 
 if __name__ == '__main__':
     # JIT compile
-    res = mutual_between_bars(np.array([1,1,1,1,1,1,1,1,1]))
+    """res = mutual_between_bars(np.array([1,1,1,1,1,1,1,1,1]))
     mutual_mat = []
     num_eval = 1000000
     for i in range(num_eval):
@@ -226,4 +227,11 @@ if __name__ == '__main__':
     print(("JIT time",time.time()-start))
     start = time.time()
     mutual_mat_eval(np.array(mutual_mat,dtype=float),12,0)
-    print(("Cython time",time.time()-start))
+    print(("Cython time",time.time()-start))"""
+
+    input = np.array([100,1000,200,100,1000,200,100,100,100])
+    input_2=np.array([input/1000.0])
+    
+    M =mutual_between_bars(input)
+    M2 = mutual_mat_eval(input_2,8,0)
+    print(M,M2)

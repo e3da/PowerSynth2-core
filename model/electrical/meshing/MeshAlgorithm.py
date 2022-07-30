@@ -231,6 +231,8 @@ class TraceIslandMesh():
                 ori_map[cell] = 'V'
     
 
+
+    
     def form_hanan_mesh_table_on_island(self):
         # Given a list of trace cells as member variables:
         # 1 generate the hanan grid
@@ -257,23 +259,17 @@ class TraceIslandMesh():
         xs.sort()
         ys.sort()
         # Adding a very small gap between locations that are very closed to each other to prevent numerical issue
-        y_lim = 0# um
         x_lim = 0 # um
-        
         rm_y = []
         y_rp_map = {}
         for iy in range(len(ys)-1):
             dy = ys[iy+1] - ys[iy]
-            if dy <= y_lim and iy!=0:
-                rm_y.append(ys[iy+1])
-                y_rp_map[ys[iy+1]] = ys[iy]
+           
         rm_x = []
         x_rp_map = {}
         for ix in range(len(xs)-1):
             dx = xs[ix+1] - xs[ix]
-            if dx <= x_lim and ix!=0:
-                rm_x.append(xs[ix+1])
-                x_rp_map[xs[ix+1]] = xs[ix] 
+            
         
         
         
@@ -316,7 +312,6 @@ class TraceIslandMesh():
                 self.corners_type[corner] = 'concave'  # convex
             else:
                 continue
-        return x_rp_map, y_rp_map # maps for xy locs that are replaced            
     def place_devices_and_components(self):
         dev_and_comp = self.leads + self.components + self.pads
         # Here we map the original layout RectCell to the splitted tracecell for nets management

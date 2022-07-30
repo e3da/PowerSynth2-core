@@ -72,7 +72,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        print ("settings.GMSH",settings.GMSH_BIN_PATH)
+        print ("settings.PARAPOWER_FOLDER",settings.PARAPOWER_FOLDER)
         
 class Cmd_Handler: 
     def __init__(self,debug=False):
@@ -1181,6 +1181,8 @@ class Cmd_Handler:
 
                 
                     self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
+                    
+                        
             elif opt == 'quit':
                 cont = False
 
@@ -1361,7 +1363,7 @@ if __name__ == "__main__":
     debug = True
     qmle_nethome = "/nethome/qmle/testcases"
     imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
-    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test"
+    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2"
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
@@ -1382,7 +1384,7 @@ if __name__ == "__main__":
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'},
-                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_DMC/macro_script.txt'},
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/2D_Case_1_Dev/macro_script_1_dev.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Journal_3D/macro_script.txt'}]
 
 

@@ -747,7 +747,10 @@ class CornerStitch_Emodel_API:
             src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
             sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
             self.circuit.verbose = 1
-            self.circuit.add_indep_current_src(0,src_net,1,'Is')
+            #self.circuit.add_component('RL5','L5',0,1e-6)
+            #self.circuit.add_component('RL6','L6',0,1e-6)
+            Iload = 100 # Change this for possible current density study
+            self.circuit.add_indep_current_src(0,src_net,Iload,'Is')
             self.circuit.add_component('Rsink',sink_net,0,1e-6)
             #self.circuit.add_component(sink_net,0,'Zsink',1e-12)            
             self.circuit.assign_freq(self.freq)
@@ -764,12 +767,18 @@ class CornerStitch_Emodel_API:
             self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
             self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
             #imp = 1 / results['I(Vs)']
-            imp = (results['V({0})'.format(src_net)] )#/results['I(Vs)']
+            
+            res_df = pd.DataFrame.from_dict(self.I_wire_dict)
+            res_df.to_csv(self.workspace_path+'/Iwire_result.csv')
+
+
+
+            imp = (results['V({0})'.format(src_net)] )/Iload
             R = np.real(imp)
             L = np.imag(imp) / self.circuit.s
             print("R: {}, L: {}".format(R,L))
             return R, L 
-        print("Finish pseudo loop by loop evaluation")    
+        #print("Finish pseudo loop by loop evaluation")    
             
     def setup_device_states(self,dev_states):
         """Here we need to check for floating nets.
@@ -805,10 +814,10 @@ class CornerStitch_Emodel_API:
                     conn_tupple = connections[i]
                     start_net = '{}_{}'.format(d,conn_tupple[0])
                     end_net = '{}_{}'.format(d,conn_tupple[1])
-                    if 'Gate' in start_net:
-                        self.circuit.add_component('Rgate{}'.format(d),start_net,0,1e-6)
-                    if 'Gate' in end_net:
-                        self.circuit.add_component('Rgate{}'.format(d),end_net,0,1e-6)
+                    #if 'Gate' in start_net:
+                    #    self.circuit.add_component('Rgate{}'.format(d),start_net,0,1e-6)
+                    #if 'Gate' in end_net:
+                    #    self.circuit.add_component('Rgate{}'.format(d),end_net,0,1e-6)
 
                     continue    
                     
@@ -933,21 +942,21 @@ class CornerStitch_Emodel_API:
                     l1 = c1_data['dimension'][2]
                     w2 = c2_data['dimension'][3]
                     l2 = c2_data['dimension'][2]
-                    dy = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
-                    dx = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
+                    E = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
+                    l3 = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
                 elif ori1 ==1:
                     w1 = c1_data['dimension'][2]
                     l1 = c1_data['dimension'][3]
                     w2 = c2_data['dimension'][2]
                     l2 = c2_data['dimension'][3]
-                    dx = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
-                    dy = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
+                    E = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
+                    l3 = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
                 t1 = c1_data['thickness']
                 t2 = c2_data['thickness']
                 dz = abs(c1_data['z_level']-c2_data['z_level'])
                 
 
-                self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'E':dx,'l3':dy,'p':dz} 
+                self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'E':E,'l3':l3,'p':dz} 
 
     def add_wires_to_circuit(self):                     
         """
@@ -958,13 +967,16 @@ class CornerStitch_Emodel_API:
         """    
         for w_group in self.wires:
             wire_obj = self.wires[w_group]
-            #if not(wire_obj.inst_name in ['BW1','BW3''BW5''BW7']):
-            #    continue
-            wire_obj.update_wires_parasitic()
             start_net = wire_obj.start_net
             stop_net = wire_obj.stop_net
-            #if 'Gate' in start_net or 'Gate' in stop_net:
+            #if not(wire_obj.inst_name in ['BW1','BW3''BW5''BW7']):
             #    continue
+            if 'Gate' in start_net or 'Gate' in stop_net:
+                continue # avoid gate for floating net testing
+
+            wire_obj.update_wires_parasitic()
+            
+            
             for w in wire_obj.imp_map:
                 self.circuit.add_z_component(w,start_net,stop_net,wire_obj.imp_map[w])
                 #self.circuit.add_component(w,start_net,stop_net,wire_obj.imp_map[w])
@@ -1003,7 +1015,6 @@ class CornerStitch_Emodel_API:
         mat = []
         name_list = [] # Have to add this for this function to work correctly accross different Python version
         # dictionary objects are not ordered < Python3.7 
-        min_len = 10000
         for imp_name in self.edge_param_map:
             data = self.edge_param_map[imp_name]
             dim = data['dimension']
@@ -1015,15 +1026,15 @@ class CornerStitch_Emodel_API:
             else: #1 
                 trace_width = dim[2]  
                 trace_len = dim[3]
-            if trace_len < min_len:
-                min_len = trace_len
+            #if trace_len < min_len:
+            #    trace_len = min_len # Set the system min len to 500 to avoid numerical unstability 
             
 
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
-        self.rs_model = None
+        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
+        #self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
         if self.rs_model == None:
@@ -1034,27 +1045,44 @@ class CornerStitch_Emodel_API:
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         wrong_case = []
-        print('num_element',len(name_list))
+        #print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
             R, L =RL_mat[i]
-            R = R_t
+            #print(R,L)
+
+            R = R_t # This theoretical R value is more stable
             L = L_t
             if L>L_t: # means numerical error has occured
-                print('error')
-                
                 wrong_case.append([mat[i][0],mat[i][1],L,L_t])
+                L = L_t
+                R = R_t
                 #print(mat[i][0]/mat[i][1])
+            # Handle weird mesh 
+            if R <=0 or L <=0 or R_t <=0 or L_t <=0: # IF this happens, we need to add minimum value
+                print('response surface numerical error')
+                R = 1e-6
+                L = 1e-12 
+            
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
             L_name  = 'L' +name
-            self.circuit.value[R_name] = R /1000
-            self.circuit.value[L_name] = 1j*L/1000
+            self.circuit.value[R_name] = R 
+            self.circuit.value[L_name] = 1j*L
         if wrong_case!=[]:
             df = pd.DataFrame(wrong_case)
-            df.to_csv('/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/need_to_double_check.csv')
-            input("check numerical err")
+            df.to_csv(self.workspace_path +'/need_to_double_check.csv')
+            print("check numerical err")
+        dump_all_rl = True
+        if dump_all_rl:
+            df = pd.DataFrame(RL_mat)
+            df.to_csv(self.workspace_path +'/all_RL_values_rs.csv')
+            df = pd.DataFrame(RL_mat_theory)
+            df.to_csv(self.workspace_path +'/all_RL_theoretical_values_rs.csv')
+            df2 = pd.DataFrame.from_dict(self.edge_param_map)
+            df2.to_csv(self.workspace_path +'/RL_debug//edge_name_param_map.csv')
+            
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.
         """
@@ -1082,15 +1110,14 @@ class CornerStitch_Emodel_API:
         t = time.perf_counter()
         mutual_result = update_mutual_mat_64_py(m_mat)
         print("M eval time",time.perf_counter()-t)
-        mutual_result= [m*1e-12 for m in mutual_result]
-        #print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
+        mutual_result= [m*1e-15 for m in mutual_result]
+        print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
         for i in range(len(mutual_result)):
             m_pair = m_pairs[i]
             L_name1 = 'L' + m_pair[0].strip('Z')
             L_name2 = 'L' + m_pair[1].strip('Z')
-            if mutual_result[i]<0 or np.isnan(mutual_result[i]):
-                print("negative or NAN")
-                input()
+            if mutual_result[i]<=0 or np.isnan(mutual_result[i]):
+                print("0, negative or NAN")
             
             self.circuit.add_mutual_term(m_names[i],L_name1,L_name2,mutual_result[i])
         
@@ -1149,6 +1176,7 @@ class CornerStitch_Emodel_API:
                 self.layer_island_dict[z_level].append(isl_name)
                 self.layer_isl_count[z_level]+= 1
             self.isl_indexing[isl_name] = self.layer_isl_count[z_level]
+
         # STEP 2: Process mesh elements for each layer and each island
         for layer_id in self.layer_island_dict:
             z, thick = self.layer_z_info[layer_id]
@@ -1162,7 +1190,7 @@ class CornerStitch_Emodel_API:
                 
                 #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
                 #    continue
-                if island_name in ['island_9.4','island_4.4']:
+                if island_name in ['island_5.4','island_10.4','island_3.4_2.4','island_6.4_7.4_8.4']:
                     continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
                 all_trace_copper = [] 
@@ -1191,7 +1219,7 @@ class CornerStitch_Emodel_API:
                     if name in self.hier.trace_island_nets[island_name]:
                         if "L" in name: # lead type
                             #isl_mesh.leads.append(net_cell)
-                            #isl_mesh.traces.append(net_cell)
+                            isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]=center_pt
                             #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.top)
                             #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.bottom)
@@ -1207,8 +1235,58 @@ class CornerStitch_Emodel_API:
                         elif "V" in name:
                             isl_mesh.small_pads[name]= center_pt
                         self.layer_id_to_lmesh[layer_id].add_net(center_pt,name)
-                x_rp, y_rp = isl_mesh.form_hanan_mesh_table_on_island()
-                original_locs = list(self.layer_id_to_lmesh[layer_id].locs_to_net.keys()) 
+                # Check for potential pins x y collision that would result in unwanted small edges
+                x_pin = {}
+                y_pin = {}
+                
+                """for pin_name in isl_mesh.small_pads:
+                    x_pin[pin_name] = isl_mesh.small_pads[pin_name][0]
+                    y_pin[pin_name] = isl_mesh.small_pads[pin_name][1]
+                    # Check for possible merge to ease out the mesh
+                    # python 3.6x plus 
+                    x_pin = dict(sorted(x_pin.items(), key=lambda item: item[1]))
+                    y_pin = dict(sorted(y_pin.items(), key=lambda item: item[1]))
+                    x_key = list(x_pin.keys())
+                    x_val = list(x_pin.values())
+                    
+                    y_key = list(y_pin.keys())
+                    y_val = list(y_pin.values())
+                    min_x = 500
+                    min_y = 500
+                    locs_to_net = self.layer_id_to_lmesh[layer_id].locs_to_net
+                    for i in range(len(x_key)-1): # merge x
+                        dx =  x_val[i+1] - x_val[i]
+                        if dx < min_x:
+                            # merge them:
+                            center_y_i = isl_mesh.small_pads[x_key[i]][0]
+                            center_x_i = isl_mesh.small_pads[x_key[i+1]][0]
+                            isl_mesh.small_pads[x_key[i]][0] = (center_x_i,center_y_i)
+                            del_key = ''
+                            for loc in locs_to_net:
+                                if locs_to_net[loc] == x_key[i]:
+                                    del_key = loc 
+                            del locs_to_net[del_key]
+                            self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),x_key[i])
+
+                    
+                    for i in range(len(y_key)-1): # merge x
+                        dy =  y_val[i+1] - y_val[i]
+                        if dy < min_y:
+                            # merge them:
+                            center_y_i = isl_mesh.small_pads[y_key[i+1]][1]
+                            center_x_i = isl_mesh.small_pads[y_key[i]][0]
+                            isl_mesh.small_pads[y_key[i]] = (center_x_i,center_y_i)
+                            del_key = ''
+                            for loc in locs_to_net:
+                                if locs_to_net[loc] == y_key[i]:
+                                    del_key = loc 
+                            del locs_to_net[del_key]        
+                            self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),y_key[i])"""
+                isl_mesh.form_hanan_mesh_table_on_island()
+                #isl_mesh.form_hanan_grid_of_trace_level()
+                
+                
+                """original_locs = list(self.layer_id_to_lmesh[layer_id].locs_to_net.keys()) 
                 for loc_x_y in original_locs:
                     net = self.layer_id_to_lmesh[layer_id].locs_to_net[loc_x_y]
                     x0, y0 = loc_x_y # original
@@ -1216,7 +1294,7 @@ class CornerStitch_Emodel_API:
                     y1 = y_rp[y0] if y0 in y_rp else y0
                     if x0 == x1 and y0 == y1:
                         continue
-                    self.layer_id_to_lmesh[layer_id].locs_to_net[(x1,y1)] = net 
+                    self.layer_id_to_lmesh[layer_id].locs_to_net[(x1,y1)] = net """
                 #isl_mesh.place_devices_and_components()
                 self.layer_id_to_lmesh[layer_id].add_table(island_name,isl_mesh)
             # Handle all nodes that are connected to the layer first

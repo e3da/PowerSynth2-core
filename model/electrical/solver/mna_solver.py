@@ -303,7 +303,8 @@ class ModifiedNodalAnalysis():
         # then subtract it from appropriate location in matrix.
         
         g = self.imp_value[el_name]
-            
+        if g <0:
+            input("negative R or C")   
         if (n1 != 0) and (n2 != 0):
             self.G[n1 - 1, n2 - 1] += -g
             self.G[n2 - 1, n1 - 1] += -g
@@ -602,12 +603,17 @@ class ModifiedNodalAnalysis():
         Z = self.Z
         A = self.A
         convergence = 0
-        #self.results = scipy.sparse.linalg.spsolve(A,Z)
-        try:
-            self.results = scipy.linalg.solve(A, Z)
+        """for n in self.net_id_to_net_name:
+            name = self.net_id_to_net_name[n]
+            if name[0]!= 'p' and not('int' in name):
+                print(name)"""
+        #self.results = scipy.sparse.linalg.spsolve(A,Z) # This method is good in the good time. BUT it wont tell you if the matrix is singular
+        try: 
+            self.results = scipy.linalg.solve(A, Z) # Direct solve is a bit slower, dont sweat. Try GMRES later if you want
         except:
-            print("check the mesh, RL values...")
-            input()
+            print("# The matrix is singular, there are many things can happen")
+            print("# Numerically unstable due to small RL")
+            print("# Floating Mesh there is something that is not setup properly/not grounded")
         
         #self.results,convergence = scipy.sparse.linalg.gmres(A,Z,maxiter = 1000)
         if convergence!=0:

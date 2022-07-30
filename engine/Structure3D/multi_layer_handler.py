@@ -84,6 +84,7 @@ class Layer():
                 
                 wire_name=con_table[0] # Raw wire name
                 for wire in wire_info:
+                    #print(wire.name,wire_name)
                     if wire.name==wire_name:
                         wire_obj=wire
                 
@@ -483,7 +484,7 @@ class Layer():
                                     if self.bw_info[bw]['Source']!=None and self.bw_info[bw]['Destination']==None:
                                         layout_id = self.bw_info[bw]['destination_pad']
                                         self.bw_info[bw]['Destination']=layout_id
-                                    elif self.bw_info[bw]['Source']==None and self.bw_infos[bw]['Destination']!=None:
+                                    elif self.bw_info[bw]['Source']==None and self.bw_info[bw]['Destination']!=None:
                                         layout_id = self.bw_info[bw]['source_pad']
                                         self.bw_info[bw]['Source']=layout_id
                                     else:
@@ -520,7 +521,8 @@ class Layer():
                                     if new_line not in new_lines[i]:
                                         new_lines[i].append(new_line)
                                         new_input_lines+=1
-
+                                else:
+                                    continue
                             for k in range(len(vias)):
                                 via= vias[k]
                                 #if via in bw_via_data:

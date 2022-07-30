@@ -229,8 +229,8 @@ class RectCell(Rect):
         # |              |
         # 0------------- 3    
         ratio = 1/2
-        min_rs = 100 # This value depends on the most accurate we can have using RS model
-        edge_width = 500 
+        min_rs = 200 # This value depends on the most accurate we can have using RS model
+        edge_width = 200 
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         # Or look at this to know 0,1,2,3 locations
