@@ -487,7 +487,7 @@ class CS_to_CG():
             # print x,y,w,h
             
             new_rect = [float(x) / s, float(y) / s, float(w) / s, float(h) / s, type, hier_level + 1, rotation_index]
-            # print "NN",new_rect,name
+            
             layout_rects.append(new_rect)
             cs_sym_info[name] = [type, x, y, w, h]
 
@@ -517,7 +517,7 @@ class CS_to_CG():
                     name = wire.source_bw_pad
                     type = wire.cs_type
                     cs_sym_info[name] = [type, x, y, w, h]
-            if wire.dest_bw_pad!=None:
+            if wire.dest_bw_pad!=None :
                 if wire.dest_bw_pad[0] == 'B' and wire.dest_bw_pad not in cs_sym_info:
                     x = wire.source_coordinate[0]
                     y = wire.source_coordinate[1]

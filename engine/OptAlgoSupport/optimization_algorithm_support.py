@@ -995,7 +995,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                                                                 structure.layers[i].bondwires,origin=structure.layers[i].origin,
                                                                 s=dbunit)
 
-
+            
 
             cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
             CS_SYM_info = {}
@@ -1125,6 +1125,8 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         sol.cs_solution=solution
         #plot_solution_structure(sol)
+        for f in sol.features_list:
+            f.printFeature()
         PS_solutions.append(sol)
 
 
