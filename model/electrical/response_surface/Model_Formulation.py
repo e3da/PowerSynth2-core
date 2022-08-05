@@ -1559,7 +1559,7 @@ if __name__ == "__main__":
     #test_corner_ind_correction(10, 4, 10)
     # test_build_corner_correction()
     #create_large_scale_model_to_prevent_numerical_issues()
-    test_build_trace_model_fh(width_range= [0.1,50],length_range= [0.1,50],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
+    test_build_trace_model_fh(width_range= [0.5,50],length_range= [0.5,50],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
     #test_build_trace_mdl_q3d()
     #test_build_trace_cornermodel_fh()
     #test_corner_ind_correction_fh(f,8,8)

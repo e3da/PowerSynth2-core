@@ -298,6 +298,7 @@ class CornerStitch_Emodel_API:
                     width = int(trace_feature.width*1000)
                     height = int(trace_feature.length*1000)
                     dz = int(trace_feature.height*1000) # in the feature, height is dz careful for confusion
+                    # although everything is supposedly integer, we should make sure one more time.
                     new_rect = Rect(top=(y_feature + height)
                                     , bottom=y_feature, left=x_feature, right=(x_feature + width))
                     p = E_plate(rect=new_rect, z=z_feature, dz=dz,z_id = z_id)
@@ -326,9 +327,9 @@ class CornerStitch_Emodel_API:
                                 # We create 2 pins that connected to the trace at .left,.right,.top,or .bot location of the cap
                                 # Assume that we only have .top .bot or .left .right scenario for now
                                 if '.top' in m and '.bot' in m:     # Need to mannualy adding the gap for the measurement case validation, dont know where is capacitor connected
-                                    rect1 = Rect(top=y +h + 1000, bottom=y +h, left=x, right=x + w)
+                                    rect1 = Rect(top=y +h + 500, bottom=y +h, left=x, right=x + w)
                                     sh1 = Sheet(rect=rect1, net_name=net1, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
-                                    rect2 = Rect(top=y, bottom=y-1000, left=x, right=x + w)
+                                    rect2 = Rect(top=y, bottom=y-500, left=x, right=x + w)
                                     sh2 = Sheet(rect=rect2, net_name=net2, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
                                 if '.left' in m and '.right' in m:    
                                     rect1 = Rect(top=(y +h), bottom=y, left=x-4000, right=x)
@@ -734,7 +735,46 @@ class CornerStitch_Emodel_API:
         #self.circuit.display_inductance_results()
         result = self.circuit.map_self_idncutances_to_loop_name()
         return result 
-    def eval_single_loop_impedances(self):
+
+    def single_loop_netlist_eval_half_bridge(self,dc_plus,out,dc_minus,results,sol_id = 0):
+        """Still not a perfect netlist extraction, quite mannually assigning the pins for DMC2022 and dissertation
+        This extraction procedure works during the DC+ to DC- extraction
+        Args:
+            dc_plus (_type_): DC+ pin
+            out (_type_): A virtual pin for output (between the conduction path DC-DC)
+            dc_minus (_type_): Dc- pin
+            sol_id (int): solution index
+            results (_type_): The full dictionary for circuit results
+        """
+        Vdc_plus = results['V({})'.format(dc_plus)]
+        Vdc_minus = results['V({})'.format(dc_minus)]
+        Vout = results['V({})'.format(out)]
+        self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
+        # Hardcode start here
+        netlist = {'ZD1':0,'ZS1':0,'ZD2':0,'ZS2':0} # We extract these at 1 time
+        netlist['ZD1'] = (Vdc_plus - results['V(D1_Drain)']) /self.I_device_dict['I(VD1_Drain_Source)']
+        netlist['ZS1'] = (results['V(D1_Source)'] - Vout) /self.I_device_dict['I(VD1_Drain_Source)']
+        netlist['ZD2'] = (Vout - results['V(D2_Drain)']) /self.I_device_dict['I(VD2_Drain_Source)']
+        netlist['ZS2'] = (results['V(D2_Source)'] - Vdc_minus) /self.I_device_dict['I(VD2_Drain_Source)']
+        
+        for k in netlist:
+            imp_k = netlist[k]
+            data = self.process_imp_data(imp_k)
+            netlist[k] = data['R']+1j*data['L']
+        
+    
+    
+    def process_imp_data(self,impedance):
+        R = np.real(impedance)
+        L = np.imag(impedance)/self.circuit.s
+        
+        return {'R':np.abs([0]),'L':np.abs(L[0])}
+    
+    
+    def eval_single_loop_impedances(self,sol_id = 0):
+        """
+        sol_id is the solution id of the layout. map it here so we can print out weird results
+        """
         for loop in self.loop_dv_state_map:
             dev_states = self.loop_dv_state_map[loop]     
             loop = loop.replace('(','')
@@ -750,18 +790,22 @@ class CornerStitch_Emodel_API:
             #self.circuit.add_component('RL5','L5',0,1e-6)
             #self.circuit.add_component('RL6','L6',0,1e-6)
             Iload = 100 # Change this for possible current density study
-            self.circuit.add_indep_current_src(0,src_net,Iload,'Is')
+            self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
             self.circuit.add_component('Rsink',sink_net,0,1e-6)
             #self.circuit.add_component(sink_net,0,'Zsink',1e-12)            
             self.circuit.assign_freq(self.freq)
             self.circuit.graph_to_circuit_minimization()
             self.circuit.handle_branch_current_elements()  
             self.circuit.solve_MNA()
-            res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
-            max_res = max(res)
+            #res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
+            #max_res = max(res)
             #self.circuit.solve_iv(mode =2)
             results = self.circuit.results
             # Test look up these lists, can be used for future reliability study
+            imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
+            R = np.real(imp)
+            L = np.imag(imp) / self.circuit.s
+            print("R: {}, L: {}".format(R,L))
             #TODO:
             self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
             self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
@@ -769,15 +813,11 @@ class CornerStitch_Emodel_API:
             #imp = 1 / results['I(Vs)']
             
             res_df = pd.DataFrame.from_dict(self.I_wire_dict)
-            res_df.to_csv(self.workspace_path+'/Iwire_result.csv')
-
-
-
-            imp = (results['V({0})'.format(src_net)] )/Iload
-            R = np.real(imp)
-            L = np.imag(imp) / self.circuit.s
-            print("R: {}, L: {}".format(R,L))
+            res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
+            self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
             return R, L 
+
+            
         #print("Finish pseudo loop by loop evaluation")    
             
     def setup_device_states(self,dev_states):
@@ -803,9 +843,9 @@ class CornerStitch_Emodel_API:
                     end_net = '{}_{}'.format(d,conn_tupple[1]) 
                     if conn_tupple == ('Drain','Source'): # TODO: User Manual
                         int_pin = '{}_internal'.format(d) # e.g D1_internal
-                        self.circuit.add_indep_voltage_src(start_net,int_pin,0,'V{}_{}_{}'
+                        self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
                                                             .format(d,conn_tupple[0],conn_tupple[1]))
-                        self.circuit.add_component('Rrds_{}'.format(d),int_pin,end_net,rds ) 
+                        #self.circuit.add_component('Rrds_{}'.format(d),int_pin,end_net,rds ) 
                     else:
                         self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
                                                             .format(d,conn_tupple[0],conn_tupple[1])) 
@@ -814,6 +854,7 @@ class CornerStitch_Emodel_API:
                     conn_tupple = connections[i]
                     start_net = '{}_{}'.format(d,conn_tupple[0])
                     end_net = '{}_{}'.format(d,conn_tupple[1])
+                    # Not the best way, attempt to ground the Gate net altogether
                     #if 'Gate' in start_net:
                     #    self.circuit.add_component('Rgate{}'.format(d),start_net,0,1e-6)
                     #if 'Gate' in end_net:
@@ -908,11 +949,19 @@ class CornerStitch_Emodel_API:
                 node2 = node_table[e[1]]
                 node12_int = 'int_{}_{}'.format(e[0],e[1])
                     
-                self.circuit.add_component(name= Rcomp_name, pnode=node1.net_name,nnode = node12_int,val = 1)
-                self.circuit.add_component(name= Lcomp_name, pnode=node12_int,nnode = node2.net_name,val = 1j)
+                self.circuit.add_component(name= Rcomp_name, pnode=node1.net_name,nnode = node12_int,val = 1e-6)
+                self.circuit.add_component(name= Lcomp_name, pnode=node12_int,nnode = node2.net_name,val = 1e-12j)
                 
                 edge_count+=1
                 edge_data = edge_table[e]
+                dim = edge_data[0]
+                # Ignore small pieces and ease out the mutual computation
+                if dim[2] == dim[3] and dim [2] <= 100:
+                    continue# posiible corner piece:
+                if edge_data[2] == 0 and dim[2] <= 200:
+                    continue
+                if edge_data[2] == 1 and dim[3] <= 200:
+                    continue
                 self.edge_param_map[comp_name] = {'dimension':edge_data[0],\
                                                     'edge_type':edge_data[1],\
                                                     'orientation':edge_data[2],\
@@ -936,25 +985,56 @@ class CornerStitch_Emodel_API:
 
                 if ori1 != ori2:
                     continue # we dont care about trace pieces in parallel.
+
+                # NEED TO BEWARE OF THE RELATIVE LOCATION IN THE EQUATIONS
+                # For 2 pieces, we need to determine which one is closer to the coordinate.
+                # Then the first piece is fixed, 2nd piece moves around it
+
                 key = (c1,c2) # create a key first
-                if ori1 == 0:
-                    w1 = c1_data['dimension'][3]
-                    l1 = c1_data['dimension'][2]
-                    w2 = c2_data['dimension'][3]
-                    l2 = c2_data['dimension'][2]
-                    E = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
-                    l3 = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
-                elif ori1 ==1:
-                    w1 = c1_data['dimension'][2]
-                    l1 = c1_data['dimension'][3]
-                    w2 = c2_data['dimension'][2]
-                    l2 = c2_data['dimension'][3]
-                    E = abs(c1_data['dimension'][0]-c2_data['dimension'][0])
-                    l3 = abs(c1_data['dimension'][1]-c2_data['dimension'][1])
+                c1_dim = c1_data['dimension']
+                c2_dim = c2_data['dimension']
+                if ori1 == 0: # 2 horizontal pieces 
+                    # First we have to determine the fixed piece, for horizontal that is the lower one
+                    if c1_dim[1] < c2_dim[1]:  # C1 is base
+                        w1 = c1_dim[3]
+                        l1 = c1_dim[2]
+                        w2 = c2_dim[3]
+                        l2 = c2_dim[2]
+                        E = c2_dim[1]- c1_dim[1]
+                        l3 = c2_dim[0]-c1_dim[0]
+                        dz = c2_data['z_level']-c1_data['z_level']
+
+                    else: # C2 is base
+                        w2 = c1_dim[3]
+                        l2 = c1_dim[2]
+                        w1 = c2_dim[3]
+                        l1 = c2_dim[2]
+                        E = c1_dim[1] - c2_dim[1]
+                        l3 = c1_dim[0] - c2_dim[0]
+                        dz = c1_data['z_level']-c2_data['z_level']
+
+                elif ori1 ==1: # 2 vertical pieces
+                    if c1_dim[0] < c2_dim[0]: # C1 is base
+                        w1 = c1_dim[2]
+                        l1 = c1_dim[3]
+                        w2 = c2_dim[2]
+                        l2 = c2_dim[3]
+                        E = c2_dim[0] - c1_dim[0]
+                        l3 = c2_dim[1]-c1_dim[1]
+                        dz = c2_data['z_level']-c1_data['z_level']
+
+                    else: # C2 is base
+                        w2 = c1_dim[2]
+                        l2 = c1_dim[3]
+                        w1 = c2_dim[2]
+                        l1 = c2_dim[3]
+                        E = c1_dim[0] - c2_dim[0]
+                        l3 = c1_dim[1]-c2_dim[1]
+                        dz = c1_data['z_level']-c2_data['z_level']
+
                 t1 = c1_data['thickness']
                 t2 = c2_data['thickness']
-                dz = abs(c1_data['z_level']-c2_data['z_level'])
-                
+                # Note: E, l3 and dz(p) can be negative. check my thesis (qmle)
 
                 self.mutual_edge_params[key] = {'w1':w1,'l1':l1,'t1':t1,'w2':w2,'l2':l2,'t2':t2,'E':E,'l3':l3,'p':dz} 
 
@@ -1033,8 +1113,8 @@ class CornerStitch_Emodel_API:
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
-        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
-        #self.rs_model = None
+        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
+        self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
         if self.rs_model == None:
@@ -1045,24 +1125,23 @@ class CornerStitch_Emodel_API:
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         wrong_case = []
-        #print('num_element',len(name_list))
+        print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
-            R, L =RL_mat[i]
-            #print(R,L)
-
-            R = R_t # This theoretical R value is more stable
+            #R, L =RL_mat[i]
+            R = R_t
             L = L_t
+
+            #R = R_t # This theoretical R value is more stable
+            #L = L_t
             if L>L_t: # means numerical error has occured
-                wrong_case.append([mat[i][0],mat[i][1],L,L_t])
-                L = L_t
-                R = R_t
+                wrong_case.append([mat[i][0],mat[i][1],L_t-L])
+                L = L_t*0.8
                 #print(mat[i][0]/mat[i][1])
             # Handle weird mesh 
-            if R <=0 or L <=0 or R_t <=0 or L_t <=0: # IF this happens, we need to add minimum value
-                print('response surface numerical error')
+            if R <=0  or R_t <=0: # IF this happens, we need to add minimum value
+                #print('response surface numerical error')
                 R = 1e-6
-                L = 1e-12 
             
             name = name_list[i]
             name = name.strip('Z')
@@ -1070,18 +1149,21 @@ class CornerStitch_Emodel_API:
             L_name  = 'L' +name
             self.circuit.value[R_name] = R 
             self.circuit.value[L_name] = 1j*L
-        if wrong_case!=[]:
-            df = pd.DataFrame(wrong_case)
-            df.to_csv(self.workspace_path +'/need_to_double_check.csv')
-            print("check numerical err")
-        dump_all_rl = True
-        if dump_all_rl:
-            df = pd.DataFrame(RL_mat)
-            df.to_csv(self.workspace_path +'/all_RL_values_rs.csv')
-            df = pd.DataFrame(RL_mat_theory)
-            df.to_csv(self.workspace_path +'/all_RL_theoretical_values_rs.csv')
-            df2 = pd.DataFrame.from_dict(self.edge_param_map)
-            df2.to_csv(self.workspace_path +'/RL_debug//edge_name_param_map.csv')
+        debug= True
+        if debug:
+            if wrong_case!=[]:
+                print(" + error: {}%".format(len(wrong_case)/len(name_list)*100))
+                df = pd.DataFrame(wrong_case)
+                df.to_csv(self.workspace_path +'/need_to_double_check.csv')
+                print("check numerical err")
+            dump_all_rl = True
+            if dump_all_rl:
+                df = pd.DataFrame(RL_mat)
+                df.to_csv(self.workspace_path +'/all_RL_values_rs.csv')
+                df = pd.DataFrame(RL_mat_theory)
+                df.to_csv(self.workspace_path +'/all_RL_theoretical_values_rs.csv')
+                df2 = pd.DataFrame.from_dict(self.edge_param_map)
+                df2.to_csv(self.workspace_path +'/edge_name_param_map.csv')
             
     def eval_and_update_trace_M_analytical(self):
         """This function evalutes the Mutual inductance among parallel traces mostly used for PEEC.
@@ -1107,17 +1189,22 @@ class CornerStitch_Emodel_API:
         #print("JIT compilation for a single parameter list")
         #mutual_result = update_mutual_mat_64_py(m_mat[0:1])
         #print("JIT evaluation for the full matrix")  
+        #mutual_result = update_mutual_mat_64_py(m_mat)
         t = time.perf_counter()
         mutual_result = update_mutual_mat_64_py(m_mat)
         print("M eval time",time.perf_counter()-t)
-        mutual_result= [m*1e-15 for m in mutual_result]
+        mutual_result= [m*1e-9 for m in mutual_result] # convert to H
         print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
+        print("num_M_eval", len(mutual_result))
+        #id = mutual_result.index(max(mutual_result))
+        #val_id = list(self.mutual_edge_params.keys())[id]
         for i in range(len(mutual_result)):
             m_pair = m_pairs[i]
             L_name1 = 'L' + m_pair[0].strip('Z')
             L_name2 = 'L' + m_pair[1].strip('Z')
             if mutual_result[i]<=0 or np.isnan(mutual_result[i]):
                 print("0, negative or NAN")
+                mutual_result[i] = 1e-12 # Set small value but it wont throw numerical error in MNA
             
             self.circuit.add_mutual_term(m_names[i],L_name1,L_name2,mutual_result[i])
         
@@ -1127,10 +1214,10 @@ class CornerStitch_Emodel_API:
     def init_layout_3D(self,module_data = None, feature_map = None, lvs_check = False):
         '''
         Convert layout info into 3D objects in electrical parasitic solver, where the circuit hierachy is built.
-        If an input netlist is provided, the layout autogenerated circuit hierachy will be validated vs the input netlist.
+        If an input netlist is provided, the layout autogenerated circuit hierachy will be compared vs the input netlist.
         Note for future students: at first most of the codes was written for the 2D hierachical module_data objects. 
         Later, with the development of the PSSolution object for ParaPower, 3D objects are available.
-        Someone might need to rewrite most of these code to use the 3D data only. 
+        Someone might need to rewrite most of these code to use the 3D data only. Becareful when you do so !
         Args:
             module_data : layout information from layout engine
             new ---feature_map: to acess 3D locs
@@ -1149,10 +1236,60 @@ class CornerStitch_Emodel_API:
             self.generate_layout_lvs()
 
 
-    def form_optimzied_trace_mesh(self,sol_id):
-        """
-        Using the old method in PS 1.9 to form H and V type elements
-        """ 
+
+
+    def handle_potential_numerical_issues(self,input_map = []):
+        # The mesh takes the center point of the pins and generate cut lines.
+        # if these lines are too close (1um) potential zero-dimension rectangle can be generated --> wrong solution
+        isl_mesh,layer_id = input_map   
+        # Check for potential pins x y collision that would result in unwanted small edges
+        x_pin = {}
+        y_pin = {}
+        # An invisible range for devices line to merge 
+        min_x = 500
+        min_y = 500
+        for pin_name in isl_mesh.small_pads:
+            x_pin[pin_name] = isl_mesh.small_pads[pin_name][0]
+            y_pin[pin_name] = isl_mesh.small_pads[pin_name][1]
+            # Check for possible merge to ease out the mesh
+            # python 3.6x plus 
+            x_pin = dict(sorted(x_pin.items(), key=lambda item: item[1]))
+            y_pin = dict(sorted(y_pin.items(), key=lambda item: item[1]))
+            x_key = list(x_pin.keys())
+            x_val = list(x_pin.values())
+            
+            y_key = list(y_pin.keys())
+            y_val = list(y_pin.values())
+            
+            locs_to_net = self.layer_id_to_lmesh[layer_id].locs_to_net
+            for i in range(len(x_key)-1): # merge x
+                dx =  x_val[i+1] - x_val[i]
+                if dx < min_x:
+                    # merge them:
+                    center_y_i = isl_mesh.small_pads[x_key[i]][0]
+                    center_x_i = isl_mesh.small_pads[x_key[i+1]][0]
+                    isl_mesh.small_pads[x_key[i]] = (center_x_i,center_y_i)
+                    del_key = ''
+                    for loc in locs_to_net:
+                        if locs_to_net[loc] == x_key[i]:
+                            del_key = loc 
+                    del locs_to_net[del_key]
+                    self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),x_key[i])
+
+            
+            for i in range(len(y_key)-1): # merge x
+                dy =  y_val[i+1] - y_val[i]
+                if dy < min_y:
+                    # merge them:
+                    center_y_i = isl_mesh.small_pads[y_key[i+1]][1]
+                    center_x_i = isl_mesh.small_pads[y_key[i]][0]
+                    isl_mesh.small_pads[y_key[i]] = (center_x_i,center_y_i)
+                    del_key = ''
+                    for loc in locs_to_net:
+                        if locs_to_net[loc] == y_key[i]:
+                            del_key = loc 
+                    del locs_to_net[del_key]        
+                    self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),y_key[i])
 
     def form_initial_trace_mesh(self,sol_id):
         """Loop through each layer_id of the layout hierachy and generate a trace mesh for each layer.
@@ -1190,7 +1327,7 @@ class CornerStitch_Emodel_API:
                 
                 #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
                 #    continue
-                if island_name in ['island_5.4','island_10.4','island_3.4_2.4','island_6.4_7.4_8.4']:
+                if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
                     continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
                 all_trace_copper = [] 
@@ -1218,83 +1355,28 @@ class CornerStitch_Emodel_API:
                     
                     if name in self.hier.trace_island_nets[island_name]:
                         if "L" in name: # lead type
-                            #isl_mesh.leads.append(net_cell)
-                            isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]=center_pt
-                            #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.top)
-                            #isl_mesh.small_pads[name+'_t'] = (center_pt[0],net_cell.bottom)
 
                         elif "B" in name:
                             isl_mesh.small_pads[name]=center_pt
                         elif "D" in name:
-                            #isl_mesh.components.append(net_cell)
-                            #isl_mesh.traces.append(net_cell)
                             isl_mesh.small_pads[name]= center_pt
                             device_name = name.split('_')
                             layer_components.append(device_name[0])
                         elif "V" in name:
                             isl_mesh.small_pads[name]= center_pt
                         self.layer_id_to_lmesh[layer_id].add_net(center_pt,name)
-                # Check for potential pins x y collision that would result in unwanted small edges
-                x_pin = {}
-                y_pin = {}
                 
-                """for pin_name in isl_mesh.small_pads:
-                    x_pin[pin_name] = isl_mesh.small_pads[pin_name][0]
-                    y_pin[pin_name] = isl_mesh.small_pads[pin_name][1]
-                    # Check for possible merge to ease out the mesh
-                    # python 3.6x plus 
-                    x_pin = dict(sorted(x_pin.items(), key=lambda item: item[1]))
-                    y_pin = dict(sorted(y_pin.items(), key=lambda item: item[1]))
-                    x_key = list(x_pin.keys())
-                    x_val = list(x_pin.values())
-                    
-                    y_key = list(y_pin.keys())
-                    y_val = list(y_pin.values())
-                    min_x = 500
-                    min_y = 500
-                    locs_to_net = self.layer_id_to_lmesh[layer_id].locs_to_net
-                    for i in range(len(x_key)-1): # merge x
-                        dx =  x_val[i+1] - x_val[i]
-                        if dx < min_x:
-                            # merge them:
-                            center_y_i = isl_mesh.small_pads[x_key[i]][0]
-                            center_x_i = isl_mesh.small_pads[x_key[i+1]][0]
-                            isl_mesh.small_pads[x_key[i]][0] = (center_x_i,center_y_i)
-                            del_key = ''
-                            for loc in locs_to_net:
-                                if locs_to_net[loc] == x_key[i]:
-                                    del_key = loc 
-                            del locs_to_net[del_key]
-                            self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),x_key[i])
-
-                    
-                    for i in range(len(y_key)-1): # merge x
-                        dy =  y_val[i+1] - y_val[i]
-                        if dy < min_y:
-                            # merge them:
-                            center_y_i = isl_mesh.small_pads[y_key[i+1]][1]
-                            center_x_i = isl_mesh.small_pads[y_key[i]][0]
-                            isl_mesh.small_pads[y_key[i]] = (center_x_i,center_y_i)
-                            del_key = ''
-                            for loc in locs_to_net:
-                                if locs_to_net[loc] == y_key[i]:
-                                    del_key = loc 
-                            del locs_to_net[del_key]        
-                            self.layer_id_to_lmesh[layer_id].add_net((center_x_i,center_y_i),y_key[i])"""
-                isl_mesh.form_hanan_mesh_table_on_island()
+                
+                #self.handle_potential_numerical_issues(input_map=[isl_mesh,layer_id])
+                isl_mesh.form_hanan_mesh_table_for_traces()
+                isl_mesh.process_frequency_dependent_from_corner()
+                # We clean up the table and redo the meshing with the corner points
+                isl_mesh.form_hanan_mesh_table_on_island_trace()
+                hierachical_id = isl_mesh.find_trace_parent_for_pads() # finding the hierachical connection between trace and cell.
                 #isl_mesh.form_hanan_grid_of_trace_level()
-                
-                
-                """original_locs = list(self.layer_id_to_lmesh[layer_id].locs_to_net.keys()) 
-                for loc_x_y in original_locs:
-                    net = self.layer_id_to_lmesh[layer_id].locs_to_net[loc_x_y]
-                    x0, y0 = loc_x_y # original
-                    x1 = x_rp[x0] if x0 in x_rp else x0
-                    y1 = y_rp[y0] if y0 in y_rp else y0
-                    if x0 == x1 and y0 == y1:
-                        continue
-                    self.layer_id_to_lmesh[layer_id].locs_to_net[(x1,y1)] = net """
+                # Add hierachical cell back to trace_table and remove the parent cell
+                isl_mesh.find_cell_to_cell_neighbor_hierachical(parent_id = hierachical_id)
                 #isl_mesh.place_devices_and_components()
                 self.layer_id_to_lmesh[layer_id].add_table(island_name,isl_mesh)
             # Handle all nodes that are connected to the layer first
@@ -1309,7 +1391,7 @@ class CornerStitch_Emodel_API:
            
             
             #debug = int(input("plot mesh ?")) # True will make it slow, cause the figure are quite huge
-            debug = 1
+            debug = 0
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)

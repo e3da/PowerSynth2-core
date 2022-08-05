@@ -254,7 +254,7 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id == 8: # Can be use for debugging, in case a solution id throws some weird resultss
+                if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
                     ps_sol = solution
                     features = ps_sol.features_list
                     obj_name_feature_map = {}
@@ -272,13 +272,14 @@ class new_engine_opt:
                         result.append(0)    
                     else:
                         
-                        R, L = self.e_api.eval_single_loop_impedances()
+                        R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
                         R_abs = abs(R)
                         L_abs = abs(np.imag(L))
                         R_abs = R_abs[0]
                         L_abs = L_abs[0]
-
-                        #print("L",L_abs)
+                        """if L_abs <= 9e-9 and L_abs >=8e-9:
+                            print("found solution",solution.solution_id)
+                            input()"""
                         if abs(R_abs)>1e3:
                             print("ID:",solution.solution_id)
                             print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
@@ -293,9 +294,8 @@ class new_engine_opt:
                 #print(self.t_api.matlab_engine)
                 measure.mode = 0 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                #print("T",max_t)
+                print("T",max_t)
                 result.append(max_t)
-                #result.append(1)
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''

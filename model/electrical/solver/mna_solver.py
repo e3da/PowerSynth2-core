@@ -439,7 +439,7 @@ class ModifiedNodalAnalysis():
                     print (Mname)
                     #print (self.L_id)
                     print("cant find element")
-                    Mval = 0
+                    Mval = 1e-12
                     #input()
                 Mval = self.value[el]
                 self.Mutual[Mname] = Mval
@@ -602,13 +602,15 @@ class ModifiedNodalAnalysis():
         
         Z = self.Z
         A = self.A
+        #Z = self.Vi
+        #A = self.D
         convergence = 0
         """for n in self.net_id_to_net_name:
             name = self.net_id_to_net_name[n]
             if name[0]!= 'p' and not('int' in name):
                 print(name)"""
-        #self.results = scipy.sparse.linalg.spsolve(A,Z) # This method is good in the good time. BUT it wont tell you if the matrix is singular
         try: 
+            #self.results = scipy.sparse.linalg.spsolve(A,Z) # This method is good in the good time. BUT it wont tell you if the matrix is singular
             self.results = scipy.linalg.solve(A, Z) # Direct solve is a bit slower, dont sweat. Try GMRES later if you want
         except:
             print("# The matrix is singular, there are many things can happen")
