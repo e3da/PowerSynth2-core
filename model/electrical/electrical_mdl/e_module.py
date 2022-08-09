@@ -265,13 +265,11 @@ class EWires(EComp):
         c_e = self.sheet[1].get_center()
         length = int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))/1000 # using integer input
         #length = length/3 + 4*length/math.sqrt(3)/3
-        
         group = {}  # all mutual inductance pair
         R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
         L_val =  wire_inductance(r=self.r, l=length) * 1e-9
         branch_val = 1j * L_val + R_val
         #print(self.sheet[0].net,self.sheet[1].net,branch_val)
-        #print(length)
 
         if self.num_wires>1: # CASE 1 we need to care about mutual between wires
             for i in range(self.num_wires):
@@ -291,7 +289,6 @@ class EWires(EComp):
         else: # Single wire
             RLname = 'Z{0}_{1}'.format(self.inst_name,0)
             self.imp_map[RLname] = branch_val
-        print(self.imp_map)
 class ESolderBalls(EComp):
     def __init__(self, ball_radi=None, ball_grid=[], ball_height=None, pitch=None, start=None, stop=None,
                  ball_model=None, frequency=100e3, p=2.65e-8, circuit=None):

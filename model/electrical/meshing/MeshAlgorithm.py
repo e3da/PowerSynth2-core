@@ -102,7 +102,6 @@ class LayerMesh():
                 node2 = self.layer_mesh.map_xyz_node[pt2]
                 # What if we want to mesh more edges ? 
                 self.layer_mesh.add_edge(node1,node2,e[2],e[3],e[4])
-                
                     
                 
             
@@ -153,7 +152,9 @@ class TraceIslandMesh():
         Args:
             parent_id (list, optional): _description_. Defaults to [].
         """
-        
+        hier_edge = {} # a group of edges to add back to the mesh
+
+
         for p_id in parent_id:
             p_cell = self.cell_table[p_id] # get the parent cell_obj
             # now get the child cell of these parent cell
@@ -167,8 +168,9 @@ class TraceIslandMesh():
                                 nc_cell.West = c_cell # and set this too so we dont need to do again
                         else: # correct the pointers # Spit/no_split cells contact edge 
                             c_cell.East = p_cell.East
+                            if not(p_cell.East.West.is_child):  # just to make sure cause it is very complicated
+                                p_cell.East.no_W = True # handle overlapping
                             p_cell.East.West = c_cell
-                            p_cell.East.West.no_E = True # handle overlapping
                     # no else here since the parent East is None
                 if not(c_cell.has_left()): # check if this cell have East neighbour
                     if p_cell.has_left(): # in case the parent cell has East neighbor
@@ -178,8 +180,9 @@ class TraceIslandMesh():
                                 nc_cell.East = c_cell # and set this too so we dont need to do again
                         else: # correct the pointers
                             c_cell.West = p_cell.West
+                            if not(p_cell.West.East.is_child):  # just to make sure cause it is very complicated
+                                p_cell.West.no_E = True # handle overlapping
                             p_cell.West.East = c_cell
-                            p_cell.West.East.no_W = True # handle overlapping
                     # no else here since the parent West is None  
                 if not(c_cell.has_top()): # check if this cell have East neighbour
                     if p_cell.has_top(): # in case the parent cell has East neighbor
@@ -189,8 +192,9 @@ class TraceIslandMesh():
                                 nc_cell.South = c_cell # and set this too so we dont need to do again
                         else: # correct the pointers
                             c_cell.North = p_cell.North
+                            if not(p_cell.North.South.is_child):  # just to make sure cause it is very complicated
+                                p_cell.North.no_S = True # handle overlapping
                             p_cell.North.South = c_cell
-                            p_cell.North.South.no_N = True # handle overlapping
                     # no else here since the parent West is None  
                 if not(c_cell.has_bot()): # check if this cell have East neighbour
                     if p_cell.has_bot(): # in case the parent cell has East neighbor
@@ -200,8 +204,9 @@ class TraceIslandMesh():
                                 nc_cell.North = c_cell # and set this too so we dont need to do again
                         else: # correct the pointers
                             c_cell.South = p_cell.South
+                            if not(p_cell.South.North.is_child):  # just to make sure cause it is very complicated
+                                p_cell.South.no_N = True # handle overlapping
                             p_cell.South.North = c_cell
-                            p_cell.South.North.no_S = True # handle overlapping
                     # no else here since the parent West is None 
                 # Once everything is finished, add this new hierachial cell back to table
                 new_cell_id = (p_id[0],p_id[1],c_id[0],c_id[1])
@@ -387,7 +392,7 @@ class TraceIslandMesh():
             N (int, optional): _description_. Defaults to 3.
             mat (str, optional): _description_. Defaults to 'Copper'.
         """
-        mat_dict = {'Copper': 100 , 'Al': 100} # We fix this to 1MHz for good enough accuracy. Going down to much is too computationally expensive
+        mat_dict = {'Copper': 200 , 'Al': 100} # We fix this to 1MHz for good enough accuracy. Going down to much is too computationally expensive
         # Because the mesh algorithm will further calculate based on 1/2 of edge to edge, we will double these values.
         for c in self.corners_type:
             if self.corners_type[c] == 'intersection':
@@ -447,7 +452,11 @@ class TraceIslandMesh():
        
         for trace_id in hierachial_meshing_id:
             parent_cell = self.trace_table[trace_id]
-            parent_cell.splitted = True
+            parent_cell.splitted = True # mark them as splitted first
+        for trace_id in hierachial_meshing_id:
+            parent_cell = self.trace_table[trace_id]
+            parent_cell.check_cell_neighbor() # Check neighbouring cell to let the cut line go over if both are cut.
+            # Otherwise no connection...
             parent_cell.split_cell()
         hierachial_meshing_id = list(set(hierachial_meshing_id))
         return hierachial_meshing_id # return so we can further process the neighbour cell
@@ -461,6 +470,7 @@ class TraceIslandMesh():
         # A Mesh table is used to store the mesh on top of trace cell later
         # STEP 1.1: FORM GRID USING TRACE CELLS
         self.cell_table = {} # clean up and redo
+        self.trace_table = {} # clean up and redo
         xs = []
         ys = []
         for cell in self.traces:

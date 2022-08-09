@@ -254,7 +254,7 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
+                if solution.solution_id == -2: # Can be use for debugging, in case a solution id throws some weird resultss
                     ps_sol = solution
                     features = ps_sol.features_list
                     obj_name_feature_map = {}
@@ -264,7 +264,6 @@ class new_engine_opt:
                     # EVALUATION PROCESS 
                     if measure.multiport:
                         multiport_result = self.e_api.eval_multi_loop_impedances()
-                        print(solution.solution_id,multiport_result)
                         self.multiport_result[solution.solution_id] = multiport_result
                         # if possible, we can collect the data for a balancing layout optimization.
                         # 1 Balancing
@@ -290,12 +289,16 @@ class new_engine_opt:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
+                t_sol2 = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
-                measure.mode = 0 #Need to input from macro
-                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                print("T",max_t)
-                result.append(max_t)
+                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 1) # extract thermal net
+                
+                t_solution=self.populate_thermal_info_to_sol_feat(t_sol2) # populating heat generation and heat transfer coefficeint
+                #print(self.t_api.matlab_engine)
+                #measure.mode = 1 #Need to input from macro
+                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
+                result.append(max_t-273)
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''

@@ -751,19 +751,23 @@ class CornerStitch_Emodel_API:
         Vout = results['V({})'.format(out)]
         self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
         # Hardcode start here
-        netlist = {'ZD1':0,'ZS1':0,'ZD2':0,'ZS2':0} # We extract these at 1 time
-        netlist['ZD1'] = (Vdc_plus - results['V(D1_Drain)']) /self.I_device_dict['I(VD1_Drain_Source)']
-        netlist['ZS1'] = (results['V(D1_Source)'] - Vout) /self.I_device_dict['I(VD1_Drain_Source)']
-        netlist['ZD2'] = (Vout - results['V(D2_Drain)']) /self.I_device_dict['I(VD2_Drain_Source)']
-        netlist['ZS2'] = (results['V(D2_Source)'] - Vdc_minus) /self.I_device_dict['I(VD2_Drain_Source)']
+        netlist = {'LD1':0,'LS1':0,'LD2':0,'LS2':0} # We extract these at 1 time
+        netlist['LD1'] = (Vdc_plus - results['V(D1_Drain)']) /self.I_device_dict['I(VD1_Drain_Source)']
+        netlist['LS1'] = (results['V(D1_Source)'] - Vout) /self.I_device_dict['I(VD1_Drain_Source)']
+        netlist['LD2'] = (Vout - results['V(D2_Drain)']) /self.I_device_dict['I(VD2_Drain_Source)']
+        netlist['LS2'] = (results['V(D2_Source)'] - Vdc_minus) /self.I_device_dict['I(VD2_Drain_Source)']
         
         for k in netlist:
             imp_k = netlist[k]
             data = self.process_imp_data(imp_k)
             netlist[k] = data['R']+1j*data['L']
-        
+
+        #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
+        #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
     
-    
+        res_df = pd.DataFrame.from_dict(netlist)
+        res_df.to_csv(self.workspace_path+'/netlist_result{}.csv'.format(sol_id)) 
+
     def process_imp_data(self,impedance):
         R = np.real(impedance)
         L = np.imag(impedance)/self.circuit.s
@@ -792,8 +796,9 @@ class CornerStitch_Emodel_API:
             Iload = 100 # Change this for possible current density study
             self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
             self.circuit.add_component('Rsink',sink_net,0,1e-6)
-            #self.circuit.add_component(sink_net,0,'Zsink',1e-12)            
-            self.circuit.assign_freq(self.freq)
+            #self.circuit.add_component(sink_net,0,'Zsink',1e-12)
+            print("frequency",self.freq,'kHz')            
+            self.circuit.assign_freq(self.freq*1000)
             self.circuit.graph_to_circuit_minimization()
             self.circuit.handle_branch_current_elements()  
             self.circuit.solve_MNA()
@@ -812,8 +817,8 @@ class CornerStitch_Emodel_API:
             self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
             #imp = 1 / results['I(Vs)']
             
-            res_df = pd.DataFrame.from_dict(self.I_wire_dict)
-            res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
+            #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
+            #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
             self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
             return R, L 
 
@@ -1149,14 +1154,14 @@ class CornerStitch_Emodel_API:
             L_name  = 'L' +name
             self.circuit.value[R_name] = R 
             self.circuit.value[L_name] = 1j*L
-        debug= True
+        debug= False
         if debug:
             if wrong_case!=[]:
                 print(" + error: {}%".format(len(wrong_case)/len(name_list)*100))
                 df = pd.DataFrame(wrong_case)
                 df.to_csv(self.workspace_path +'/need_to_double_check.csv')
                 print("check numerical err")
-            dump_all_rl = True
+            dump_all_rl = False
             if dump_all_rl:
                 df = pd.DataFrame(RL_mat)
                 df.to_csv(self.workspace_path +'/all_RL_values_rs.csv')
@@ -1325,10 +1330,10 @@ class CornerStitch_Emodel_API:
             
             for island_name in self.layer_island_dict[layer_id]:
                 
-                #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
-                #    continue
-                if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
+                if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
                     continue
+                #if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
+                #    continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
                 all_trace_copper = [] 
                 all_net_on_trace = []
@@ -1377,7 +1382,7 @@ class CornerStitch_Emodel_API:
                 #isl_mesh.form_hanan_grid_of_trace_level()
                 # Add hierachical cell back to trace_table and remove the parent cell
                 isl_mesh.find_cell_to_cell_neighbor_hierachical(parent_id = hierachical_id)
-                #isl_mesh.place_devices_and_components()
+                isl_mesh.place_devices_and_components()
                 self.layer_id_to_lmesh[layer_id].add_table(island_name,isl_mesh)
             # Handle all nodes that are connected to the layer first
             self.layer_id_to_lmesh[layer_id].layer_on_trace_nodes_generation()

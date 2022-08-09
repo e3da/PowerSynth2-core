@@ -199,6 +199,7 @@ class RectCell(Rect):
                           ,(self.right, self.bottom) : 3}
     
         self.child = {} 
+        self.cuts = [] # for neighboring hier-hier splitted case
         # MeshAlgorithm copy -- so we dont need to inherit the whole MeshTable here
         self.cell_table = {} 
         self.splitted = False # a flag to check if the trace is splitted or not.
@@ -228,6 +229,7 @@ class RectCell(Rect):
         # using cell ID to quickly find them
         for cell_id in self.cell_table:
             cell = self.cell_table[cell_id]
+            cell.is_child = True
             # Reference cell to setup neighbours
             if cell_id[0] == 0:
                 self.child_cell_left.append(cell) 
@@ -277,6 +279,36 @@ class RectCell(Rect):
                 new_cell.id = (i_x, i_y)
                 self.cell_table[(i_x, i_y)] = new_cell 
 
+
+    def add_cut(self,point):
+        self.cuts.append(point)
+
+
+    def check_cell_neighbor(self):
+        """Before split cell check if the neighbour is also splited, if so, depending on the directions, need to add more child 
+        to form connections.
+
+        """
+        # Add horizontal cut points if hier-hier pair is found
+        if self.has_top() and self.North.splitted: # H hier-hier pair
+            for name in self.North.child:
+                c = self.North.child[name]
+                self.add_cut([c[0],self.top]) # add a cut line to let hier-hier cell connect
+        if self.has_bot() and self.South.splitted: # H hier-hier pair
+            for name in self.South.child:
+                c = self.South.child[name]
+                self.add_cut([c[0],self.bottom]) # add a cut line to let hier-hier cell connect
+    
+        # Add vertical cut points if hier-hier pair is found
+        if self.has_left() and self.West.splitted: # V hier-hier pair
+            for name in self.West.child:
+                c = self.West.child[name]
+                self.add_cut([self.left,c[1]]) # add a cut line to let hier-hier cell connect
+        if self.has_right() and self.East.splitted: # V hier-hier pair
+            for name in self.East.child:
+                c = self.East.child[name]
+                self.add_cut([self.right,c[1]]) # add a cut line to let hier-hier cell connect
+
     def split_cell(self):
         """
         Depending the locations of the child-nodes and the shape of the piece
@@ -289,6 +321,9 @@ class RectCell(Rect):
             pt = self.child[name]
             xs.append(pt[0])
             ys.append(pt[1])
+        for c in self.cuts:
+            xs.append(c[0])
+            ys.append(c[1])
         # Make sure everything is organized! Sort them
         xs = list(set(xs))
         ys = list(set(ys))
@@ -356,7 +391,7 @@ class RectCell(Rect):
         traces = []
         ratio = 1/2
         min_rs = 200 # This value depends on the most accurate we can have using RS model
-        edge_width = 50 
+        edge_width = 100 
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         # Or look at this to know 0,1,2,3 locations
@@ -376,9 +411,9 @@ class RectCell(Rect):
             trace_left = self.left - int(self.West.width*ratio)
             trace_width = int((self.West.width + self.width)*ratio)
             edge_type = 'internal'
-        #if not(self.no_W):  
-        e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
-        traces.append(e_0_1)
+        if not(self.no_W):  
+            e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+            traces.append(e_0_1)
         # 2 --- 3
         if not(self.has_right()):
             trace_width =  edge_width
@@ -390,10 +425,10 @@ class RectCell(Rect):
             trace_width = int((self.East.width + cell_width)*ratio) 
             edge_type = 'internal'
 
-        #if not(self.no_E):  
-        e_2_3 = [pt_2,pt_3,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
-        traces.append(e_2_3)   
-        
+        if not(self.no_E):  
+            e_2_3 = [pt_2,pt_3,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+            traces.append(e_2_3)   
+            
         # Handle horizontal traces 
         # 1 -- 2
         if not(self.has_top()):
@@ -406,10 +441,10 @@ class RectCell(Rect):
             trace_bottom = self.top - int(cell_height*ratio)    
             edge_type = 'internal'
         
-        #if not(self.no_N):  
-        e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
-        traces.append(e_1_2)    
-       
+        if not(self.no_N):  
+            e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+            traces.append(e_1_2)    
+            
         # 0 -- 3
         if not(self.has_bot()):#
             trace_height = edge_width
@@ -421,10 +456,10 @@ class RectCell(Rect):
             trace_bottom = self.bottom - int(self.South.height*ratio)  
             edge_type = 'internal'
 
-        #if not(self.no_S):  
-        e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
-        traces.append(e_0_3)       
-        
+        if not(self.no_S):  
+            e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+            traces.append(e_0_3)       
+                
         
 
 

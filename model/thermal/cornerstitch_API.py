@@ -464,7 +464,7 @@ class CornerStitch_Tmodel_API:
         time_start = perf_counter()
         for dv_name_on in device_map_to_feature_obj:
             f = device_map_to_feature_obj[dv_name_on]
-            f.power = 1
+            f.power = 10
             for dv_name_off in device_map_to_feature_obj: 
                 if dv_name_on != dv_name_off:
                     f = device_map_to_feature_obj[dv_name_off]
@@ -474,14 +474,14 @@ class CornerStitch_Tmodel_API:
                     self.dev_result_table_eval(module_data,solution)
                     self.temp_res = {'D1': 400} if self.temp_res=={} else self.temp_res # Failed to run ParaPower
                     # Because thermal resistance is measured between heatsink and device
-                    rth_dict = {d:(self.temp_res[d]-273.5-27) for d in self.temp_res}
+                    rth_dict = {d:(self.temp_res[d]-273.5-27)/10 for d in self.temp_res}
                     #print('thermal_res with {} ON'.format(dv_name_on))
                     rth_values = list(rth_dict.values())
                     thermal_net[i:] = rth_values
                 j+=1
             i+=1    
         print("thermal extraction time {}s".format(perf_counter()- time_start))   
-        thermal_ws ='/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_2D_DMC/Thermal_netlist/'
+        thermal_ws ='/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/2D_Case_1_Dev/thermal_net_40x50_h1000/'
         np.savetxt(thermal_ws+"/thermal_net_single_size_{}.csv".format(solution.solution_id), thermal_net, delimiter=",")
         #rth_max = max(list(rth_dict.values()))
         #print("RTH:{}".format(rth_max))

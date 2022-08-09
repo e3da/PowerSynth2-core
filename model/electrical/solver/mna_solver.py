@@ -624,6 +624,7 @@ class ModifiedNodalAnalysis():
         if self.verbose:
             print("eval time",perf_counter() - t,convergence)
         self.results_dict={}
+        
         for i in range(len(self.X)):
             self.results_dict[self.X[i,0].decode()]=self.results[i]
             

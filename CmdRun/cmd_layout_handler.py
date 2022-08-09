@@ -787,7 +787,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 layer_sol.abstract_infos=structure.layers[i].abstract_info
                 layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
                 layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
+                layer_sol.export_layer_info(sol_path=sol_dir,id=k)
                 layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
                 solution.layer_solutions.append(layer_sol)
                 module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]
