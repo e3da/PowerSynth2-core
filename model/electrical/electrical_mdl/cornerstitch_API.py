@@ -860,10 +860,10 @@ class CornerStitch_Emodel_API:
                     start_net = '{}_{}'.format(d,conn_tupple[0])
                     end_net = '{}_{}'.format(d,conn_tupple[1])
                     # Not the best way, attempt to ground the Gate net altogether
-                    #if 'Gate' in start_net:
-                    #    self.circuit.add_component('Rgate{}'.format(d),start_net,0,1e-6)
-                    #if 'Gate' in end_net:
-                    #    self.circuit.add_component('Rgate{}'.format(d),end_net,0,1e-6)
+                    if 'Gate' in start_net:
+                        self.circuit.add_component('Rgate{}'.format(d),start_net,0,1e-6)
+                    if 'Gate' in end_net:
+                        self.circuit.add_component('Rgate{}'.format(d),end_net,0,1e-6)
 
                     continue    
                     
@@ -1330,8 +1330,8 @@ class CornerStitch_Emodel_API:
             
             for island_name in self.layer_island_dict[layer_id]:
                 
-                if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
-                    continue
+                #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
+                #    continue
                 #if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
                 #    continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
@@ -1396,7 +1396,7 @@ class CornerStitch_Emodel_API:
            
             
             #debug = int(input("plot mesh ?")) # True will make it slow, cause the figure are quite huge
-            debug = 0
+            debug = 1
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)
