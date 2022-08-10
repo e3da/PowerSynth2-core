@@ -254,7 +254,7 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id == -2: # Can be use for debugging, in case a solution id throws some weird resultss
+                if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
                     ps_sol = solution
                     features = ps_sol.features_list
                     obj_name_feature_map = {}

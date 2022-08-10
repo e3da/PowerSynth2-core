@@ -1330,8 +1330,8 @@ class CornerStitch_Emodel_API:
             
             for island_name in self.layer_island_dict[layer_id]:
                 
-                #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
-                #    continue
+                if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
+                    continue
                 #if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
                 #    continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
@@ -1396,7 +1396,7 @@ class CornerStitch_Emodel_API:
            
             
             #debug = int(input("plot mesh ?")) # True will make it slow, cause the figure are quite huge
-            debug = 1
+            debug = 0
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)

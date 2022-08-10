@@ -602,6 +602,7 @@ class ModifiedNodalAnalysis():
         
         Z = self.Z
         A = self.A
+        print('mat_size',A.shape)
         #Z = self.Vi
         #A = self.D
         convergence = 0
