@@ -390,8 +390,7 @@ class RectCell(Rect):
         # 0------------- 3    
         traces = []
         ratio = 1/2
-        min_rs = 200 # This value depends on the most accurate we can have using RS model
-        edge_width = 100 
+        edge_width = 25 # set the max frequency to 10 MHz range 
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
         # Or look at this to know 0,1,2,3 locations

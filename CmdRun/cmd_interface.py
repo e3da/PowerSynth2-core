@@ -526,7 +526,9 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
-        self.e_api_init.set_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
+        e_layer_stack = copy.deepcopy(self.layer_stack) # deep-copy so it wont affect the thermal side
+        
+        self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
         
         # EVALUATION STEPS BELOW:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
@@ -537,15 +539,17 @@ class Cmd_Handler:
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
-        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
+            
+        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
         #self.e_api_init.start_meshing_process(module_data=module_data)
-        
+        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
+        self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
+        self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
         self.e_api_init.form_initial_trace_mesh('init')
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time
-        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
         self.e_api_init.generate_circuit_from_trace_mesh()
@@ -1379,7 +1383,7 @@ if __name__ == "__main__":
                     {imam_nethome1:'Imam_Journal_3D_2/macro_scripts/macro_script_47.5X47.5_ANSYS.txt'},\
                     {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'},\
                     {qmle_nethome:"Unit_Test_Cases/with_vias/Via_Case_5/macro_script.txt"},\
-                     {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'},\
+                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_old/macro_script_40X50.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_3D_Case_Single_Substrate/macro_script.txt'},\
                     {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},

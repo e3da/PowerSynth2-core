@@ -1,3 +1,4 @@
+#@authors: qmle, ialrazi
 
 from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar
@@ -227,7 +228,8 @@ class new_engine_opt:
         #schem.set_up_relative_locations()
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
-        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
+        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
+        self.e_api.handle_net_hierachy(lvs_check = False) 
         #self.e_api.print_and_debug_layout_objects_locations()
         self.e_api.form_initial_trace_mesh(id)
         # Setup wire connection
@@ -288,11 +290,11 @@ class new_engine_opt:
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
-                t_sol = copy.deepcopy(solution)
+                #t_sol = copy.deepcopy(solution)
                 t_sol2 = copy.deepcopy(solution)
-                t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
+                #t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
-                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 1) # extract thermal net
+                #max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 1) # extract thermal net
                 
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol2) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
