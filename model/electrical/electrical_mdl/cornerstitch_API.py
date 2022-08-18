@@ -1422,7 +1422,7 @@ class CornerStitch_Emodel_API:
            
             
             #debug = int(input("plot mesh ?")) # True will make it slow, cause the figure are quite huge
-            debug = 1
+            debug = 0
             if debug:
                 self.layer_id_to_lmesh[layer_id].layer_mesh.display_nodes_and_edges(mode=0)
                 #self.layer_id_to_lmesh[layer_id].plot_all_mesh_island(name=layer_name)

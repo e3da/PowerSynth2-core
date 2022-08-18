@@ -127,6 +127,7 @@ class Cmd_Handler:
         self.data_x = None
         self.data_y = None
         self.e_model_choice = 'PEEC'
+        self.e_model_dim = '2D' # default as 2D and 2.5D
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -330,7 +331,7 @@ class Cmd_Handler:
             else:
                 self.setup_models(mode=0) # setup thermal model
                 
-                self.electrical_init_setup() # init electrical loop model
+                self.electrical_init_setup() # init electrical loop model using PEEC one time
                 self.setup_models(mode=1) # setup electrical model
                 self.structure_3D = Structure_3D() # Clean it up
                 self.init_cs_objects(run_option=run_option)
@@ -539,7 +540,9 @@ class Cmd_Handler:
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
-            
+        if len(module_data[0].islands) > 1: # means there is more than one layer:
+            self.e_model_dim = '3D'
+           
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
@@ -547,27 +550,30 @@ class Cmd_Handler:
         self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
-        self.e_api_init.form_initial_trace_mesh('init')
-        # Setup wire connection
-        # Go through every loop and ask for the device mode # run one time
-        # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
-        # Eval R, L , M without backside consideration
-        self.e_api_init.generate_circuit_from_trace_mesh()
-        self.e_api_init.add_wires_to_circuit()
-        self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-        self.e_api_init.eval_and_update_trace_RL_analytical()
-        self.e_api_init.eval_and_update_trace_M_analytical()
-        # EVALUATION PROCESS 
-        # Loop through all loops provided by the user   
-        # Test evaluation for multiloop:
-        if mode == 0: # not multiport
-            self.e_api_init.eval_single_loop_impedances()
-        else:
-            self.e_api_init.eval_multi_loop_impedances()
-        #self.e_api_init.eval_multi_loop()
-        #self.e_model_choice = self.e_api_init.process_and_select_best_model()
+        if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
+            print("Dectected {} layout, using PEEC electrical model".format(self.e_model_dim))
+            self.e_api_init.form_initial_trace_mesh('init')
+            # Setup wire connection
+            # Go through every loop and ask for the device mode # run one time
+            # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+            # Eval R, L , M without backside consideration
+            self.e_api_init.generate_circuit_from_trace_mesh()
+            self.e_api_init.add_wires_to_circuit()
+            self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+            self.e_api_init.eval_and_update_trace_RL_analytical()
+            self.e_api_init.eval_and_update_trace_M_analytical()
+            # EVALUATION PROCESS 
+            # Loop through all loops provided by the user   
+            # Test evaluation for multiloop:
+            if mode == 0: # not multiport
+                self.e_api_init.eval_single_loop_impedances()
+            else:
+                self.e_api_init.eval_multi_loop_impedances()
+            self.e_model_choice = 'PEEC'
+            #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
-        
+        elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
+            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
         
     # ------------------ Export Features ---------------------------------------------
     def init_export_tasks(self,run_option=0):
