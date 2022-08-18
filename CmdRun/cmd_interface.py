@@ -526,7 +526,7 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
-        e_layer_stack = copy.deepcopy(self.layer_stack) # deep-copy so it wont affect the thermal side
+        e_layer_stack = self.layer_stack # deep-copy so it wont affect the thermal side
         
         self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
         

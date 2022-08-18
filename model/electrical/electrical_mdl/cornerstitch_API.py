@@ -1111,6 +1111,7 @@ class CornerStitch_Emodel_API:
         edge-param maps the auto-generated edge name to their w,l and t value.
         This function will efficienty evaluate the w,l,t matrix and update the branch (edge) componentn'value in the solver
         """
+        # Need to add flag here to use RS model/ normal equations
         mat = []
         name_list = [] # Have to add this for this function to work correctly accross different Python version
         # dictionary objects are not ordered < Python3.7 
@@ -1152,9 +1153,9 @@ class CornerStitch_Emodel_API:
         print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
-            R, L =RL_mat[i]
-            #R = R_t
-            #L = L_
+            #R, L =RL_mat[i]
+            R = R_t
+            L = L_t
 
             #R = R_t # This theoretical R value is more stable
             #L = L_t
