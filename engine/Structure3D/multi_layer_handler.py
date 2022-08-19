@@ -1020,18 +1020,21 @@ class Layer():
         # To update parent component info for each child in island
         comp_hierarchy={}
         for island in self.islands:
-            #print(island.child_names)
+            
+            
 
             for child1 in island.child:
+                
                 if child1[-2]==1:
                     for child2 in island.elements:
+                        
                         if (child1[1]>=child2[1]) and (child1[2]>= child2[2]) and (child1[1]+child1[3]<=child2[1]+child2[3]) and (child1[2]+child1[4]<=child2[2]+child2[4]):
                             comp_hierarchy[child1[5]]=child2[5]
 
 
 
-        #input()
-
+        
+        
 
         for island in self.islands:
             #print(island.child)
@@ -1048,8 +1051,8 @@ class Layer():
                                 #print(child1,child2)
                                 comp_hierarchy[child1[5]]=child2[5]
 
-            #print(len(list(comp_hierarchy.keys())))
-        #print(comp_hierarchy)
+            
+        
 
         for comp in self.all_components:
             if comp.layout_component_id in comp_hierarchy:

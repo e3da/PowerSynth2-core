@@ -536,7 +536,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         index=0
         solution = CornerStitchSolution(index=0)
         solution.module_data=module_data #updated module data is in the solution
-        
+        for f in os.listdir(sol_dir):
+            if '.csv' in f:
+                os.remove(os.path.join(dir, f))
         for i in range(len(structure.layers)):
             
             structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[0][0]
@@ -597,6 +599,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             sol.cs_solution=solution
+            plot_solution_structure(sol)
             
             '''plot_solution_structure(sol)
             
@@ -635,95 +638,12 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     elif mode == 1:
         seed = get_seed(seed)
 
-        '''if optimization == True:
-            choice = opt_choices(algorithm=algorithm)
-            params = get_params(num_layouts=num_layouts,alg = 'NG-RANDOM')
-            num_layouts = params[0]
-            if choice == "NG-RANDOM":
-
-                cs_sym_info, module_data = layout_engine.generate_solutions(mode, num_layouts=num_layouts, W=None, H=None,
-                                                                         fixed_x_location=None, fixed_y_location=None,
-                                                                         seed=seed, individual=None,db=db_file,count=None, bar=False)
-
-                opt_problem = new_engine_opt(engine=layout_engine, W=None, H=None, seed=seed, level=mode, method=None,
-                                             apis=apis, measures=measures)
-                Solutions = update_solution_data(layout_dictionary=cs_sym_info,module_info=module_data, opt_problem=opt_problem,
-                                                 measure_names=measure_names)
-
-            else:
-                if choice == "NSGAII":
-                    params= get_params(num_layouts=num_gen,alg='NSGAII')
-                    num_layouts = params[0]
-                    # optimization_algorithm="NSGAII"
-                    opt_problem = new_engine_opt(engine=layout_engine, W=None, H=None, seed=seed, level=mode,
-                                                 method="NSGAII",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.optimize()
-
-                elif choice == "WS":
-                    params = get_params(num_layouts=num_layouts,num_disc=num_disc,alg='WS')
-                    num_layouts=params[0]
-                    num_disc = params[1]
-
-                    opt_problem = new_engine_opt(engine=layout_engine, W=None, H=None, seed=seed, level=mode,
-                                                 method="FMINCON",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.num_disc = num_disc
-                    opt_problem.optimize()  # results=list of list, where each element=[fig,cs_sym_info,perf1_value,perf2_value,...]
-
-                elif choice == "SA":
-                    # optimization_algorithm="SA"
-                    params = get_params(num_layouts=num_layouts,temp_init=max_temp, alg='SA')
-                    num_layouts = params[0]
-                    temp_init = params[1]
-
-
-                    opt_problem = new_engine_opt(engine=layout_engine, W=None, H=None, seed=seed, level=mode,
-                                                 method="SA",db=db_file,
-                                                 apis=apis, measures=measures)
-                    opt_problem.num_measure = 2  # number of performance metrics
-                    opt_problem.num_gen = num_layouts  # number of generations
-                    opt_problem.T_init = temp_init  # initial temperature
-                    opt_problem.optimize()  # results=list of list, where each element=[fig,cs_sym_info,perf1_value,perf2_value,...]
-
-                Solutions = update_solution_data(layout_dictionary=opt_problem.layout_data,module_info=opt_problem.module_info, measure_names=measure_names,
-                                                 perf_results=opt_problem.perf_results)
-
-
-            # ---------------------------------------------- save pareto data and plot figures ------------------------------------
-            # checking pareto_plot and saving csv file
-            pareto_data = pareto_solutions(Solutions)  # a dictionary with index as key and list of performance value as value {0:[p1,p2],1:[...],...}
-            export_solutions(solutions=Solutions, directory=sol_dir,pareto_data=pareto_data)  # exporting solution info to csv file
-            if plot:
-                sol_path = fig_dir + '/Mode_1_pareto'
-                if not os.path.exists(sol_path):
-                    os.makedirs(sol_path)
-                if len(Solutions)<50:
-                    sol_path_all = fig_dir + '/Mode_1_solutions'
-                    if not os.path.exists(sol_path_all):
-                        os.makedirs(sol_path_all)
-                pareto_data = pareto_solutions(Solutions)
-                for solution in Solutions:
-                    if solution.index in list(pareto_data.keys()):
-                        solution.layout_plot(layout_ind=solution.index, db=db_file, fig_dir=sol_path)
-                    solution.layout_plot(layout_ind=solution.index, db=db_file, fig_dir=sol_path_all)
-
-
-
-
-        else: '''
+        
         # Layout generation only
         params = get_params(num_layouts=num_layouts,alg='LAYOUT_GEN')
         num_layouts = params[0]
         seed = get_seed(seed)
 
-        '''cs_sym_info,module_data = layout_engine.generate_solutions(mode, num_layouts=num_layouts, W=None, H=None,
-                                                                     fixed_x_location=None, fixed_y_location=None,
-                                                                    seed=seed, individual=None,db=db_file, bar=False)'''
         structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed)
 
         layer_solutions=[]
@@ -736,20 +656,18 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                         bw_type=wire.cs_type
                         break
             
-            #print(structure_variable.layers[i].mode_1_location_h)
+            
             for j in range(len(structure.layers[i].mode_1_location_h)):
-                #print(structure_variable.layers[i].mode_1_location_h[j])
-                #input()
+                
                 CS_SYM_Updated = []
-                #CG2 = CS_to_CG(mode)
-                #print(structure_fixed.layers[i].mode_2_location_h[j])
+                
                 CS_SYM_Updated1, Layout_Rects1 = cg_interface.update_min(structure_variable.layers[i].mode_1_location_h[j],
                                                                     structure_variable.layers[i].mode_1_location_v[j],
                                                                     structure_variable.layers[i].new_engine.init_data[1],
                                                                     structure_variable.layers[i].bondwires,origin=structure_variable.layers[i].origin,
                                                                     s=dbunit)
 
-                #print(CS_SYM_Updated1)
+                
                 cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
                 CS_SYM_info = {}
                 for item in cur_fig_data:
@@ -789,7 +707,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 layer_sol.abstract_infos=structure.layers[i].abstract_info
                 layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
                 layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
+                layer_sol.export_layer_info(sol_path=sol_dir,id=k)
                 layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
                 solution.layer_solutions.append(layer_sol)
                 module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]
@@ -850,7 +768,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             solution=Solutions[i]
             sol=PSSolution(solution_id=solution.index,module_data=solution.module_data)
             sol.cs_solution=solution
-            #print("Here")
+            
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             #plot_solution_structure(sol)
             PS_solutions.append(sol)
@@ -865,23 +783,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
         return PS_solutions
 
-        '''Solutions = []
-            for i in range(len(cs_sym_info)):
-                name = 'Layout_' + str(i)
-                solution = CornerStitchSolution(name=name)
-                results = [None, None]
-                solution.params = dict(list(zip(measure_names, results)))
-                solution.layout_info = cs_sym_info[i]
-                solution.abstract_info = solution.form_abs_obj_rect_dict()
-                Solutions.append(solution)
-
-                if plot:
-                    sol_path = fig_dir + '/Mode_1'
-                    if not os.path.exists(sol_path):
-                        os.makedirs(sol_path)
-                    solution.layout_plot(layout_ind=i, db=db_file, fig_dir=sol_path)
-
-        export_solutions(solutions=Solutions, directory=sol_dir)'''
+        
 
     elif mode == 2:
 
@@ -889,33 +791,16 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         seed = get_seed(seed)
         params = get_params(num_layouts=num_layouts, alg=algorithm)
         num_layouts=params[0]
-        #print ("MY SEED", seed)
+        
         
         if optimization == True:
             start=time.time()
             if algorithm=='NSGAII':
-                #print(num_layouts)
-                #opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures)
-                #structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
-                #structure_copy=structure
-                #for i in range(5):
+                
                 
                 structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
                 structure_sample.get_design_strings()
-                """
-                hcg_string_objects,vcg_string_objects=structure_sample.get_design_strings()
-                hcg_strings=copy.deepcopy(structure_sample.hcg_design_strings)
-                vcg_strings=copy.deepcopy(structure_sample.vcg_design_strings)
-                ds=[hcg_string_objects,vcg_string_objects]
-                """
-
-                #print(len(structure_sample.hcg_design_strings))
-    
-                #print(len(structure_sample.vcg_design_strings))
-                    
-                #input()
-        
-                #if optimization==True:
+                
                 opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts)
                 opt_problem.num_measure = 2  # number of performance metrics
                 #opt_problem.num_gen = num_layouts  # number of generations
@@ -938,12 +823,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 print("Random_generation",end_random)
                 
         
-            #end=time.time()
-            #print("Eval",end_random_eval)
-            #print("Gen_time",runtime)
-            #print("Total_time",end-start)
-            #print("Random_generation",end_random)
-            #print("Random_eval",end_random_eval)
+            
                 
 
         else:
@@ -955,173 +835,10 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 
             for solution in PS_solutions:
                 solution.parameters={'Perf_1':None,'Perf_2':None}
+                
             end=time.time()
             gen_time=end-start
-        """
-        layer_solutions=[]
-        width=0
-        height=0
-        bw_type=None
-        for i in range(len(structure.layers)):
-            if structure.layers[i].bondwires!=None:
-                for wire in structure.layers[i].bondwires:
-                    bw_type=wire.cs_type
-                    break
-            for j in range(len(structure.layers[i].mode_2_location_h)):
-                CS_SYM_Updated = []
-                #CG2 = CS_to_CG(mode)
-                #print(structure_fixed.layers[i].mode_2_location_h[j])
-                CS_SYM_Updated1, Layout_Rects1 = cg_interface.update_min(structure_fixed.layers[i].mode_2_location_h[j],
-                                                                    structure_fixed.layers[i].mode_2_location_v[j],
-                                                                    structure_fixed.layers[i].new_engine.init_data[1],
-                                                                    structure_fixed.layers[i].bondwires,origin=structure_fixed.layers[i].origin,
-                                                                    s=dbunit)
-
-
-                cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
-                CS_SYM_info = {}
-                for item in cur_fig_data:
-                    for k, v in item.items():
-                        k = (k[0] * dbunit, k[1] * dbunit)
-                        CS_SYM_info[k] = CS_SYM_Updated1
-                        if k[0]>width:
-                            width=k[0]
-                        if k[1]>height:
-                            height=k[1]
-                CS_SYM_Updated.append(CS_SYM_info)
-                structure.layers[i].updated_cs_sym_info.append(CS_SYM_Updated)
-                structure.layers[i].layer_layout_rects.append(Layout_Rects1)
-                #cs_islands_up = structure.layers[i].New_engine.update_islands(CS_SYM_Updated1, structure.layers[i].mode_2_location_h[j],structure.layers[i].mode_2_location_v[j], structure.layers[i].New_engine.init_data[ 2],structure.layers[i].New_engine.init_data[3])
-                cs_islands_up = structure.layers[i].new_engine.update_islands(CS_SYM_Updated1,
-                                                                              structure.layers[i].mode_2_location_h[j],
-                                                                              structure.layers[i].mode_2_location_v[j],
-                                                                              structure.layers[
-                                                                                  i].new_engine.init_data[2],
-                                                                              structure.layers[
-                                                                                  i].new_engine.init_data[3])
-                    
-                structure.layers[i].cs_islands_up.append(cs_islands_up)
-                               
-            
-        Solutions = [] # list of CornerStitchSolution objects
-        md_data=[] #list of ModuleDataCornerStitch objects
-        for k in range((num_layouts)):
-            solution = CornerStitchSolution(index=k)
-            module_data=copy.deepcopy(structure.module_data)
-            for i in range(len(structure.layers)):
-                structure.layers[i].layout_info= structure.layers[i].updated_cs_sym_info[k][0]
-                structure.layers[i].abstract_info= structure.layers[i].form_abs_obj_rect_dict()
-
-                layer_sol=LayerSolution(name=structure.layers[i].name)
-
-                layer_sol.layout_plot_info=structure.layers[i].layout_info
-                layer_sol.abstract_infos=structure.layers[i].abstract_info
-                layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
-                layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-                layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
-                solution.layer_solutions.append(layer_sol)
-                module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]
-                module_data.footprint[structure.layers[i].name]=layer_sol.abstract_infos[structure.layers[i].name]['Dims'] # (wdith, height)
-
-            solution.module_data=module_data #updated module data is in the solution
-            solution.floorplan_size=[width,height]
-            solution.module_data=module_data
-            Solutions.append(solution)
-            md_data.append(solution.module_data)
-
-
-        db = db_file
-        count = None
-        if db != None:
-            for i in range(len(Solutions)):
-                solution=Solutions[i]
-                for j in range(len(solution.layer_solutions)):
-                    size=list(solution.layer_solutions[j].layout_plot_info.keys())[0]
-                    size=[size[0] / dbunit, size[1] / dbunit]
-
-                    structure.save_layouts(Layout_Rects=solution.layer_solutions[j].layout_rects,layer_name=solution.layer_solutions[j].name,min_dimensions=solution.layer_solutions[j].min_dimensions,count=solution.index, db=db,bw_type=bw_type,size=size )
-
-            
-            
-        if plot:
-            sol_path = fig_dir + '/Mode_2'
-            if not os.path.exists(sol_path):
-                os.makedirs(sol_path)
-            for solution in Solutions:
-                print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
-                for i in range(len(solution.layer_solutions)):
-
-                    size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-
-                    solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path,bw_type=bw_type)
-
         
-            
-            #ax2 = plt.subplots(len(solution.layer_solutions))[1]
-            #fig.subplots_adjust(hspace = .5, wspace=.001)
-
-            
-            if len(solution.layer_solutions)>1:
-                for solution in Solutions:
-                    all_patches=[]
-                    all_colors=['blue','red','green','yellow','pink','violet']
-                    for i in range(len(solution.layer_solutions)):
-                        size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
-                        alpha=(i)*1/len(solution.layer_solutions)
-                        color=all_colors[i]
-                        label='Layer '+str(i+1)
-
-                        #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
-                        
-
-                        # FIXME: solution.layout_plot not returning any values
-                        patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                        #patches[0].label=label
-                        #print(patches[0].label)
-                        #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
-                        all_patches+=patches
-                    
-                    
-                        #print(patch.Rectangle.label)
-                    solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
-                '''for p in all_patches:
-                    ax2[solution.index].add_patch(p)
-                ax2[solution.index].set_xlim(ax_lim[0])
-                ax2[solution.index].set_ylim(ax_lim[1])
-            
-                ax2[solution.index].set_aspect('equal')
-                #if self.fig_dir!=None:
-                plt.savefig(sol_path+'/layout_all_layers_'+str(solution.index)+'.png')
-                
-                
-                plt.close()'''
-                
-            
-
-        
-        PS_solutions=[] #  PowerSynth Generic Solution holder
-
-        for i in range(len(Solutions)):
-            solution=Solutions[i]
-            sol=PSSolution(solution_id=solution.index)
-            #print("Here")
-            sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
-            sol.cs_solution=solution
-            #plot_solution_structure(sol)
-            
-            PS_solutions.append(sol)
-
-        
-        if optimization==True:
-                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-                PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
-                print("Gen",gen_time)
-        else:
-            for solution in PS_solutions:
-                solution.parameters={'Perf_1':None,'Perf_2':None}
-        #if plot and optimization==True:
-            #export_solution_layout_attributes(sol_path=sol_dir,solutions=PS_solutions,size=size,layout_solutions=Solutions,dbunit=dbunit)
-        """
         return PS_solutions
 
            
@@ -1350,7 +1067,7 @@ def get_unique_edges(edge_list=None):
     Returns unique edges within same vertices
     '''
 
-    print(len(edge_list))
+    #print(len(edge_list))
     removed_edges=[]
     for edge1 in edge_list:
         for edge2 in edge_list:
@@ -1369,7 +1086,7 @@ def get_unique_edges(edge_list=None):
             #print("R",edge.source,edge.dest,edge.constraint)
             edge_list.remove(edge)
 
-    print("RE",len(edge_list))
+    #print("RE",len(edge_list))
     return edge_list
 
 
@@ -1997,7 +1714,7 @@ if __name__ == '__main__':
             
             #for row in reader:
             for i, row in enumerate(reader):
-                print(i,row)
+                #print(i,row)
                 solution_rows.append(row)
                 if row[0]=='Component_Name':
                     start=i
@@ -2046,8 +1763,8 @@ if __name__ == '__main__':
         for i in range(len(solution_script)):
             line=solution_script[i]
             texts=l.strip().split(' ')
-            print(texts)
-            input()
+            #print(texts)
+            #input()
             if line[0] in new_script_rows:
                 layer_name=texts[0]
             else:
@@ -2061,7 +1778,7 @@ if __name__ == '__main__':
             
 
 
-        input()        
+        #input()        
         solution_script_info=[]
 
 

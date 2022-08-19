@@ -1,7 +1,7 @@
 # This is the layout generation and optimization flow using command line only
 import sys, os
 # Remember to setenv PYTHONPATH yourself.
-
+import shutil
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
@@ -458,19 +458,37 @@ class Cmd_Handler:
             except:
                 print ("Cant make directory for figures")
                 cont =False
+        else:
+            #deleting existing content in a folder
+            for f in os.listdir(self.fig_dir):
+                try:
+                    shutil.rmtree(os.path.join(self.fig_dir, f))
+                except:
+                    os.remove(os.path.join(self.fig_dir, f))
         # Making Output Dirs for Model Char
         if not(check_dir(self.model_char_path)):
             try:
                 os.mkdir(self.model_char_path)
             except:
                 print("Cant make directory for model characterization")
+            else:
+                #deleting existing content in a folder
+                for f in os.listdir(self.model_char_path):
+                    os.remove(os.path.join(self.model_char_path, f))
         # Making Output Dirs for DataBase
         if not(check_dir(self.db_dir)):
             try:
                 os.mkdir(self.db_dir)
             except:
-                print ("cant make directory for database")
+                print ("Cant make directory for database")
                 cont =False
+        else:
+            for f in os.listdir(self.db_dir):
+                try:
+                    shutil.rmtree(os.path.join(self.db_dir, f))
+                except:
+                    os.remove(os.path.join(self.db_dir, f))
+                
         return cont 
 
     def setup_models(self, mode = 0):
@@ -778,7 +796,10 @@ class Cmd_Handler:
                     via_type_assignment[via_name]=None
 
         
-        
+        #updating constraint table
+        self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
+        self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
+         
 
         
         for i in range(len(self.structure_3D.layers)):
@@ -786,19 +807,20 @@ class Cmd_Handler:
             input_info = [layer.input_rects, layer.size, layer.origin]
             layer.populate_bondwire_objects()
             layer.new_engine.rel_cons=self.i_v_constraint
+            
+            
             #layer.plot_layout(fig_data=None,fig_dir=self.fig_dir,name=all_layers[i].name,rects=layer.input_rects,dbunit=self.dbunit) # plots initial layout
             #input()
+            
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
             #layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
+            
             self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
                 self.structure_3D.layers[i].comp_dict[comp.layout_component_id] = comp
                 self.layout_obj_dict[comp.layout_component_id] = comp # for electrical model
-
-        #updating constraint table
-        self.structure_3D.update_constraint_table(rel_cons=self.i_v_constraint)
-        self.structure_3D.read_constraint_table(rel_cons=self.i_v_constraint,mode=self.new_mode, constraint_file=self.constraint_file)
+            
         
         if len(via_connecting_layers)>0:
             for comp_name, component in self.layout_obj_dict.items():
@@ -841,39 +863,7 @@ class Cmd_Handler:
                 plt.savefig(self.fig_dir+'/initial_layout_all_layers.png')
             plt.close()
 
-        '''background = Image.open(self.pathToFigs + f"initial_layout_I1.png")
-        overlay = Image.open(self.pathToFigs + f"initial_layout_I2.png")
-
-        background = background.convert("RGBA")
-        overlay = overlay.convert("RGBA")
-
-        new_img = Image.blend(background, overlay, 0.5)
-        new_img.save(self.pathToFigs + "new.png","PNG")'''
-        #No need to handle inter-layer constraints for now
-        """
-        # taking info for inter-layer constraints
-        if self.new_mode==0:
-            try:
-                cons_df = pd.read_csv(self.constraint_file)
-                self.structure_3D.layer_constraints_info=cons_df
-            except:
-                self.structure_3D.layer_constraints_info=None
-        else:
-            pass# need to edit later
-            '''
-            self.structure_3D.create_inter_layer_constraints()
-            if self.constraint_file!=None and self.structure_3D.layer_constraints_info!=None:
-                self.structure_3D.layer_constraints_info.to_csv(self.constraint_file, sep=',', header=None, index=None)
-            flag = input("Please edit the inter-layer constraint table {} :\n Enter 1 on completion: ".format(self.constraint_file))
-            if flag == '1':
-                try:
-                    self.structure_3D.layer_constraints_info = pd.read_csv(self.constraint_file)
-                except:
-                    print("constraint file is not ready to read in")
-            '''
-        #print(self.structure_3D.layer_constraints_info)
-        #input()
-        """
+        
         self.structure_3D.create_module_data_info(layer_stack=self.layer_stack)
         self.structure_3D.populate_via_objects()
         self.structure_3D.populate_initial_layout_objects_3D()
@@ -1217,6 +1207,10 @@ class Cmd_Handler:
             # print data
         """
         if opt>0:
+            
+            for f in os.listdir(sol_dir):
+                if 'all_data.csv' in f or 'final_pareto.csv' in f:
+                    os.remove(os.path.join(dir, f))
             file_name = sol_dir+'/all_data.csv'
             with open(file_name, 'w',newline='') as my_csv:
                 csv_writer = csv.writer(my_csv, delimiter=',')
@@ -1313,7 +1307,7 @@ class Cmd_Handler:
             labels=list(solution.parameters.keys())
             break
         #if len(labels)==2:
-        print(labels)
+        #print(labels)
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
@@ -1346,6 +1340,21 @@ class Cmd_Handler:
         if len(self.measures)==2:
             self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
 
+class Logger(object):
+    def __init__(self,file_name=None):
+        self.terminal = sys.stdout
+        self.log = open(file_name, "w")
+   
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)  
+
+    def flush(self):
+        # this flush method is needed for python 3 compatibility.
+        # this handles the flush command by doing nothing.
+        # you might want to specify some extra behavior here.
+        pass    
+
 
 
 
@@ -1356,6 +1365,9 @@ if __name__ == "__main__":
 
     sys.exit()
     '''
+    
+    
+
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
     cmd = Cmd_Handler(debug=False)
@@ -1366,6 +1378,7 @@ if __name__ == "__main__":
     imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2"
     imam_nethome3= "/nethome/ialrazi/Quang_Result"
     qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
+    imam_nethome4="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
                 , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
@@ -1389,7 +1402,8 @@ if __name__ == "__main__":
                     {imam_nethome2: 'Journal_Case_2p5D_Up/macro_script_1_dev.txt'},
                     {imam_nethome2: 'macro_script_40X45_R.txt'},
                     {imam_nethome2: 'macro_script_50X50_R.txt'},
-                    {imam_nethome3:'Case_2D_DMC/macro_script.txt'}]
+                    {imam_nethome3:'Case_2D_DMC/macro_script.txt'},
+                    {imam_nethome4:'3D_Case_8/macro_script.txt'}]
 
 
         for tc in tc_list:
@@ -1411,8 +1425,15 @@ if __name__ == "__main__":
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
         args = ['python','cmd.py','-m',macro_dir,'-settings',setting_dir]
+        
+     
+        log_file_name=os.path.dirname(macro_dir)+'/output.log'
+        sys.stdout = Logger(file_name=log_file_name)
+        
+        
         cmd.cmd_handler_flow(arguments= args)
-           
+        
+        
 
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default

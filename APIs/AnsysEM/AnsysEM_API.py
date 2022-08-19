@@ -117,12 +117,13 @@ class AnsysEM_API():
             self.max_f_id+=28
             box.read_ps_feature(PS_feature,name)
             self.output_script+= box.script
-        self.handle_3D_connectivity()
-        self.add_src_sink()
-        self.output_script+=Auto_identify_nets
-        self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
-        #self.output_script+=Analyze_all
-        self.save_project_as()
+        if self.e_api!=None:
+            self.handle_3D_connectivity()
+            self.add_src_sink()
+            self.output_script+=Auto_identify_nets
+            self.output_script+=Analysis_Setup.format(self.e_api.freq,False,10,3,3,1,30)
+            #self.output_script+=Analyze_all
+            self.save_project_as()
 
     def add_src_sink(self):
         measure = self.e_api.measure[0]
@@ -152,7 +153,8 @@ class AnsysEM_API():
         # Handle wires and vias connections
         # get all layer IDs
         if self.run_option == 0:
-            self.e_api.setup_layout_objects(self.module_data)
+            if self.e_api!=None:
+                self.e_api.setup_layout_objects(self.module_data)
         w_id = 0
         for w in self.e_api.wires:
             c_s = w.sheet[0].get_center()

@@ -275,7 +275,7 @@ class PSSolution(object):
             if (min_width!=None and min_length!=None) or mode == -1: # initial layout evaluation
                 if '_Metal' in f.name or '_Attach' in f.name or f.name[0]=='E':
                     if min_width!=None and min_length!=None:
-                        if '_Metal' in f.name:
+                        if '_Metal' in f.name or '_Attach' in f.name:
                             f.width=min_width # dynamically changing dimension to support variable sized solution
                             f.length=min_length # dynamically changing dimension to support variable sized solution
                 if 'Baseplate' in f.name:
@@ -700,7 +700,9 @@ def ps_feature_to_cell(powersynth_feature):
                     'SiC': 'olivedrab',
                     'AlN': 'lightsteelblue',
                     'Al_N': 'lightsteelblue',
-                    'Al': 'red'}
+                    'Al': 'red',
+                    'Air':'blue',
+                    'SAC405':'yellow'}
     
     cell = Cell(xyz=[float(psf.x), float(psf.y), float(psf.z)],
                 wlh=[float(psf.width), float(psf.length), float(psf.height)],

@@ -1998,8 +1998,8 @@ class constraintGraph:
     ## creating edges from corner stitched tiles
     def setEdgesFromLayer(self, cornerStitch_h, cornerStitch_v,Types,rel_cons):
         
-
-        #print "Voltage",constraint.voltage_constraints
+        print(rel_cons)
+        print ("Voltage",constraint.voltage_constraints)
         #print "Current",constraint.current_constraints
         ID = cornerStitch_h.id # node id
         Horizontal_patterns, Vertical_patterns = self.shared_coordinate_pattern(cornerStitch_h, cornerStitch_v, ID)
@@ -2355,7 +2355,7 @@ class constraintGraph:
 
 
                         voltage_diff=self.find_voltage_difference(rect.NORTH.voltage,rect.SOUTH.voltage,rel_cons)
-                        #print "V_DIFF",voltage_diff
+                        print ("V_DIFF",voltage_diff)
                         '''
                         # tolerance is considered 10%
                         if voltage_diff-0.1*voltage_diff>100:

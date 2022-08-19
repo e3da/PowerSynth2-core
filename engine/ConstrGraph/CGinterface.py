@@ -302,6 +302,7 @@ class CS_to_CG():
         :param flexible: False means rigid bondwire/ True means flexible bond wires
 
         '''
+        
         forward_cg= ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible,constraint_info=constraint_info) # left-to-right/ bottom-to-top
         forward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
         forward_cg.get_x_y_coordinates(direction='forward')

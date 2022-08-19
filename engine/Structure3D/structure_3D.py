@@ -450,6 +450,7 @@ class Structure_3D():
         
         self.voltage_info= voltage_info
         self.current_info= current_info
+        
 
     def populate_via_objects(self):
         '''
@@ -701,34 +702,7 @@ class Structure_3D():
 
 
 
-        """
-        for f in objects_3D:
-                #f.print_cell_3D()
-                
-                if f.h==0:
-                    for pair in self.via_pairs:
-                        if pair[0].layout_component_id.split('.')[0]==rect_name:
-                            parent_comp_id=pair[0].parent_component_id
-                            if parent_comp_id[0]=='D':# checking if via is on top of a device
-                                for feat in objects_3D:
-                                    if feat.name==parent_comp_id:
-                                        f.z=feat.z+feat.h #+0.1 # solder material thickness 0.1 mm
-                                        
-                                        #via_attach=Cell3D(name=f.name+'_attach',z=f.z-0.1,w=f.w,l=f.l,h=0.1,material=material)
-                                        #objects_3D.append(cell_3D_object)
-                                        '''top_landing_parent=pair[1].parent_component_id
-                                        rect_name,rect_layer_id=top_landing_parent.split('.')
-
-                                        print(rect_name,rect_layer_id)
-                                        for layer in self.layers:
-                                            if layer.id==int(rect_layer_id):
-                                                for component in layer.all_components:
-                                                    if component.layout_component_id==top_landing_parent:
-                                                        if isinstance(component, RoutingPath):
-                                                            print(layer.thickness)
-                                        input()
-                                        '''
-        """
+        
 
 
 
@@ -1069,6 +1043,7 @@ class Structure_3D():
         if self.via_connected_layer_info!=None:
             id=-2 # virtual node id for via nodes
             for via_name, layer_name_list in self.via_connected_layer_info.items():
+                
                 via_root_node_h=Node_3D(id=id) # for each via connected layer group
                 via_root_node_v=Node_3D(id=id) # for each via connected layer group
                 via_root_node_h.name=via_name
@@ -1195,83 +1170,7 @@ class Structure_3D():
                 id-=1
                 self.interfacing_layer_nodes[via_name]=[via_node_h,via_node_v]
            
-    """
-    def create_root(self):
-        '''
-        creates all necessary virtual nodes and a virtaul root node.
-        '''
-        self.root_node_h=Node_3D(id=-1)
-        self.root_node_v = Node_3D(id=-1)
-        
-        self.root_node_h.edges=[]
-        self.root_node_v.edges=[]
-        if self.via_connected_layer_info!=None:
-            id=-2 # virtual node id for via nodes
-            for via_name, layer_name_list in self.via_connected_layer_info.items():
-                via_node_h=Node_3D(id=id) # for each via connected layer group
-                via_node_v=Node_3D(id=id) # for each via connected layer group
-                via_node_h.name=via_name
-                via_node_v.name=via_name
-                via_node_h.parent=self.root_node_h # assigning root node as the parent node
-                self.root_node_h.child.append(via_node_h) # assigning each via connected group as child node
-                via_node_v.parent=self.root_node_v
-                self.root_node_v.child.append(via_node_v)
-                
-                for layer in self.layers:
-                    if layer.name in layer_name_list:
-                        # assuming all layers in the same via connected group have same origin and dimensions
-                        origin_x=layer.origin[0] 
-                        origin_y=layer.origin[1]
-                        width=layer.width # dimmension along x-axis
-                        height=layer.height # dimension along y-axis
-                        # adding the root node of the layer sub-tree as the child node of the via connected group
-                        if layer.new_engine.Htree.hNodeList[0].parent==None:
-                            layer.new_engine.Htree.hNodeList[0].parent=via_node_h
-                            via_node_h.child.append(layer.new_engine.Htree.hNodeList[0])
-                            via_node_h.child_names.append(layer.name)
-
-                        # adding the root node of the layer sub-tree as the child node of the via connected group
-                        if layer.new_engine.Vtree.vNodeList[0].parent==None:
-                            layer.new_engine.Vtree.vNodeList[0].parent=via_node_v
-                            via_node_v.child.append(layer.new_engine.Vtree.vNodeList[0])
-                            via_node_v.child_names.append(layer.name)
-
-                    #populating boundary coordinates for each via connected group
-                    if origin_x not in via_node_h.boundary_coordinates:
-                        via_node_h.boundary_coordinates.append(origin_x)
-                    if origin_x+width not in via_node_h.boundary_coordinates:
-                        via_node_h.boundary_coordinates.append(origin_x+width)
-                    if origin_y not in via_node_v.boundary_coordinates:
-                        via_node_v.boundary_coordinates.append(origin_y)
-                    if origin_y+height not in via_node_v.boundary_coordinates:
-                        via_node_v.boundary_coordinates.append(origin_y+height)
-                    
-                    for via_location in list(layer.via_locations.values()):
-                        via_node_h.via_coordinates.append(via_location[0]) #x
-                        via_node_h.via_coordinates.append(via_location[0]+via_location[2]) #x+width
-                        via_node_v.via_coordinates.append(via_location[1]) #y
-                        via_node_v.via_coordinates.append(via_location[1]+via_location[3]) #y+height
-                
-                via_node_h.boundary_coordinates=list(set(via_node_h.boundary_coordinates))  
-                via_node_v.boundary_coordinates=list(set(via_node_v.boundary_coordinates)) 
-                via_node_h.boundary_coordinates.sort()
-                via_node_v.boundary_coordinates.sort()
-                via_node_h.via_coordinates=list(set(via_node_h.via_coordinates))
-                via_node_v.via_coordinates=list(set(via_node_v.via_coordinates))
-                via_node_h.via_coordinates.sort()
-                via_node_v.via_coordinates.sort()
-
-                self.sub_roots[via_name]=[via_node_h,via_node_v] #sub root node for each via connected group
-                
-                id-=1 #decrementing id to assign next via connected group
-        else: # 2D case (only one layer is available)
-            if len(self.layers)==1:
-                self.root_node_h.child.append(self.layers[0].new_engine.Htree.hNodeList[0])
-                self.layers[0].new_engine.Htree.hNodeList[0].parent=self.root_node_h
-                self.root_node_v.child.append(self.layers[0].new_engine.Vtree.vNodeList[0])
-                self.layers[0].new_engine.Vtree.vNodeList[0].parent=self.root_node_v
-        
-    """   
+    
     
     def calculate_min_location_root(self): # need to get rid of this function
         edgesh_root=self.root_node_h_edges
@@ -1361,6 +1260,8 @@ class Structure_3D():
                 #print(self.layers[i].name)
                 
                 self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
+                
+                #--------------------------for debugging-------------------------------------------------##
                 """
                 for tb_eval in self.layers[i].forward_cg.tb_eval_h:
                     print("ID",tb_eval.ID)
@@ -1484,9 +1385,9 @@ class Structure_3D():
                                         p_z_order=i[-2]-1
                                     else:
                                         p_z_order=1
-                                #print(i,colour)
+                                
                                 if type[type_ind] in min_dimensions :
-                                    #print(min_dimensions[t])
+                                    
                                     if i[-1]==0 or i[-1]==2:  # rotation_index
                                         w = min_dimensions[t][0][0]
                                         h = min_dimensions[t][0][1]
@@ -1501,8 +1402,7 @@ class Structure_3D():
                                 
                         if (w == None and h == None) :
                             if i[4]!=bw_type:
-                                #R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None'] # i[-2]=zorder
-                                #print(i,self.types_for_all_layers_plot)
+                                
                                 if i[4] in self.types_for_all_layers_plot:
                                     
                                     R_in = [i[0], i[1], i[2], i[3], colour, i[4],i[-2], 'None', 'None','True'] # i[-2]=zorder
@@ -1528,7 +1428,7 @@ class Structure_3D():
                                 R_in = [i[0], i[1], i[2], i[3], p_colour,i[4], p_z_order, '--', '#000000', 'False']
                                 R_in1 = [x, y, w, h, colour,i[4], i[-2], 'None', 'None','False']
 
-                            #print(R_in1)
+                            
                             data.append(R_in1)
                     data.append(R_in)
                 data.append([k[0], k[1]])
@@ -1633,25 +1533,19 @@ class Structure_3D():
         count=0
         if self.via_connected_layer_info!=None:
             for child in self.root_node_h.child:
-                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-                #print("H",child.name,child.id,len(child.design_strings))
-                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+                
                 hcg_strings+=child.design_strings[0].min_constraints
                 count+=len(child.design_strings[0].min_constraints)
                 hcg_string_objects.append(child.design_strings[0])
             for child in self.root_node_v.child:
-                #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-                #print("V",child.name,child.id,len(child.design_strings))
-                #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
+                
                 vcg_strings+=child.design_strings[0].min_constraints
                 vcg_string_objects.append(child.design_strings[0])
 
             for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
-                #print(via_name,sub_root_node_list )
+                
                 for node in sub_root_node_list:
-                    #print(len(node.design_strings))
-                    #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints)
-                    #input()
+                    
                     if node.direction=='hor':
                         hcg_strings+=node.design_strings[0].min_constraints
                         count+=len(node.design_strings[0].min_constraints)
@@ -1664,45 +1558,31 @@ class Structure_3D():
 
                 for i in range(len(self.layers)):
                     if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
-                        #count+=len(list(self.layers[i].forward_cg.design_strings_h.values()))
-                        #print("HCG",self.layers[i].name)
                         for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
-                            #for id,ds_ in ds.items():
-                            #print(id,len(ds_.min_constraints))
                             if id in self.layers[i].forward_cg.design_strings_h:
                                 hcg_string_objects.append(self.layers[i].forward_cg.design_strings_h[id])
                                 ds_=self.layers[i].forward_cg.design_strings_h[id]
-                                #print(id)
-                                #print(len(ds_.min_constraints))
+                                
                                 if len(ds_.min_constraints)==0:
-                                    #print(ds_.min_constraints,ds_.new_weights)
+                                    
                                     continue
                                 else:
                                     count+=len(ds_.min_constraints)
                                     hcg_strings+=ds_.min_constraints
 
-                        #print("VCG")
+                        # VCG
                         for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
-                            #for id,ds_ in ds.items():
-                            #print(id,len(ds_.min_constraints))
+                            
                             if id in self.layers[i].forward_cg.design_strings_v:
                                 vcg_string_objects.append(self.layers[i].forward_cg.design_strings_v[id])
                                 ds_=self.layers[i].forward_cg.design_strings_v[id]
-                                #print(id)
-                                #print(len(ds_.min_constraints))
+                                
                                 if len(ds_.min_constraints)==0:
-                                    #rint(ds_.min_constraints,ds_.new_weights)
+                                    
                                     continue
                                 else:
                                     vcg_strings+=ds_.min_constraints
-                            #print(ds_.longest_paths,ds_.min_constraints)
-                        #input()
-                        #hcg_strings.append(list(self.layers[i].forward_cg.design_strings_h.values()))
-                        #vcg_strings.append(list(self.layers[i].forward_cg.design_strings_v.values()))
-
-                        #print(self.layers[i].forward_cg.design_strings_h,self.layers[i].forward_cg.design_strings_v)
-
-            #print("GATHERD",count)
+                            
 
 
         else:# handles 2D/2.5D layouts
@@ -1758,9 +1638,7 @@ class Structure_3D():
 
         self.hcg_design_strings=hcg_strings
         self.vcg_design_strings=vcg_strings
-        print("B")
-        print(self.hcg_design_strings)
-        print(self.vcg_design_strings)
+        
         return #hcg_string_objects,vcg_string_objects
 
     def update_design_strings(self,individual):

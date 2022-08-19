@@ -838,6 +838,7 @@ class ConstraintGraph:
 
 
     def create_forward_edges(self,cornerStitch_h=None, cornerStitch_v=None,Types=None,rel_cons=0,comp_type={}):
+        
         '''
         adds forward edges from corner stitch tile
         '''

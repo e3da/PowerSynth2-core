@@ -49,6 +49,7 @@ class LayerSolution():
     def export_layer_info(self,sol_path=None,id=None):
         #print(self.abstract_infos)
         item = 'solution_'+str(id)+'_'+self.name
+        
         file_name = sol_path + '/' + item + '.csv'
         with open(file_name, 'w') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')

@@ -1067,6 +1067,10 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                 if layer.name==geometry_info[i][0]:
                     size=[layer.width,layer.height]
                     layer.input_geometry.append(size)
+        else:
+            if len(geometry_info[i][0])!=1:
+                print(geometry_info[i])
+                print("Make sure indentation is a \t (Tab) character in the layout geometry script")
 
     for i in range(len(geometry_info)):
         if geometry_info[i][0][0] == 'I':
