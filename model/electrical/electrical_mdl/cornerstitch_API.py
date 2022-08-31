@@ -775,7 +775,7 @@ class CornerStitch_Emodel_API:
             imp_k = netlist[k]
             data = self.process_imp_data(imp_k)
             netlist[k] = data['R']+1j*data['L']
-
+        print(self.I_device_dict)
         #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
         #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
     
@@ -1139,7 +1139,7 @@ class CornerStitch_Emodel_API:
         # Otherwise for the cases where the traces are weird use RS-model
         
         self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
-        #self.rs_model = None
+        self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
         if self.rs_model == None:
