@@ -25,165 +25,6 @@ from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot
 from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
 
 
-# --------------Plot function---------------------
-def plot_fig_data(Layout_Rects,level,bw_type=None,min_dimensions=None,Min_X_Loc=None,Min_Y_Loc=None):
-    #global min_dimensions
-    # Prepares solution rectangles as patches according to the requirement of mode of operation
-    Patches=[]
-    if level==0:
-
-        Rectangles = Layout_Rects
-
-        max_x = 0
-        max_y = 0
-        min_x = 1e30
-        min_y = 1e30
-
-        for i in Rectangles:
-            #print(i)
-            if i[4]!=bw_type:
-
-                if i[0] + i[2] > max_x:
-                    max_x = i[0] + i[2]
-                if i[1] + i[3] > max_y:
-                    max_y = i[1] + i[3]
-                if i[0] < min_x:
-                    min_x = i[0]
-                if i[1] < min_y:
-                    min_y = i[1]
-        colors = ['white','green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
-        type = ['EMPTY','Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8', 'Type_9']
-        ALL_Patches={}
-        key=(max_x,max_y)
-        ALL_Patches.setdefault(key,[])
-        for i in Rectangles:
-            for t in type:
-                if i[4]==t:
-
-                    type_ind=type.index(t)
-                    colour=colors[type_ind]
-            R=matplotlib.patches.Rectangle(
-                    (i[0], i[1]),  # (x,y)
-                    i[2],  # width
-                    i[3],  # height
-                    facecolor=colour,
-
-
-                )
-            ALL_Patches[key].append(R)
-        Patches.append(ALL_Patches)
-
-
-
-    else:
-
-
-        for k,v in list(Layout_Rects.items()):
-
-            if k=='H':
-                Total_H = {}
-
-                for j in range(len(v)):
-
-
-                    Rectangles = []
-                    for rect in v[j]:  # rect=[x,y,width,height,type]
-
-                        Rectangles.append(rect)
-                    max_x = 0
-                    max_y = 0
-                    min_x = 1e30
-                    min_y = 1e30
-
-                    for i in Rectangles:
-
-                        if i[0] + i[2] > max_x:
-                            max_x = i[0] + i[2]
-                        if i[1] + i[3] > max_y:
-                            max_y = i[1] + i[3]
-                        if i[0] < min_x:
-                            min_x = i[0]
-                        if i[1] < min_y:
-                            min_y = i[1]
-                    key=(max_x,max_y)
-
-                    Total_H.setdefault(key,[])
-                    Total_H[(max_x,max_y)].append(Rectangles)
-        plot = 0
-        for k,v in list(Total_H.items()):
-
-            for i in range(len(v)):
-
-                Rectangles = v[i]
-                max_x=k[0]
-                max_y=k[1]
-                ALL_Patches = {}
-                key = (max_x, max_y)
-                ALL_Patches.setdefault(key, [])
-
-                colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple', 'pink', 'magenta', 'orange', 'violet']
-
-                type = ['EMPTY', 'Type_1', 'Type_2', 'Type_3', 'Type_4', 'Type_5', 'Type_6', 'Type_7', 'Type_8','Type_9']
-                for i in Rectangles:
-                    for t in type:
-                        if i[4] == t:
-
-                            type_ind = type.index(t)
-                            colour = colors[type_ind]
-
-                            if type[type_ind] in min_dimensions and min_dimensions[t][0]!=i[2] and min_dimensions[t][1]!=i[3] :
-
-                                w=min_dimensions[t][0]
-                                h=min_dimensions[t][1]
-                            else:
-
-                                w=None
-                                h=None
-                    if (w==None and h==None ) or (w==i[2] and h==i[3]):
-
-                        R= matplotlib.patches.Rectangle(
-                                (i[0], i[1]),  # (x,y)
-                                i[2],  # width
-                                i[3],  # height
-                                facecolor=colour
-
-                            )
-                    else:
-
-                        center_x=(i[0]+i[0]+i[2])/float(2)
-                        center_y=(i[1]+i[1]+i[3])/float(2)
-                        x=center_x-w/float(2)
-                        y=center_y-h/float(2)
-
-                        R = matplotlib.patches.Rectangle(
-                            (i[0], i[1]),  # (x,y)
-                            i[2],  # width
-                            i[3],  # height
-                            facecolor='green',
-                            linestyle='--',
-                            edgecolor='black',
-                            zorder=1
-
-
-                        )#linestyle='--'
-
-                        R1=matplotlib.patches.Rectangle(
-                            (x, y),  # (x,y)
-                            w,  # width
-                            h,  # height
-                            facecolor=colour,
-                            zorder=2
-
-
-                        )
-                        ALL_Patches[key].append(R1)
-
-                    ALL_Patches[key].append(R)
-                plot+=1
-                Patches.append(ALL_Patches)
-
-
-    return Patches
 
 
 
@@ -996,7 +837,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                                                                 s=dbunit)
 
             
-
+            """
             cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
             CS_SYM_info = {}
             for item in cur_fig_data:
@@ -1007,6 +848,17 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                         width=k[0]
                     if k[1]>height:
                         height=k[1]
+            """
+            CS_SYM_info = {}
+            for rect in Layout_Rects1:
+                if rect[4] == 'EMPTY':
+                    size=(rect[2] * dbunit,rect[3] * dbunit)
+                    break 
+            CS_SYM_info[size] = CS_SYM_Updated1
+            if size[0]>width:
+                width=size[0]
+            if size[1]>height:
+                height=size[1]
             CS_SYM_Updated.append(CS_SYM_info)
             structure.layers[i].updated_cs_sym_info.append(CS_SYM_Updated)
             structure.layers[i].layer_layout_rects.append(Layout_Rects1)
