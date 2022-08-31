@@ -29,7 +29,62 @@ from core.SolBrowser.cs_solution_handler import pareto_solutions,export_solution
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 
+def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],dbunit=1000): # function for exporting individual solution components
+    
+    layout_solutions = []
+    for solution in solutions:
+        layout_solutions.append(solution.cs_solution)
+    parameters=solutions[0].parameters
+    performance_names=list(parameters.keys())
+    for i in range(len(performance_names)):
+        if 'Perf_1' in performance_names[i]:
+            performance_names[i]= 'Solution Index'
+    
+    for i in range(len(solutions)):
+        item='Solution_'+str(solutions[i].solution_id)
+        
+        file_name = sol_path + item + '.csv'
+        
+        with open(file_name, 'w', newline='') as my_csv:
+            csv_writer = csv.writer(my_csv, delimiter=',')
+            if len (performance_names) >=2: # Multi (2) objectives optimization
+                csv_writer.writerow(["Size", performance_names[0], performance_names[1]])
+                
+                try:
+                    Perf_1 = solutions[i].parameters[performance_names[0]]
+                    Perf_2 =  solutions[i].parameters[performance_names[1]]
+                except:
+                    Perf_1 = 3000
+                    Perf_2 =  3000
+                data = [size, Perf_1, Perf_2]
+            else: # Single objective eval
+                csv_writer.writerow(["Size", performance_names[0]])
+                Size = size
+                Perf_1 = solutions[i].parameters[performance_names[0]]
+                data = [Size, Perf_1]
 
+            csv_writer.writerow(data)
+            
+            
+            
+            for layer_sol in layout_solutions[i].layer_solutions:
+                
+                if size[0]>dbunit:
+                    data=[layer_sol.name,size[0]/dbunit,size[1]/dbunit]
+                else:
+                    data=[layer_sol.name,size[0],size[1]]
+                csv_writer.writerow(data)
+                csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
+                
+                for k,v in layer_sol.abstract_infos[layer_sol.name]['rect_info'].items():
+                    k=k.split('.')[0]
+                    if v.width==1:v.width*=1000
+                    if v.height==1:v.height*=1000
+                    layout_data = [k, v.x/dbunit, v.y/dbunit, v.width/dbunit, v.height/dbunit]
+                    csv_writer.writerow(layout_data)
+        
+        my_csv.close()
+        print("Export Complete")
 
 def opt_choices(algorithm=None): # for step-by-step mode option.
     
