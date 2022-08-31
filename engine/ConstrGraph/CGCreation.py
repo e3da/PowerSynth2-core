@@ -3346,6 +3346,205 @@ class ConstraintGraph:
                     #return  abs(voltage1['DC']-voltage2['DC'])+abs(voltage1['AC']+voltage2['AC'])
 
 
+    def HcgEval(self, level,Random,seed, N,algorithm,ds=None):
+        """
+
+        :param level: mode of operation
+        :param N: number of layouts to be generated
+        :return: evaluated HCG for N layouts
+        """
+        #"""
+        if level == 2:
+            for element in reversed(self.tb_eval_h):
+                if element.parentID in list(self.LocationH.keys()):
+                    for node in self.hcs_nodes:
+                        if node.id == element.parentID:
+                            parent=node
+                            break
+
+                ZDL_H = []
+                if element.parentID>0:
+
+                    if element.ID in self.propagated_parent_coord_hcg:
+                        ZDL_H=self.propagated_parent_coord_hcg[element.ID]
+                        
+
+                else:
+                    if element.parentID in self.propagated_parent_coord_hcg:
+                        ZDL_H=self.propagated_parent_coord_hcg[element.parentID]
+                    else:
+                        ZDL_H = self.x_coordinates[element.parentID]
+                    if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
+                        for vertex in self.hcg_vertices[element.ID]:
+                            ZDL_H.append(vertex.coordinate)
+                    else:
+                        
+                        if element.parentID in self.LocationH:
+                            parent_coords=list(self.LocationH[element.parentID][0].keys())
+                            for coord in parent_coords:
+                                if coord not in ZDL_H:
+                                    ZDL_H.append(coord)
+                #ZDL_H=parent_coordinates
+
+                # deleting multiple entries
+                P = set(ZDL_H)
+                ZDL_H = list(P)
+                ZDL_H.sort() # sorted list of HCG vertices which are propagated from parent
+                
+
+                parent_locations=self.LocationH[element.parentID]
+                locations_=[]
+                count=0
+                for location in parent_locations:
+                    loc_x={}
+                    for vertex in element.graph.vertices:
+                        if vertex.coordinate in location and vertex.coordinate in ZDL_H:
+                            loc_x[vertex.coordinate]=location[vertex.coordinate]
+                        else:
+                            continue
+
+                    if element.parentID<0 and self.via_type==None:
+                        ledge_dims=self.constraint_info.get_ledgeWidth()
+                        left=self.x_coordinates[element.ID][1]
+                        right=self.x_coordinates[element.ID][-2]                        
+                    
+                                        
+                                    
+                                
+
+                        start=self.x_coordinates[element.ID][0]
+                        end=self.x_coordinates[element.ID][-1]
+                        
+                        loc_x[left]=loc_x[start]+ledge_dims[0]
+                        loc_x[right]=loc_x[end]-ledge_dims[0]
+                        
+                    seed=seed+count*1000
+                   
+                    
+                    if element.ID==1 and Random==False and algorithm==None:
+                            ds_found=DesignString(node_id=element.ID,direction='hor')
+                            self.design_strings_h[element.ID]=ds_found
+                    elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
+                        ds_found=self.design_strings_h[element.ID]
+                        
+
+                    else:
+                        ds_found=None
+                    
+                    loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
+                    loc_items=loc.items()
+
+                    
+                    count+=1
+                    locations_.append(loc)  
+                    if Random==False and N==1 and algorithm==None and element.ID in self.design_strings_h:
+                        self.design_strings_h[element.ID]=design_strings
+
+
+                self.LocationH[element.ID]=locations_
+
+        return self.LocationH
+
+
+
+
+    
+    def VcgEval(self, level,Random,seed, N,algorithm,ds=None):
+
+        if level == 2:
+            for element in reversed(self.tb_eval_v):
+                if element.parentID in list(self.LocationV.keys()):
+                    for node in self.vcs_nodes:
+                        if node.id == element.parentID:
+                            parent=node
+                            break
+
+                ZDL_V = []
+                if element.parentID>0:
+                        
+                    if element.ID in self.propagated_parent_coord_vcg:
+                        ZDL_V=self.propagated_parent_coord_vcg[element.ID]
+
+                else:
+                    if element.parentID in self.propagated_parent_coord_vcg:
+                        ZDL_V=self.propagated_parent_coord_vcg[element.parentID]
+                    else:
+                        ZDL_V = self.y_coordinates[element.parentID]
+                    if self.via_type!=None: # if it's 3D, there is an interfacing layer that contains all coordinates of root node of each layer
+                        for vertex in self.vcg_vertices[element.ID]:
+                            ZDL_V.append(vertex.coordinate)
+                    else:
+                        #print(self.LocationH)
+                        if element.parentID in self.LocationV:
+                            parent_coords=list(self.LocationV[element.parentID][0].keys())
+                            for coord in parent_coords:
+                                if coord not in ZDL_V:
+                                    ZDL_V.append(coord)
+                #ZDL_H=parent_coordinates
+
+                # deleting multiple entries
+                P = set(ZDL_V)
+                ZDL_V = list(P)
+                ZDL_V.sort() # sorted list of HCG vertices which are propagated from parent
+                
+
+                parent_locations=self.LocationV[element.parentID]
+                locations_=[]
+                count=0
+                for location in parent_locations:
+
+                    loc_y={}
+                    for vertex in element.graph.vertices:
+
+                        if vertex.coordinate in location and vertex.coordinate in ZDL_V:
+                            loc_y[vertex.coordinate]=location[vertex.coordinate]
+                        else:
+                            continue
+
+                    if element.parentID<0 and self.via_type==None:
+                        ledge_dims=self.constraint_info.get_ledgeWidth()
+                        left = self.y_coordinates[element.ID][1]
+                        right = self.y_coordinates[element.ID][-2]
+                        start = self.y_coordinates[element.ID][0]
+                        end = self.y_coordinates[element.ID][-1]
+
+                        loc_y[left]=loc_y[start]+ledge_dims[1]
+                        loc_y[right]=loc_y[end]-ledge_dims[1]
+
+
+
+                    seed=seed+count*1000
+                    
+                    if element.ID==1 and Random==False  and algorithm==None:
+                            ds_found=DesignString(node_id=element.ID,direction='ver')
+                            self.design_strings_v[element.ID]=ds_found
+                    elif Random==False and element.ID in self.design_strings_v and algorithm!=None:
+                        ds_found=self.design_strings_v[element.ID]
+                        
+
+                    else:
+                        ds_found=None
+                     
+                    locs,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
+                    
+                    count+=1
+                    locations_.append(locs)  
+                    if Random==False and N==1 and algorithm==None and element.ID in self.design_strings_v:
+
+                        self.design_strings_v[element.ID]= design_strings
+
+                
+                self.LocationV[element.ID]=locations_
+
+       
+
+        return self.LocationV
+
+
+    
+    
+
+    
     def get_node_ids_hybrid_connection(self):
         '''
         finds node ids, where both bondwires and vias are inside a device
