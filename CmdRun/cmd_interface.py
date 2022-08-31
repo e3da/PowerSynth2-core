@@ -470,7 +470,8 @@ class Cmd_Handler:
             try:
                 os.mkdir(self.model_char_path)
             except:
-                print("Cant make directory for model characterization")
+                #print("Cant make directory for model characterization")
+                x=0
             else:
                 #deleting existing content in a folder
                 for f in os.listdir(self.model_char_path):
@@ -1403,7 +1404,8 @@ if __name__ == "__main__":
                     {imam_nethome2: 'macro_script_40X45_R.txt'},
                     {imam_nethome2: 'macro_script_50X50_R.txt'},
                     {imam_nethome3:'Case_2D_DMC/macro_script.txt'},
-                    {imam_nethome4:'2D_Case_11/Case_11_new/macro_script.txt'}]
+                    {imam_nethome4:'2D_Case_11/Case_11_new/macro_script.txt'},
+                    {qmle_nethome:'PS2release/2D_Case_11/macro_script.txt'}]
 
 
         for tc in tc_list:
