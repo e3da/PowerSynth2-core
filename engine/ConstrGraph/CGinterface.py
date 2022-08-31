@@ -1,3 +1,4 @@
+# Author: Imam Al Razi (ialrazi@uark.edu)
 # Preparing constraints and passing necessary info to call constraint graph generation and evaluation function
 import sys
 sys.path.append('..')
@@ -16,7 +17,7 @@ class CS_Type_Map():
         self.all_component_types = ['EMPTY'] # list to maintain all unique component types associated with each layer. "EMPTY" is the default type as it is the background for each layer
         self.types_name=['EMPTY'] # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
         self.types_index=[0] # list of index for each type (integer). To search quickly
-        #self.populate_type_names_index()
+        
     
     def populate_types_name_index(self):
         for i in range(len(self.all_component_types)):
@@ -28,9 +29,7 @@ class CS_Type_Map():
                     self.types_name.append(t)
                     self.types_index.append(i)
 
-    '''component_to_component_type = {}
-    for i in range(len(type_name)):
-        component_to_component_type[all_component_types[i]] = type_name[i]'''
+    
 
     def add_component_type(self,component_name_type=None,routing=False):
         '''
@@ -42,7 +41,7 @@ class CS_Type_Map():
         t_in="Type_"+str(t)
         self.types_name.append(t_in)
         self.types_index.append(t)
-        #component_to_component_type[component_name_type] = t_in
+        
         if routing==False:
             self.comp_cluster_types['Fixed'].append(t_in)
 
@@ -78,25 +77,7 @@ class CS_to_CG():
             constraint=Constraint(name)
             self.constraints.append(constraint)
 
-            """
-            if 'Width' in name:  # 1D array
-                self.MinWidth=[0 for i in range(len(self.all_cs_types))]
-            elif 'Length' in name:  # 1D array
-                self.MinLength=[0 for i in range(len(self.all_cs_types))]
-            elif 'HorExtension' in name:  # 1D array
-                self.MinHorExtension=[0 for i in range(len(self.all_cs_types))]
-            elif 'VerExtension' in name:  # 1D array
-                self.MinVerExtension=[0 for i in range(len(self.all_cs_types))]
-            elif 'Enclosure' in name or 'Spacing' in name: # 2D matrix
-                if name =='MinHorEnclosure':
-                    self.MinHorEnclosure =  np.zeros(shape=(self.all_cs_types, self.all_cs_types))
-                if name == 'MinVerEnclosure':
-                    self.MinVerEnclosure =  np.zeros(shape=(self.all_cs_types, self.all_cs_types))
-                if name == 'MinHorSpacing':
-                    self.MinHorSpacing = np.zeros(shape=(self.all_cs_types, self.all_cs_types))
-                if name == 'MinVerSpacing':
-                    self.MinVerSpacing = np.zeros(shape=(self.all_cs_types, self.all_cs_types))
-            """
+           
         
     
     def getConstraints(self, constraint_df=None, dbunit=1000):
@@ -230,10 +211,7 @@ class CS_to_CG():
         
 
     def get_ledgeWidth(self,dest=None,cons_name=None):
-        '''source='EMPTY'
-        for constraint in self.constraints:
-            if constraint.name == cons_name and dest!=None:
-                ledgewidth= constraint.value[source][dest]'''
+        
         source_type = self.all_cs_types.index('EMPTY')
         dest_type = self.all_cs_types.index('Type_1') # hardcoded assuming trace is always there
         cons_name= 'MinVerEnclosure'
@@ -362,10 +340,7 @@ class CS_to_CG():
                 CG = constraintGraph(W, H, XLoc, YLoc)
                 CG.graphFromLayer(Htree.hNodeList, Vtree.vNodeList, bondwires, self.level, cs_islands, N, seed,
                                   individual, Types=Types, flexible=flexible, rel_cons=rel_cons,root=root)
-            # else:
-            # CG = constraintGraph(W, H, XLoc, YLoc)
-            # CG.graphFromLayer(Htree.hNodeList, Vtree.vNodeList, bondwires, self.level, cs_islands, N, seed,
-            # individual, Types=Types, flexible=flexible, rel_cons=rel_cons)
+            
         else:
 
             CG = constraintGraph(W=None, H=None, XLocation=None, YLocation=None)
@@ -373,8 +348,7 @@ class CS_to_CG():
                               flexible=flexible, rel_cons=rel_cons,root=root)
                              
         return CG
-        #MIN_X, MIN_Y = CG.minValueCalculation(Htree.hNodeList, Vtree.vNodeList, self.level)
-        #return MIN_X, MIN_Y
+        
 
     
     
@@ -392,31 +366,27 @@ class CS_to_CG():
 
         layout_rects = []
         cs_sym_info = {}
-        #print(minx)
+        
         
         sub_x=min(minx[1].values())
         sub_y=min(miny[1].values())
         sub_width = max(minx[1].values())
         sub_length = max(miny[1].values())
-        #print(sub_x,sub_y,sub_width,sub_length)
+        
         updated_wires = []
         if bondwires != None:
             for wire in bondwires:
-                # wire2=BondingWires()
-                #wire.printWire()
+                
                 if wire.source_node_id != None and wire.dest_node_id != None:
                     wire2 = copy.deepcopy(wire)
-                    #wire2.printWire()
-                    ##print wire.source_coordinate
-                    # print wire.dest_coordinate
+                    
                     if wire.source_node_id in minx and wire.dest_node_id in minx:
                         wire2.source_coordinate[0] = minx[wire.source_node_id][wire.source_coordinate[0]]
                         wire2.dest_coordinate[0] = minx[wire.dest_node_id][wire.dest_coordinate[0]]
                     if wire.source_node_id in miny and wire.dest_node_id in miny:
                         wire2.source_coordinate[1] = miny[wire.source_node_id][wire.source_coordinate[1]]
                         wire2.dest_coordinate[1] = miny[wire.dest_node_id][wire.dest_coordinate[1]]
-                    # print"A", wire2.source_coordinate
-                    # print"AD", wire2.dest_coordinate
+                   
                     updated_wires.append(wire2)
                     wire_1 = [wire2.source_coordinate[0] / float(s), wire2.source_coordinate[1] / float(s), 0.5, 0.5,
                               wire.cs_type, 3, 0]
@@ -430,14 +400,12 @@ class CS_to_CG():
                         y = wire_1[1]
                     else:
                         y = wire_2[1]
-                    # wire=[x,y,abs(wire_2[1]-wire_1[1]),abs(wire_2[2]-wire_1[2]),wire_1[-2],wire_1[-1]]
+                    
                     wire_sol = [wire_1[0], wire_1[1], wire_2[0], wire_2[1], wire_1[-3],
                             wire_1[-2]]  # xA,yA,xB,yB,type,zorder
-                    # print "final_wire", wire
-                    # layout_rects.append(wire_1)
-                    # layout_rects.append(wire_2)
+                    
                     if wire.num_of_wires>1:
-                        #print(wire.spacing)
+                        
                         if wire.spacing>self.min_enclosure_bw and self.min_enclosure_bw>0.0:
                             wire.spacing=self.min_enclosure_bw
                         for i in range(1,wire.num_of_wires):
@@ -454,10 +422,7 @@ class CS_to_CG():
                     layout_rects.append(wire_sol)
 
 
-            # for k, v in sym_to_cs.items():
-            # print k,v
-
-            # raw_input()
+            
         
         for k, v in list(sym_to_cs.items()):
             
@@ -473,7 +438,7 @@ class CS_to_CG():
             hier_level = v[3]
             rotation_index = v[4]
             
-            #print ("UP",k,rect.cell.x,rect.cell.y,rect.EAST.cell.x,rect.NORTH.cell.y
+            
             for nodeid in nodeids:
                 if left in minx[nodeid] and bottom in miny[nodeid] and top in miny[nodeid] and right in minx[nodeid]:
                     x = minx[nodeid][left]
@@ -485,7 +450,7 @@ class CS_to_CG():
                     continue
                 
             name = k
-            # print x,y,w,h
+            
             
             new_rect = [float(x) / s, float(y) / s, float(w) / s, float(h) / s, type, hier_level + 1, rotation_index]
             
@@ -539,7 +504,7 @@ class CS_to_CG():
             sub_y=0
             new_rect = [sub_x, sub_y, float(sub_width) / s, float(sub_length) / s, "EMPTY", 0, 0]  # z_order,rotation_index
             substrate_rect = ["EMPTY", 0, 0, sub_width, sub_length]
-        #print(new_rect,origin,minx[1][origin[0]],miny[1][origin[1]],sub_x,sub_y)
+        
         cs_sym_info['Substrate'] = substrate_rect
         layout_rects.append(new_rect)
         
