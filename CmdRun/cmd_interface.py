@@ -1403,7 +1403,7 @@ if __name__ == "__main__":
                     {imam_nethome2: 'macro_script_40X45_R.txt'},
                     {imam_nethome2: 'macro_script_50X50_R.txt'},
                     {imam_nethome3:'Case_2D_DMC/macro_script.txt'},
-                    {imam_nethome4:'3D_Case_6/macro_script.txt'}]
+                    {imam_nethome4:'2D_Case_11/macro_script.txt'}]
 
 
         for tc in tc_list:
