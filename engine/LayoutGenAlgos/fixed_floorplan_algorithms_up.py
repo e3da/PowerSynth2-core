@@ -80,7 +80,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
     '''
     adj_matrix=graph.generate_adjacency_matrix()
     for edge in graph.nx_graph_edges:
-        if edge.source.coordinate in locations and edge.type=='fixed':
+        if edge.source.coordinate in locations and edge.type=='fixed' and edge.dest.coordinate not in locations:
             locations[edge.dest.coordinate]=locations[edge.source.coordinate]+edge.constraint
     
     
@@ -255,6 +255,22 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
     fixed_vert_indices.sort()
     
     potential_sub_graph_verts=[]
+    '''
+    for start in fixed_vert_indices:
+        for end in fixed_vert_indices:
+
+            if start != end:
+                connected, path = is_connected(adj_matrix=adj_matrix, src=start, dest=end)
+                # print(start, end, connected,path)
+                if path != None:
+                    sub_graph = []
+                    for vert in graph.vertices:
+                        for i in range(len(path)):
+                            if path[i] == vert.index:
+                                sub_graph.append(vert)
+
+                    potential_sub_graph_verts.append(sub_graph)
+    '''
     for i in range(len(fixed_vert_indices)-1):
         start=fixed_vert_indices[i]
 
@@ -328,10 +344,12 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                         
                         if edge.source.coordinate in coords1 and edge.dest.coordinate in coords2:
                             sub_1+=sub_2
-                            combined_sub_graphs.remove(sub_2)
+                            if sub_2 in combined_sub_graphs:
+                                combined_sub_graphs.remove(sub_2)
                         elif edge.source.coordinate in coords2 and edge.dest.coordinate in coords1:
                             sub_2+=sub_1
-                            combined_sub_graphs.remove(sub_1)
+                            if sub_1 in combined_sub_graphs:
+                                combined_sub_graphs.remove(sub_1)
                         else:
                             continue
     
