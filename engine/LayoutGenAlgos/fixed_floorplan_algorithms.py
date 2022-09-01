@@ -62,11 +62,11 @@ class fixed_floorplan_algorithms():
         s = seed
         for m in range(num_solutions):
             dictList1 = []
-            # print self.edgesh
+            
             for foo in edgesh:
-                #print ("EDGE",foo.getEdgeDict())
+                
                 dictList1.append(foo.getEdgeDict())
-            # print dictList1
+            
             d = defaultdict(list)
             for i in dictList1:
                 k, v = list(i.items())[0]  
@@ -94,38 +94,38 @@ class fixed_floorplan_algorithms():
                 seed= seed + m * 1000
                 random.seed(seed)
                 for key,value in edge_labels1.items():
-                    #print(key, value)
+                    
                     
                     if len(value)==1:
                         if num_solutions>2:
                             max_lim=int((value[0][0])*((m+1)/num_solutions))+value[0][0]
-                            #print(max_lim)
+                            
                             if max_lim<=value[0][0]:
                                 max_lim=2*value[0][0]
                             
-                            #print(max_lim,random.randrange(value[0][0],max_lim))
+                            
                             val=random.randrange(value[0][0],max_lim)
-                            #print("random",val)
+                            
                             value[0][0]=val
                             value[0][-2]=2*val
                         if num_solutions==2:
                             max_lim=2*value[0][0]
-                            #s= seed + m * 1000
+                            
                             val=random.randrange(value[0][0],max_lim)
-                            #print("random",val)
+                            
                             value[0][0]=val
                             value[0][-2]=2*val
                         else:
                             val=value[0][0]
-                            #print("random",val)
+                            
                             value[0][0]=val
                             value[0][-2]=2*val
 
                         
 
-                #print("R",edge_labels1)
+                
             nodes = [x for x in range(len(ZDL_H))]
-            # G2.add_nodes_from(nodes)
+            
 
             edge_label = []
             for branch in edge_labels1:
@@ -133,9 +133,7 @@ class fixed_floorplan_algorithms():
                 data = []
                 weight = []
                 for internal_edge in edge_labels1[branch]:
-                    # print lst_branch[0], lst_branch[1]
-                    # print internal_edge
-                    # if (lst_branch[0], lst_branch[1], internal_edge) not in data:
+                    
                     data.append((lst_branch[0], lst_branch[1], internal_edge))
 
                     edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
@@ -144,19 +142,19 @@ class fixed_floorplan_algorithms():
             for i in edge_label:
                 k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
                 d3[k].append(v)
-            # print d3
+            
             X = {}
             H = []
             for i, j in list(d3.items()):
                 X[i] = max(j)
-            #print("X", X)
+            
             for k, v in list(X.items()):
                 H.append((k[0], k[1], v))
             
             G = nx.MultiDiGraph()
             n = [x for x in range(len(ZDL_H))]
             G.add_nodes_from(n)
-            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
+            
             G.add_weighted_edges_from(H)
         
             if level == 2:
@@ -164,41 +162,39 @@ class fixed_floorplan_algorithms():
                 for k, v in XLoc.items():
                     if k in n:
                         self.Loc_X[k] = v
-                #print (self.Loc_X,XLoc)
+                
                 
                 self.seed_h.append(s + m * 1000)
-                #print(self.seed_h[m])
+                
                 self.FUNCTION(G, ID, Random, sid=self.seed_h[m])
-                #print("FINX_after",self.Loc_X)
+                
                 loct.append(self.Loc_X)
             if level==1:
                 A = nx.adjacency_matrix(G)
                 B = A.toarray()
-                #print (B)
+                
                 Location = {}
                 for i in range(len(n)):
                     if n[i] == 0:
                         Location[n[i]] = 0
                     else:
-                        #print("else",i)
+                        
                         k = 0
                         val = []
-                        # for j in range(len(B)):
-                        #print(B)
+                        
                         for j in range(0, i):
                             if B[j][i] > k:
-                                # k=B[j][i]
+                                
                                 pred = j
                                 val.append(Location[n[pred]] + B[j][i])
-                        # loc1=Location[n[i-1]]+X[(n[i-1],n[i])]
-                        # loc2=Location[n[pred]]+k
+                        
                         Location[n[i]] = max(val)
-                #print(Location)
+                
                 loct.append(Location)
             
 
 
-        #print loct
+        
         
         Location = {}
         key = ID
@@ -209,7 +205,7 @@ class fixed_floorplan_algorithms():
             for j in range(len(ZDL_H)):
                 location[ZDL_H[j]] = loct[i][j]
             Location[ID].append(location)
-        #print ("LOC",Location)
+       
         x_locations = Location
 
         # evaluate VCG
@@ -218,17 +214,17 @@ class fixed_floorplan_algorithms():
         for m in range(num_solutions):
             
             dictList1 = []
-            # print self.edgesh
+            
             for foo in edgesv:
-                # print "EDGE",foo.getEdgeDict()
+                
                 dictList1.append(foo.getEdgeDict())
-            # print dictList1
+            
             d = defaultdict(list)
             for i in dictList1:
                 k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
                 d[k].append(v)
             edge_labels1 = d
-            # print "d",ID, edge_labels1
+            
             if level==1:
                 for key,value in edge_labels1.items():
                     if len(value)>1:
@@ -245,13 +241,13 @@ class fixed_floorplan_algorithms():
                                 continue
                             else:
                                 removed.append(edge)
-                        #print(removed)
+                        
                         for edge in removed:
                             value.remove(edge)
                         
                 seed= seed + m * 1000
                 for key,value in edge_labels1.items():
-                    #print("V",key, value)
+                    
                     random.seed(seed)
                     if len(value)==1:
                         if num_solutions>2:
@@ -260,30 +256,30 @@ class fixed_floorplan_algorithms():
                                 max_lim=2*value[0][0]
                             
                             val=random.randrange(value[0][0],max_lim)
-                            #print("random",val)
+                            
                             value[0][0]=val
                             value[0][-2]=2*val
                                 
                         if num_solutions==2:
                             max_lim=int(2*value[0][0])
-                            #s= seed + m * 1000
+                            
                             val=random.randrange(value[0][0],max_lim)
-                            #print("random",val)
+                           
                             value[0][0]=val
                             value[0][-2]=2*val
                         else:
                             val=value[0][0]
-                            #print("random",val)
+                            
                             value[0][0]=val
                             value[0][-2]=2*val
 
                         
                         value[0][0]=val
                         value[0][-2]=2*val
-                #print(edge_labels1)
+                
                 
             nodes = [x for x in range(len(ZDL_V))]
-            # G2.add_nodes_from(nodes)
+            
 
             edge_label = []
             for branch in edge_labels1:
@@ -291,9 +287,7 @@ class fixed_floorplan_algorithms():
                 data = []
                 weight = []
                 for internal_edge in edge_labels1[branch]:
-                    # print lst_branch[0], lst_branch[1]
-                    # print internal_edge
-                    # if (lst_branch[0], lst_branch[1], internal_edge) not in data:
+                    
                     data.append((lst_branch[0], lst_branch[1], internal_edge))
 
                     edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
@@ -302,18 +296,18 @@ class fixed_floorplan_algorithms():
             for i in edge_label:
                 k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
                 d3[k].append(v)
-            # print d3
+            
             X = {}
             H = []
             for i, j in list(d3.items()):
                 X[i] = max(j)
-            #print"X", X,YLoc,ZDL_V
+            
             for k, v in list(X.items()):
                 H.append((k[0], k[1], v))
             GV = nx.MultiDiGraph()
             n = [x for x in range(len(ZDL_V))]
             GV.add_nodes_from(n)
-            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
+            
             GV.add_weighted_edges_from(H)
             if level == 2:
                 self.Loc_Y = {}
@@ -322,35 +316,34 @@ class fixed_floorplan_algorithms():
                         self.Loc_Y[k] = v
                 self.seed_v.append(s + m * 1000)
                 self.FUNCTION_V(GV, ID, Random, sid=self.seed_v[m])
-                #print"FINX_after",self.Loc_Y
+                
                 loctV.append(self.Loc_Y)
             
             if level==1:
                 
                 A = nx.adjacency_matrix(GV)
                 B = A.toarray()
-                #print (B)
+                
                 Location = {}
                 for i in range(len(n)):
                     if n[i] == 0:
                         Location[n[i]] = 0
                     else:
-                        #print("else",i)
+                        
                         k = 0
                         val = []
-                        # for j in range(len(B)):
+                        
                         for j in range(0, i):
                             if B[j][i] > k:
-                                # k=B[j][i]
+                               
                                 pred = j
                                 val.append(Location[n[pred]] + B[j][i])
-                        # loc1=Location[n[i-1]]+X[(n[i-1],n[i])]
-                        # loc2=Location[n[pred]]+k
+                        
                         Location[n[i]] = max(val)
-                #print(Location)
+                
                 loctV.append(Location)
 
-        #print loctV
+        
         Location = {}
         key = ID
         Location.setdefault(key, [])
@@ -360,7 +353,7 @@ class fixed_floorplan_algorithms():
             for j in range(len(ZDL_V)):
                 locationV[ZDL_V[j]] = loctV[i][j]
             Location[ID].append(locationV)
-            # print Location
+            
         y_locations=Location
 
         return x_locations,y_locations
@@ -376,21 +369,21 @@ class fixed_floorplan_algorithms():
         s = seed
         for m in range(num_solutions):
             dictList1 = []
-            # print self.edgesh
+            
             for foo in edgesh:
-                # print "EDGE",foo.getEdgeDict()
+                
                 dictList1.append(foo.getEdgeDict())
-            # print dictList1
+            
             d = defaultdict(list)
             for i in dictList1:
                 k, v = list(i.items())[0]  # an alternative to the single-iterating inner loop from the previous solution
                 d[k].append(v)
             edge_labels1 = d
-            # print "d",ID, edge_labels1
+            
             
             s= seed + m * 1000
             for key,value in edge_labels1.items():
-                #print(key, value)
+                
                 if num_solutions>2:
                     max_lim=(2*value[0][0]-value[0][0])*m/num_solutions
                     val=random.randrange(value[0][0],max_lim)
@@ -403,22 +396,18 @@ class fixed_floorplan_algorithms():
                 
                 value[0][0]=val
                 value[0][-2]=2*val
-            #print(edge_labels1)
-            #input()
+            
             nodes = [x for x in range(len(ZDL_H))]
-            # G2.add_nodes_from(nodes)
+            
 
             edge_label = []
             for branch in edge_labels1:
-                #print(branch)
+                
                 lst_branch = list(branch)
                 data = []
                 weight = []
                 for internal_edge in edge_labels1[branch]:
-                    #print(internal_edge)
-                    # print lst_branch[0], lst_branch[1]
-                    # print internal_edge
-                    # if (lst_branch[0], lst_branch[1], internal_edge) not in data:
+                    
                     data.append((lst_branch[0], lst_branch[1], internal_edge))
 
                     edge_label.append({(lst_branch[0], lst_branch[1]): internal_edge[0]})  ### {(source,dest):weight}
@@ -436,13 +425,13 @@ class fixed_floorplan_algorithms():
             H = []
             for i, j in list(d3.items()):
                 X[i] = max(j)
-            #print("X", X)
+           
             for k, v in list(X.items()):
                 H.append((k[0], k[1], v))
             G = nx.MultiDiGraph()
             n = [x for x in range(len(ZDL_H))]
             G.add_nodes_from(n)
-            # G.add_weighted_edges_from([(0,1,2),(1,2,3),(2,3,4),(3,4,4),(4,5,3),(5,6,2),(1,4,15),(2,5,16),(1,5,20)])
+            
             G.add_weighted_edges_from(H)
         
             if level == 2:
@@ -450,11 +439,11 @@ class fixed_floorplan_algorithms():
                 for k, v in XLoc.items():
                     if k in n:
                         self.Loc_X[k] = v
-            #print (self.Loc_X,XLoc)
+            
             self.seed_h.append(s + m * 1000)
-            #print(self.seed_h[m])
+           
             self.FUNCTION(G, ID, Random, sid=self.seed_h[m])
-            #print("FINX_after",self.Loc_X)
+            
             loct.append(self.Loc_X)
 
     # Applies algorithms for evaluating mode-2 and mode-3 solutions
@@ -464,7 +453,7 @@ class fixed_floorplan_algorithms():
         B = A.toarray()
         Fixed_Node = list(self.Loc_X.keys()) # list of vertices which are given from user as fixed vertices (vertices with user defined locations)
         Fixed_Node.sort()
-        ''''''
+        
         #trying to split all possible edges
         Splitlist = [] # list of edges which are split candidate. Edges which has either source or destination as fixed vertex and bypassing a fixed vertex
         for i, j in G.edges():
@@ -516,8 +505,7 @@ class fixed_floorplan_algorithms():
             if len(node) > 2:
                 Node_List.append(node)
 
-        #nodes.sort()
-        #print Node_List
+        
 
         for i in range(len(B)):
             for j in range(len(B)):
@@ -536,14 +524,13 @@ class fixed_floorplan_algorithms():
                                     else:
                                         continue
 
-        #print "New", Node_List
+       
         Connected_List=[]
         for node_list in Node_List:
             node_list=list(set(node_list))
             node_list.sort()
             Connected_List.append(node_list)
-        #raw_input()
-        #print "CON",Connected_List
+        
 
         if len(Connected_List) > 0:
             for i in range(len(Connected_List)):
@@ -558,7 +545,7 @@ class fixed_floorplan_algorithms():
 
 
                         path_exist = self.LONGEST_PATH(B, start, j)
-                        # i=start
+                        
                         j = end - 1
                     end = j
 

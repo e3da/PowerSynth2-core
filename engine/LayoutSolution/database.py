@@ -45,9 +45,7 @@ def insert_record(conn,data,name,temp_file):
             ablob = f.read()
             
             cur.execute("INSERT INTO LAYOUT_DATA VALUES (?,?,?)", [data[0],name, ablob])
-            #cur.execute("INSERT INTO LAYOUT_DATA(ID,Layout_info) VALUES (?,?)", [data[0], buffer(ablob)])
-            #cur.execute(sql, (lite.Binary(data), ))
-            # [id,buffer(info)])
+            
             conn.commit()
         f.close()
     except:
@@ -62,9 +60,7 @@ def retrieve_data(conn,ID,layer_name):
     :return:
     """
     cur = conn.cursor()
-    #cur.execute("SELECT * FROM " +table)
-    #return cur.fetchall()
-    #cur.execute("SELECT Layout_info FROM LAYOUT_DATA where ID=?",ID )
+    
     sql = "SELECT Layout_info FROM LAYOUT_DATA WHERE ID = :id and Layer_name = :layer_name"
     param = {'id': ID,'layer_name':layer_name}
     cur.execute(sql, param)

@@ -4,7 +4,7 @@ from core.opt.optimizer import NSGAII_Optimizer, DesignVar
 import platform
 if platform.system() == 'Windows': # Matlab doesnt work on the server yet, this must be fixed later 
     from powercad.opt.optimizer import Matlab_weighted_sum_fmincon, Matlab_hybrid_method, Matlab_gamultiobj, SimulatedAnnealing
-#from opt.simulated_anneal import Annealer
+
 import collections
 import numpy as np
 import random
@@ -31,10 +31,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 class new_engine_opt:
     def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100):
-        #self.engine = engine
-        #self.W = W
-        #self.H = H
-        # self.solutions = {}
+        
         self.count = 0
         self.layout_data = []
         self.module_info =[]
@@ -42,7 +39,7 @@ class new_engine_opt:
         self.perf_results = []
         self.db=db
 
-        #self.gen_layout_func = self.engine.generate_solutions
+        
         self.method = method
         self.seed = seed
         self.level = level
@@ -65,11 +62,11 @@ class new_engine_opt:
         self.multiport_result = {}
     def extract_3D_loop_schematic_beta(self,e_api = None):
         schem = LtSpice_layout_to_schematic(e_api)
-        #schem.set_up_relative_locations()
+        
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
         self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
-        #self.e_api.print_and_debug_layout_objects_locations()
+        
         self.e_api.form_initial_trace_mesh(id)
         # Setup wire connection
         # Go through every loop and ask for the device mode # run one time
@@ -105,7 +102,7 @@ class new_engine_opt:
                     # EVALUATION PROCESS 
                     if measure.multiport:
                         multiport_result = self.e_api.eval_multi_loop_impedances()
-                        print(solution.solution_id,multiport_result)
+                        
                         self.multiport_result[solution.solution_id] = multiport_result
                         # if possible, we can collect the data for a balancing layout optimization.
                         # 1 Balancing
@@ -115,7 +112,7 @@ class new_engine_opt:
                         R, L = self.e_api.eval_single_loop_impedances()
                         R_abs = abs(R)
                         L_abs = abs(np.imag(L))
-                        print("L",L_abs)
+                        
                         if abs(R_abs)>1e3:
                             print("ID:",solution.solution_id)
                             input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
@@ -123,12 +120,12 @@ class new_engine_opt:
             if isinstance(measure, ThermalMeasure):
                 t_sol = copy.deepcopy(solution)
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
-                #print(self.t_api.matlab_engine)
+                
                 measure.mode = 0 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                #print("T",max_t)
+                
                 result.append(max_t)
-                #result.append(1)
+                
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
@@ -160,8 +157,7 @@ class new_engine_opt:
                     continue
                 if not "compare" in self.e_api.e_mdl: # use this when there is no compare mode
                     self.e_api.init_layout_3D(module_data=module_data)
-                #self.e_api.type = 'Loop' # hardcodedß
-                #print ('API type', self.e_api.e_mdl)
+                
                 id_select = None # specify a value for debug , None otherwise
 
                 if self.e_api.e_mdl == 'PowerSynthPEEC':
@@ -176,8 +172,7 @@ class new_engine_opt:
                     self.e_api.generate_fasthenry_inputs(solution.solution_id)
                     if sol_len==1:
                         R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
-                    #if solution.solution_id == id_select:
-                        #print ("RL_FH",R,L)
+                    
                         
                     
                 if self.e_api.e_mdl == "Loop":
@@ -204,24 +199,18 @@ class new_engine_opt:
                     self.e_api_1.form_isl_script()    
                     self.e_api_1.add_source_sink(measure.source,measure.sink)
                     R_FH,L_FH = self.e_api_1.run_fast_henry_script(parent_id = solution.solution_id)
-                    print("RFH-RLoop",R_FH,R_loop)
+                    
                     # Temp to store result
                     R = L_FH
                     L = L_loop
-                    print ("FH",L_FH,"LOOP",L_loop)
-                    '''if abs(L_loop-L_FH)/L_FH >0.3:
-                        input("CHECK THIS CASE")
-                    '''
+                    
                     self.e_api.e_mdl = 'LoopFHcompare'
                     #input()
                 if math.isnan(R) or math.isnan(L) : 
                     print ("ERROR: No loop found. Please check the electrical loop description.")
-                    print ("RL",R,L)
+                    
                     R,L= [-1,-1]
                     
-                #except:
-                #R=10000
-                #L=10000
                 
 
                 if type == 0:  # LOOP RESISTANCE
@@ -234,7 +223,7 @@ class new_engine_opt:
             if isinstance(measure, ThermalMeasure):
                 # DISABLED ON QUANG's branch, if you see this line, you need to ENABLE ParaPower.
                 solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                #print(self.t_api.matlab_engine)
+                
                 max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
                 result.append(max_t)
         return result
@@ -244,8 +233,7 @@ class new_engine_opt:
 
     def populate_thermal_info_to_sol_feat(self,solution=None):
         
-        #print( self.dev_powerload_table)
-        #print(self.devices)
+        
         
         h_conv=self.t_api.bp_conv
             
@@ -255,8 +243,7 @@ class new_engine_opt:
                     if f.name ==dev:
                         f.power=heat_gen
             
-                    '''if f.z==0.0:
-                        f.h_val=h_conv[0]'''
+                    
         return solution       
     
 
@@ -264,41 +251,32 @@ class new_engine_opt:
         for k, v in list(X_Loc.items()):
             for dict in v:
                 X_locations = collections.OrderedDict(sorted(dict.items()))
-        # print X_locations
-        # print"Y",Y_Loc
+        
         for k, v in list(Y_Loc.items()):
             for dict in v:
                 Y_locations = collections.OrderedDict(sorted(dict.items()))
-        # print Y_locations
-        # print Y_locations
+        
         X_params = []
         X_Val = list(X_locations.values())
         for i in range(len(X_Val) - 1):
             X_params.append(X_Val[i + 1] - X_Val[i])
 
-        # X_individuals=[i/sum(X_params) for i in X_params]
+        
         Y_params = []
         Y_Val = list(Y_locations.values())
         for i in range(len(Y_Val) - 1):
             Y_params.append(Y_Val[i + 1] - Y_Val[i])
 
-        # Y_individuals = [i / sum(Y_params) for i in Y_params]
-
+        
         individ = X_params + Y_params
         ind = [i / sum(individ) for i in individ]
-        # print"IND", len(ind), sum(ind)
+        
         return ind
 
     def cost_func_NSGAII(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
-        #print("IN",len(individual))
-        #print(individual)
-        #print(individual)
-        #input()
-        #self.structure.update_design_strings(individual)
-
-        #if self.count>0:
+        
         start=time.time()
         self.structure.update_design_strings(individual)
 
@@ -311,10 +289,7 @@ class new_engine_opt:
         solutions,module_info=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=self.level,num_layouts=1,db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.sol_dir,plot=True,dbunit=self.dbunit,count=self.count)
 
 
-        #cs_sym_info,module_data = self.gen_layout_func(level=self.level, num_layouts=1, W=self.W, H=self.H,
-                                                     #fixed_x_location=None, fixed_y_location=None, seed=self.seed,
-                                                     #individual=individual,db=self.db,count=self.count)
-
+        
         for i in range(len(solutions)):
             start2=time.time()
             results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
@@ -531,19 +506,7 @@ class new_engine_opt:
         self.fig_dir=fig_dir
         self.dbunit=dbunit
         self.measure_names=measure_names
-        #self.initial_ds=initial_ds
-
-
-        #random.dirichlet(np.ones(len(Random.min_constraints[current_index])),size=1)[0]
-        """self.hcg_strings,self.vcg_strings=get_string_elements(self.initial_ds)
-        print(len(self.hcg_strings))
-        print(len(self.vcg_strings))"""
-
-        #print(len(self.structure.hcg_design_strings))
-        #print(self.structure.hcg_design_strings)
-        #print(len(self.structure.vcg_design_strings))
-        #print(self.structure.vcg_design_strings)
-        #input()
+        
         all_hcg_strings=[]
         all_vcg_strings=[]
         for list_ in self.structure.hcg_design_strings:
@@ -552,12 +515,11 @@ class new_engine_opt:
         for list_ in self.structure.vcg_design_strings:
             for element in list_:
                 all_vcg_strings.append(element)
-        #print(len(all_hcg_strings))
-        #print(len(all_vcg_strings))
+        
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
         if self.method == "NSGAII":
-            # start = timeit.default_timer()
+            
             
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
                                    num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen)
@@ -566,16 +528,12 @@ class new_engine_opt:
 
         elif self.method == "FMINCON":
 
-            # start = timeit.default_timer()
-
-            # num_gen=MaxIter, num_disc= how many times a complete maxiter number of iterations will happen.
-
+            
             opt = Matlab_weighted_sum_fmincon(len(Design_Vars), self.cost_func_fmincon, num_measures=self.num_measure,
                                               num_gen=self.num_gen, num_disc=self.num_disc,
                                               matlab_dir=os.path.abspath("../../../MATLAB"), individual=None)
             opt.run()
-            # results=np.array(self.solution_data)
-            # end = timeit.default_timer()
+            
 
         elif self.method == "SA":
 
@@ -592,16 +550,7 @@ class new_engine_opt:
 
     def get_design_vars(self,all_hcg_strings=[],all_vcg_strings=[]):
 
-        """all_hcg_strings=[]
-        all_vcg_strings=[]
-        for list_ in self.hcg_strings:
-            for element in list_:
-                all_hcg_strings.append(element)
-        for list_ in self.vcg_strings:
-            for element in list_:
-                all_vcg_strings.append(element)
-        print(len(all_hcg_strings))
-        print(len(all_vcg_strings))"""
+        
 
         Random = []
         for i in range((len(all_hcg_strings) + len(all_vcg_strings))):
@@ -642,11 +591,7 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
         for i in range(num_layouts-1): # adding multiple copies to make the evaluation flow consistent
             structure.root_node_h.node_mode_2_locations[structure.root_node_h.id].append(root_node_h_mode_2_location)
             structure.root_node_v.node_mode_2_locations[structure.root_node_v.id].append(root_node_v_mode_2_location)
-    #structure.root_node_h.node_mode_2_locations,structure.root_node_v.node_mode_2_locations=fixed_location_evaluation.get_root_locations(ID=structure.root_node_h.id,edgesh=edgesh_root,ZDL_H=ZDL_H,edgesv=edgesv_root,ZDL_V=ZDL_V,level=mode,XLoc=Min_X_Loc,YLoc=Min_Y_Loc,seed=seed,num_solutions=num_layouts)
-    #print("INSIDE RECREATION")
-    #print ("Root_h",structure.root_node_h.node_mode_2_locations)
-    #print ("Root_v",structure.root_node_v.node_mode_2_locations)
-
+    
 
     if structure.via_connected_layer_info!=None:
         for child in structure.root_node_h.child:
@@ -669,8 +614,7 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
             for k, v in root_node_v_mode_2_location.items():
                 root_Y[list(root_node_v_mode_2_location.keys()).index(k)] = v
 
-            #print(root_X)
-            #print(root_Y)
+           
 
             node_mode_2_locations_h={}
             node_mode_2_locations_v={}
@@ -680,7 +624,7 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                     if vertex_coord in root_node_h_mode_2_location:
                         node_mode_2_locations_h[vertex_coord]=root_X[list(root_node_h_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_h)
-                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+                
 
 
 
@@ -690,50 +634,35 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                     if vertex_coord in root_node_v_mode_2_location:
                         node_mode_2_locations_v[vertex_coord]=root_Y[list(root_node_v_mode_2_location.keys()).index(vertex_coord)]
                 child.node_mode_2_locations[child.id].append(node_mode_2_locations_v)
-                #child.get_fixed_sized_solutions(mode,Random=None,seed=seed, N=num_layouts)
+                
 
 
     if structure.via_connected_layer_info!=None:
         for child in structure.root_node_h.child:
-            """ds_found=None
-            for ds in ds_h:
-                if ds.node_id==child.id and ds.direction==child.direction:
-                    ds_found=ds
-                
-            if ds_found!=None:
-                """
+            
             child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-            #print("H",child.name,child.id,len(child.design_strings))
-            #print(child.id,child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
-            #else:
-                #print("ERROR: no design string found for ID: {}".format(child.id))
+            
         for child in structure.root_node_v.child:
 
             child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-            #print("V",child.name,child.id,len(child.design_strings))
-            #print(child.id,child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
-        #print ("H",child.name,child.id,child.node_mode_2_locations)
-        #print ("V",child.name,child.id,child.node_mode_2_locations)
+           
 
 
 
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
-                #print(via_name,sub_root_node_list )
+                
                 for node in sub_root_node_list:
                     node.set_min_loc()
-                    #print (node.node_min_locations)
+                    
                     node.vertices.sort(key= lambda x:x.index, reverse=False)
                     ledge_dim=node.vertices[1].min_loc # minimum location of first vertex is the ledge dim
 
 
 
-                    #if ds_found!=None:
+                    
 
                     node.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,ledge_dim=ledge_dim,algorithm=algorithm)
-                    #else:
-                        #print("ERROR: no design string found for ID: {}".format(node.id))
-
-                    #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints,node.design_strings[0].new_weights)
+                    
 
         for via_name, sub_root_node_list in structure.interfacing_layer_nodes.items():
             sub_root=sub_root_node_list # root of each via connected layes subtree
@@ -742,33 +671,14 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                 if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
                     structure.layers[i].forward_cg.LocationH[sub_root_node_list[0].id]=sub_root_node_list[0].node_mode_2_locations[sub_root_node_list[0].id]
                     structure.layers[i].forward_cg.LocationV[sub_root_node_list[1].id]=sub_root_node_list[1].node_mode_2_locations[sub_root_node_list[1].id]
-                    #structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                    #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-
-                    #print(structure.layers[i].forward_cg.LocationH)
-                    #print(structure.layers[i].forward_cg.LocationV)
-                    #input()
-                    """
-                    print("HCG",structure.layers[i].name)
-                    for id,ds_ in structure.layers[i].forward_cg.design_strings_h.items():
-                        #for id,ds_ in ds.items():
-                        print(id)
-                        print(ds_,ds_.longest_paths,ds_.min_constraints,ds_.new_weights)
-                    print("VCG")
-                    for id,ds_ in structure.layers[i].forward_cg.design_strings_v.items():
-                        #for id,ds_ in ds.items():
-                        print(id)
-                        print(ds_,ds_.longest_paths,ds_.min_constraints,ds_.new_weights)
-                    #input()
-                    """
+                    
 
 
                     structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
 
                     structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
 
-                    #print(structure.layers[i].forward_cg.design_strings_h,structure.layers[i].forward_cg.design_strings_v)
-
+                    
 
 
                     structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
@@ -780,26 +690,7 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
             if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
                 structure.layers[i].forward_cg.LocationH[sub_tree_root[0].id]=sub_tree_root[0].node_mode_2_locations[sub_tree_root[0].id]
                 structure.layers[i].forward_cg.LocationV[sub_tree_root[1].id]=sub_tree_root[1].node_mode_2_locations[sub_tree_root[1].id]
-                #structure.layers[i].c_g.minX[sub_tree_root[0].id]=sub_tree_root[0].node_min_locations
-                #structure.layers[i].c_g.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations
-
-                #ds_h=structure.layers[i].forward_cg.design_strings_h
-                #ds_v=structure.layers[i].forward_cg.design_strings_v
-
-                #print(structure.layers[i].forward_cg.design_strings_h,structure.layers[i].forward_cg.design_strings_v)
-                #print("HCG",structure.layers[i].name)
-                """for id,ds_ in structure.layers[i].forward_cg.design_strings_h.items():
-                    #for id,ds_ in ds.items():
-                    print(id)
-                    print(ds_.longest_paths,ds_.min_constraints)
                 
-                print("VCG")
-                for id,ds_ in structure.layers[i].forward_cg.design_strings_v.items():
-                    #for id,ds_ in ds.items():
-                    print(id)
-                    print(ds_.longest_paths,ds_.min_constraints)
-                input()
-                """
 
                 structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
                 structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
@@ -807,8 +698,7 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
 
 
                 structure.layers[i].mode_2_location_h,structure.layers[i].mode_2_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
-                #print (structure.layers[i].mode_2_location_h)
-                #print(structure.layers[i].mode_2_location_v)
+                
 
 
 
@@ -828,8 +718,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                 break
         for j in range(len(structure.layers[i].mode_2_location_h)):
             CS_SYM_Updated = []
-            #CG2 = CS_to_CG(mode)
-            #print(structure_fixed.layers[i].mode_2_location_h[j])
+            
             CS_SYM_Updated1, Layout_Rects1 = cg_interface.update_min(structure.layers[i].mode_2_location_h[j],
                                                                 structure.layers[i].mode_2_location_v[j],
                                                                 structure.layers[i].new_engine.init_data[1],
@@ -837,18 +726,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                                                                 s=dbunit)
 
             
-            """
-            cur_fig_data = plot_fig_data(Layout_Rects1, level=0, bw_type=bw_type)
-            CS_SYM_info = {}
-            for item in cur_fig_data:
-                for k, v in item.items():
-                    k = (k[0] * dbunit, k[1] * dbunit)
-                    CS_SYM_info[k] = CS_SYM_Updated1
-                    if k[0]>width:
-                        width=k[0]
-                    if k[1]>height:
-                        height=k[1]
-            """
+            
             CS_SYM_info = {}
             for rect in Layout_Rects1:
                 if rect[4] == 'EMPTY':
@@ -862,7 +740,6 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
             CS_SYM_Updated.append(CS_SYM_info)
             structure.layers[i].updated_cs_sym_info.append(CS_SYM_Updated)
             structure.layers[i].layer_layout_rects.append(Layout_Rects1)
-            #cs_islands_up = structure.layers[i].New_engine.update_islands(CS_SYM_Updated1, structure.layers[i].mode_2_location_h[j],structure.layers[i].mode_2_location_v[j], structure.layers[i].New_engine.init_data[ 2],structure.layers[i].New_engine.init_data[3])
             cs_islands_up = structure.layers[i].new_engine.update_islands(CS_SYM_Updated1,
                                                                             structure.layers[i].mode_2_location_h[j],
                                                                             structure.layers[i].mode_2_location_v[j],
@@ -882,7 +759,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         else:
             index=count
             k=count
-        #print(index)
+        
         solution = CornerStitchSolution(index=index)
         module_data=copy.deepcopy(structure.module_data)
         for i in range(len(structure.layers)):
@@ -912,7 +789,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         Solutions.append(solution)
         md_data.append(solution.module_data)
 
-    #Solutions=get_updated_solutions()
+    
     db = db_file
 
     if db != None:
@@ -948,18 +825,15 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
                     color=all_colors[i]
                     label='Layer '+str(i+1)
 
-                    #print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                    
 
 
                     # FIXME: solution.layout_plot not returning any values
                     patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha,c=color,lab=label)
-                    #patches[0].label=label
-                    #print(patches[0].label)
-                    #patches,ax_lim=solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type, all_layers=True,a=0.9-alpha)
                     all_patches+=patches
 
 
-                    #print(patch.Rectangle.label)
+                    
                 solution.plot_all_layers(all_patches= all_patches,sol_ind=solution.index, sol_path=sol_path, ax_lim=ax_lim)
                 
                     
@@ -973,12 +847,10 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
             sol=PSSolution(solution_id=count)
         else:
             sol=PSSolution(solution_id=solution.index)
-        #print("Here")
+        
         sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
         sol.cs_solution=solution
-        #plot_solution_structure(sol)
-        for f in sol.features_list:
-            f.printFeature()
+        
         PS_solutions.append(sol)
 
 
@@ -995,12 +867,12 @@ def get_string_elements(initial_ds):
         ds=ds_h[i]
 
         if ds.direction=='hor':
-            print("DSH",ds.node_id,len(ds.min_constraints))
+            
             hcg_strings.append(ds.min_constraints)
     for i in range(len(ds_v)):
         ds=ds_v[i]
         if ds.direction=='ver':
-            print("DSV",ds.node_id,len(ds.min_constraints))
+            
             vcg_strings.append(ds.min_constraints)
 
     return hcg_strings, vcg_strings
@@ -1023,8 +895,7 @@ def update_design_string(individual,ds):
         for list_ in ds.min_constraints:
             total_len+=len(list_)
 
-    print(total_len,len(individual))
-    input()
+    
     for i in range(len(ds_h)):
         ds=ds_h[i]
 
@@ -1056,219 +927,4 @@ def update_design_string(individual,ds):
 
     return [ds_h,ds_v]
 
-    """        
-    for i in range(len(ds_v)):
-        ds=ds_v[i]
-        if ds.direction=='ver':
-            print("DSV",ds.node_id,len(ds.min_constraints))
-            vcg_strings.append(ds.min_constraints)
-       
-    return hcg_strings, vcg_strings 
-    
-    hcg_new_weights=[]
-    vcg_new_weights=[]
-    start=0
-    for list_ in self.hcg_design_strings:
-        
-        new_weights=individual[start:start+len(list_)]
-        start+=len(list_)
-        hcg_new_weights.append(new_weights)
-    print(start)
-    print(len(hcg_new_weights))
-    #print(hcg_new_weights)
-    for list_ in self.vcg_design_strings:
-        
-        new_weights=individual[start:start+len(list_)]
-        start+=len(list_)
-        vcg_new_weights.append(new_weights)
-    print(len(vcg_new_weights))
-    #print(vcg_new_weights) 
-
-    normalized_hcg_new_weights_=[]
-    normalized_vcg_new_weights_=[]
-
-    for list_ in hcg_new_weights:
-        total=sum(list_)
-        new_weights=[i/total for i in list_[:-1]]
-        new_weights.append(1-sum(new_weights))
-        #print(list_)
-        new_weights=[round(i,2) for i in new_weights]
-        normalized_hcg_new_weights_.append(new_weights)
-    for list_ in vcg_new_weights:
-        total=sum(list_)
-        new_weights=[i/total for i in list_[:-1]]
-        new_weights.append(1-sum(new_weights))
-        #print(list_)
-        new_weights=[round(i,2) for i in new_weights]
-        normalized_vcg_new_weights_.append(new_weights)
-    
-    
-    normalized_hcg_new_weights=copy.deepcopy(normalized_hcg_new_weights_)
-    normalized_vcg_new_weights=copy.deepcopy(normalized_vcg_new_weights_)
-    
-    print(len(normalized_hcg_new_weights))
-    print(len(normalized_vcg_new_weights))
-    print(normalized_hcg_new_weights)
-    print(normalized_vcg_new_weights)
-    hcount=0
-    vcount=0
-    for list_ in normalized_hcg_new_weights:
-        hcount+=len(list_)
-    for list_ in normalized_vcg_new_weights:
-        vcount+=len(list_)
-    print(hcount,vcount)
-    
-    
-    
-    #update new_weights in design string objects
-    if self.via_connected_layer_info!=None:
-        for child in self.root_node_h.child:
-            #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-            #print("H",child.name,child.id,len(child.design_strings))
-            #print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints)
-            
-            for i in range(len(child.design_strings[0].min_constraints)):
-                try:
-                    new_weight=normalized_hcg_new_weights.pop(0)
-                except:
-                    new_weight=random.dirichlet(np.ones(len(child.design_strings[0].min_constraints[i])),size=1)[0]
-                child.design_strings[0].new_weights[i]=new_weight
-
-        for child in self.root_node_h.child:
-            #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-            print("H",child.name,child.id,len(child.design_strings))
-            print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
-            
-        
-        
-        for child in self.root_node_v.child:
-            for i in range(len(child.design_strings[0].min_constraints)):
-                try:
-                    new_weight=normalized_vcg_new_weights.pop(0)
-                except:
-                    new_weight=random.dirichlet(np.ones(len(child.design_strings[0].min_constraints[i])),size=1)[0]
-                child.design_strings[0].new_weights[i]=new_weight
-        
-
-        for child in self.root_node_v.child:
-            #child.get_fixed_sized_solutions(mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-            print("V",child.name,child.id,len(child.design_strings))
-            print(child.design_strings[0].longest_paths,child.design_strings[0].min_constraints,child.design_strings[0].new_weights)
-
-        for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
-            #print(via_name,sub_root_node_list )
-            for node in sub_root_node_list:
-                
-                #print(node.id,node.direction,node.design_strings[0].longest_paths,node.design_strings[0].min_constraints)
-                if node.direction=='hor':
-                    for i in range(len(node.design_strings[0].min_constraints)):
-                        try:
-                            new_weight=normalized_hcg_new_weights.pop(0)
-                        except:
-                            new_weight=random.dirichlet(np.ones(len(node.design_strings[0].min_constraints[i])),size=1)[0]
-                        
-                        node.design_strings[0].new_weights[i]=new_weight
-        
-                    print(node.design_strings[0].longest_paths,node.design_strings[0].min_constraints,node.design_strings[0].new_weights)
-                elif node.direction=='ver':
-                    for i in range(len(node.design_strings[0].min_constraints)):
-                        try:
-                            new_weight=normalized_vcg_new_weights.pop(0)
-                        except:
-                            new_weight=random.dirichlet(np.ones(len(node.design_strings[0].min_constraints[i])),size=1)[0]
-                        node.design_strings[0].new_weights[i]=new_weight
-                    print(node.design_strings[0].longest_paths,node.design_strings[0].min_constraints,node.design_strings[0].new_weights)
-            
-        for via_name, sub_root_node_list in self.interfacing_layer_nodes.items():
-            sub_root=sub_root_node_list # root of each via connected layes subtree
-            
-            for i in range(len(self.layers)):
-                if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
-                    #count+=len(list(self.layers[i].forward_cg.design_strings_h.values()))    
-            
-                    print(self.layers[i].forward_cg.design_strings_h.keys())
-                    for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
-                        #print(id)
-                        if id in self.layers[i].forward_cg.design_strings_h:
-                            ds_=self.layers[i].forward_cg.design_strings_h[id]
-                            print(ds_.min_constraints) 
-                            
-                            for i in range(len(ds_.min_constraints)):
-                                try:
-                                    new_weight=normalized_hcg_new_weights.pop(0)
-                                except:
-                                    new_weight=random.dirichlet(np.ones(len(ds_.min_constraints[i])),size=1)[0]
-                                ds_.new_weights[i]=new_weight
-                    for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
-                            #for id,ds_ in ds.items():
-                            
-                        if id in self.layers[i].forward_cg.design_strings_v:
-                            ds_=self.layers[i].forward_cg.design_strings_v[id]
-                            print(id)
-                            print(len(ds_.min_constraints))
-                            print(ds_.min_constraints)
-                            
-                            for i in range(len(ds_.min_constraints)):
-                                try:
-                                    new_weight=normalized_vcg_new_weights.pop(0)
-                                except:
-                                    new_weight=random.dirichlet(np.ones(len(ds_.min_constraints[i])),size=1)[0]
-                                ds_.new_weights[i]=new_weight
-    
-    
-                            
-                
-            
-
-                
-    else:# handles 2D/2.5D layouts
-        count=0
-            
-        sub_tree_root=[self.root_node_h,self.root_node_v] # root of each via connected layes subtree
-        for i in range(len(self.layers)):
-            if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_tree_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_tree_root[1]:
-                
-                print("HCG",self.layers[i].name)
-                for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
-                    #for id,ds_ in ds.items():
-                    
-                    if id in self.layers[i].forward_cg.design_strings_h:
-                        ds_=self.layers[i].forward_cg.design_strings_h[id]
-                        print(id)
-                        print(len(ds_.min_constraints))
-                        if len(ds_.min_constraints)==0:
-                            print(ds_.longest_paths,ds_.new_weights)
-                            continue
-                        else:
-                            for i in range(len(ds_.min_constraints)):
-                                try:
-                                    new_weight=normalized_hcg_new_weights.pop(0)
-                                except:
-                                    new_weight=random.dirichlet(np.ones(len(ds_.min_constraints[i])),size=1)[0]
-                                ds_.new_weights[i]=new_weight
-                        print(ds_.longest_paths,ds_.new_weights)
-                print("VCG")
-                for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
-                    #for id,ds_ in ds.items():
-                    if id in self.layers[i].forward_cg.design_strings_v:
-                        ds_=self.layers[i].forward_cg.design_strings_v[id]
-                        
-                        print(id)
-                        print(len(ds_.min_constraints))
-                        if len(ds_.min_constraints)==0:
-                            print(ds_.longest_paths,ds_.new_weights)
-                            continue
-                        else:
-                            for i in range(len(ds_.min_constraints)):
-                                try:
-                                    new_weight=normalized_vcg_new_weights.pop(0)
-                                except:
-                                    new_weight=random.dirichlet(np.ones(len(ds_.min_constraints[i])),size=1)[0]
-                                ds_.new_weights[i]=new_weight
-                        print(ds_.min_constraints,ds_.new_weights)
-                
-                
-                #hcg_strings.append(list(self.layers[i].forward_cg.design_strings_h.values()))
-                #vcg_strings.append(list(self.layers[i].forward_cg.design_strings_v.values()))
-
-    """
+   

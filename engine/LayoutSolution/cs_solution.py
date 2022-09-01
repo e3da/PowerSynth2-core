@@ -27,39 +27,32 @@ class LayerSolution():
         self.objects_3D=copy.deepcopy(initial_input_info)
         if len(self.abstract_infos)>0 and mode>=0:
             for object_ in self.objects_3D:
-                #for layer in self.layer_solutions:
+                
                 for name,rect_object in self.abstract_infos[self.name]['rect_info'].items():
-                    #print(name,object_.name)
+                    
                     if object_.name!='Substrate':
                         if object_.name==name :
-                            #print(name,object_.name,rect_object)
+                           
                             object_.x=rect_object.x 
                             object_.y=rect_object.y
                             object_.w=rect_object.width
                             object_.l=rect_object.height
 
                     else:
-                        #print(name,rect_object.x,rect_object.y)
+                        
                         object_.x=rect_object.x 
                         object_.y=rect_object.y
                         object_.w=rect_object.width
                         object_.l=rect_object.height
-        #for object_ in self.objects_3D:
-            #object_.print_cell_3D()
+        
     def export_layer_info(self,sol_path=None,id=None):
-        #print(self.abstract_infos)
+        
         item = 'solution_'+str(id)+'_'+self.name
         
         file_name = sol_path + '/' + item + '.csv'
         with open(file_name, 'w') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')
-            #csv_writer.writerow(["Size", performance_names[0], performance_names[1]])
-            # for k, v in _fetch_currencies.iteritems():
-            #Size = solutions[i].abstract_info[item]['Dims']
-            #Perf_1 = solutions[i].params[performance_names[0]]
-            #Perf_2 =  solutions[i].params[performance_names[1]]
-            #data = [Size, Perf_1, Perf_2]
-            #csv_writer.writerow(data)
+            
             csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
             for k, v in self.abstract_infos[self.name]['rect_info'].items():
                 
@@ -87,14 +80,7 @@ class CornerStitchSolution():
         self.module_data=None # ModuleDataCornerStitch object
         
         
-        #self.layout_info={}   # dictionary holding layout_info for a solution with key=size of layout
-        #self.abstract_info={} # dictionary with solution name as a key and layout_symb_dict as a value
-
-
-            
-        
-            
-   
+     
     def populate_objects_3D(self):
         '''
         makes Cell3D objects and appends in the objects_3D.
@@ -110,20 +96,20 @@ class CornerStitchSolution():
                 width=layer_object.width
                 length=layer_object.length
                 height=layer_object.thick
-                #print (layer_object.material)
+                
                 material_name=layer_object.material.name
                 
                 signal_layer=Cell3D(name=name, x=x, y=y, z=z, w=width, l=length, h=height, material_name=material_name) # creating Cell3D object for each routing layer
                 signal_layer_info.append(signal_layer)
         
         for layer in all_layers:
-            #print(layer.name)
+            
             comps_names=[]
             for comp in layer.New_engine.all_components:
                 name=(comp.layout_component_id)
                 if name[0]!='B':
                     comps_names.append(name)
-                    #print (name,comp.material_id, comp.thickness)
+                    
                     if isinstance(comp,Part):
                         if name[0]=='D': # only device thickness is considered
                             height=comp.thickness
@@ -166,7 +152,7 @@ class CornerStitchSolution():
         ax2.set_ylim(ax_lim[1])
     
         ax2.set_aspect('equal')
-        #if self.fig_dir!=None:
+        
         plt.legend(bbox_to_anchor = (0.8, 1.005))
         plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
         
@@ -187,27 +173,18 @@ class CornerStitchSolution():
         all_patches=[]
 
         with conn:
-            # create a new project
-            #table = 'Layout_' + str(la
-            # yout_ind)
-            #print(layout_ind,layer_name)
+            
             all_data = retrieve_data(conn,layout_ind, layer_name)
-            #print("H,all",all_data)
-            #all_data=json.loads(all_data)
-
-            #print "A",all_data
-            #data=str(all_data[0])
+            
             data=all_data[0].decode("utf-8")
-            #all_lines=data
-            #print(data)
-            #'''
+            
             data=data.rstrip()
             lines=data.split('\n')
             
-            #lines=lines.rstrip()
+            
             lines_bytes=[]
             for line in lines:
-                #print("D",line)
+                
                 line=line.rstrip()
                 line=line.split(',')
                 line=[i.encode("utf-8") for i in line]
@@ -219,11 +196,7 @@ class CornerStitchSolution():
                    line=[ (line[0].decode("utf-8")).replace('[',''),(line[1].decode("utf-8")).replace(']','')]
                   
                 lines_bytes.append(line)
-                #print (line)
-            #lines_bytes=[list for list in lines_bytes if list!=[]]
-            #for line in lines_bytes:
-                #print (line[0],line[-1])
-                #print (line)
+                
             
             all_lines=[]
             for line in lines_bytes:
@@ -235,42 +208,23 @@ class CornerStitchSolution():
                         
                         i=i
                     l.append(i)
-                #line=[i.decode("utf-8") for i in line]
-                #print (l)
+                
                 all_lines.append(l)
-            '''
-            for i in lines_bytes:
-                #print (i,len(i))
-                #print (i[-1])
-                l=[]
-                if i[-1]!=']':
-                    if i[0]=='[':
-                        l.append(i[1:-2])
-
-                    else:
-                        l.append(i[0:-2])
-                else:
-                    j=i[0:-1]
-                    l.append(j)
-                print (l)
-                all_lines.append(l)
-            '''
+            
 
 
-            #colors = ['white', 'green', 'red', 'blue', 'yellow', 'purple','pink','magenta','orange','violet','black']
-
-            #colours=[" 'white'"," 'green'"," 'red'"," 'blue'"," 'yellow'"," 'purple'"," 'pink'"," 'magenta'"," 'orange'"," 'violet'"," 'black'"]
+            
             all_layers_plot_rows=[]
             for row in all_lines:
                 if row[-1]==" 'True'" and all_layers== True and len(row)>4 and row[5] != bondwire_type:
                     all_layers_plot_rows.append(row)
 
             for row in all_lines:
-                #print("R", row)
+                
 
                 if len(row) < 4:
                     k1 = (float(row[0]), float(row[1]))
-                    #print "plot",k1
+                    
                 elif row[5] == " 'EMPTY'":
                     
                     x0,y0=(float(row[0]), float(row[1]))
@@ -282,11 +236,11 @@ class CornerStitchSolution():
                         point1 = (float(row[0]), float(row[1]))
                         point2 = (float(row[2]), float(row[3]))
                         verts = [point1, point2]
-                        #print"here", verts
+                        
                         codes = [Path.MOVETO, Path.LINETO]
                         path = Path(verts, codes)
                         colour = (row[4])
-                        #print("CB",self.hex_to_rgb(colour))
+                        
                         colour=self.hex_to_rgb(colour)
                         
                        
@@ -301,19 +255,16 @@ class CornerStitchSolution():
                         h = float(row[3])
                         colour = (row[4])
                         colour=self.hex_to_rgb(colour)
-                        #ind=colours.index(colour)
-                        #colour=colours[ind]
-                        #print(colour,row)
+                        
                         order = int(row[6])
                         if row[7] != " 'None'" :
                             linestyle = row[7]
                             edgecolour = row[8]
-                            #ind = colours.index(edgecolor)
-                            #edgecolor = colours[ind]
+                            
                             edgecolor=self.hex_to_rgb(edgecolour)
 
                         if row[7] == " 'None'":
-                            #print "IN"
+                            
                             R1 = matplotlib.patches.Rectangle(
                                 (x, y),  # (x,y)
                                 w,  # width
@@ -323,8 +274,7 @@ class CornerStitchSolution():
 
                             )
                         else:
-                            #print x, y, w, h, colour, order, row[6], row[7]
-                            #print "here"
+                            
                             R1 = matplotlib.patches.Rectangle(
                                 (x, y),  # (x,y)
                                 w,  # width
@@ -374,7 +324,7 @@ class CornerStitchSolution():
             ax1.set_ylim(y0, k1[1])
             ax1.set_aspect('equal')
             plt.savefig(fig_dir+'/layout_'+str(layout_ind)+'_'+layer_name+'.png', bbox_inches = 'tight', pad_inches = 0)
-            #plt.savefig((fig_dir + '/layout_' + str(layout_ind) + '.svg'),dpi=1200, bbox_inches = 'tight',pad_inches = 0)
+            
             # Try to release memory
             fig1.clf()
             plt.close()

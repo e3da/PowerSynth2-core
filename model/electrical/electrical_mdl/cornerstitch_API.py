@@ -174,7 +174,7 @@ class CornerStitch_Emodel_API:
                         for conns in comp.conn_dict:
                             states[conns] = dev_conn[name][list(comp.conn_dict.keys()).index(conns)]
                         self.conn_dict[name] = states
-        #print self.conn_dict
+        
     def set_solver_frequency(self, frequency=1e6):
         """ 
         Args:

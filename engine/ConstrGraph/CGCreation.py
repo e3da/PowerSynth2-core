@@ -3430,8 +3430,11 @@ class ConstraintGraph:
 
                     else:
                         ds_found=None
-                    
-                    loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
+                    try:
+                        loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
+                    except:
+                        print("Please double check your layout geometry script/constraint table. Layout generation is failed")
+                        exit()
                     loc_items=loc.items()
 
                     
@@ -3524,9 +3527,11 @@ class ConstraintGraph:
 
                     else:
                         ds_found=None
-                     
-                    locs,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
-                    
+                    try: 
+                        locs,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_y, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
+                    except:
+                        print("Please double check your layout geometry script/constraint table. Layout generation is failed")
+                        exit()
                     count+=1
                     locations_.append(locs)  
                     if Random==False and N==1 and algorithm==None and element.ID in self.design_strings_v:
