@@ -255,22 +255,28 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
     fixed_vert_indices.sort()
     
     potential_sub_graph_verts=[]
-    '''
+    
     for start in fixed_vert_indices:
         for end in fixed_vert_indices:
 
             if start != end:
-                connected, path = is_connected(adj_matrix=adj_matrix, src=start, dest=end)
-                # print(start, end, connected,path)
-                if path != None:
-                    sub_graph = []
-                    for vert in graph.vertices:
-                        for i in range(len(path)):
-                            if path[i] == vert.index:
-                                sub_graph.append(vert)
+                connected = is_connected(adj_matrix=adj_matrix, src=start, dest=end)
+                if connected ==True:
+        
+                    path,Value,Max=find_longest_path(start,end,adj_matrix)
+                    
+                    # print(start, end, connected,path)
+                    if len(path) >0:
+                        sub_graph = []
+                        for vert in graph.vertices:
+                            for i in range(len(path)):
+                                if path[i] == vert.index:
+                                    sub_graph.append(vert)
 
-                    potential_sub_graph_verts.append(sub_graph)
-    '''
+                        potential_sub_graph_verts.append(sub_graph)
+                else:
+                    continue
+    
     for i in range(len(fixed_vert_indices)-1):
         start=fixed_vert_indices[i]
 
@@ -427,7 +433,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                 connected=is_connected(adj_matrix=adj_matrix,src=source.index,dest=sub_graph[j].index)
                 if connected:
                     end=j
-                    break
+                    #break
                 else:
                     j=j-1
                 
@@ -451,7 +457,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                 connected=is_connected(adj_matrix=adj_matrix,src=sub_graph[j].index,dest=sink.index)
                 if connected:
                     start=j
-                    break
+                    #break
                 else:
 
                     j+=1
@@ -646,6 +652,8 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                                     #input()
                                     continue
             else:
+                continue
+                """
                 if connected_graph_eval==True:
                     #print(longest_path,min_constraints)
                     locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID)
@@ -695,7 +703,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
 
                                 continue
 
-        
+                """
         graph=update_graph(locations,graph)                
                 
             
