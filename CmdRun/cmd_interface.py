@@ -166,8 +166,8 @@ class Cmd_Handler:
                     continue
                 if line[0] == '#':  # Comments ? Need to have inline comments too...
                     continue
-                #if info[0] == "Trace_Ori:": # Will be removed
-                #    self.layout_ori_file = os.path.abspath(info[1])
+                if info[0] == "Trace_Ori:": # Will be removed
+                    self.layout_ori_file = os.path.abspath(info[1])
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
@@ -570,11 +570,14 @@ class Cmd_Handler:
             else:
                 self.e_api_init.eval_multi_loop_impedances()
             self.e_model_choice = 'PEEC'
-            #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
-            self.e_model_choice = 'FastHenry' # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only.
-
+            self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
+            #PEEC works for any layout, but need to optimize the mesh for 3D later 
+        
+        # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
+        #self.e_model_choice = self.e_api_init.process_and_select_best_model()
+        
             print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
         
     # ------------------ Export Features ---------------------------------------------

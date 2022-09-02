@@ -49,11 +49,29 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.parent_trace_net = {} # a dictionary for parent trace to net connect
         self.commands = []
         self.solution_paths = []
+    
     def set_fasthenry_env(self,dir=''):
         self.fh_env = dir   
              
     
-    def form_isl_script(self):
+    def form_isl_script(self,module_data = None,feature_map=None):
+        print("here")
+        print(self.e_traces)
+        layer_ids = list(module_data.islands.keys())
+        ts = datetime.now().timestamp()
+        self.out_text = Begin.format(str(ts))
+        self.locs_name_dict={}
+        self.fh_point_dict={} # can be used to manage equivalent net and 
+        self.fh_bw_dict= {} # quick access to bws connections
+        self.wire_id= 0
+        self.tc_id = 0
+        for  l_key in layer_ids:
+            island_data = module_data.islands[l_key]
+            for isl in island_data:
+                planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
+                print(planar_trace, trace_cells)
+
+    def form_isl_script_old(self):
         isl_dict = {isl.name: isl for isl in self.emesh.islands}
         ts = datetime.now().timestamp()
         self.out_text = Begin.format(str(ts))
