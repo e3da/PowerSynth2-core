@@ -949,7 +949,10 @@ class Cmd_Handler:
         elif self.e_model_choice == 'FastHenry': # For 3D only
             self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table)
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
-        
+            
+        if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
+            if self.layout_ori_file != None:
+                self.e_api.process_trace_orientation(self.layout_ori_file)
         # Copy from the init run
         self.e_api.freq = self.e_api_init.freq
         self.e_api.input_netlist = self.e_api_init.input_netlist

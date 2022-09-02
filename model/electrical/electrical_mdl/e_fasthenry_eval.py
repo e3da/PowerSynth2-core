@@ -55,8 +55,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
              
     
     def form_isl_script(self,module_data = None,feature_map=None):
-        print("here")
-        print(self.e_traces)
         layer_ids = list(module_data.islands.keys())
         ts = datetime.now().timestamp()
         self.out_text = Begin.format(str(ts))
