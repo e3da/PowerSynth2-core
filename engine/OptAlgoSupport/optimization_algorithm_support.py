@@ -237,11 +237,14 @@ class new_engine_opt:
         self.e_api.check_device_connectivity(False)
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
-        self.e_api.generate_circuit_from_trace_mesh()
-        self.e_api.add_wires_to_circuit()
-        self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-        self.e_api.eval_and_update_trace_RL_analytical()
-        self.e_api.eval_and_update_trace_M_analytical()
+        if self.e_api.e_mdl == "PEEC":
+            self.e_api.generate_circuit_from_trace_mesh()
+            self.e_api.add_wires_to_circuit()
+            self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+            self.e_api.eval_and_update_trace_RL_analytical()
+            self.e_api.eval_and_update_trace_M_analytical()
+        elif self.e_api.e_mdl == 'FastHenry':
+            print("I connected FastHenry, what next ?")
         
     def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
         result = []

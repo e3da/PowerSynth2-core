@@ -573,6 +573,8 @@ class Cmd_Handler:
             #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
+            self.e_model_choice = 'FastHenry' # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only.
+
             print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
         
     # ------------------ Export Features ---------------------------------------------
@@ -937,18 +939,25 @@ class Cmd_Handler:
         Args:
             measure_data (dict, optional): _description_. Defaults to {}.
         """
-        if self.e_model_choice == 'PEEC':
+        if self.e_model_choice == 'PEEC': # for most 2D layout
             # Should setup rs model somewhere here
             self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
-            self.e_api.freq = self.e_api_init.freq
-            self.e_api.input_netlist = self.e_api_init.input_netlist
-            self.e_api.loop = self.e_api_init.loop
-            self.e_api.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
-            self.e_api.workspace_path = self.model_char_path
-            self.e_api.layer_stack = self.e_api_init.layer_stack
-            self.e_api.loop_dv_state_map = self.e_api_init.loop_dv_state_map # copy the inital PEEC model
-            self.measures += self.e_api.measurement_setup(measure_data)
             
+        elif self.e_model_choice == 'FastHenry': # For 3D only
+            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table)
+            self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+        
+        # Copy from the init run
+        self.e_api.freq = self.e_api_init.freq
+        self.e_api.input_netlist = self.e_api_init.input_netlist
+        self.e_api.loop = self.e_api_init.loop
+        self.e_api.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
+        self.e_api.workspace_path = self.model_char_path
+        self.e_api.layer_stack = self.e_api_init.layer_stack
+        self.e_api.loop_dv_state_map = self.e_api_init.loop_dv_state_map # copy the inital PEEC model
+        # Update the measurement goals 
+        self.measures += self.e_api.measurement_setup(measure_data)
+        
     def setup_electrical_old(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
 
         if type == 'Loop':
