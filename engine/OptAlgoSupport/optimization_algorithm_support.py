@@ -231,9 +231,10 @@ class new_engine_opt:
         
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
+        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
+        self.e_api.handle_net_hierachy(lvs_check = False) 
+
         if self.e_api.e_mdl == "PEEC":
-            self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
-            self.e_api.handle_net_hierachy(lvs_check = False) 
             #self.e_api.print_and_debug_layout_objects_locations()
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time
@@ -246,8 +247,9 @@ class new_engine_opt:
             self.e_api.eval_and_update_trace_M_analytical()
         elif self.e_api.e_mdl == 'FastHenry':
             print("I connected FastHenry, what next ?")
+            
             self.e_api.form_isl_script(module_data=module_data,feature_map=obj_name_feature_map) # mimic the init-3D of PEEC here
-
+            
     def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
         result = []
         measures=[None,None]

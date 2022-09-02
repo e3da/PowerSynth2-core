@@ -1247,12 +1247,23 @@ class CornerStitch_Emodel_API:
             new ---feature_map: to acess 3D locs
             lvs_check: Only used in the initial circuit check otherwise bypass
         '''
+        # if PEEC
         self.setup_layout_objects(module_data=module_data,feature_map = feature_map)
         # Update module object
         self.module = EModule(plates=self.e_traces, sheets=self.e_sheets, wires=self.wires, components= self.e_devices, vias =self.device_vias,layer_stack=self.layer_stack)
         self.module.form_group_cs_hier()
         # Form and store hierachy information using hypergraph        
-        
+        if self.e_mdl == "FastHenry" or self.e_mdl == "Loop": # This is old code from journal_JESTPE
+            islands = []
+            for isl_group in list(module_data.islands.values()):
+                islands.extend(isl_group)
+            if self.e_mdl == "FastHenry": # Need to check this hierachy...
+                self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
+                self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
+                if self.trace_ori == {}:
+                    self.emesh.mesh_init(mode =0)
+                else:
+                    self.emesh.mesh_init(mode =1)
     def handle_net_hierachy(self,lvs_check = False):
         self.hier = EHier(module=self.module)
         # Special net connections, dev_states, f2f via,dev_via
