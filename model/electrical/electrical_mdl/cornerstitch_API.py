@@ -368,6 +368,7 @@ class CornerStitch_Emodel_API:
                         # Create a bounding box of 10um around the center point sent from layout
                         new_rect = Rect(top=y_feature + 10, bottom=y_feature - 10, left=x_feature -10, right=x_feature +10)
                         pin = Sheet(rect=new_rect, net_name=name, net_type='internal', n=N_v, z=z_feature)
+                        pin.parent_name = isl.name
                         self.e_sheets[name] = pin 
                 elif isinstance(obj, Part):
                     z_part= z_feature + thickness if sum(N_v) == -1 else z_feature # This is for upward and downward only
@@ -390,6 +391,7 @@ class CornerStitch_Emodel_API:
                         if type == 'V': # Handling Vias type # No dz #
                             new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
                             pin = self.handle_vias_from_layout_script(inputs = [obj, new_rect, name, N_v, z_part ] )                           
+                        pin.parent_name = isl.name
                         self.e_sheets[name] = pin
                     elif obj.type == 1:  # Device type
                         dev_name = obj.layout_component_id 
@@ -398,9 +400,9 @@ class CornerStitch_Emodel_API:
                         elif "DIODE" in obj.name:
                             spc_type = 'DIODE' 
                         if self.script_mode == "Old":
-                            self.handle_comp_pins_old_script(inputs = [obj, dev_name, isl_dir, x_feature, y_feature, z_id,spc_type,N_v])
+                            self.handle_comp_pins_old_script(inputs = [obj, dev_name, isl_dir, x_feature, y_feature, z_id,spc_type,N_v,isl])
                         elif self.script_mode == 'New':
-                            self.handle_comp_pins_new_script(inputs = [obj, dev_name,x_feature,y_feature, width, height, z_part, N_v])    
+                            self.handle_comp_pins_new_script(inputs = [obj, dev_name,x_feature,y_feature, width, height, z_part, N_v,isl])    
     
     def handle_vias_from_layout_script(self, inputs=[]):
         """_summary_
@@ -428,7 +430,7 @@ class CornerStitch_Emodel_API:
         Args:
             inputs (list): This maps the variable from convert_layout_to_electrical_objects(). Defaults to [].
         """
-        obj, dev_name,x_feature,y_feature, width, height, z_feature, N_v = inputs
+        obj, dev_name,x_feature,y_feature, width, height, z_feature, N_v,isl = inputs
         dev_pins = {}  # all device pins
         net_to_connect = {} # Flag each net with 0: no sheet is creted, 1: a sheet is created
         for pin_name in obj.pin_locs: 
@@ -441,6 +443,7 @@ class CornerStitch_Emodel_API:
                 if 'Drain' in net_name:
                     new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
                     pin = Sheet(rect=new_rect, net_name=net_name, net_type='external', n=N_v, z=z_feature)
+                    pin.parent_name = isl.name
                     self.e_sheets[net_name] = pin
                     dev_pins[net_name]= pin
                     net_to_connect[net_name] = 1
@@ -463,7 +466,7 @@ class CornerStitch_Emodel_API:
         """
         dev_pins = {}
         dev_para = {}
-        obj, dev_name, isl_dir, x, y, z_id,spc_type,N_v = inputs
+        obj, dev_name, isl_dir, x, y, z_id,spc_type,N_v,isl = inputs
         for pin_name in obj.pin_locs:
             net_name = dev_name + '_' + pin_name
             locs = obj.pin_locs[pin_name]
@@ -484,6 +487,7 @@ class CornerStitch_Emodel_API:
 
             rect = Rect(top=top, bottom=bot, left=left, right=right)
             pin = Sheet(rect=rect, net_name=net_name, z=z,n=N_v)
+            pin.parent_name = isl.name
             self.e_sheets[net_name] = pin
             #self.net_to_sheet[net_name] = pin
             dev_pins[net_name]= pin

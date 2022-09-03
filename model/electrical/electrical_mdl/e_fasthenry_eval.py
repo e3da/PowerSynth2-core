@@ -409,6 +409,13 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         # Even each sheet has a different z level, in FastHenry, to form a connection we need to make sure this is the same for all points
         #print(("len", len(trace_cells)))
         debug = False
+        for sh_name in self.e_sheets:
+            sh_obj = self.e_sheets[sh_name]
+            parent_name = sh_obj.parent_name
+            if island_name == parent_name:  # means if this sheet is in this island
+                if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object
+                    self.emesh.comp_nodes[parent_name] = []
+            print(sh_name,parent_name)
         for sh in self.emesh.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
@@ -469,8 +476,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         self.emesh.comp_net_id[sheet_data.net] = 1
 
 
-        if debug:
-            self.plot_trace_cells(trace_cells=trace_cells, ax=ax)
         return trace_cells  # trace cells with updated component information
     
     
