@@ -231,14 +231,15 @@ class new_engine_opt:
         
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
+        # Generic flow for all apis -- PEEC, Loop or FH
         self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
         self.e_api.handle_net_hierachy(lvs_check = False) 
+        self.e_api.check_device_connectivity(False)
 
         if self.e_api.e_mdl == "PEEC":
             #self.e_api.print_and_debug_layout_objects_locations()
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time
-            self.e_api.check_device_connectivity(False)
             self.e_api.form_initial_trace_mesh(id)
             self.e_api.generate_circuit_from_trace_mesh()
             self.e_api.add_wires_to_circuit()
