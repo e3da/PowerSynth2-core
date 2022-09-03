@@ -271,29 +271,30 @@ class new_engine_opt:
                         obj_name_feature_map[f.name] = f
                     self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
                     # EVALUATION PROCESS 
-                    if measure.multiport:
-                        multiport_result = self.e_api.eval_multi_loop_impedances()
-                        self.multiport_result[solution.solution_id] = multiport_result
-                        # if possible, we can collect the data for a balancing layout optimization.
-                        # 1 Balancing
-                        # 2 Using the full matrix (without mutual for now) to estimate thermal performance
-                        result.append(0)    
-                    else:
-                        
-                        R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
-                        R_abs = abs(R)
-                        L_abs = abs(np.imag(L))
-                        R_abs = R_abs[0]
-                        L_abs = L_abs[0]
-                        """if L_abs <= 9e-9 and L_abs >=8e-9:
-                            print("found solution",solution.solution_id)
-                            input()"""
-                        if abs(R_abs)>1e3:
-                            print("ID:",solution.solution_id)
-                            print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                            print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
+                    if self.e_api.e_mdl == "PEEC":
+                        if measure.multiport:
+                            multiport_result = self.e_api.eval_multi_loop_impedances()
+                            self.multiport_result[solution.solution_id] = multiport_result
+                            # if possible, we can collect the data for a balancing layout optimization.
+                            # 1 Balancing
+                            # 2 Using the full matrix (without mutual for now) to estimate thermal performance
+                            result.append(0)    
+                        else:
+                            
+                            R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
+                            R_abs = abs(R)
+                            L_abs = abs(np.imag(L))
+                            R_abs = R_abs[0]
+                            L_abs = L_abs[0]
+                            """if L_abs <= 9e-9 and L_abs >=8e-9:
+                                print("found solution",solution.solution_id)
+                                input()"""
+                            if abs(R_abs)>1e3:
+                                print("ID:",solution.solution_id)
+                                print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                                print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
 
-                        result.append(L_abs)  
+                            result.append(L_abs)  
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):

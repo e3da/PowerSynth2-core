@@ -66,9 +66,25 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             for isl in island_data:
+                z_id = isl.element_names[0].split('.')
+                z_id = int(z_id[-1])
+                z = self.get_z_loc(z_id)
+                dz = self.get_thick(z_id)
                 planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
                 print(planar_trace, trace_cells)
+                # Remove zero dim traces
+                for t in trace_cells: 
+                    if t.eval_length() == 0:
+                        trace_cells.remove(t)
+                trace_cells = self.handle_pins_connect_trace_cells_fh(trace_cells=trace_cells, island_name=isl.name, isl_z =z + dz)
+                self.out_text+=self.convert_trace_cells_to_fh_script(trace_cells=trace_cells,z_pos=z,dz=dz)
+            self.out_text += self.gen_fh_points()
+            self.connect_fh_pts_to_isl_trace() # ADD THIS TO THE TRACE CELL TO FH CONVERSION
+            self.out_text += self.gen_wires_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
+            self.out_text += self.gen_equiv_list()
+            self.out_text += self.gen_virtual_connection()
 
+            print (self.out_text)
     def form_isl_script_old(self):
         isl_dict = {isl.name: isl for isl in self.emesh.islands}
         ts = datetime.now().timestamp()
@@ -390,7 +406,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         return text
                 
     def handle_pins_connect_trace_cells_fh(self, trace_cells=None, island_name=None, isl_z=0):
-            # Even each sheet has a different z level, in FastHenry, to form a connection we need to make sure this is the same for all points
+        # Even each sheet has a different z level, in FastHenry, to form a connection we need to make sure this is the same for all points
         #print(("len", len(trace_cells)))
         debug = False
         for sh in self.emesh.hier_E.sheets:

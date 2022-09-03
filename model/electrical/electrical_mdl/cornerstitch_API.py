@@ -1258,7 +1258,7 @@ class CornerStitch_Emodel_API:
             for isl_group in list(module_data.islands.values()):
                 islands.extend(isl_group)
             if self.e_mdl == "FastHenry": # Need to check this hierachy...
-                self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = self.measure)
+                self.emesh = EMesh_CS(islands=islands,hier_E=self.hier, freq=self.freq, mdl=self.rs_model,mdl_type=self.mdl_type,layer_stack = self.layer_stack,measure = None)
                 self.emesh.trace_ori =self.trace_ori # Update the trace orientation if given
                 if self.trace_ori == {}:
                     self.emesh.mesh_init(mode =0)

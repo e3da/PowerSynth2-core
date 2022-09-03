@@ -14,6 +14,7 @@ class HyperGraph():
         self.hyper_edges = {} # for net only hyper edge
         self.vertices ={} # for net only vertices
         self.v_to_e_map = {}
+        
 class EHier():
     # Convert the E module design to hierachy tree representation for more useful data access
     def __init__(self, module):

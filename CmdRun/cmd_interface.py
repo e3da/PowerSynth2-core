@@ -572,13 +572,14 @@ class Cmd_Handler:
             self.e_model_choice = 'PEEC'
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
+            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
+
             self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
             #PEEC works for any layout, but need to optimize the mesh for 3D later 
         
         # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
         #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
-            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
         
     # ------------------ Export Features ---------------------------------------------
     def init_export_tasks(self,run_option=0):
