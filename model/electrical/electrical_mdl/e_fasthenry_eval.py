@@ -72,7 +72,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 z = self.get_z_loc(z_id)
                 dz = self.get_thick(z_id)
                 planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
-                print(planar_trace, trace_cells)
+                #print(planar_trace, trace_cells)
                 # Remove zero dim traces
                 for t in trace_cells: 
                     t.z = z
@@ -98,10 +98,18 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         """Added to handle via connection as virtual shorted path. A real structure 
         of via/solderball in FH must be handled in the future
         """
+        text =''
         for v in self.via_dict:
             print(v)
+            
             print(self.via_dict[v])
-    
+            via_pins = self.via_dict[v]
+            v1,v2 = via_pins
+            fh_pt1 = 'N_'+ v1.net
+            fh_pt2 = 'N_'+ v2.net
+            text += equiv.format(fh_pt1,fh_pt2)
+
+        return text
     def form_isl_script_old(self):
         isl_dict = {isl.name: isl for isl in self.emesh.islands}
         ts = datetime.now().timestamp()
@@ -137,7 +145,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.out_text += '.end'
         
         original_stdout = sys.stdout # Save a reference to the original standard output
-        out_file=self.ws+'/eval.inp'
+        out_file=self.work_space+'/eval.inp'
         with open(out_file, 'w') as f:
             sys.stdout = f # Change the standard output to the file we created.
             print(self.out_text)

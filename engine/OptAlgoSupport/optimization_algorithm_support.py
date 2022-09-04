@@ -250,7 +250,8 @@ class new_engine_opt:
             print("I connected FastHenry, what next ?")
             
             self.e_api.form_isl_script(module_data=module_data,feature_map=obj_name_feature_map) # mimic the init-3D of PEEC here
-            
+            #self.e_api.generate_fasthenry_solutions_dir(id)
+            #self.e_api.generate_fasthenry_inputs(id)
     def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
         result = []
         measures=[None,None]
@@ -296,6 +297,13 @@ class new_engine_opt:
                                 print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
 
                             result.append(L_abs)  
+                    elif self.e_api.e_mdl == 'FastHenry':
+                        self.e_api.add_source_sink(measure.source,measure.sink)
+                        self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
+                        self.e_api.generate_fasthenry_inputs(solution.solution_id)
+                        if sol_len==1:
+                            R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
