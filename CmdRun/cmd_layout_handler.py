@@ -158,7 +158,7 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
         
     if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
         e_results = opt_problem.e_api.parallel_run(solutions)
-        type_= opt_problem.e_api.measure[0].measure
+        type_= 1# opt_problem.e_api.measure[0].measure
 
         for i in range(len(solutions)):
             s=solutions[i]
