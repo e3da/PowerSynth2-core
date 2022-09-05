@@ -87,7 +87,7 @@ def self_res(w,l,t):
     R = copper_res*l/(w*t)*1e6
     return R
 
-def self_imp_py_mat(input_mat=[],f=1e8,type = 'trace',eval_type ='equation'):
+def self_imp_py_mat(input_mat=[],f=1e8,type = 'wire',eval_type ='equation'):
     """_summary_
 
     Args:

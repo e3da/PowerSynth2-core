@@ -750,7 +750,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minL, maxL]])
     model_input.set_name(mdl_name)
-    mesh_size=10
+    mesh_size= 50
     model_input.create_uniform_DOE([mesh_size, mesh_size], True) # uniform  np.meshgrid. 
     #model_input.create_freq_dependent_DOE(freq_range=[freq[0],freq[1]],num1=10,num2=40, Ws=Width,Ls=Length)
     model_input.generate_fname()
@@ -764,14 +764,14 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
             ax.scatter(w,l,s=100)
         plt.show()
     
-    num_cpus = 20  # multiprocessing.cpu_count()
+    num_cpus = 40  # multiprocessing.cpu_count()
     if num_cpus>10:
         num_cpus=int(num_cpus)
     print ("Number of available CPUs",num_cpus)
     
     data  = model_input.DOE.tolist()
     i=0
-    rerun = False
+    rerun = True
     
     # Parallel run fasthenry
     while i < len(data):
@@ -793,7 +793,7 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
                     done = False
                     break
             print("sleep for 1 s, waiting for simulation to finish")
-            #time.sleep(1)   
+            time.sleep(1)   
         if rerun:
             for cpu in range(num_cpus): 
                 [w,l] =data[i+cpu]
@@ -803,6 +803,9 @@ def form_fasthenry_trace_response_surface(layer_stack, Width=[1.2, 40], Length=[
         os.system("rm out*")
         i+=num_cpus
     #print(model_input.generic_fnames)
+    # Changing these flag will change the fitting model. The RL is a large package with multiple fitting tools,
+    #  the L only is based on the microstrip equations paramters. These paramters are re-characterized for differnt MCPM trace 
+
     buildRL = True
     buildL = False
     if buildRL:
@@ -978,9 +981,9 @@ def build_and_run_trace_sim(**kwags):
         for i in layer_dict:
             info = layer_dict[i]
             [cond,width,length,thick,z_loc,nhinc,e_type] = info
-            nhinc = 5
+            nhinc = 7
             if e_type == 'G':
-                #continue # test trace only
+                continue # test trace only
                 script += GroundPlane.format(i,width/2,length/2,z_loc,thick,cond,nhinc)
             elif e_type == 'S':
                 skindepth = math.sqrt(1 / (math.pi * fmax * u * cond * 1e6))
@@ -988,7 +991,7 @@ def build_and_run_trace_sim(**kwags):
                 nwinc =1
                 if nwinc <= 0:
                     nwinc = 1
-                nwinc = 5
+                nwinc = 7
                 script += Element.format(l / 2,z_loc,w,thick,cond,nwinc,nhinc)
                 #print("mesh", nwinc,nhinc)
 
@@ -1031,8 +1034,8 @@ def process_output(**kwags):
                 r_list.append(float(row[0]))            # resistance in ohm
                 l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
 
-    r_list=np.array(r_list)*1e3 # convert to mOhm
-    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
+    r_list=np.array(r_list)*1e3 # convert to uOhm
+    l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to pH unit
     f_list = np.array(f_list)*1e-3
     ''' Fit the data to simple math functions for more data prediction in the given range '''
     try:
@@ -1102,7 +1105,7 @@ def form_fasthenry_corner_correction(layer_stack, Width=[1.2, 40], freq=[10, 100
     model_input.set_dir(savedir)
     model_input.set_data_bound([[minW, maxW], [minW, maxW]])
     model_input.set_name(mdl_name)
-    mesh_size = 10
+    mesh_size = 5
     model_input.create_uniform_DOE([mesh_size, mesh_size], True)
     # model_input.create_DOE(0, 10)
     model_input.generate_fname()
@@ -1399,7 +1402,9 @@ def test_build_bw_group_model_fh(f=100,num_wire=2,bw_pad_width=None,radius=0.276
     else:
         print("fail to add more wires")
     print("total characterization time", time.time()-start)
-def test_build_trace_model_fh():
+
+
+def test_build_trace_model_fh(freq_range = [1,9,5], width_range = [] , length_range = [], generic_name = '', mdk_dir = ''):
     # Hardcoded path to fasthenry executable.
     if platform.system=='windows':
         fh_env_dir = "C://Users//qmle//Desktop//Testing//FastHenry//Fasthenry3_test_gp//WorkSpace//fasthenry.exe"
@@ -1412,7 +1417,7 @@ def test_build_trace_model_fh():
     else:
         fh_env_dir = "/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry"
         read_output_dir = "/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/ReadOutput"
-        mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
+        #mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
         #mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_no_bp.csv"
         
         w_dir = "/nethome/qmle/RS_Build/WS"
@@ -1433,14 +1438,12 @@ def test_build_trace_model_fh():
     freq = 1e8
     sd_met = math.sqrt(1 / (math.pi * freq * u * metal_cond )) *1000
 
-    Width = [1,5]
-    Length = [1,20]
+    Width = width_range
+    Length =length_range
     #freq = [0.01, 100000, 100] # in kHz
-    freq = [1,7,10]
-    form_fasthenry_trace_response_surface(layer_stack=ls, Width=Width, Length=Length, freq=freq, wdir=w_dir,
+    form_fasthenry_trace_response_surface(layer_stack=ls, Width=Width, Length=Length, freq=freq_range, wdir=w_dir,
                                           savedir=mdl_dir
-                                          , mdl_name='simple_trace_40_50_it', env=env, doe_mode=2,mode='log',ps_vers=2)
-
+                                          , mdl_name=generic_name, env=env, doe_mode=2,mode='log',ps_vers=2)
 
 def test_build_trace_model_fh1():
     fh_env_dir = "C:\PowerSynth\FastHenry//fasthenry.exe"
@@ -1535,12 +1538,28 @@ def test_continuous(w, l1, l2, f):
     mdl = rs_mdl['L']
     print(trace_ind_krige(f, w, l1 + l2, mdl) - trace_ind_krige(f, w, l2, mdl) - trace_ind_krige(f, w, l1, mdl))
 
+def create_large_scale_model_to_prevent_numerical_issues():
+    WL_list= [{'w':[0.02,1],'l':[0.02,50]},\
+                {'w':[1,5],'l':[0.02,50]},\
+                    {'w':[5,10],'l':[0.02,50]},\
+                    {'w':[10,15],'l':[0.02,50]},\
+                    {'w':[15,20],'l':[0.02,50]},\
+                    {'w':[20,30],'l':[0.02,50]}]   
+    mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
+    for wl in WL_list:
+        w_range = wl['w']
+        l_range = wl['l']
+        name = '2_64_2_wr_{},{}_lr_{},{}'.format(w_range[0],w_range[1],l_range[0],l_range[1])
+        
+        test_build_trace_model_fh(width_range= w_range,length_range= l_range,generic_name= name, mdk_dir = mdk_dir)
+    
 
 if __name__ == "__main__":
     #test_corner_ind_correction(10, 4, 4)
     #test_corner_ind_correction(10, 4, 10)
     # test_build_corner_correction()
-    test_build_trace_model_fh()
+    create_large_scale_model_to_prevent_numerical_issues()
+    #test_build_trace_model_fh(width_range= [0.1,50],length_range= [0.1,50],generic_name= 'model_rerun_journal_again', mdk_dir = '/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv')
     #test_build_trace_mdl_q3d()
     #test_build_trace_cornermodel_fh()
     #test_corner_ind_correction_fh(f,8,8)

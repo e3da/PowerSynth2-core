@@ -130,6 +130,7 @@ class Cmd_Handler:
         self.data_x = None
         self.data_y = None
         self.e_model_choice = 'PEEC'
+        self.e_model_dim = '2D' # default as 2D and 2.5D
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -168,8 +169,8 @@ class Cmd_Handler:
                     continue
                 if line[0] == '#':  # Comments ? Need to have inline comments too...
                     continue
-                #if info[0] == "Trace_Ori:": # Will be removed
-                #    self.layout_ori_file = os.path.abspath(info[1])
+                if info[0] == "Trace_Ori:": # Will be removed
+                    self.layout_ori_file = os.path.abspath(info[1])
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
@@ -332,8 +333,8 @@ class Cmd_Handler:
                 self.run_options() # Start the tool here...
             else:
                 self.setup_models(mode=0) # setup thermal model
-                if self.electrical_mode!=None:
-                    self.electrical_init_setup() # init electrical loop model
+                
+                self.electrical_init_setup() # init electrical loop model using PEEC one time
                 self.setup_models(mode=1) # setup electrical model
                 self.structure_3D = Structure_3D() # Clean it up
                 self.init_cs_objects(run_option=run_option)
@@ -473,7 +474,8 @@ class Cmd_Handler:
             try:
                 os.mkdir(self.model_char_path)
             except:
-                print("Cant make directory for model characterization")
+                #print("Cant make directory for model characterization")
+                x=0
             else:
                 #deleting existing content in a folder
                 for f in os.listdir(self.model_char_path):
@@ -547,7 +549,9 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
-        self.e_api_init.set_layer_stack(self.layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
+        e_layer_stack = self.layer_stack # deep-copy so it wont affect the thermal side
+        
+        self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
         
         # EVALUATION STEPS BELOW:
         module_data,ps_sol = self.single_layout_evaluation(init = True) # get the single element list of solution
@@ -558,32 +562,45 @@ class Cmd_Handler:
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
-        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map,lvs_check= True) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
+        if len(module_data[0].islands) > 1: # means there is more than one layer:
+            self.e_model_dim = '3D'
+           
+        self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
         #self.e_api_init.print_and_debug_layout_objects_locations()
-        self.e_api_init.start_meshing_process(module_data=module_data)
-        
-        self.e_api_init.form_initial_trace_mesh('init')
-        # Setup wire connection
-        # Go through every loop and ask for the device mode # run one time
+        #self.e_api_init.start_meshing_process(module_data=module_data)
         self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
-        # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
-        # Eval R, L , M without backside consideration
-        self.e_api_init.generate_circuit_from_trace_mesh()
-        self.e_api_init.add_wires_to_circuit()
-        self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-        self.e_api_init.eval_and_update_trace_RL_analytical()
-        self.e_api_init.eval_and_update_trace_M_analytical()
-        # EVALUATION PROCESS 
-        # Loop through all loops provided by the user   
-        # Test evaluation for multiloop:
-        if mode == 0: # not multiport
-            self.e_api_init.eval_single_loop_impedances()
-        else:
-            self.e_api_init.eval_multi_loop_impedances()
-        #self.e_api_init.eval_multi_loop()
-        #self.e_model_choice = self.e_api_init.process_and_select_best_model()
+        self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
+        self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
+        if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
+            print("Dectected {} layout, using PEEC electrical model".format(self.e_model_dim))
+            self.e_api_init.form_initial_trace_mesh('init')
+            # Setup wire connection
+            # Go through every loop and ask for the device mode # run one time
+            # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
+            # Eval R, L , M without backside consideration
+            self.e_api_init.generate_circuit_from_trace_mesh()
+            self.e_api_init.add_wires_to_circuit()
+            self.e_api_init.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+            self.e_api_init.eval_and_update_trace_RL_analytical()
+            self.e_api_init.eval_and_update_trace_M_analytical()
+            # EVALUATION PROCESS 
+            # Loop through all loops provided by the user   
+            # Test evaluation for multiloop:
+            if mode == 0: # not multiport
+                self.e_api_init.eval_single_loop_impedances()
+            else:
+                self.e_api_init.eval_multi_loop_impedances()
+            self.e_model_choice = 'PEEC'
         
+        elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
+            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
+
+            self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
+            #PEEC works for any layout, but need to optimize the mesh for 3D later 
+        
+        # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
+        #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
         
     # ------------------ Export Features ---------------------------------------------
@@ -920,18 +937,28 @@ class Cmd_Handler:
         Args:
             measure_data (dict, optional): _description_. Defaults to {}.
         """
-        if self.e_model_choice == 'PEEC':
+        if self.e_model_choice == 'PEEC': # for most 2D layout
             # Should setup rs model somewhere here
             self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
-            self.e_api.freq = self.e_api_init.freq
-            self.e_api.input_netlist = self.e_api_init.input_netlist
-            self.e_api.loop = self.e_api_init.loop
-            self.e_api.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
-            self.e_api.workspace_path = self.model_char_path
-            self.e_api.layer_stack = self.e_api_init.layer_stack
-            self.e_api.loop_dv_state_map = self.e_api_init.loop_dv_state_map # copy the inital PEEC model
-            self.measures += self.e_api.measurement_setup(measure_data)
             
+        elif self.e_model_choice == 'FastHenry': # For 3D only
+            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table)
+            self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+            
+        if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
+            if self.layout_ori_file != None:
+                self.e_api.process_trace_orientation(self.layout_ori_file)
+        # Copy from the init run
+        self.e_api.freq = self.e_api_init.freq
+        self.e_api.input_netlist = self.e_api_init.input_netlist
+        self.e_api.loop = self.e_api_init.loop
+        self.e_api.script_mode = self.script_mode  # THIS IS TEMPORARY FOR NOW TO HANDLE THE NEW SCRIPT
+        self.e_api.workspace_path = self.model_char_path
+        self.e_api.layer_stack = self.e_api_init.layer_stack
+        self.e_api.loop_dv_state_map = self.e_api_init.loop_dv_state_map # copy the inital PEEC model
+        # Update the measurement goals 
+        self.measures += self.e_api.measurement_setup(measure_data)
+        
     def setup_electrical_old(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
 
         if type == 'Loop':
@@ -1429,8 +1456,7 @@ if __name__ == "__main__":
         
         
         cmd.cmd_handler_flow(arguments= args)
-        
-        
+           
 
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default

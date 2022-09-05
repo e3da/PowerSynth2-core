@@ -2,6 +2,7 @@
 # for corner stitch need to use analytical model since the layout size can be changed
 #from PySide.QtGui import QFileDialog
 import sys
+from time import perf_counter
 from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
 from core.model.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, \
     compound_top_surface_avg
@@ -25,6 +26,7 @@ import copy
 import numpy as np
 import os
 import pickle
+
 TFSM_MODEL = 1
 RECT_FLUX_MODEL = 2
 
@@ -40,7 +42,7 @@ class ThermalMeasure(object):
     def __init__(self, devices=None, name=None):
         self.devices = devices
         self.name = name
-        self.mode = 1 # 0 for maxtemp, 1 for thermal resistance
+        self.mode = 0 # 0 for maxtemp, 1 for thermal resistance
 
 #class Thermal_data_collect_main():
     #def __init__(self):
@@ -444,19 +446,39 @@ class CornerStitch_Tmodel_API:
         features = solution.features_list        
         # Set up a one hot thermal resistance extraction. 
         # Each device will be applied a 1W power while others devices 
+        device_map_to_feature_obj = {}
+        num_devices =0
         for f in features:
             if 'D' == f.name[0]: # device:
-                f.power = 1 # set to 1W so we have thermal resistance
-
-        # Normalized all power to 1 W to extract thermal resistance
-        module_data.layer_stack = self.layer_stack
-        self.dev_result_table_eval(module_data,solution)
-        self.temp_res = {'D1': 400} if self.temp_res=={} else self.temp_res # Failed to run ParaPower
-        # Because thermal resistance is measured between heatsink and device
-        rth_dict = {d:(self.temp_res[d]-273.5-27) for d in self.temp_res}
-        rth_max = max(list(rth_dict.values()))
-        print("RTH:{}".format(rth_max))
-        return rth_max
+                device_map_to_feature_obj[f.name] = f
+                num_devices+=1
+        thermal_net = np.zeros((num_devices,num_devices))
+        i,j = [0,0]
+        time_start = perf_counter()
+        for dv_name_on in device_map_to_feature_obj:
+            f = device_map_to_feature_obj[dv_name_on]
+            f.power = 10
+            for dv_name_off in device_map_to_feature_obj: 
+                if dv_name_on != dv_name_off:
+                    f = device_map_to_feature_obj[dv_name_off]
+                    f.power = 0
+                    # Normalized all power to 1 W to extract thermal resistance
+                    module_data.layer_stack = self.layer_stack
+                    self.dev_result_table_eval(module_data,solution)
+                    self.temp_res = {'D1': 400} if self.temp_res=={} else self.temp_res # Failed to run ParaPower
+                    # Because thermal resistance is measured between heatsink and device
+                    rth_dict = {d:(self.temp_res[d]-273.5-27)/10 for d in self.temp_res}
+                    #print('thermal_res with {} ON'.format(dv_name_on))
+                    rth_values = list(rth_dict.values())
+                    thermal_net[i:] = rth_values
+                j+=1
+            i+=1    
+        print("thermal extraction time {}s".format(perf_counter()- time_start))   
+        thermal_ws ='/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/2D_Case_1_Dev/thermal_net_40x50_h1000/'
+        np.savetxt(thermal_ws+"/thermal_net_single_size_{}.csv".format(solution.solution_id), thermal_net, delimiter=",")
+        #rth_max = max(list(rth_dict.values()))
+        #print("RTH:{}".format(rth_max))
+        return rth_dict
 
 
 
