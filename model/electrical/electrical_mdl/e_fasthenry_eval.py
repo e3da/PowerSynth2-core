@@ -49,17 +49,27 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.parent_trace_net = {} # a dictionary for parent trace to net connect
         self.commands = []
         self.solution_paths = []
-    
+
     def set_fasthenry_env(self,dir=''):
         self.fh_env = dir   
   
     
-    def form_isl_script(self,module_data = None,feature_map=None):
+    def form_isl_script(self,module_data = None,feature_map=None,device_states = None):
+        """This function takes the PowerSynth layout as input and converts it into a script in FastHenry tool.
+
+        Args:
+            module_data (_type_, optional): _description_. Defaults to None.
+            feature_map (_type_, optional): _description_. Defaults to None.
+            device_states: device state from user
+        """
         layer_ids = list(module_data.islands.keys())
         ts = datetime.now().timestamp()
         self.out_text = Begin.format(str(ts))
         self.locs_name_dict={}
         self.fh_point_dict={} # can be used to manage equivalent net and 
+        self.fh_ignore_dict = {} # include list of equiv pins before adding fh_point generation, so that we wont init a node twice
+        self.fh_point_on_trace = {} # during point handling, to distinguish between trace node and float node
+        
         self.fh_bw_dict= {} # quick access to bws connections
         self.wire_id= 0
         self.tc_id = 0
@@ -80,19 +90,26 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         trace_cells.remove(t)
                 trace_cells = self.handle_pins_connect_trace_cells_fh(trace_cells=trace_cells, island_name=isl.name, isl_z =z + dz,dz=dz)
                 self.out_text+=self.convert_trace_cells_to_fh_script(trace_cells=trace_cells,z_pos=z,dz=dz)
-            self.out_text += self.gen_fh_points()
-            self.connect_fh_pts_to_isl_trace() # ADD THIS TO THE TRACE CELL TO FH CONVERSION
-            self.out_text += self.gen_wires_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
-            self.out_text += self.gen_via_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
+        self.add_fh_point_off_trace() # ADD THIS TO THE TRACE CELL TO FH CONVERSION
+        # Only perform once.
+        self.out_text += self.gen_fh_points()
+        self.out_text += self.gen_wires_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
+        self.out_text += self.gen_via_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
+        self.out_text += self.gen_equiv_list()
+        self.out_text += self.gen_virtual_connection_for_devices(device_states=device_states)
 
-            self.out_text += self.gen_equiv_list()
-            self.out_text += self.gen_virtual_connection()
-
-            print (self.out_text)
     
     
     
     
+    
+    def add_fh_point_off_trace(self):
+        for sh_name in self.e_sheets:
+            if not (sh_name in self.fh_point_on_trace):
+                sh_obj = self.e_sheets[sh_name]
+                cp = [sh_obj.x,sh_obj.y,sh_obj.z]
+                name = 'N_'+sh_name
+                self.add_fh_points(name,cp)
     
     def gen_via_text(self):
         """Added to handle via connection as virtual shorted path. A real structure 
@@ -110,6 +127,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             text += equiv.format(fh_pt1,fh_pt2)
 
         return text
+    
     def form_isl_script_old(self):
         isl_dict = {isl.name: isl for isl in self.emesh.islands}
         ts = datetime.now().timestamp()
@@ -138,8 +156,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
     
     def add_source_sink(self,source=None,sink=None):
-        source_name = 'N'+source
-        sink_name = 'N'+sink
+        source_name = 'N_'+source
+        sink_name = 'N_'+sink
         self.out_text += measure.format(source_name,sink_name)
         self.out_text += freq_set.format(self.freq*1000,self.freq*1000,1)
         self.out_text += '.end'
@@ -180,22 +198,23 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 for i in range(len(xs)-1):
                     x_start = xs[i]
                     x_stop = xs[i+1]
-                    start = (x_start,y_loc,z_pos+dz*1000)
-                    stop = (x_stop,y_loc,z_pos+dz*1000)
+                    start = (x_start,y_loc,z_pos+dz)
+                    stop = (x_stop,y_loc,z_pos+dz)
                     net_to_add = None
                     for name in net_names:
                         if name in self.fh_point_dict:
                             net_pos = self.fh_point_dict[name]  # if already added ignore
-                            if net_pos[0] == x_start: # only connect to the left of the trace
-                                # equiv to start loc of trace 
-                                net_to_add = name
-                                self.fh_point_dict.pop(net_to_add,None)
-                                add_start = True
-                            if net_pos[0] == x_stop: # only connect to the left of the trace
-                                # equiv to start loc of trace 
-                                net_to_add = name
-                                self.fh_point_dict.pop(net_to_add,None)
-                                add_end = True
+                            if net_pos[2] == z_pos or net_pos[2] == z_pos+dz:
+                                if net_pos[0] == x_start: # only connect to the left of the trace
+                                    # equiv to start loc of trace 
+                                    net_to_add = name
+                                    self.fh_point_dict.pop(net_to_add,None)
+                                    add_start = True
+                                if net_pos[0] == x_stop: # only connect to the left of the trace
+                                    # equiv to start loc of trace 
+                                    net_to_add = name
+                                    self.fh_point_dict.pop(net_to_add,None)
+                                    add_end = True
                     if add_start:
                         output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz,type=tc_type,eq_to_start=net_to_add)
                     elif add_end:
@@ -219,22 +238,23 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     y_stop = ys[i+1]
                     #if y_start==y_stop:
                     #    input()
-                    start = (x_loc,y_start,z_pos+dz*1000)
-                    stop = (x_loc,y_stop,z_pos+dz*1000)
+                    start = (x_loc,y_start,z_pos+dz)
+                    stop = (x_loc,y_stop,z_pos+dz)
                     net_to_add = None
                     for name in net_names:
                         if name in self.fh_point_dict:
                             net_pos = self.fh_point_dict[name]  # if already added ignore
-                            if net_pos[1] == y_start: # only connect to the left of the trace
-                                # equiv to start loc of trace 
-                                net_to_add = name
-                                self.fh_point_dict.pop(net_to_add,None)
-                                add_start= True
-                            if net_pos[1] == y_stop: # only connect to the left of the trace
+                            if net_pos[2] == z_pos or net_pos[2] == z_pos+dz:
+                                if net_pos[1] == y_start: # only connect to the left of the trace
                                     # equiv to start loc of trace 
                                     net_to_add = name
                                     self.fh_point_dict.pop(net_to_add,None)
-                                    add_end = True
+                                    add_start= True
+                                if net_pos[1] == y_stop: # only connect to the left of the trace
+                                        # equiv to start loc of trace 
+                                        net_to_add = name
+                                        self.fh_point_dict.pop(net_to_add,None)
+                                        add_end = True
                     if add_start:
                         output_text+=self.gen_trace_script(start_loc=start,end_loc=stop,width=width,thick=dz,type=tc_type,eq_to_start=net_to_add)
                     elif add_end:
@@ -244,11 +264,11 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     
             elif tc_type == 2:
                 # NEED TO ADD PINS HERE
-                c = ((left+right)/2,(bot+top)/2,z_pos+dz*1000)
-                l_loc = (left,c[1],z_pos+dz*1000)
-                r_loc = (right,c[1],z_pos+dz*1000)
-                b_loc = (c[0],bot,z_pos+dz*1000)
-                t_loc = (c[0],top,z_pos+dz*1000)
+                c = ((left+right)/2,(bot+top)/2,z_pos+dz)
+                l_loc = (left,c[1],z_pos+dz)
+                r_loc = (right,c[1],z_pos+dz)
+                b_loc = (c[0],bot,z_pos+dz)
+                t_loc = (c[0],top,z_pos+dz)
                 w_h = top-bot
                 w_v = right-left
                         
@@ -266,9 +286,9 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     output_text+=self.gen_trace_script(start_loc=c,end_loc=b_loc,width=w_v,thick=dz,type=tc_type)
             elif tc_type ==3: # planar type
                 mesh  =  [10,10]# default
-                nw_loc = (left,top,z_pos+dz*1000)
-                sw_loc = (left,bot,z_pos+dz*1000)
-                se_loc = (right,bot,z_pos+dz*1000)
+                nw_loc = (left,top,z_pos+dz)
+                sw_loc = (left,bot,z_pos+dz)
+                se_loc = (right,bot,z_pos+dz)
                 output_text += self.gen_planar_script(nw_loc = nw_loc , sw_loc = sw_loc, se_loc = se_loc, thick = dz ,mesh =mesh)
         return output_text
     
@@ -303,7 +323,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         return text_out
 
-    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =9 ,nhinc =9,type = 0,eq_to_start=None,eq_to_end=None):
+    def gen_trace_script(self,start_loc=(),end_loc=(),width=0,thick=0,nwinc =9 ,nhinc =5,type = 0,eq_to_start=None,eq_to_end=None):
         #print ("TRACE-FH:", 'Start:', start_loc, 'Stop', end_loc, 'Width:' , width)
         
         
@@ -320,14 +340,17 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             self.locs_name_dict[end_loc] = [end_name]
         else:
             self.locs_name_dict[end_loc].append(end_name)
-        textout = Trace.format(name, start_loc[0]/1000,start_loc[1]/1000,start_loc[2]/1000, end_loc[0]/1000,end_loc[1]/1000,end_loc[2]/1000, width/1000,thick,self.cond,nwinc,nhinc,self.tc_id)
+        textout = Trace.format(name, start_loc[0]/1000,start_loc[1]/1000,start_loc[2]/1000, end_loc[0]/1000,end_loc[1]/1000,end_loc[2]/1000, width/1000,thick/1000,self.cond,nwinc,nhinc,self.tc_id)
         self.tc_id+=1 
         if eq_to_start!=None: # equiv a net to start
             print ("EQUIV_START",eq_to_start,start_name)
             textout += equiv.format(start_name,eq_to_start)
+            self.fh_ignore_dict[eq_to_start] = 1
+            
         if eq_to_end!=None: # equiv a net to start
             print ("EQUIV_END",eq_to_end,end_name)
             textout += equiv.format(end_name,eq_to_end)
+            self.fh_ignore_dict[eq_to_end] = 1
         return textout
     
     def add_fh_points(self,name=None,loc=[],mode = 0,parent = None): # add parent to ensure the node is selected from the parent trace
@@ -353,8 +376,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             stop = wire_obj.sheet[1]
             # create new net in FastHerny for the whole bondwire group
             
-            start_name = 'N'+start.net
-            stop_name = 'N'+stop.net
+            start_name = 'N_'+start.net
+            stop_name = 'N_'+stop.net
             # Note these are 2D pts only
             if 'D' in start_name: # Move the wire loc to device center 
                 dv_name = start.net.split("_")
@@ -410,7 +433,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     #print (average_width)
                     bw_text+= "\n* START RIBBON TRACE\n"
                     average_thickness = wire_obj.r*2
-                    bw_text+=self.gen_trace_script(start_loc=tuple(start_wire_loc_raw),end_loc=tuple(end_wire_loc_raw),width=average_width,thick=average_thickness,type=ori,eq_to_start=start_name,eq_to_end=stop_name)
+                    bw_text+=self.gen_trace_script(start_loc=tuple(start_wire_loc_raw),end_loc=tuple(end_wire_loc_raw),width=average_width,thick=average_thickness*1000,type=ori,eq_to_start=start_name,eq_to_end=stop_name)
                     bw_text+= "\n* END RIBBON TRACE\n"
 
                     
@@ -428,14 +451,16 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         text = ''
         for loc in self.locs_name_dict:
             name_list = self.locs_name_dict[loc]
-            for i in range(len(name_list)-1):
-                text+= equiv.format(name_list[i],name_list[i+1])
+            if len(name_list) >1:
+                for i in range(len(name_list)-1):
+                    text+= equiv.format(name_list[i],name_list[i+1])
         return text
                 
     def handle_pins_connect_trace_cells_fh(self, trace_cells=None, island_name=None, isl_z=0,dz = 0):
         # Even each sheet has a different z level, in FastHenry, to form a connection we need to make sure this is the same for all points
         #print(("len", len(trace_cells)))
         debug = False
+        
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
             parent_name = sh_obj.parent_name
@@ -454,9 +479,9 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                     tc.handle_component(loc=(x , y ))
                     parent_trace=tc
                     self.add_fh_points(name,cp,parent=parent_trace)
-                else: # not enclosed, floating net of components:
-                    self.add_fh_points(name,cp)
-
+                self.fh_point_on_trace[sh_name] = 1
+        
+                
         """for sh in self.emesh.hier_E.sheets:
             group = sh.parent.parent  # Define the trace island (containing a sheet)
             sheet_data = sh.data
@@ -523,8 +548,10 @@ class FastHenryAPI(CornerStitch_Emodel_API):
     def gen_fh_points(self):
         text=''
         for name in self.fh_point_dict:
-            pt= self.fh_point_dict[name]
-            text += FH_point.format(name,pt[0]/1000,pt[1]/1000,pt[2]/1000)
+            if not (name in self.fh_ignore_dict): # So we wont init it twice
+                pt= self.fh_point_dict[name]
+                self.fh_ignore_dict[name] =1 # So we never do it twice
+                text += FH_point.format(name,pt[0]/1000,pt[1]/1000,pt[2]/1000)
         return text
     
     def connect_fh_pts_to_isl_trace(self): # BAD IMPLEMENTATION 
@@ -542,16 +569,20 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             if best_loc != None:
                 self.locs_name_dict[best_loc].append(net_name)
     
-    def gen_virtual_connection(self):
+    def gen_virtual_connection_for_devices(self,device_states):
         text = ''
-        for component in self.e_devices:
-            comp_obj = self.e_devices[component]
-            print(component)
-
-        for c in list(self.emesh.comp_dict.keys()):
-            for e in c.net_graph.edges(data=True):
-                if c.class_type =='comp' or c.class_type == 'via':
-                    text += equiv.format('N'+e[0],'N'+e[1])
+        for d in self.e_devices:
+            dev_obj = self.e_devices[d]
+            para = dev_obj.conn_order # get the connection order
+            connections = list(para.keys())
+            
+            for i in range(len(connections)):
+                if device_states[d][i] == 1: # if the user set these pins to be connected
+                    # We add a 0 V voltage source between the 2 pins
+                    conn_tupple = connections[i]
+                    start_net = 'N_{}_{}'.format(d,conn_tupple[0])
+                    end_net = 'N_{}_{}'.format(d,conn_tupple[1]) 
+                    text += equiv.format(start_net,end_net)
         return text
     
     def generate_fasthenry_inputs(self,parent_id = 0):

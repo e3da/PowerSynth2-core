@@ -797,48 +797,48 @@ class CornerStitch_Emodel_API:
         """
         sol_id is the solution id of the layout. map it here so we can print out weird results
         """
-        for loop in self.loop_dv_state_map:
-            dev_states = self.loop_dv_state_map[loop]     
-            loop = loop.replace('(','')
-            loop = loop.replace(')','')
-            src,sink = loop.split(',')
-            self.setup_device_states(dev_states)  # TODO: GET IT BACK IN THE CODE
-            # Now we check if there is a path from src to sink for this loop. 
-            # If not, the user's setup is probably wrong
-            # TODO: need to handle capacitance smartly in the future
-            src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
-            sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
-            self.circuit.verbose = 1
-            #self.circuit.add_component('RL5','L5',0,1e-6)
-            #self.circuit.add_component('RL6','L6',0,1e-6)
-            Iload = 100 # Change this for possible current density study
-            self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
-            self.circuit.add_component('Rsink',sink_net,0,1e-6)
-            #self.circuit.add_component(sink_net,0,'Zsink',1e-12)
-            print("frequency",self.freq,'kHz')            
-            self.circuit.assign_freq(self.freq*1000)
-            self.circuit.graph_to_circuit_minimization()
-            self.circuit.handle_branch_current_elements()  
-            self.circuit.solve_MNA()
-            #res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
-            #max_res = max(res)
-            #self.circuit.solve_iv(mode =2)
-            results = self.circuit.results
-            # Test look up these lists, can be used for future reliability study
-            imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
-            R = np.real(imp)
-            L = np.imag(imp) / self.circuit.s
-            print("R: {}, L: {}".format(R,L))
-            #TODO:
-            self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
-            self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
-            self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
-            #imp = 1 / results['I(Vs)']
-            
-            #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
-            #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
-            self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
-            return R, L 
+        loop = self.loop_dv_state_map[0]
+        dev_states = self.loop_dv_state_map[loop]     
+        loop = loop.replace('(','')
+        loop = loop.replace(')','')
+        src,sink = loop.split(',')
+        self.setup_device_states(dev_states)  # TODO: GET IT BACK IN THE CODE
+        # Now we check if there is a path from src to sink for this loop. 
+        # If not, the user's setup is probably wrong
+        # TODO: need to handle capacitance smartly in the future
+        src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
+        sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
+        self.circuit.verbose = 1
+        #self.circuit.add_component('RL5','L5',0,1e-6)
+        #self.circuit.add_component('RL6','L6',0,1e-6)
+        Iload = 100 # Change this for possible current density study
+        self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
+        self.circuit.add_component('Rsink',sink_net,0,1e-6)
+        #self.circuit.add_component(sink_net,0,'Zsink',1e-12)
+        print("frequency",self.freq,'kHz')            
+        self.circuit.assign_freq(self.freq*1000)
+        self.circuit.graph_to_circuit_minimization()
+        self.circuit.handle_branch_current_elements()  
+        self.circuit.solve_MNA()
+        #res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
+        #max_res = max(res)
+        #self.circuit.solve_iv(mode =2)
+        results = self.circuit.results
+        # Test look up these lists, can be used for future reliability study
+        imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
+        R = np.real(imp)
+        L = np.imag(imp) / self.circuit.s
+        print("R: {}, L: {}".format(R,L))
+        #TODO:
+        self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
+        self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
+        self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
+        #imp = 1 / results['I(Vs)']
+        
+        #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
+        #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
+        self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
+        return R, L 
 
             
         #print("Finish pseudo loop by loop evaluation")    
