@@ -471,7 +471,8 @@ class Cmd_Handler:
             try:
                 os.mkdir(self.model_char_path)
             except:
-                print("Cant make directory for model characterization")
+                #print("Cant make directory for model characterization")
+                x=0
             else:
                 #deleting existing content in a folder
                 for f in os.listdir(self.model_char_path):
