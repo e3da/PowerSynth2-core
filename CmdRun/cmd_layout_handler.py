@@ -152,22 +152,22 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
 
         
         solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
-        if opt_problem!= None:
+        if opt_problem.e_api!= None:
             if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
                 print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
         
-    if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
-        e_results = opt_problem.e_api.parallel_run(solutions)
-        type_= opt_problem.e_api.measure[0].measure
+            if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
+                e_results = opt_problem.e_api.parallel_run(solutions)
+                type_= opt_problem.e_api.measure[0].measure
 
-        for i in range(len(solutions)):
-            s=solutions[i]
-            value=e_results[i][type_]
-            for m_name,value_ in s.parameters.items():
-                if value_==-1:
-                    s.parameters[m_name]=value
+                for i in range(len(solutions)):
+                    s=solutions[i]
+                    value=e_results[i][type_]
+                    for m_name,value_ in s.parameters.items():
+                        if value_==-1:
+                            s.parameters[m_name]=value
 
-            print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+                    print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
         
     print("Perf_eval_time",time.time()-start)
     return solutions

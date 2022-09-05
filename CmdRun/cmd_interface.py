@@ -69,6 +69,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_FOLDER:":
                     settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
+                if info[0] == "PARAPOWER_CODEBASE:":
+                    settings.PARAPOWER_CODEBASE = os.path.abspath(info[1])
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
@@ -81,6 +83,7 @@ class Cmd_Handler:
         self.layout_script = None  # layout file dir
         self.connectivity_setup = None  # bondwire setup dir
         self.layer_stack_file = None  # layerstack file dir
+        self.floor_plan= [1,1] # handle those cases when floorplan is not required.
         self.rs_model_file = 'default'        
         self.fig_dir = None  # Default dir to save figures
         self.db_dir = None  # Default dir to save layout db
@@ -219,7 +222,7 @@ class Cmd_Handler:
                         floor_plan = floor_plan.split(",")
                         self.floor_plan = [float(i) for i in floor_plan]
                     except:
-                        floorplan= [1,1] # handle those cases when floorplan is not required.
+                        self.floor_plan= [1,1] # handle those cases when floorplan is not required.
                 if info[0] == 'Num_generations:':
                     self.num_gen = int(info[1])
                 if info[0] == 'Export_AnsysEM_Setup:':
@@ -329,8 +332,8 @@ class Cmd_Handler:
                 self.run_options() # Start the tool here...
             else:
                 self.setup_models(mode=0) # setup thermal model
-                
-                self.electrical_init_setup() # init electrical loop model
+                if self.electrical_mode!=None:
+                    self.electrical_init_setup() # init electrical loop model
                 self.setup_models(mode=1) # setup electrical model
                 self.structure_3D = Structure_3D() # Clean it up
                 self.init_cs_objects(run_option=run_option)
@@ -993,7 +996,9 @@ class Cmd_Handler:
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
             if model_type==2:
-                self.t_api.init_matlab()
+                self.t_api.init_matlab(ParaPower_dir=settings.PARAPOWER_CODEBASE)
+                #print(settings.PARAPOWER_CODEBASE)
+                #input()
     def init_apis(self):
         '''
         initialize electrical and thermal APIs
@@ -1359,7 +1364,7 @@ class Logger(object):
 
 
 if __name__ == "__main__":  
-    '''
+    
     application = main.GUI()
     application.run()
 
@@ -1374,36 +1379,28 @@ if __name__ == "__main__":
     print (str(sys.argv))
     debug = True
     qmle_nethome = "/nethome/qmle/testcases"
-    imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
-    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2"
-    imam_nethome3= "/nethome/ialrazi/Quang_Result"
-    qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
-    imam_nethome4="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
+    imam_nethome="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test"
     if debug: # you can mannualy add the argument in the list as shown here
-        tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
-                , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
-                  {imam_nethome1:'Xiaoling_Case_Opt/macro_script_42X32.txt'},\
-                  {qmle_nethome:'Meshing/Planar/Rayna_case_updated/macro_script_40X40.txt'},\
-                  {qmle_nethome:'Unit_Test_Cases/trace_to_trace/Case_1/cmd'}
-                  ,{qmle_nethome:'Quang_JESPE/macro_script.txt'}
-                  ,{qmle_nethome:'Unit_Test_Cases/netlist_extraction/macro_script.txt'}\
-                  ,{qmle_nethome:'Imam_3D_Journal_Case/macro_script.txt'}\
-                    ,{qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_1/macro_script.txt'},\
-                   {qmle_nethome:'Unit_Test_Cases/with_vias/Imam_journal_3D/macro_script.txt'},\
-                   {imam_nethome1:'Imam_Journal_3D_2/macro_scripts/macro_script_47.5X47.5_ANSYS.txt'},\
-                   {qmle_nethome:'Unit_Test_Cases/with_vias/Via_Case_3/macro_script.txt'},\
-                   {qmle_nethome:"Unit_Test_Cases/with_vias/Via_Case_5/macro_script.txt"},\
-                   {imam_nethome1:'Xiaoling_Case_Opt/macro_script.txt'},\
-                    {qmle_nethome:'/nethome/qmle/testcases/Journal_3D_Case_Single_Substrate/macro_script.txt'},\
-                    {qmle_nethome:'/nethome/qmle/testcases/Journal_2_case/macro_script.txt'},
-                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_2D_new/macro_script.txt'},
-                    {qmle_nethome:'/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new/macro_script.txt'},
-                    {imam_nethome2: 'Journal_3D/macro_script.txt'},
-                    {imam_nethome2: 'Journal_Case_2p5D_Up/macro_script_1_dev.txt'},
-                    {imam_nethome2: 'macro_script_40X45_R.txt'},
-                    {imam_nethome2: 'macro_script_50X50_R.txt'},
-                    {imam_nethome3:'Case_2D_DMC/macro_script.txt'},
-                    {imam_nethome4:'2D_Case_11/macro_script.txt'}]
+        tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'},
+                    {imam_nethome:'2D_Case_1/macro_script.txt'},
+                    {imam_nethome:'2D_Case_2/macro_script.txt'},
+                    {imam_nethome:'2D_Case_3/macro_script.txt'},
+                    {imam_nethome:'2D_Case_4/macro_script.txt'},
+                    {imam_nethome:'2D_Case_5/macro_script.txt'},
+                    {imam_nethome:'2D_Case_6/macro_script.txt'},
+                    {imam_nethome:'2D_Case_7/macro_script.txt'},
+                    {imam_nethome:'2D_Case_8/macro_script.txt'},
+                    {imam_nethome:'2D_Case_9/macro_script.txt'},
+                    {imam_nethome:'2D_Case_10/macro_script.txt'},
+                    {imam_nethome:'2D_Case_11/Case_11_new/macro_script.txt'},
+                    {imam_nethome:'2D_Case_11/macro_script.txt'},
+                    {imam_nethome:'3D_Case_1/macro_script.txt'},
+                    {imam_nethome:'3D_Case_2/macro_script.txt'},
+                    {imam_nethome:'3D_Case_3/macro_script.txt'},
+                    {imam_nethome:'3D_Case_3/Case_3_new/macro_script.txt'},
+                    {imam_nethome:'3D_Case_4/macro_script.txt'},
+                    {imam_nethome:'3D_Case_5/macro_script.txt'},
+                    {imam_nethome:'3D_Case_6/macro_script.txt'}]
 
 
         for tc in tc_list:
@@ -1438,3 +1435,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
+    '''

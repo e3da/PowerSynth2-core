@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>547</width>
-    <height>226</height>
+    <height>319</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -104,7 +104,7 @@
      <item>
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Path to bondwire_setup</string>
+        <string>Path to Connectivity_script</string>
        </property>
       </widget>
      </item>

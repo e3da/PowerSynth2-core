@@ -68,7 +68,7 @@ class CornerStitch_Tmodel_API:
         self.pp_json_path= None # to store PP json file
         print("Starting cornerstitch_API thermal interface")
 
-    def init_matlab(self):
+    def init_matlab(self,ParaPower_dir=''):
         """Initializes the MATLAB for Python engine and starts it in the working directory specified in the path
         attribute.
 
@@ -78,7 +78,10 @@ class CornerStitch_Tmodel_API:
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/lib/ParaPower/')
+        if ParaPower_dir=='':
+            self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/lib/ParaPower/')
+        else:
+            self.matlab_engine.cd(ParaPower_dir)
 
     def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
         layer_average_list = []

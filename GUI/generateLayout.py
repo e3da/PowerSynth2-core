@@ -2,6 +2,7 @@ from core.engine.Structure3D.structure_3D import Structure_3D
 from core.MDK.LayerStack.layer_stack import Layer, LayerStack
 from core.engine.Structure3D.structure_3D import Structure_3D
 from core.engine.InputParser.input_script import script_translator
+from core.engine.InputParser.input_script_up import script_translator as script_translator_up
 
 
 
@@ -10,8 +11,15 @@ def generateLayout(layout_script, bondwire_setup, layer_stack_file, constraint_f
     
     layer_stack = LayerStack()
     layer_stack.import_layer_stack_from_csv(layer_stack_file)
+    if bondwire_setup!='None':
+         
+        all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=layout_script, bond_wire_info=bondwire_setup,layer_stack_info=layer_stack,dbunit=1000)
+    else:
+         
+        all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=layout_script, bond_wire_info=bondwire_setup, layer_stack_info=layer_stack,dbunit=1000)
+       
 
-    all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=layout_script, bond_wire_info=bondwire_setup, layer_stack_info=layer_stack, flexible=True)
+    #all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=layout_script, bond_wire_info=bondwire_setup, layer_stack_info=layer_stack, flexible=True)
 
     layer = all_layers[0]
 

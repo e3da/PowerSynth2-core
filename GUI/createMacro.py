@@ -3,22 +3,33 @@ from io import TextIOWrapper
 def createMacro(file: TextIOWrapper, self):
     file.write("# Input scripts:" + "\n")
     file.write("Layout_script: " + self.pathToLayoutScript + "\n")
-    file.write("Bondwire_setup: " + self.pathToBondwireSetup + "\n")
+    if self.pathToBondwireSetup!='None':
+        file.write("Connectivity_script: " + self.pathToBondwireSetup + "\n")
+    #else:
+        #file.write("Model_char: " + self.pathToBondwireSetup + "\n")
     file.write("Layer_stack: " + self.pathToLayerStack + "\n")
-    file.write("Parasitic_model: " + self.pathToParasiticModel + "\n")
+    if self.pathToParasiticModel!=None:
+        file.write("Parasitic_model: " + self.pathToParasiticModel + "\n")
+    else:
+        file.write("Parasitic_model: " + 'default' + "\n")
 
     figDir = self.pathToLayoutScript.split("/")
     figDir.pop(-1)
     figDir = "/".join(figDir) + "/Figs"
-
     solutionDir = self.pathToLayoutScript.split("/")
     solutionDir.pop(-1)
-    solutionDir = "/".join(solutionDir) + "/Solutions"
-
+    solutionDir = "/".join(solutionDir) + "/Characterization"
+    
     file.write("Fig_dir: " + figDir + "\n")
     file.write("Solution_dir: " + solutionDir + "\n")
     file.write("Constraint_file: " + self.pathToConstraints + "\n")
-    if self.option!=0:
+    charDir = self.pathToLayoutScript.split("/")
+    charDir.pop(-1)
+    charDir = "/".join(charDir) + "/Characterization"
+    if self.pathToBondwireSetup=='None':
+        file.write("Model_char: " + charDir + "\n")
+
+    if self.option!=0 or self.pathToTraceOri!="" :
         file.write("Trace_Ori: " + self.pathToTraceOri + "\n")
 
     file.write("\n")

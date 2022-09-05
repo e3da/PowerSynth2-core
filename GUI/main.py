@@ -340,13 +340,17 @@ class GUI():
                 popup.setText("Please enter a valid path to the layout_script file.")
                 popup.exec_()
                 return
-
-            if not os.path.exists(ui.lineEdit_bondwire.text()) or not ui.lineEdit_bondwire.text().endswith(".txt"):
-                popup = QtWidgets.QMessageBox()
-                popup.setWindowTitle("Error:")
-                popup.setText("Please enter a valid path to the bondwire_setup file.")
-                popup.exec_()
-                return
+            
+            if ui.lineEdit_bondwire.text()=='None':
+                pass
+            else:
+                if not os.path.exists(ui.lineEdit_bondwire.text()) or not ui.lineEdit_bondwire.text().endswith(".txt"):
+                    
+                        popup = QtWidgets.QMessageBox()
+                        popup.setWindowTitle("Error:")
+                        popup.setText("Please enter a valid path to the Connectivity_script file.")
+                        popup.exec_()
+                        return
             
             self.pathToLayerStack = ui.lineEdit_layer.text()
             self.pathToLayoutScript = ui.lineEdit_layout.text()
@@ -373,7 +377,7 @@ class GUI():
             newPath.pop(-1)
             
             self.pathToWorkFolder = "/".join(newPath) + "/"
-            print(newPath,self.pathToWorkFolder)
+            #print(newPath,self.pathToWorkFolder)
             os.chdir(self.pathToWorkFolder)
             self.pathToConstraints = self.pathToWorkFolder + "constraint.csv"
             self.pathToFigs = self.pathToWorkFolder + "Figs/"
