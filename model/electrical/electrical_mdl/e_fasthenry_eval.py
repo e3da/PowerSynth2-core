@@ -117,9 +117,9 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         """
         text =''
         for v in self.via_dict:
-            print(v)
+            #print(v)
             
-            print(self.via_dict[v])
+            #print(self.via_dict[v])
             via_pins = self.via_dict[v]
             v1,v2 = via_pins
             fh_pt1 = 'N_'+ v1.net
@@ -343,12 +343,12 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         textout = Trace.format(name, start_loc[0]/1000,start_loc[1]/1000,start_loc[2]/1000, end_loc[0]/1000,end_loc[1]/1000,end_loc[2]/1000, width/1000,thick/1000,self.cond,nwinc,nhinc,self.tc_id)
         self.tc_id+=1 
         if eq_to_start!=None: # equiv a net to start
-            print ("EQUIV_START",eq_to_start,start_name)
+            #print ("EQUIV_START",eq_to_start,start_name)
             textout += equiv.format(start_name,eq_to_start)
             self.fh_ignore_dict[eq_to_start] = 1
             
         if eq_to_end!=None: # equiv a net to start
-            print ("EQUIV_END",eq_to_end,end_name)
+            #print ("EQUIV_END",eq_to_end,end_name)
             textout += equiv.format(end_name,eq_to_end)
             self.fh_ignore_dict[eq_to_end] = 1
         return textout
@@ -428,7 +428,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                         self.wire_id +=1
                 else: # generate equivatlent ribbon representation
                 
-                    print("RIBBON representation",'z',start.z)
+                    #print("RIBBON representation",'z',start.z)
                     average_width = numwires*wire_obj.r*2 *1000
                     #print (average_width)
                     bw_text+= "\n* START RIBBON TRACE\n"
@@ -686,8 +686,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
-            #return r_list[0],l_list[0]
-            return -1,-1
+            return r_list[0],l_list[0]
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
             return -1,-1
