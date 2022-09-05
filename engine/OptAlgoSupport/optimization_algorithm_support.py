@@ -66,16 +66,7 @@ class new_engine_opt:
         
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
-<<<<<<< HEAD
-        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
         
-        self.e_api.form_initial_trace_mesh(id)
-        # Setup wire connection
-        # Go through every loop and ask for the device mode # run one time
-        self.e_api.check_device_connectivity(False)
-=======
-        
->>>>>>> origin/E_API_Update
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
         # Generic flow for all apis -- PEEC, Loop or FH
@@ -127,34 +118,6 @@ class new_engine_opt:
                         obj_name_feature_map[f.name] = f
                     self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
                     # EVALUATION PROCESS 
-<<<<<<< HEAD
-                    if measure.multiport:
-                        multiport_result = self.e_api.eval_multi_loop_impedances()
-                        
-                        self.multiport_result[solution.solution_id] = multiport_result
-                        # if possible, we can collect the data for a balancing layout optimization.
-                        # 1 Balancing
-                        # 2 Using the full matrix (without mutual for now) to estimate thermal performance
-                        result.append(0)    
-                    else:
-                        R, L = self.e_api.eval_single_loop_impedances()
-                        R_abs = abs(R)
-                        L_abs = abs(np.imag(L))
-                        
-                        if abs(R_abs)>1e3:
-                            print("ID:",solution.solution_id)
-                            input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                        result.append(L_abs/1e-9)  
-            if isinstance(measure, ThermalMeasure):
-                t_sol = copy.deepcopy(solution)
-                t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
-                
-                measure.mode = 0 #Need to input from macro
-                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                
-                result.append(max_t)
-                
-=======
                     if self.e_api.e_mdl == "PEEC":
                         if measure.multiport:
                             multiport_result = self.e_api.eval_multi_loop_impedances()
@@ -201,7 +164,6 @@ class new_engine_opt:
                 #measure.mode = 1 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
                 result.append(max_t-273)
->>>>>>> origin/E_API_Update
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
