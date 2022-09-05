@@ -1,5 +1,5 @@
 # all constraint graph related data structures are implemented here
-
+# Author: Imam al Razi (ialrazi@uark.edu)
 import sys
 sys.path.append('..')
 
@@ -157,7 +157,7 @@ class Graph():
                     edge_weight.append({(lst_branch[0], lst_branch[1]): internal_edge[3]})
                     weight.append((lst_branch[0], lst_branch[1], internal_edge[3]))
 
-                #print("B",data)
+                
                 data_to_append=[]
                 if len(data)>1:
                     for i in range(len(data)):
@@ -187,8 +187,7 @@ class Graph():
 
                 
                             
-                #graph.add_weighted_edges_from(data_to_append)
-                #print("D",data_to_append)
+                
                 for edge in self.edges:
                     for data_ in data_to_append:
                     
@@ -206,7 +205,7 @@ class Graph():
             for i in dictList2:
                 k, v = list(i.items())[0]  
                 edge_labels2 [k].append(v)
-            #print("B",edge_labels2)
+            
             for key,value_list in edge_labels2.items():
                 value=[]
                 type_=[]
@@ -231,7 +230,7 @@ class Graph():
                     if selected_index==None:
                         selected_index= value.index(max_value)
                     edge_labels2[key]=[value_list[selected_index]]
-            #print("A",edge_labels2)
+            
             for branch in edge_labels2:
                 lst_branch = list(branch)
                 data = []
@@ -277,10 +276,9 @@ class Graph():
             edges=graph.nx_graph_edges
         adj_matrix=[[float('inf') for i in range(len(vertices))] for j in range(len(vertices))]
         dictList = []
-        #print(len(self.edges))
-        #print(len(edges))
+        
         for edge in edges:
-            #edge.printEdge()
+            
             dictList.append(edge.getEdgeDict())
         for edge in dictList:
             key=list(edge.keys())[0]
@@ -288,7 +286,7 @@ class Graph():
             
             adj_matrix[key[0]][key[1]]=value[0]
 
-        #print(adj_matrix)
+        
         return adj_matrix
         
 
@@ -302,7 +300,7 @@ class Graph():
         
         dictlist=[]
         for edge in self.edges:
-            # print "EDGE",foo.getEdgeDict()
+            
             dictlist.append(edge.getEdgeDict())
         edge_labels= defaultdict(list)
         for i in dictlist:
@@ -336,9 +334,7 @@ class Graph():
         nx.draw_networkx_edge_labels(self.nx_graph, pos, edge_labels=edge_labels)
         nx.draw(self.nx_graph, pos, node_color=node_colors, node_size=900, edge_color=edge_colors)
         
-        '''
-        nx.draw_networkx_edge_labels(self.nx_graph, pos, edge_labels=edge_labels)
-        nx.draw(self.nx_graph, pos, node_color='red', node_size=900, edge_color=edge_colors)'''
+        
         if name==None:
             plt.show()
         else:
@@ -368,170 +364,17 @@ def find_longest_path(source=None,sink=None,adj_matrix=None,graph=None,debug=Fal
         connected_path=is_connected(adj_matrix=adj_matrix,src=source,dest=sink)
     if graph!=None:
         connected_path=is_connected(source,sink,graph=graph)
-    #print(source,sink,connected_path)
+    
     
     if connected_path==True:
-        #print("C",connected_path)
         
-        
-        
-        '''
-        X = {}
-        for i in range(len(adj_matrix)):
-            for j in range(len(adj_matrix[i])):
-                if adj_matrix[i][j] != float('inf'):
-                    X[(i, j)] = adj_matrix[i][j]
-        if debug:
-            print(X)
-        Pred = {}  ## Saves all predecessors of each node{node1:[p1,p2],node2:[p1,p2..]}
-
-        Pred[source]=[source]
-        for i in range(len(adj_matrix)):
-            for j in range(len(adj_matrix)):
-                if (i,j) in X:
-                    if j in Pred:
-                        Pred[j].append(i)
-                    else:
-                        Pred[j]=[i]
-                
-
-           
-    
-        if debug:
-            print(Pred)
-        
-        Preds=[]
-        for k,v in list(Pred.items()):
-            Preds+=v
-        #Preds=Pred.values()
-        # make sure sink is also traversed
-        Preds=list(set(Preds))
-        #print Preds,source,target
-        Preds.sort()
-        if sink not in Preds:
-            Preds.append(sink)# make sure sink is also traversed
-        else:
-            Preds.remove(sink)
-            Preds.append(sink)
-        if debug:
-            print("PREDS",Preds)
-        
-        Preds.sort(reverse=True)
-        '''
-        """
-        dist = {}  ## Saves each node's (cumulative maximum weight from source,predecessor) {node1:(cum weight,predecessor)}
-        position = {}
-        #dist[source] = (0, source) # source-to-source distance=0
-        dist[sink] = (0, sink) 
-        key = sink#source
-        position.setdefault(key, [0])
-        
-        #node=Preds[0]
-        
-        for node in Preds:
-            
-            if node in Pred:
-                #if debug:
-                    #print(node)
-                if source in Pred[node] and source in dist:
-                    pred=source
-                    if (pred, node) in X and node in position:
-                        #pairs = (max(position[pred]) + (X[(pred, node)]), pred)
-                        pairs = (max(position[node]) + (X[(pred, node)]), pred)
-                        print(pairs)
-                        #if debug:
-                            #print("PAI",pairs)
-                            #print(dist)
-                        f = 0
-                        for x, v in list(dist.items()):
-                            if node == x:
-                                if v[0] >= pairs[0] :
-                                    f = 1
-                                
-                                    
-                        print(f,v[0],pairs[0])
-                        if f == 0 and pairs[1] in Pred:
-                            dist[node] = pairs
-                        
-                        key =pred#node
-                        position.setdefault(key, [])
-                        position[key].append(pairs[0])
-                        if debug:
-                            print("POS",position)
-                            print(dist)
-                else:
-                    for i in range(len(Pred[node])):
-                        pred = Pred[node][i]
-                    #if debug:
-                        #print("P",pred)
-                    '''if node == source:
-                        dist[node] = (0, pred)
-                        key = node
-                        position.setdefault(key, [])
-                        position[key].append(0)
-                    else:'''
-                    if debug:
-                        print(pred,node)
-                    #if (pred, node) in X and pred in position:
-                    if (pred, node) in X and node in position:
-                        #pairs = (max(position[pred]) + (X[(pred, node)]), pred)
-                        pairs = (max(position[node]) + (X[(pred, node)]), pred)
-                        print(pairs)
-                        #if debug:
-                            #print("PAI",pairs)
-                            #print(dist)
-                        f = 0
-                        for x, v in list(dist.items()):
-                            if node == x:
-                                if v[0] >= pairs[0] :
-                                    f = 1
-                                
-                                    
-                        print(f,v[0],pairs[0])
-                        if f == 0 and pairs[1] in Pred:
-                            dist[node] = pairs
-                        Preds.append(pairs[1])
-                        key =pred#node
-                        position.setdefault(key, [])
-                        position[key].append(pairs[0])
-                        if debug:
-                            print("POS",position)
-                            print(dist)
-            
-            
-        
-        #if debug:
-            #print(position)
-        vert = sink
-        path = []
-        while vert != source:
-            if vert not in path:
-                path.append(vert)
-            
-            vert = dist[vert][1]
-            
-            path.append(vert)
-        
-       
-
-
-
-        PATH = list(reversed(path))  ## Longest path
-        #PATH=path
-        
-        Value = []
-        for i in range(len(PATH) - 1):
-            if (PATH[i], PATH[i + 1]) in list(X.keys()):
-                Value.append(X[(PATH[i], PATH[i + 1])])
-        
-        Max = sum(Value)
-        """
+      
         PATH,Value,Max=longest_path(source,sink,visited=[],path=[],fullpath=[],adj_matrix=adj_matrix)
         # returns longest path, list of minimum constraint values in that path and summation of the values
         return PATH, Value, Max
 
     else:
-        #print("No Path Exists from {} to {}".format(source,sink))
+        
         PATH=[]
         Value=0
         Max=0
@@ -573,13 +416,12 @@ def is_connected( src=None, dest=None,adj_matrix=None,graph=None):
             if v == dest and v!=src:
                 
                 return True
-            #print("N",q,discovered)
+            
             # do for every edge `v > u`
             for k in range(len(adj_matrix[v])):
                 u=adj_matrix[v][k]
                 if u!=float('inf'):
-                    #j=adj_matrix[v].index(u)
-                    #print("j",j)
+                    
                     if not discovered[k]:
                         # mark it as discovered and enqueue it
                         discovered[k] = True
@@ -595,7 +437,7 @@ def reference_edge_handling(graph_in=None,ID=None,fixed_edges=None,dependent_ver
         
         dependent_vertices={} # stores dependent vertex as key and list of corresponding incoming fixed edges as value
         fixed_edges=[] # list of fixed edges from the edges
-        #adj_matrix=graph.generate_adjacency_matrix()
+        
         # finding initial dependent vertices from the given edges
         for edge in graph.nx_graph_edges:
             if edge.type=='fixed':
@@ -609,21 +451,19 @@ def reference_edge_handling(graph_in=None,ID=None,fixed_edges=None,dependent_ver
                         break
                 if vert_found==False:
                     dependent_vertices[edge.dest]=[edge]
-        #dependent_vertices=copy.deepcopy(dependent_vertices_in)
+        
     else:
         graph=graph_in
     adj_matrix=graph.generate_adjacency_matrix()
     dependent_veretx_list=list(dependent_vertices.keys())
-    #print ([i.index for i in dependent_veretx_list])
+    
     dependent_veretx_list.sort(key=lambda x: x.index)
 
     while len(dependent_veretx_list)>0:
         
-        #print ("HEAD",[i.index for i in dependent_veretx_list])
+        
         vertex=dependent_veretx_list.pop(0)
-        #for vertex in dependent_vertices:
-        #vertex.printVertex()
-        #print(len(dependent_vertices[vertex]))
+        
         dependent_vertex={}
         while len(dependent_vertices[vertex])>1:
             
@@ -642,7 +482,7 @@ def reference_edge_handling(graph_in=None,ID=None,fixed_edges=None,dependent_ver
                             dependent_vertices[edge.dest]=[edge]
                         if edge.dest not in dependent_veretx_list:
                             dependent_veretx_list.append(edge.dest)
-            #for vertex,edge_list in removed_edges.items():
+            
             if len(removed_edges[vertex])>0:
                 for edge in removed_edges[vertex]:
                     
@@ -655,12 +495,7 @@ def reference_edge_handling(graph_in=None,ID=None,fixed_edges=None,dependent_ver
                         if edge in graph.modified_edges:
                             graph.modified_edges.remove(edge)
                         #edge.printEdge()
-            """if ID==-3:
-                print("A")
-                for vert,edge_list in dependent_vertices.items():
-                    print(vert.coordinate)
-                    for edge in edge_list:
-                        edge.printEdge()"""
+            
                 
             if len(dependent_vertices[vertex])>1:
                 
@@ -698,14 +533,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
     #makes sure each dependent vertex has a single reference vertex
     dependent_vertices,graph,fixed_edges=reference_edge_handling(graph_in=graph,ID=ID)        
     
-    '''
-    print(ID)
-    if ID==22:
-        for vert,edge_list in dependent_vertices.items():
-            vert.printVertex()
-            for edge in edge_list:
-                edge.printEdge()
-    '''
+   
     # topological sorting of vertices in dependent_vertices
     dep_vertices=list(dependent_vertices.keys())
     dep_vertices.sort(key=lambda x: x.index)
@@ -724,12 +552,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
     
     #for vertex in sorted_vertices:
     while len(sorted_vertices)>0:
-        """if ID==15:
-            print("B",dep_verts)
-            print(fixed_edges)
-            #if len(fixed_edges)==3:
-            for edge in graph.nx_graph_edges:
-                edge.printEdge()"""
+        
         vertex=sorted_vertices.pop(0)
         removable=True # assuming the vertex is emovable
         if dep_verts[vertex][0] in graph.nx_graph_edges:
@@ -783,7 +606,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 new_edge=Edge(source=ref_vert, dest=in_src, constraint=abs(backward_weight), index=edge.index, type='fixed', weight=2*abs(backward_weight),comp_type='Fixed')
                                 new_edges.append(new_edge)
                             elif find_longest_path(ref_vert.index,in_src.index,adj_matrix_)[2]>abs(backward_weight):
-                                #print(ID,ref_vert.coordinate,in_src.coordinate,backward_weight,fixed_dim)
+                                
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
                                 #print("HERE3",ID)
@@ -807,9 +630,9 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                         else:
                             if edge.constraint>fixed_dim+w1:
                                 removable=False
-                                print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                print("HERE10",ID)
-                                input()
+                                #print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
+                                #print("HERE10",ID)
+                                #input()
                                 if edge.comp_type=='Fixed':
                                     exit()
                             else:
@@ -819,15 +642,14 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             removable_edges.append(edge)
                         elif in_src.coordinate==ref_vert.coordinate and edge.constraint>fixed_dim:
                             removable=False
-                            #print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
                             if edge.comp_type=='Fixed':
                                 exit()
                         else:
                             removable_edges.append(edge)
-                            #w1=find_longest_path(in_src.index,ref_vert.index,adj_matrix_)[2] #longest distance(in_src, ref_vert)
+                            
                             w2=edge.constraint-fixed_dim
                             if w2>0:
-                                #removable_edges.append(edge)
+                                
                                 new_edge=Edge(source=in_src, dest=ref_vert, constraint=w2, index=edge.index, type='non-fixed', weight=2*w2,comp_type='Flexible')
                                 new_edges.append(new_edge)
                         
@@ -851,15 +673,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                     
                         if is_connected(ref_vert.index,out_dest.index,adj_matrix_):
                             new_weight=edge.constraint+fixed_dim
-                            '''if new_weight<=0:
-                                removable=False
-                                print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                print("HERE5",ID, ref_vert.coordinate,out_dest.coordinate,new_weight)
-                                edge.printEdge()
-                                input()
-                                if edge.comp_type=='Fixed':
-                                    exit()
-                            else:'''
+                            
                             removable_edges.append(edge)
                             new_edge=Edge(source=ref_vert, dest=out_dest, constraint=new_weight, index=edge.index, type=edge.type, weight=2*new_weight,comp_type=edge.comp_type)
                             new_edges.append(new_edge)
@@ -867,20 +681,14 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                         else:
                             
                             new_weight=edge.constraint+fixed_dim
-                            #if ID==9:
-                                #print("NW",new_weight,edge.constraint,fixed_dim,edge.dest.coordinate,ref_vert.coordinate)
                             
                             if new_weight>=0 and ref_vert.coordinate!=out_dest.coordinate:
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
-                                #print("NW",new_weight,edge.constraint,fixed_dim,edge.dest.coordinate,ref_vert.coordinate)
-                                #print("HERE6",ID)
-                                #input()
+                                
                                 if edge.comp_type=='Fixed':
                                     exit()
-                                """elif new_weight==0:
-                                if abs(edge.constraint)==abs(fixed_dim):
-                                    removable_edges.append(edge)"""
+                                
                             else:
                                 
                                 if is_connected(out_dest.index,ref_vert.index,adj_matrix_) :
@@ -893,8 +701,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                     elif w1>abs(w2):
                                         removable=False
                                         print("{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                        print("HERE7",ID)
-                                        input()
+                                        #print("HERE7",ID)
+                                        #input()
                                         if edge.comp_type=='Fixed':
                                             exit()
 
@@ -910,8 +718,8 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                     elif out_dest.index==ref_vert.index and abs(edge.constraint)<fixed_dim:
                                         removable=False
                                         print("ERROR:{} dimension cannot be fixed.Please update constraint table".format(fixed_dim/dbunit))
-                                        print("HERE7",ID)
-                                        input()
+                                        #print("HERE7",ID)
+                                        #input()
                                         if edge.comp_type=='Fixed':
                                             exit()
 

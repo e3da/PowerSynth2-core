@@ -179,20 +179,7 @@ class CornerStitch():
                     previous=current
                     input_tree.append(current)
 
-            '''for element in input_tree:
-                if element.hier_level==1:
-                    for el in element.elements:
-                        print(el)
-                else:
-                    dots=[]
-                    for i in range(element.hier_level-1):
-                        dots.append('+ ')
-                    print(dots),
-                    for el in element.elements:
-                        print(el)'''
-                
-            
-            return input_tree #Modified_input
+            return input_tree 
 
     # function to generate initial layout
     def draw_layout(self, rects=None,types=None,colors=None,ZDL_H=None,ZDL_V=None, dbunit=1000):
@@ -271,7 +258,7 @@ class CornerStitch():
 
         return Patches, Graph
 
-    #'''
+    
     # input tile coordinates and type are passed to create corner stitched layout
     def input_processing(self, Input, origin, Base_W, Base_H):
 
@@ -295,7 +282,7 @@ class CornerStitch():
             line= Input[i]
             if line.hier_level==1:
                 for inp in line.elements:
-                    #print(inp)
+                    
                     start = inp[0]
                     x1 = int(inp[1])
                     y1 = int(inp[2]) + int(inp[4])
@@ -303,7 +290,7 @@ class CornerStitch():
                     y2 = int(inp[2])
                     
                     
-                    #print(x1,y1,x2,y2,inp[5])
+                    
                     Parent = Vtree.vNodeList[0]
                     Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
                     
@@ -328,7 +315,7 @@ class CornerStitch():
 
                 for inp in line.elements:
                     inp2=copy.deepcopy(inp)
-                    #print(inp2)
+                    
                     inp=list(filter(lambda a: a != '.', inp))
                     start = inp[0]
                     x1 = int(inp[1])
@@ -336,13 +323,10 @@ class CornerStitch():
                     x2 = int(inp[1]) + int(inp[3])
                     y2 = int(inp[2])
                     
-                    
-                    #print(x1,y1,x2,y2,inp[5])
-                    #Parent = Vtree.vNodeList[0]
                     Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
                     Parent.child[-1].layout_script_elements.append(inp2)
 
-                    #ParentH = Htree.hNodeList[0]
+                    
                     ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
                     ParentH.child[-1].layout_script_elements.append(inp2)
 
@@ -357,7 +341,7 @@ class CornerStitch():
                 print (i.id, i, len(i.stitchList))
                 rectlist=[]
                 
-                #if len(i.child)>0:
+                
                 for j in i.stitchList:
                     k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
                     rectlist.append(k)
@@ -369,7 +353,7 @@ class CornerStitch():
                 print (i.id, i, len(i.stitchList))
                 rectlist=[]
                 
-                #if len(i.child)>0:
+                
                 for j in i.stitchList:
                     k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
                     rectlist.append(k)
@@ -403,171 +387,6 @@ class CornerStitch():
         return Htree, Vtree
 
 
-        
-    
-    
-    
-    
-    '''
-    # input tile coordinates and type are passed to create corner stitched layout
-    def input_processing(self, Input, origin, Base_W, Base_H):
-
-        #ToDo: generalize parent finding. Currently supports upto 3rd level of hierarchy.
-        """
-
-        Input: Input Rectangles in the form: ['/',x,y,width,height,type,'/']
-        origin: Substrate origin
-        Base_W: Substrate Width
-        Base_H: Substrate Height
-        :return: Corner stitched layout
-        """
-
-        substrate = Substrate(origin,Base_W, Base_H, "EMPTY")
-        Hnode0, Vnode0 = substrate.Initialize() # initialized empty background tile (root node) for the CS trees
-        
-        Htree = Tree(hNodeList=[Hnode0], vNodeList=None)
-        Vtree = Tree(hNodeList=None, vNodeList=[Vnode0])
-        #print(Input)
-        #input()
-        while (len(Input) > 0):
-            inp = Input.pop(0)
-            #print(inp)
-            
-            if inp[1] == "." and inp[2] != ".":  ## determining hierarchy level (2nd level):Device insertion
-                start = inp[0]
-                x1 = int(inp[2]) # top-left corner x coordinate
-                y1 = int(inp[3]) + int(inp[5]) # top-left corner y coordinate
-                x2 = int(inp[2]) + int(inp[4]) # bottom-right corner x coordinate
-                y2 = int(inp[3]) # bottom-right corner y coordinate
-                for i in reversed(Htree.hNodeList):
-                    if i.parent.id == 1:
-                        
-                        ParentH = i
-                        break
-                CHILDH = ParentH
-                
-                CHILDH.insert(start, x1, y1, x2, y2, inp[6], inp[7], Htree, ParentH,rotate_angle=inp[-1])  # rotate_angle=inp[-1]
-                CHILDH.layout_script_elements.append(inp)
-                for i in reversed(Vtree.vNodeList):
-                    if i.parent.id == 1:
-                        
-                        Parent = i
-                        break
-                CHILD = Parent
-                CHILD.insert(start, x1, y1, x2, y2, inp[6], inp[7], Vtree, Parent, rotate_angle=inp[-1])
-                CHILD.layout_script_elements.append(inp)
-
-            if inp[1] == "." and inp[2] == ".":  ##determining hierarchy level (3rd level):Pin insertion
-
-                start = inp[0]
-                x1 = int(inp[3])
-                y1 = int(inp[4]) + int(inp[6])
-                x2 = int(inp[3]) + int(inp[5])
-                y2 = int(inp[4])
-                for i in reversed(Htree.hNodeList):
-                    if i.parent.id == 1:
-                        med = i
-                        break
-
-                ParentH = med.child[-1]
-                CHILDH = ParentH
-
-                
-                CHILDH.insert(start, x1, y1, x2, y2, inp[7], inp[8], Htree, ParentH, rotate_angle=inp[-1])
-                CHILDH.layout_script_elements.append(inp)
-
-                for i in reversed(Vtree.vNodeList):
-                    if i.parent.id == 1:
-                        med = i
-                        break
-
-                Parent = med.child[-1]
-                CHILD = Parent
-
-                CHILD.insert(start, x1, y1, x2, y2, inp[7], inp[8], Vtree, Parent, rotate_angle=inp[-1])
-                CHILD.layout_script_elements.append(inp)
-
-            if inp[1] != ".":  # determining hierarchy level (1st level):Trace insertion
-
-                start = inp[0]
-                Parent = Vtree.vNodeList[0]
-                
-                x1 = int(inp[1])
-                y1 = int(inp[2]) + int(inp[4])
-                x2 = int(inp[1]) + int(inp[3])
-                y2 = int(inp[2])
-                
-                
-                #print(x1,y1,x2,y2,inp[5])
-                Parent.insert(start, x1, y1, x2, y2, inp[5], inp[6], Vtree, Parent, rotate_angle=inp[-1])
-                Parent.layout_script_elements.append(inp)
-
-                ParentH = Htree.hNodeList[0]
-
-                x1 = int(inp[1])
-                y1 = int(inp[2]) + int(inp[4])
-                x2 = int(inp[1]) + int(inp[3])
-                y2 = int(inp[2])
-
-                ParentH.insert(start, x1, y1, x2, y2, inp[5], inp[6], Htree, ParentH, rotate_angle=inp[-1])
-                ParentH.layout_script_elements.append(inp)
-        
-        Htree.setNodeId1(Htree.hNodeList)
-        Vtree.setNodeId1(Vtree.vNodeList)
-        debug=True
-        if debug:
-            print ("Horizontal NodeList")
-
-            for i in Htree.hNodeList:
-
-                print (i.id, i, len(i.stitchList))
-                rectlist=[]
-                
-                if len(i.child)>0:
-                    for j in i.stitchList:
-                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-                        rectlist.append(k)
-                    fig,ax=plt.subplots()
-                    self.draw_rect_list_cs(rectlist,name='HNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
-
-            for i in Vtree.vNodeList:
-
-                print (i.id, i, len(i.stitchList))
-                rectlist=[]
-                
-                if len(i.child)>0:
-                    for j in i.stitchList:
-                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-                        rectlist.append(k)
-                    fig,ax=plt.subplots()
-                    self.draw_rect_list_cs(rectlist,name='VNode_'+str(i.id),ax=ax,x_max=57000,y_max=51000)
-
-            for i in Htree.hNodeList:
-
-                print (i.id, i, len(i.stitchList))
-
-                
-                for j in i.stitchList:
-                    k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-                    print (k)
-
-                if i.parent == None:
-                    print (0)
-                else:
-                    print (i.parent.id, i.id)
-                for j in i.boundaries:
-                    if j.cell.type != None:
-                        k = j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.id, j.cell.type, j.nodeId, j.bw, j.name
-
-                    else:
-                        k = j.cell.x, j.cell.y, j.cell.type, j.nodeId
-                    print ("B", i.id, k)
-
-
-        
-
-        return Htree, Vtree
-    '''
     def draw_rect_list_cs(self,rectlist, ax, dbunit=1000,name=None,x_min=0,y_min=0,x_max=None, y_max=None):
         
         types=[]
@@ -609,8 +428,7 @@ if __name__== "__main__":
         
         """
 
-        # fig2 = matplotlib.pyplot.figure()
-        #node=nodelist[0]
+        
         Rect_H=[]
         for rect in node.stitchList:
             if rect.cell.type=='Type_1' or rect.cell.type=='Type_2' or rect.cell.type=='EMPTY':

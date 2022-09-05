@@ -19,8 +19,7 @@ class constraint():
             Type.append(t)
             type.append(str(i))
 
-    # print type
-    # Type=["EMPTY","Type_1", "Type_2","Type_3","Type_4"]  # in this version 4 types of components are considered (Trace, MOS, Leads, Diodes)
+    
 
     # type=["0","1","2","3","4"]
     component_to_component_type = {}
@@ -51,7 +50,7 @@ class constraint():
             constraint.all_component_types.append(component_name_type)
         t=constraint.all_component_types.index(component_name_type)
         t_in="Type_"+str(t)
-        #print component_name_type,t
+        
         constraint.Type.append(t_in)
         constraint.type.append(str(t))
         constraint.component_to_component_type[component_name_type] = t_in

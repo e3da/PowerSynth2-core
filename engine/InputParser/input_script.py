@@ -18,16 +18,6 @@ from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath, BondingWires, ViaConnections
 from core.MDK.Design.group import Island
 from core.engine.Structure3D.multi_layer_handler import Layer
-'''
-class ConstraintWindow(QtGui.QMainWindow):
-    # A fake window to call the constraint dialog object
-    def __init__(self):
-        QtGui.QMainWindow.__init__(self, None)
-        self.cons_df = None
-
-'''
-
-
 
 
 class ScriptInputMethod():
@@ -82,8 +72,6 @@ class ScriptInputMethod():
             elif all_lines[start][0]=='#' and all_lines[start][1]=='Table_info':
                 table_info=all_lines[start+1:end]
 
-        #print (definition)
-        #print (table_info)
         bondwire_object_def={}
         for i in range(len(definition)):
             if os.path.isfile(definition[i][1]):
@@ -93,8 +81,6 @@ class ScriptInputMethod():
                 print("Wrong bondwire setup file location! Please check again!!")
                 exit()
 
-        
-        #print(bondwire_object_def)
         return bondwire_object_def, table_info
     
     # creates bondwire connection table (a dictionary) from the information given by the user in a text file
@@ -122,18 +108,14 @@ class ScriptInputMethod():
                 via_connection.load_part()
                 via_connection_objects.append(via_connection)
 
-        #for via in via_connection_objects:
-            #print(via.name,via.footprint)
-
         wires_vias={}
         table_info=wire_table
         
 
         for i in range(len(table_info)):
             name=table_info[i][0]
-            #print(table_info[i])
+            
             for j in bond_wire_objects:
-                #print (j.name)
 
                 if j.name==table_info[i][1]:
                     pads_s=table_info[i][2].split('_')
@@ -143,7 +125,7 @@ class ScriptInputMethod():
                         drop_part='_'+source_pad
                         source = table_info[i][2].replace(drop_part,'')
                     else:
-                        #source_pad=pads_s[0]
+                        
                         source_pad =table_info[i][2]
                         source=source_pad
 
@@ -153,18 +135,17 @@ class ScriptInputMethod():
                         drop_part='_'+dest_pad
                         destination =table_info[i][3].replace(drop_part,'')
                     else:
-                        #dest_pad=pads_d[0]
+                        
                         dest_pad=table_info[i][3]
                         destination=dest_pad
 
-                    #print (source,source_pad,destination,dest_pad)
                     wires_vias[name]={'BW_object':j,'Source':source,'Destination':destination,'num_wires':table_info[i][4],'spacing':table_info[i][5],'source_pad':source_pad,'destination_pad':dest_pad}
 
             for j in via_connection_objects:
 
                 if j.name==table_info[i][1]:
                     pads_s=table_info[i][2].split('_')
-                    #print("S",pads_s)
+                    
 
                     if len(pads_s)>3 and pads_s[-1]=='':
                         source_pad=pads_s[-2]+'_'
@@ -174,19 +155,16 @@ class ScriptInputMethod():
                         source_pad=pads_s[-1]
                         if source_pad=='':
                             source_pad=(pads_s[-2]+'_') #if device via has a downward connection
-                        #print(table_info[i][2],source_pad)
                         drop_part='_'+source_pad
-                        #print(table_info[i][2].strip(drop_part))
-
                         source = table_info[i][2].replace(drop_part,'')
 
                     else:
-                        #source_pad=pads_s[0]
+                        
                         source_pad =table_info[i][2]
                         source=source_pad
 
                     pads_d = table_info[i][3].split('_')
-                    #print(pads_d)
+                    
                     if len(pads_d) > 3 and pads_d[-1]=='':
                         dest_pad = pads_d[-2]+'_'
                         drop_part='_'+dest_pad
@@ -196,7 +174,7 @@ class ScriptInputMethod():
                         drop_part='_'+dest_pad
                         destination =table_info[i][3].replace(drop_part,'')
                     else:
-                        #dest_pad=pads_d[0]
+                        
                         dest_pad=table_info[i][3]
                         destination=dest_pad
 
@@ -210,70 +188,8 @@ class ScriptInputMethod():
         #print (wires)
         # ------------------- for debugging --------------------------------------
         '''
-        #input()
-        #raw_input()
-        return wires_vias
-
-
-    """
-
-    # creates bondwire connection table (a dictionary) from the information given by the user in a text file
-    def bond_wire_table(self,bondwire_info=None):
-        '''
-        :param bondwire_info: text file location of bonding wire connection information
-        :return: a dictionary having bond wire connections:
-        wires[name]={'BW_object':BondWire object,'Source':Source pad,'Destination':Destination pad,'num_wires':number of wires in parallel,'spacing':spacing in between two wires}
-        #name , source pad, destination pad, number of wires, spacing information are from text file
-        '''
-        bond_wire_objects=[]
-
-        for i in range(len(Definition)):
-            name=Definition[i][0]
-            wire=BondingWires(name=name)
-            wire.info_file=Definition[i][1]
-            wire.load_wire()
-            bond_wire_objects.append(wire)
-
         
-
-        wires={}
-        for i in range(len(table_info)):
-            name=table_info[i][0]
-            for j in bond_wire_objects:
-
-                if j.name==table_info[i][1]:
-                    pads_s=table_info[i][2].split('_')
-
-                    if len(pads_s)>2:
-                        source_pad=pads_s[-1]
-                        source = table_info[i][2].strip('_'+source_pad)
-                    else:
-                        #source_pad=pads_s[0]
-                        source_pad =table_info[i][2]
-                        source=source_pad
-
-                    pads_d = table_info[i][3].split('_')
-                    if len(pads_d) > 2:
-                        dest_pad = pads_d[-1]
-                        destination =table_info[i][3].strip('_'+dest_pad)
-                    else:
-                        #dest_pad=pads_d[0]
-                        dest_pad=table_info[i][3]
-                        destination=dest_pad
-
-                    #print source,source_pad,destination,dest_pad
-                    wires[name]={'BW_object':j,'Source':source,'Destination':destination,'num_wires':table_info[i][4],'spacing':table_info[i][5],'source_pad':source_pad,'destination_pad':dest_pad}
-                    
-        '''
-        # ------------------- for debugging --------------------------------------
-        for i in bond_wire_objects:
-            print (i.printWire())
-        print (wires)
-        # ------------------- for debugging --------------------------------------
-        '''
-        #raw_input()
-        return wires
-    """
+        return wires_vias
 
 
 
@@ -285,13 +201,11 @@ class ScriptInputMethod():
     MOS ../../Part_Lib/CPM2-1200-0040B.part
     power_lead ../../Part_Lib/PL.part
     signal_lead ../../Part_Lib/SL.part
-    # Layer Information
-    I1 0 0 40 44 Z+
-    I2 0 0 40 44 Z+
     # Via Connectivity Information
     V1 I1 I2
+    V2 I3 I4
     # Layout Information
-    I1
+    I1 Z+
     + T1 power 3 2 34 17
 	    + V1 Via 33 15
 	    + L2 power_lead 4 3
@@ -302,10 +216,6 @@ class ScriptInputMethod():
         :return:four parts: 3 lists and 1 dictionary
         '''
         input_file=self.input_script # takes the layout script as input
-        #with open(input_file,'r') as fp:
-            #lines = fp.readlines()
-        
-        
         file = open(input_file,'r')
         lines = [line for line in file.readlines() if line.strip()]
         file.close()
@@ -321,7 +231,6 @@ class ScriptInputMethod():
             all_lines.append(line)
         parts.append(len(all_lines))
         
-        #print("no_of_parts",parts)
         for i in range(len(parts)-1):
             start=parts[i]
             end=parts[i+1]
@@ -367,7 +276,7 @@ class ScriptInputMethod():
                 if len(info)==2: # name, direction
                     if info[0] ==name:
                         layer_data=[info[0], layer_stack.all_layers_info[id].x, layer_stack.all_layers_info[id].y, layer_stack.all_layers_info[id].width, layer_stack.all_layers_info[id].length, id, info[1]] # name, x, y, width, length, layer_id, direction: Z+/Z-
-                        #print(layer_data)
+                        
                         self.layer_info.append(layer_data)
                 
         
@@ -381,14 +290,11 @@ class ScriptInputMethod():
         for i in range(len(parts)-1):
             start=parts[i]
             end=parts[i+1]
-            
-
             if self.layout_info[start][0] in layer_id_name_map:
                 parent_layer_id=layer_id_name_map[self.layout_info[start][0]]
                 if self.layout_info[start][1]=='Z+':
                     child_layer_id=parent_layer_id+1
                 elif self.layout_info[start][1]=='Z-':
-                    #child_layer_id=parent_layer_id-1
                     child_layer_id=str(parent_layer_id)+'_'
                 
                 for j in range(start+1, end):
@@ -396,8 +302,6 @@ class ScriptInputMethod():
                         self.layout_info[j].append(str(parent_layer_id))
                     else:
                         self.layout_info[j].append(str(child_layer_id))
-        
-        
         
         '''
         print (self.layer_info)
@@ -472,8 +376,7 @@ class ScriptInputMethod():
                 self.cs_type_map.add_component_type(i[0])
 
         all_components_types =  self.cs_type_map.all_component_types  # set of all components considered so far
-        #all_cs_types= c.type_name
-
+        
         for j in range (len(layout_info)):
             if len(layout_info[j])>2:
                 for k in range(len(layout_info[j])):
@@ -517,7 +420,6 @@ class ScriptInputMethod():
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.vai_type=via_type
                             element.load_part()
-                            #print"Foot",element.footprint
                             self.all_parts_info[layout_info[j][k+1]].append(element)
 
 
@@ -541,34 +443,33 @@ class ScriptInputMethod():
                                 layer_id=int(layout_info[j][-2])
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            #print"Foot",element.footprint
                             self.all_parts_info[layout_info[j][k+1]].append(element)
 
                         else:
                             layout_component_id = layout_info[j][k] #+ '.' + layout_info[j][-2]
-                            #print(layout_info[j])
+                            
                             element = Part(info_file=self.info_files[layout_info[j][k + 1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            # print element.footprint
+                            
                             if angle == '90':
                                 name = layout_info[j][k + 1] + '_' + '90'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 1
                                 element.rotate_90()
                             elif angle == '180':
                                 name = layout_info[j][k + 1] + '_' + '180'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 2
                                 element.rotate_180()
                             elif angle == '270':
                                 name = layout_info[j][k + 1] + '_' + '270'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 3
                                 element.rotate_270()
-                            # print element.footprint
+                            
                             self.all_parts_info[layout_info[j][k + 1]].append(element)
 
                     elif layout_info[j][k][0] == 'L' and (layout_info[j][k+1] == 'power_lead' or layout_info[j][k+1]=='signal_lead' or  layout_info[j][k+1]=='neutral_lead') and layout_info[j][k+1] in all_components_types:
@@ -582,14 +483,7 @@ class ScriptInputMethod():
 
                         if rotate==False:
                             layout_component_id = layout_info[j][k]# + '.' + layout_info[j][-2]
-                            #print(type(layout_info[j][-2]))
-                            #if isinstance(layout_info[j][-2], str):
-                                #layer_id=int(layout_info[j][-2].split('.')[0].strip('_'))-1
-                            #else:
-                                #layer_id=int(layout_info[j][-2])
-
                             layer_id=(layout_info[j][-2])
-
                             element = Part(name=layout_info[j][k + 1], info_file=self.info_files[layout_info[j][k + 1]],layout_component_id=layout_component_id,layer_id=layer_id)
                             element.load_part()
                             self.all_parts_info[layout_info[j][k + 1]].append(element)
@@ -598,33 +492,33 @@ class ScriptInputMethod():
                             layout_component_id = layout_info[j][k]# + '.' + layout_info[j][-2]
                             element = Part(info_file=self.info_files[layout_info[j][k + 1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            # print element.footprint
+                            
                             if angle == '90':
                                 name = layout_info[j][k + 1] + '_' + '90'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 1
                                 element.rotate_90()
                             elif angle == '180':
                                 name = layout_info[j][k + 1] + '_' + '180'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 2
                                 element.rotate_180()
                             elif angle == '270':
                                 name = layout_info[j][k + 1] + '_' + '270'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 3
                                 element.rotate_270()
-                            # print element.footprint
+                            
                             self.all_parts_info[layout_info[j][k + 1]].append(element)
                     
                     #capacitor or resitor
                     elif (layout_info[j][k][0] == 'C' or layout_info[j][k][0] == 'R') and layout_info[j][k+1] in all_components_types:
                         rotate=False
                         angle=None
-                        #for m in range(len(layout_info[j])):
+                        
                         if layout_info[j][-1][0]=='R': # assuming Rotation parameter is at the end of the line
                             rotate=True
                             angle=layout_info[j][m].strip('R')
@@ -637,34 +531,34 @@ class ScriptInputMethod():
                                 layer_id=int(layout_info[j][-2])
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            #print("Foot",element.footprint)
+                            
                             self.all_parts_info[layout_info[j][k+1]].append(element)
 
                         else:
                             layout_component_id = layout_info[j][k] #+ '.' + layout_info[j][-2]
-                            #print(layout_info[j])
+                            
                             element = Part(info_file=self.info_files[layout_info[j][k + 1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
                             element.load_part()
-                            # print element.footprint
+                            
                             if angle == '90':
                                 name = layout_info[j][k + 1] + '_' + '90'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 1
                                 element.rotate_90()
                             elif angle == '180':
                                 name = layout_info[j][k + 1] + '_' + '180'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 2
                                 element.rotate_180()
                             elif angle == '270':
                                 name = layout_info[j][k + 1] + '_' + '270'
-                                #name = layout_info[j][k + 1]
+                                
                                 element.name = name
                                 element.rotate_angle = 3
                                 element.rotate_270()
-                            # print element.footprint
+                            
                             self.all_parts_info[layout_info[j][k + 1]].append(element)
                     
         
@@ -675,7 +569,7 @@ class ScriptInputMethod():
 
         # double checking if any component is missed
         all_component_types = self.cs_type_map.all_component_types
-        #print(all_component_types)
+        
         for j in range(len(layout_info)):
             if (len(layout_info[j]))>2:
                 for k, v in list(self.all_parts_info.items()):
@@ -713,8 +607,7 @@ class ScriptInputMethod():
         
            
         self.cs_type_map.all_component_types=all_component_types
-        #if len(self.cs_type_map.all_component_types)>len(self.cs_type_map.types_index):
-        #print(self.cs_type_map.all_component_types)
+        
         self.cs_type_map.populate_types_name_index()
        
         
@@ -747,14 +640,12 @@ class ScriptInputMethod():
         
         size = [float(i) for i in layout_info[0]]  # extracts layout size (1st line of the layout_info)
         cs_info = []  # list of rectanges to be used as cornerstitch input information
-        #component_to_cs_type = {}
         if len(self.cs_type_map.all_component_types)==len(self.cs_type_map.types_name):
             component_to_cs_type = {self.cs_type_map.all_component_types[i]: self.cs_type_map.types_name[i] for i in range(len(self.cs_type_map.all_component_types))}
         else:
             print("ERROR: Couldn't find corner stitch type for each component.")
             exit()
-        
-        #print(component_to_cs_type)
+
         # for each component populating corner stitch type information
         for v in list(self.all_parts_info.values()):
             for comp in v:
@@ -765,7 +656,7 @@ class ScriptInputMethod():
                     name=comp.name.split('_')[0]
                     comp.cs_type = component_to_cs_type[name]
 
-                #print(comp.name,comp.layout_component_id,comp.cs_type)
+                
 
         for v in list(self.all_route_info.values()):
             for element in v:
@@ -777,7 +668,7 @@ class ScriptInputMethod():
                     type_name= 'bonding wire pad'
                 element.cs_type = component_to_cs_type[type_name]
                 
-                #print(element.name,element.layout_component_id,element.cs_type)
+                
         
 
 
@@ -805,7 +696,6 @@ class ScriptInputMethod():
         all_components=[] # to store components in each layer
         rects_info=[]
         for k1,layout_data in list(hier_input_info.items()):
-            #print(len(layout_data))
             for j in range(len(layout_data)):
                 for v in list(self.all_parts_info.values()):
                     for element in v:
@@ -821,7 +711,7 @@ class ScriptInputMethod():
                                 
                                 width = (element.footprint[0])
                                 height = (element.footprint[1])
-                                #name = layout_data[j][1]
+                                
                                 name = element.layout_component_id
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
@@ -840,7 +730,7 @@ class ScriptInputMethod():
                                 
                                 width = (element.footprint[0])
                                 height = (element.footprint[1])
-                                #name = layout_data[j][1]
+                                
                                 name = element.layout_component_id
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
@@ -852,7 +742,7 @@ class ScriptInputMethod():
                 for k, v in list(self.all_route_info.items()):
                     for element in v:
                         if len(element.layout_component_id.split('.'))>1:
-                            #print(element.layout_component_id)
+                            
                             if element.layout_component_id.split('.')[0] in layout_data[j] and element.layout_component_id.split('.')[1]==layout_data[j][-2]:
                                 if element.type == 0 and element.name == 'trace':
                                     type_name = 'power_trace'
@@ -866,9 +756,9 @@ class ScriptInputMethod():
                                 y = float(layout_data[j][4])
                                 width = float(layout_data[j][5])
                                 height = float(layout_data[j][6])
-                                #name = layout_data[j][1]
+                                
                                 name=element.layout_component_id
-                                #print name
+                                
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
@@ -887,9 +777,9 @@ class ScriptInputMethod():
                                 y = float(layout_data[j][4])
                                 width = float(layout_data[j][5])
                                 height = float(layout_data[j][6])
-                                #name = layout_data[j][1]
+                                
                                 name=element.layout_component_id
-                                #print name
+                                
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
@@ -967,11 +857,16 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
     
     #print(geometry_info)
     for i in range(len(geometry_info)):
-        if geometry_info[i][0][0]=='I':
-            for layer in all_layers:
-                if layer.name==geometry_info[i][0]:
-                    size=[layer.width,layer.height]
-                    layer.input_geometry.append(size)
+        try:
+            if geometry_info[i][0][0]=='I':
+                for layer in all_layers:
+                    if layer.name==geometry_info[i][0]:
+                        size=[layer.width,layer.height]
+                        layer.input_geometry.append(size)
+        except:
+            print(geometry_info[i])
+            print("Make sure indentation is a Tab character in the layout geometry script")
+            exit()
 
     for i in range(len(geometry_info)):
         if geometry_info[i][0][0] == 'I':
@@ -1072,7 +967,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
         
         if all_layers[i].name in layer_wise_table:
             all_layers[i].wire_table=ScriptMethod.bond_wire_table(bw_objects_def=bondwire_objects_def,wire_table=layer_wise_table[all_layers[i].name])
-            #print(all_layers[i].wire_table)
+            
             all_layers[i].bw_info=all_layers[i].wire_table
             
         
@@ -1121,9 +1016,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                     island.elements.remove(element)
                     island.element_names.remove(element[5])
                     
-                    #extra='_'+element[5]
-                    #island.name.replace(extra, '')
-                    #print(island.name)
+                    
             
     
     return all_layers, ScriptMethod.via_connected_layer_info,ScriptMethod.cs_type_map

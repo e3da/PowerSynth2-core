@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui/editLayout.ui',
-# licensing of 'ui/editLayout.ui' applies.
+# Form implementation generated from reading ui file 'editLayout.ui',
+# licensing of 'editLayout.ui' applies.
 #
-# Created: Sun Oct 10 12:28:39 2021
+# Created: Thu Sep  1 16:08:23 2022
 #      by: pyside2-uic  running on PySide2 5.9.0~a1
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,7 +13,7 @@ from PySide2 import QtCore, QtGui, QtWidgets
 class Ui_Macro_Input_Paths(object):
     def setupUi(self, Macro_Input_Paths):
         Macro_Input_Paths.setObjectName("Macro_Input_Paths")
-        Macro_Input_Paths.resize(547, 226)
+        Macro_Input_Paths.resize(547, 319)
         self.gridLayout = QtWidgets.QGridLayout(Macro_Input_Paths)
         self.gridLayout.setObjectName("gridLayout")
         self.btn_get_settings = QtWidgets.QPushButton(Macro_Input_Paths)
@@ -115,7 +115,7 @@ class Ui_Macro_Input_Paths(object):
         self.btn_open_layer_stack.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Open File", None, -1))
         self.label_2.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Path to layout_script", None, -1))
         self.btn_open_layout.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Open File", None, -1))
-        self.label_5.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Path to bondwire_setup", None, -1))
+        self.label_5.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Path to Connectivity_script", None, -1))
         self.btn_open_bondwire.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Open File", None, -1))
         self.label.setText(QtWidgets.QApplication.translate("Macro_Input_Paths", "Reliability Constraints:", None, -1))
         self.combo_reliability_constraints.setItemText(0, QtWidgets.QApplication.translate("Macro_Input_Paths", "no constraints", None, -1))

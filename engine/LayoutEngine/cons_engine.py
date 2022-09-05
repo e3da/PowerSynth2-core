@@ -13,7 +13,6 @@ from core.engine.LayoutSolution.database import create_connection,insert_record
 from core.MDK.Design import parts
 from core.MDK.Design.group import Island
 from core.model.electrical.meshing.MeshObjects import MeshNode
-#from core.engine.ConstrGraph.ConstraintGraph import constraintGraph
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 
 # GLOBAL VARIABLE FOR DEBUG ONLY
@@ -184,9 +183,7 @@ class New_layout_engine():
 
         # creating corner stitch islands and map between input rectangle(s) and corner stitch tile(s)
         cs_islands,sym_to_cs= self.form_cs_island(islands, self.Htree, self.Vtree) # creates a list of island objects populated with corner stitch tiles
-        #for k,v in sym_to_cs.items():
-            #print (k,v)
-        #input()
+        
         #--------------------------------------for debugging----------------------
         """
         for island in cs_islands:
@@ -198,8 +195,7 @@ class New_layout_engine():
                 print("c",child)
         input()
         """
-        #for k,v in sym_to_cs.items():
-            #print k,v
+        
         #--------------------------------------------------------------------------
         # populate voltage and current information for Htree and Vtree tiles
         if voltage_info!=None or current_info!=None:
@@ -256,16 +252,7 @@ class New_layout_engine():
                                 wire.source_node_id=element[-1] # node id
                                 break
             #self.bondwires = copy.deepcopy(bondwires)  # to pass bondwire info to CG
-            '''for wire in bondwires:
-                print("here", wire.printWire())
-            input()'''
-
-
-
-
-        
-        #------------------------------------------------------------------------------------
-
+  
         #To access globally, patches=initial input rectangle patch list, sym_to_cs= dictionary mapped between input rectangle(s) and corner stitch tile(s)
         # cs_islands: updated islands having cs tiles as elements and mesh node objects,islands=initial islands based on input, combined_graph is for mode 3 (initial layout with nodes)
         self.init_data = [patches, sym_to_cs,cs_islands,islands, combined_graph]
@@ -476,17 +463,17 @@ class New_layout_engine():
                                     if coordinate8 not in points:
                                         points.append(coordinate8)
                                     if tile.EAST.cell.type == 'EMPTY':
-                                        # E.append(coordinate8)
+                                        
                                         E.append(coordinate6)
                                     if tile.WEST.cell.type == "EMPTY":
                                         W.append(coordinate1)
-                                        # W.append(coordinate7)
+                                        
                                     if tile.NORTH.cell.type == 'EMPTY':
-                                        # N.append(coordinate7)
+                                        
                                         N.append(coordinate6)
                                     if tile.SOUTH.cell.type == "EMPTY":
                                         S.append(coordinate1)
-                                        # S.append(coordinate8)
+                                        
                                     if tile.westNorth(tile).cell.type == 'EMPTY':
                                         N.append(coordinate7)
                                     if tile.northWest(tile).cell.type == 'EMPTY':
@@ -581,17 +568,17 @@ class New_layout_engine():
                                         points.append(coordinate8)
 
                                     if tile.EAST.cell.type == 'EMPTY':
-                                        # E.append(coordinate8)
+                                        
                                         E.append(coordinate6)
                                     if tile.WEST.cell.type == "EMPTY":
                                         W.append(coordinate1)
-                                        # W.append(coordinate7)
+                                        
                                     if tile.NORTH.cell.type == 'EMPTY':
-                                        # N.append(coordinate7)
+                                        
                                         N.append(coordinate6)
                                     if tile.SOUTH.cell.type == "EMPTY":
                                         S.append(coordinate1)
-                                        # S.append(coordinate8)
+                                        
                                     if tile.westNorth(tile).cell.type == 'EMPTY':
                                         N.append(coordinate7)
                                     if tile.northWest(tile).cell.type == 'EMPTY':
@@ -720,17 +707,17 @@ class New_layout_engine():
                                             points.append(coordinate8)
 
                                         if tile.EAST.cell.type == 'EMPTY' :
-                                            # E.append(coordinate8)
+                                            
                                             E.append(coordinate6)
                                         if tile.WEST.cell.type == "EMPTY" :
                                             W.append(coordinate1)
-                                            # W.append(coordinate7)
+                                            
                                         if tile.NORTH.cell.type == 'EMPTY' :
-                                            # N.append(coordinate7)
+                                            
                                             N.append(coordinate6)
                                         if tile.SOUTH.cell.type == "EMPTY":
                                             S.append(coordinate1)
-                                            # S.append(coordinate8)
+                                            
                                         if tile.westNorth(tile).cell.type == 'EMPTY' :
                                             N.append(coordinate7)
                                         if tile.northWest(tile).cell.type == 'EMPTY':
@@ -959,7 +946,7 @@ class New_layout_engine():
                             new_x ,new_y = new_pt
                             for v_element in island.elements_v:
                                 v_x, v_y, v_w, v_h = v_element[1:5]
-                                #if h_x <= new_x and h_y <= new_y and h_x + h_w >= new_x and h_y + h_h >= new_y:
+                                
                                 if new_pt in selected_pt:
                                     if v_y==new_y:
                                         S.append(new_pt)
@@ -968,7 +955,7 @@ class New_layout_engine():
 
 
                         bw_points +=selected_pt
-                        #print bw_points
+                        
             bw_points = list(set(bw_points))
 
             bw_points=[list(pt) for pt in bw_points]
@@ -1044,15 +1031,14 @@ class New_layout_engine():
                 bottom_left_coordinates=list(itertools.product(zdl_h[0:-1],zdl_v[0:-1]))
                 node_h=Htree.hNodeList[0]
                 node_v=Vtree.vNodeList[0]
-                #print("grid",grid_points)
-                #print("bl",bottom_left_coordinates)
+                
 
 
                 for point in bottom_left_coordinates:
                     tile=node_h.findPoint(point[0],point[1],node_h.stitchList[0])
                     if tile.cell.type!='EMPTY' and tile not in cs_tiles_h and (tile.cell.x,tile.cell.y+tile.getHeight()) in grid_points and (tile.cell.x+tile.getWidth(),tile.cell.y+tile.getHeight()) in grid_points and (tile.cell.x+tile.getWidth(),tile.cell.y) in grid_points :
                         cs_tiles_h.append(tile)
-                        #print(tile.cell.x,tile.cell.y)
+                        
                 for point in bottom_left_coordinates:
                     tile=node_v.findPoint(point[0],point[1],node_v.stitchList[0])
                     if tile.cell.type!='EMPTY' and tile not in cs_tiles_v and (tile.cell.x,tile.cell.y+tile.getHeight()) in grid_points and (tile.cell.x+tile.getWidth(),tile.cell.y+tile.getHeight()) in grid_points and (tile.cell.x+tile.getWidth(),tile.cell.y) in grid_points :
@@ -1088,21 +1074,20 @@ class New_layout_engine():
             
 
             shared=True
-            #shared=False
+            
             all_bond_wires=[]
             if len(child) > 0:
                 for rect in child:
                     if rect[5][0]=='B':
                         all_bond_wires.append(rect)
-            #print("B",all_bond_wires)
+            
             if len(child) > 0:
                 for rect in child:
                     if self.flexible==False and shared==False:
                         if rect[5][0]=='B':
 
                             node_id=cs_elements[0][-1]
-                            #print(node_id)
-                            #input()
+                            
                             r = [rect[0], rect[1], rect[2], rect[3], rect[4],node_id]  # type,x,y,width,height, hierarchy_level, parent nodeId
                             if r not in cs_child:
                                 cs_child.append(r)
@@ -1133,19 +1118,11 @@ class New_layout_engine():
 
                                             if rect1[1] == i.cell.x and rect1[2] == i.cell.y and rect1[3] >= i.getWidth() and rect1[4] >= i.getHeight(): #searching bw point in child node of device (device with via)
                                                 node_id=node.id
-                                                #print(i.cell.type)
-                                    
-                                    
-                                                #print(node_id)
-                                                #input()
-
+                                               
                                     r = [rect[0], rect[1], rect[2], rect[3], rect[4],node_id]  # type,x,y,width,height, hierarchy_level, parent nodeId
                                     
                                     cs_child.append(r)
-                                    #cs_mapped_input[rect[5]] = [[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]],[node.id],rect[0], rect[8], i.rotation_index]
-                                    #cs_mapped_input[rect[5]] = [
-                                        #[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]], [node.id], rect[0],
-                                        #rect[8], 0]  # added to pass bw location on top of a device
+                                    
                                     all_bond_wires.remove(rect)
 
                                     cs_island.child_names.append(rect[5])
@@ -1177,21 +1154,16 @@ class New_layout_engine():
                             if rect[5][0]=='B':
 
                                 node_id=cs_elements[0][-1]
-                                #print(node_id)
-                                #input()
+                                
                                 r = [rect[0], rect[1], rect[2], rect[3], rect[4],node_id]  # type,x,y,width,height, hierarchy_level, parent nodeId
                                 if r not in cs_child:
                                     cs_child.append(r)
-                                    #cs_mapped_input[rect[5]] = [
-                                        #[rect[1], rect[2], rect[1] + rect[3], rect[2] + rect[4]], [node.id], rect[0],
-                                        #rect[8], 0]  # added to pass bw location on top of a device
                                     
                                     all_bond_wires.remove(rect)
 
                                     cs_island.child_names.append(rect[5])
 
-            #print(len(all_bond_wires),all_bond_wires)
-            #input()
+            
             cs_island.child = cs_child
 
             cs_element_nodes=[]
@@ -1206,14 +1178,13 @@ class New_layout_engine():
 
             cs_islands.append(cs_island)
 
-        #print(cs_mapped_input)
         
         return cs_islands, cs_mapped_input
 
 
 
     def save_layout(self,Layout_Rects, count, db):
-        # print Layout_Rects
+        
 
         data = []
 
@@ -1229,7 +1200,7 @@ class New_layout_engine():
 
         with open(temp_file, 'wb') as f:
             f.writelines(["%s\n" % item for item in data])
-            # f.write(''.join(chr(i) for i in range(data)))
+            
         conn = create_connection(db)
         with conn:
             insert_record(conn, l_data, temp_file)
@@ -1306,17 +1277,11 @@ class New_layout_engine():
                 data.append([k[0], k[1]])
 
                 l_data = [j, data]
-                #print(l_data)
+                
                 directory = os.path.dirname(db)
                 temp_file = directory + '/out.txt'
                 with open(temp_file, 'w+') as f:
-                    #res = [''.join(format(ord(i), 'b') for i in data)]
                     
-                    #for item in data:
-                        #line=[str(i).encode('utf-8') for i in item]
-                        #line=[i for i in item]
-                    #line.append('\n')
-                    #f.write(json.dumps(line))
                     f.writelines(["%s\n" % item for item in data])
                 conn = create_connection(db)
                 with conn:
@@ -1535,8 +1500,7 @@ def Sym_to_CS(input_rects,Htree,Vtree):
     for node in HorizontalNodeList:
         for i in node.stitchList:
             for j in input_rects:
-                #if j.hier_level==0:
-
+                
                 if j.x==i.cell.x and j.y==i.cell.y and j.type==i.cell.type and j.width==i.getWidth() and j.height==i.getHeight():
                     i.name=j.name
                     if node.parent!=None:
@@ -1545,8 +1509,7 @@ def Sym_to_CS(input_rects,Htree,Vtree):
                                 if v[0].nodeId==node.id:
                                     i.parent_name=v[0].name
 
-                    #if node.parent!=None:
-                    #print i.nodeId,j.name,node.id
+                    
                     if node.parent==None:
                         dict = {j.name: [i, node.parent]}
                     else:
@@ -1559,7 +1522,7 @@ def Sym_to_CS(input_rects,Htree,Vtree):
     for node in VerticalNodeList:
         for i in node.stitchList:
             for j in input_rects:
-                #if j.hier_level == 0:
+                
                 if j.x == i.cell.x and j.y == i.cell.y and j.type == i.cell.type and j.width == i.getWidth() and j.height == i.getHeight():
                     i.name=j.name
                     if node.parent!=None:

@@ -137,6 +137,8 @@ class CornerStitch_Emodel_API:
         self.dev_conn_file = '' # A file to store in the workspace for the device connectivity setup
         self.workspace_path = ''
         self.mutual_count = 0 # mutual elements
+        #To store FastHenry files
+        self.fashenry_folder= ''
         
     def process_trace_orientation(self,trace_ori_file=None):
         with open(trace_ori_file, 'r') as file_data:
@@ -179,7 +181,7 @@ class CornerStitch_Emodel_API:
                         for conns in comp.conn_dict:
                             states[conns] = dev_conn[name][list(comp.conn_dict.keys()).index(conns)]
                         self.conn_dict[name] = states
-        #print self.conn_dict
+        
     def set_solver_frequency(self, frequency=1e6):
         """ 
         Args:
@@ -797,7 +799,8 @@ class CornerStitch_Emodel_API:
         """
         sol_id is the solution id of the layout. map it here so we can print out weird results
         """
-        loop = self.loop_dv_state_map[0]
+        loops=list(self.loop_dv_state_map.keys())
+        loop = loops[0]
         dev_states = self.loop_dv_state_map[loop]     
         loop = loop.replace('(','')
         loop = loop.replace(')','')

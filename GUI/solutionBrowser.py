@@ -49,8 +49,12 @@ def showSolutionBrowser(self):
             for sol in self.cmd.structure_3D.solutions:
                 for key in sol.parameters:
                     perf_metrices.append(key)
-            axes.set_xlabel(perf_metrices[0])
-            axes.set_ylabel(perf_metrices[1])
+            if len(perf_metrices)==2:
+                axes.set_xlabel(perf_metrices[0])
+                axes.set_ylabel(perf_metrices[1])
+            else:
+                axes.set_xlabel(perf_metrices[0])
+                axes.set_ylabel('None')
         else:
             axes.set_xlabel("Solution Index")
             axes.set_ylabel("Solution Index")
@@ -159,8 +163,12 @@ def showSolutionBrowser(self):
         
 
         if self.option:
-            ui.x_label.setText(perf_metrices[0])
-            ui.y_label.setText(perf_metrices[1])
+            if len(perf_metrices)==2:
+                ui.x_label.setText(perf_metrices[0])
+                ui.y_label.setText(perf_metrices[1])
+            else:
+                ui.x_label.setText(perf_metrices[0])
+                ui.y_label.setText('None')
 
             # FIXME Currently hardcoding the units.
             ui.label_units1.setText("nH")
@@ -191,11 +199,8 @@ def showSolutionBrowser(self):
                     
                     break
             if self.cmd.structure_3D.solutions:
-                #print(self.solution_ind)
-                #print(self.cmd.structure_3D.solutions[self.solution_ind])
+                
                 export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[float(self.floorPlan[0]), float(self.floorPlan[1])])
-            #elif self.cmd.solutions:
-                #export_solution_layout_attributes(sol_path=self.pathToWorkFolder + "Solutions/", solutions=self.cmd.solutions[self.solution_ind], size=[int(self.floorPlan[0]), int(self.floorPlan[1])])
             else:
                 print("Error: Something went wrong.")
             
@@ -212,7 +217,7 @@ def showSolutionBrowser(self):
         ui.btn_exit.pressed.connect(close_GUI)
         ui.btn_initial_layout.pressed.connect(display_initial_layout)
 
-        ui.btn_export_selected.setToolTip("Export solution selected in the above graph to a csv file in the Solutions folder.")
+        ui.btn_export_selected.setToolTip("Export solution selected in the above graph to a csv file in the Solutions folder. Also, exports the parasitic netlist for the selected solution.")
         ui.btn_export_all.setToolTip("Export all solutions to a csv file in the Solutions folder.")
         ui.btn_exit.setToolTip("Close and exit the GUI.")
         ui.btn_initial_layout.setToolTip("Display initial layout.")

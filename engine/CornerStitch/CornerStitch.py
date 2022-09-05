@@ -682,9 +682,7 @@ class Vnode(Node):
         x2 = foo[2]
         y2 = foo[3]
         RESP = 0  # flag to check empty area
-        # if self.areaSearch(x1, y1, x2, y2,type):#check to ensure that the area is empty
-        # RESP=1
-
+        
         # finding top left and bottom right coordinate containing tiles of the new tile
         topLeft = self.findPoint(x1, y1, self.stitchList[0])
         bottomRight = self.findPoint(x2, y2, self.stitchList[0])
@@ -787,8 +785,6 @@ class Vnode(Node):
             if cc.cell.type == type and cc.cell.y + cc.getHeight() == y2 or bl.cell.type == type:
                 if cc not in splitList and cc not in self.boundaries:
                     splitList.append(cc)
-                # if cc.cell.type=="SOLID" and cc.cell.y+cc.getHeight() == y2:
-
                 if cc.cell.type == type and cc.cell.y + cc.getHeight() == y2:
                     if cc.SOUTH not in self.boundaries:
                         cc = cc.SOUTH
@@ -1063,12 +1059,12 @@ class Vnode(Node):
             if bw != None:
                 Connections = [bw[x:x + 3] for x in range(0, len(bw), 3)]
 
-                # print Connections
+                
                 for w in Connections:
 
                     parent_tile = None
                     for wire in v_bondwire_objects:
-                        # print"PRe", wire.src_coordinate, wire.dest_coordinate
+                        
                         if wire.name == w[0]:
 
                             if wire.src_coordinate == None:
@@ -1080,7 +1076,7 @@ class Vnode(Node):
                                     parent_tile = self.findPoint(x1, y2, tile_list[0])
                                     wire.src_tile = parent_tile
                                     wire.src_nodeID = Parent.id
-                                    # wire.src_nodeID = parent_tile.nodeId
+                                    
                             elif wire.dest_coordinate == None:
 
                                 wire.dest_coordinate = (int(w[1]), int(w[2]))
@@ -1091,9 +1087,9 @@ class Vnode(Node):
                                     parent_tile = self.findPoint(x1, y2, tile_list[0])
                                     wire.dest_tile = parent_tile
                                     wire.dest_nodeID = Parent.id
-                                    # wire.dest_nodeID =  parent_tile.nodeId
+                                    
 
-                            # print "Pr",parent_tile.cell.x,parent_tile.cell.y,parent_tile.cell.type,wire.src_coordinate,wire.dest_coordinate
+                            
                             parent_tile.bw.append(wire)
         return self.stitchList
 
@@ -1214,13 +1210,13 @@ class Vnode(Node):
                     rect.nodeId = id
             for rect in tile_list:
 
-                # if rect.cell.type == type and rect not in stitchList:
+                
                 if rect not in stitchList and rect.nodeId == id:
                     rect.nodeId = id
 
                     stitchList.append(rect)
                 else:
-                    # if rect not in boundaries and rect.cell.type!=type:
+                    
                     if rect not in boundaries:
                         boundaries.append(copy.copy(rect))
             Vtree.vNodeList.remove(node)
@@ -1444,9 +1440,7 @@ class Hnode(Node):
         splitList = []
         splitList.append(topLeft)
         cc = topLeft
-        # print "TL",cc.cell.x, cc.cell.y, cc.cell.type,cc.getWidth(),cc.getHeight(),cc.cell.type
-        # print"TR",tr.cell.x,tr.cell.y, tr.cell.type,tr.getWidth(),tr.getHeight(),tr.cell.type
-
+        
         if start != Schar:
             if cc.WEST not in self.boundaries and cc.WEST.cell.type == type and cc.WEST.cell.x + cc.WEST.getWidth() == x1 or cc.cell.type == type:
                 cc1 = cc.WEST
@@ -1462,7 +1456,7 @@ class Hnode(Node):
                 if cc2 not in self.boundaries:
                     splitList.append(cc2)
 
-            # print "HSP", len(splitList)
+            
             while cc.cell.x <= tr.cell.x and cc not in self.boundaries:
                 if cc not in splitList:
                     splitList.append(cc)
@@ -1485,9 +1479,9 @@ class Hnode(Node):
                         splitList.append(cc)
 
         # splitting tiles at y1 coordinate
-        # print "HSP",len(splitList)
+        
         for rect in splitList:
-            #print (rect.cell.x,rect.cell.y,rect.cell.type)
+            
             i = self.stitchList.index(rect)
             if y1 != rect.cell.y and y1 != rect.NORTH.cell.y:
                 self.hSplit(i, y1)
@@ -1536,9 +1530,9 @@ class Hnode(Node):
                     splitList.append(cc1)
 
         # splitting tiles at y2 coordinate
-        # print"v_split",len(splitList)
+        
         for rect in splitList:
-            # print"s",rect.cell.x,rect.cell.y,rect.cell.type,rect.getWidth(),rect.getHeight()
+            
             i = self.stitchList.index(rect)
             if y2 != rect.cell.y and y2 != rect.NORTH.cell.y: self.hSplit(i, y2)
 
@@ -1546,7 +1540,7 @@ class Hnode(Node):
         # list of tiles which need to be split vertically at x1 and x2
         changeList = []
         cc = self.findPoint(x1, y1, self.stitchList[0]).SOUTH
-        # print x1,y1
+        
 
         while cc.cell.x + cc.getWidth() <= x1:
             cc = cc.EAST
@@ -1609,7 +1603,7 @@ class Hnode(Node):
                         if foo.cell.y + foo.getHeight() > min_y:
 
                             if min_y != foo.cell.y and min_y != foo.NORTH.cell.y:
-                                # RESP=1
+                                
                                 k = self.stitchList.index(foo)
                                 self.hSplit(k, min_y)
 
@@ -1698,7 +1692,7 @@ class Hnode(Node):
                 else:
                     del changeList[i + 1]
                     del changeList[i]
-                    # print"arealist=", len(changeList)
+                   
                     if len(changeList) == 0:
                         changeList.append(mergedcell)
                     else:
@@ -1760,7 +1754,7 @@ class Hnode(Node):
             else:
                 del changeList[i + 1]
                 del changeList[i]
-                # print"arealist=", len(changeList)
+                
                 if len(changeList) == 0:
                     changeList.append(mergedcell)
                 else:
@@ -1798,7 +1792,7 @@ class Hnode(Node):
                     N = rect.findNeighbors()
                     for i in N:
                         if i.cell.type == type:
-                            # print "1",i.nodeId
+                            
                             N2 = i.findNeighbors()
                             for j in N2:
                                 if j not in tile_list:
@@ -1809,10 +1803,7 @@ class Hnode(Node):
             self.addChild(start, tile_list, type, end, Htree, Parent)
             if bw != None:
                 Connections = [bw[x:x + 3] for x in range(0, len(bw), 3)]
-
-                # print Connections
                 for w in Connections:
-
                     parent_tile = None
                     for wire in h_bondwire_objects:
                         if wire.name == w[0]:
@@ -1824,7 +1815,7 @@ class Hnode(Node):
                                     parent_tile = self.findPoint(x1, y2, tile_list[0])
                                     wire.src_tile = parent_tile
                                     wire.src_nodeID = ParentH.id
-                                    # wire.src_nodeID = parent_tile.nodeId
+                                    
                             elif wire.dest_coordinate == None:
                                 wire.dest_coordinate = (int(w[1]), int(w[2]))
                                 x3 = wire.dest_coordinate[0]
@@ -1833,7 +1824,7 @@ class Hnode(Node):
                                     parent_tile = self.findPoint(x1, y2, tile_list[0])
                                     wire.dest_tile = parent_tile
                                     wire.dest_nodeID = ParentH.id
-                                    # wire.dest_nodeID = parent_tile.nodeId
+                                    
                             parent_tile.bw.append(wire)
 
         return self.stitchList
@@ -1874,8 +1865,6 @@ class Hnode(Node):
             boundaries = []
             id = len(Htree.hNodeList) + 1
             for rect in tile_list:
-                # print "R", rect.cell.x, rect.cell.y
-
                 if rect.cell.type == type and rect.nodeId == None:
                     rect.nodeId = id
 
@@ -1967,11 +1956,11 @@ class Hnode(Node):
 
     def rectifyShadow(self, caster):
         """
-                this checks the EAST and WEST of caster, to see if there are alligned empty cells that could be merged.
-                Primarily called after insert, but for simplicity and OOP's sake, I'm separating this from the other
+        this checks the EAST and WEST of caster, to see if there are alligned empty cells that could be merged.
+        Primarily called after insert, but for simplicity and OOP's sake, I'm separating this from the other
 
-                Re-write this to walk along the E and W edges and try to combine neighbors sequentially
-                """
+        Re-write this to walk along the E and W edges and try to combine neighbors sequentially
+        """
         changeSet = []
 
         cc = caster.EAST  # recitfy east side, walking downwards
@@ -2012,7 +2001,6 @@ class Hnode(Node):
             mergedCell = self.merge(topCell, lowerCell)
             if mergedCell == "Tiles are not alligned":  # the tiles couldn't merge because they didn't line up
                 i += 1
-                # print "i = ", i
                 if j < len(changeSet) - 1:
                     j += 1
             else:
@@ -2101,9 +2089,7 @@ class Substrate():
         self.w = origin[0]+w
         self.h = origin[1]+h
         self.type = type
-        #self.Initialize()
-        #print(self.origin,self.w,self.h)
-
+        
     # defining root tile of the tree
     def Initialize(self):
         

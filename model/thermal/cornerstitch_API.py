@@ -70,7 +70,7 @@ class CornerStitch_Tmodel_API:
         self.pp_json_path= None # to store PP json file
         print("Starting cornerstitch_API thermal interface")
 
-    def init_matlab(self):
+    def init_matlab(self,ParaPower_dir=''):
         """Initializes the MATLAB for Python engine and starts it in the working directory specified in the path
         attribute.
 
@@ -80,7 +80,10 @@ class CornerStitch_Tmodel_API:
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/ARL_ParaPower/')
+        if ParaPower_dir=='':
+            self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/lib/ParaPower/')
+        else:
+            self.matlab_engine.cd(ParaPower_dir)
 
     def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
         layer_average_list = []
@@ -103,8 +106,7 @@ class CornerStitch_Tmodel_API:
                          thickness=bp_layer.thick * 1e-3,
                          conv_coeff=self.bp_conv[0],
                          thermal_cond=bp_layer.material.thermal_cond)
-        # device thermal
-        #print self.devices
+        
         module_device_locs = module_data.get_devices_on_layer()
 
         devices = []
@@ -129,8 +131,7 @@ class CornerStitch_Tmodel_API:
             names = []
             island_names=list(module_data.islands.keys())
             layer_islands=module_data.islands[island_names[0]]
-            #print("H",islands)
-            #for isl in module_data.islands[0]: # TODO: gotta setup the layer id for island in layout script
+            # TODO: gotta setup the layer id for island in layout script
             for isl in layer_islands: # to handle 2D layouts
                 die_thermals = []
                 trace_rects = []
@@ -165,15 +166,15 @@ class CornerStitch_Tmodel_API:
             tg.trace_islands = islands
             tg.sublayer_features = self.sub_thermal_feature
             res = solve_TFSM(tg,1.0)
-            #print ("thermal",res)
+            
             self.temp_res = dict(list(zip(names, list(res))))
-            #print self.temp_res
+            
 
         elif self.model == 1:
             t_bp, layer, devices = self.set_up_thermal_props(module_data)
             self.temp_res = {}
             for k in self.devices:
-                # Find extra temp. through die
+                
                 dev = self.devices[k]
                 A = dev.footprint[0] * dev.footprint[1] * 1e-6
                 t1 = dev.thickness * 1e-3
@@ -186,8 +187,7 @@ class CornerStitch_Tmodel_API:
                 temp = compound_top_surface_avg(t_bp, layer, devices, list(self.devices.keys()).index(k))
                 temp += self.t_amb + dev_delta
                 self.temp_res[k] = temp
-            #print "here"
-            #print self.temp_res
+            
         elif self.model== 2:
             '''
             parapower evaluation goes here
@@ -195,14 +195,11 @@ class CornerStitch_Tmodel_API:
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
             removable_features=[]
             for f in solution.features_list:
-                #f.printFeature()
                 if f.name[0]=='L' or f.name[0]=='V':
                     removable_features.append(f)
             for f in removable_features:
                 solution.features_list.remove(f)
 
-            #for f in solution.features_list:
-                #f.printFeature()
             if self.matlab_engine == None:
                 #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()
@@ -210,20 +207,16 @@ class CornerStitch_Tmodel_API:
             ambient_temp=self.t_amb
             h_val=self.bp_conv
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
-            #for f in solution.features_list:
-                #f.printFeature()
+            
             self.temp_res = {}
             if len(h_val)==1:
                 h_val.append(0) # single-sided cooling
             if self.matlab_engine != None:
-                #print("PP_JSON_TAPI",self.pp_json_path)
                 ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")
             self.temp_res =ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
-            #temp=400
-            #for k in self.devices:
-            #    self.temp_res[k] = temp
+            
             return
     
 

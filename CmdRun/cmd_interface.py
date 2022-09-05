@@ -69,6 +69,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_FOLDER:":
                     settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
+                if info[0] == "PARAPOWER_CODEBASE:":
+                    settings.PARAPOWER_CODEBASE = os.path.abspath(info[1])
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
@@ -81,6 +83,7 @@ class Cmd_Handler:
         self.layout_script = None  # layout file dir
         self.connectivity_setup = None  # bondwire setup dir
         self.layer_stack_file = None  # layerstack file dir
+        self.floor_plan= [1,1] # handle those cases when floorplan is not required.
         self.rs_model_file = 'default'        
         self.fig_dir = None  # Default dir to save figures
         self.db_dir = None  # Default dir to save layout db
@@ -220,7 +223,7 @@ class Cmd_Handler:
                         floor_plan = floor_plan.split(",")
                         self.floor_plan = [float(i) for i in floor_plan]
                     except:
-                        floorplan= [1,1] # handle those cases when floorplan is not required.
+                        self.floor_plan= [1,1] # handle those cases when floorplan is not required.
                 if info[0] == 'Num_generations:':
                     self.num_gen = int(info[1])
                 if info[0] == 'Export_AnsysEM_Setup:':
@@ -546,6 +549,7 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
+        self.e_api_init.fasthenry_folder= settings.FASTHENRY_FOLDER
         e_layer_stack = self.layer_stack # deep-copy so it wont affect the thermal side
         
         self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
@@ -939,7 +943,7 @@ class Cmd_Handler:
             self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
             
         elif self.e_model_choice == 'FastHenry': # For 3D only
-            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table)
+            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
@@ -1020,7 +1024,9 @@ class Cmd_Handler:
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
             if model_type==2:
-                self.t_api.init_matlab()
+                self.t_api.init_matlab(ParaPower_dir=settings.PARAPOWER_CODEBASE)
+                #print(settings.PARAPOWER_CODEBASE)
+                #input()
     def init_apis(self):
         '''
         initialize electrical and thermal APIs
@@ -1386,6 +1392,7 @@ class Logger(object):
 
 
 if __name__ == "__main__":  
+    
     '''
     application = main.GUI()
     application.run()
@@ -1401,11 +1408,8 @@ if __name__ == "__main__":
     print (str(sys.argv))
     debug = True
     qmle_nethome = "/nethome/qmle/testcases"
-    imam_nethome1 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase"
-    imam_nethome2 = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Cases_PS2"
-    imam_nethome3= "/nethome/ialrazi/Quang_Result"
-    qmle_csrc = "C:/Users/qmle/Desktop/peng-srv/testcases"
-    imam_nethome4="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
+    imam_nethome="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test"
+    imam_nethome2="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
                 , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
@@ -1463,3 +1467,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
+    #'''
