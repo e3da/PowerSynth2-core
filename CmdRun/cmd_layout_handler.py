@@ -409,7 +409,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             sol.cs_solution=solution
-            #plot_solution_structure(sol)
+            plot_solution_structure(sol)
             PS_solutions.append(sol)
 
         #------------------------for debugging---------------------------#

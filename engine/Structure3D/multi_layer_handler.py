@@ -427,7 +427,7 @@ class Layer():
                                    
                                     elif len(vias) == 2 and len(bws) ==0: # SiC MOSFET/ Si IGBT with wire bondless case (via only)
                                         dev_id = self.input_geometry[i][index_-1]
-                                        new_line1= ['.','.','+', vias[0], str(gate_x), str(gate_y), layer_id]
+                                        new_line1= ['.','.','+', vias[0], 'Via', str(gate_x), str(gate_y), layer_id]
                                         
                                         if new_line1 not in new_lines[i]:
                                             new_lines[i].append(new_line1)

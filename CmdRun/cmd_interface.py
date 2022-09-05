@@ -549,6 +549,7 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
+        self.e_api_init.fasthenry_folder= settings.FASTHENRY_FOLDER
         e_layer_stack = self.layer_stack # deep-copy so it wont affect the thermal side
         
         self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
@@ -942,7 +943,7 @@ class Cmd_Handler:
             self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
             
         elif self.e_model_choice == 'FastHenry': # For 3D only
-            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table)
+            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
@@ -1392,6 +1393,7 @@ class Logger(object):
 
 if __name__ == "__main__":  
     
+    '''
     application = main.GUI()
     application.run()
 
@@ -1407,6 +1409,7 @@ if __name__ == "__main__":
     debug = True
     qmle_nethome = "/nethome/qmle/testcases"
     imam_nethome="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test"
+    imam_nethome2="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'},
                     {imam_nethome:'2D_Case_1/macro_script.txt'},
@@ -1427,7 +1430,8 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_3/Case_3_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
-                    {imam_nethome:'3D_Case_6/macro_script.txt'}]
+                    {imam_nethome:'3D_Case_6/macro_script.txt'},
+                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'}]
 
 
         for tc in tc_list:
@@ -1461,4 +1465,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    '''
+    #'''

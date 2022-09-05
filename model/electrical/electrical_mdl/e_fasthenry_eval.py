@@ -623,14 +623,15 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         # removee the Zc.mat file incase their is error
         cmd = 'rm '+outputfile
         print (cmd)
-        os.system(cmd)    
+        #os.system(cmd)    
         try:
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
         #print ('R',r_list,'L',l_list)
-        return r_list[0],l_list[0]
+        #return r_list[0],l_list[0]
+        return -1,-1
 
     def parallel_run(self,solutions):
         num_cpu = multiprocessing.cpu_count()
@@ -685,7 +686,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
-            return r_list[0],l_list[0]
+            #return r_list[0],l_list[0]
+            return -1,-1
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
             return -1,-1
