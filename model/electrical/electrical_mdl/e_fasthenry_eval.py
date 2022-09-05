@@ -686,8 +686,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
-            #return r_list[0],l_list[0]
-            return -1,-1
+            return r_list[0],l_list[0]
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
             return -1,-1

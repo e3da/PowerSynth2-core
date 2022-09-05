@@ -1410,6 +1410,7 @@ if __name__ == "__main__":
     qmle_nethome = "/nethome/qmle/testcases"
     imam_nethome="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test"
     imam_nethome2="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
+    imam_nethome1 = ""
     if debug: # you can mannualy add the argument in the list as shown here
         tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'}\
                 , {qmle_nethome:'Meshing/Planar/Rayna_Case_Opt/macro_script.txt'},\
@@ -1432,7 +1433,7 @@ if __name__ == "__main__":
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/2D_Case_1_Dev/macro_script_1_dev.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Journal_3D/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/2D_Half_Bridge_Test_Case_1/2D_Half_Bridge_Test_Case_1/macro_script.txt'},
-                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new_debug/Case_3_new/macro_script.txt'},
+                    {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new_debug/macro_script.txt'},
                     {qmle_nethome:'Unit_Test_Cases/New_Script/Test_Cases/Case_3D_new_debug_1/macro_script_new.txt'}]
 
 
@@ -1450,7 +1451,7 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings.info"#os.path.join(k,"settings.info")
+        setting_dir = "/nethome/qmle/testcases/settings_up.info"#os.path.join(k,"settings.info")
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
