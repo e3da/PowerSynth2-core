@@ -1,3 +1,4 @@
+#@authors: qmle, ialrazi
 
 from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar
@@ -68,20 +69,37 @@ class new_engine_opt:
         #schem.set_up_relative_locations()
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
-        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map) 
-        #self.e_api.print_and_debug_layout_objects_locations()
-        self.e_api.form_initial_trace_mesh(id)
-        # Setup wire connection
-        # Go through every loop and ask for the device mode # run one time
-        self.e_api.check_device_connectivity(False)
+        
         # Form circuits from the PEEC mesh -- This circuit is not fully connected until the device state are set.
         # Eval R, L , M without backside consideration
-        self.e_api.generate_circuit_from_trace_mesh()
-        self.e_api.add_wires_to_circuit()
-        self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
-        self.e_api.eval_and_update_trace_RL_analytical()
-        self.e_api.eval_and_update_trace_M_analytical()
-        
+        # Generic flow for all apis -- PEEC, Loop or FH
+        self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
+        self.e_api.handle_net_hierachy(lvs_check = False) 
+        self.e_api.check_device_connectivity(False)
+
+        if self.e_api.e_mdl == "PEEC":
+            #self.e_api.print_and_debug_layout_objects_locations()
+            # Setup wire connection
+            # Go through every loop and ask for the device mode # run one time
+            self.e_api.form_initial_trace_mesh(id)
+            self.e_api.generate_circuit_from_trace_mesh()
+            self.e_api.add_wires_to_circuit()
+            self.e_api.add_vias_to_circuit() # TODO: Implement this method for solder ball arrays
+            self.e_api.eval_and_update_trace_RL_analytical()
+            self.e_api.eval_and_update_trace_M_analytical()
+        elif self.e_api.e_mdl == 'FastHenry':
+            loops = list(self.e_api.loop_dv_state_map.keys())
+            loop = loops[0]
+            dev_states = self.e_api.loop_dv_state_map[loop]     
+            loop = loop.replace('(','')
+            loop = loop.replace(')','')
+            src,sink = loop.split(',')
+            self.e_api.form_isl_script(module_data=module_data,feature_map=obj_name_feature_map,device_states= dev_states) # mimic the init-3D of PEEC here
+            
+            self.e_api.add_source_sink(src,sink)
+            
+            #self.e_api.generate_fasthenry_solutions_dir(id)
+            #self.e_api.generate_fasthenry_inputs(id)
     def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
         result = []
         measures=[None,None]
@@ -95,7 +113,7 @@ class new_engine_opt:
             measure=self.measures[i]
             # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
             if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id != -1: # Can be use for debugging, in case a solution id throws some weird resultss
+                if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
                     ps_sol = solution
                     features = ps_sol.features_list
                     obj_name_feature_map = {}
@@ -103,32 +121,52 @@ class new_engine_opt:
                         obj_name_feature_map[f.name] = f
                     self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
                     # EVALUATION PROCESS 
-                    if measure.multiport:
-                        multiport_result = self.e_api.eval_multi_loop_impedances()
-                        print(solution.solution_id,multiport_result)
-                        self.multiport_result[solution.solution_id] = multiport_result
-                        # if possible, we can collect the data for a balancing layout optimization.
-                        # 1 Balancing
-                        # 2 Using the full matrix (without mutual for now) to estimate thermal performance
-                        result.append(0)    
-                    else:
-                        R, L = self.e_api.eval_single_loop_impedances()
-                        R_abs = abs(R)
-                        L_abs = abs(np.imag(L))
-                        print("L",L_abs)
-                        if abs(R_abs)>1e3:
-                            print("ID:",solution.solution_id)
-                            input("Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                        result.append(L_abs/1e-9)  
+                    if self.e_api.e_mdl == "PEEC":
+                        if measure.multiport:
+                            multiport_result = self.e_api.eval_multi_loop_impedances()
+                            self.multiport_result[solution.solution_id] = multiport_result
+                            # if possible, we can collect the data for a balancing layout optimization.
+                            # 1 Balancing
+                            # 2 Using the full matrix (without mutual for now) to estimate thermal performance
+                            result.append(0)    
+                        else:
+                            
+                            R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
+                            R_abs = abs(R)
+                            L_abs = abs(np.imag(L))
+                            R_abs = R_abs[0]
+                            L_abs = L_abs[0]
+                            """if L_abs <= 9e-9 and L_abs >=8e-9:
+                                print("found solution",solution.solution_id)
+                                input()"""
+                            if abs(R_abs)>1e3:
+                                print("ID:",solution.solution_id)
+                                print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
+                                print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
+
+                            result.append(L_abs)  
+                    elif self.e_api.e_mdl == 'FastHenry':
+                        
+                        self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
+                        self.e_api.generate_fasthenry_inputs(solution.solution_id)
+                        if sol_len==1:
+                            R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                            L_abs = abs(L)
+                            result.append(L_abs)  
+                else:
+                    result.append(-1)
             if isinstance(measure, ThermalMeasure):
-                t_sol = copy.deepcopy(solution)
-                t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
+                #t_sol = copy.deepcopy(solution)
+                t_sol2 = copy.deepcopy(solution)
+                #t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
-                measure.mode = 0 #Need to input from macro
-                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = measure.mode)
-                #print("T",max_t)
-                result.append(max_t)
-                #result.append(1)
+                #max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 1) # extract thermal net
+                
+                t_solution=self.populate_thermal_info_to_sol_feat(t_sol2) # populating heat generation and heat transfer coefficeint
+                #print(self.t_api.matlab_engine)
+                #measure.mode = 1 #Need to input from macro
+                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
+                result.append(max_t-273)
         return result
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''

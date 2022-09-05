@@ -45,7 +45,7 @@ class TraceCell(Rect):
         -3: z- 
         '''
         
-    def get_cell_corners(self):
+    def get_cell_nodes(self):
         # Return the xy locations of the cell and its type
         pt_dict = {(self.left,self.bottom): 'internal',(self.left,self.top): 'internal',(self.right,self.top): 'internal',(self.right,self.bottom): 'internal'}
         pt_index = {(self.left,self.bottom): 0
@@ -198,12 +198,164 @@ class RectCell(Rect):
                           ,(self.right, self.top)    : 2
                           ,(self.right, self.bottom) : 3}
     
-                    
-        
+        self.child = {} 
+        self.cuts = [] # for neighboring hier-hier splitted case
+        # MeshAlgorithm copy -- so we dont need to inherit the whole MeshTable here
+        self.cell_table = {} 
+        self.splitted = False # a flag to check if the trace is splitted or not.
+        self.is_child = False # a flag to check if this one was a child cell
+
+        # select a cell for left,right,bot, and top references
+        self.child_cell_top = []
+        self.child_cell_bot = []
+
+        self.child_cell_left = []
+        self.child_cell_right = []
+
+        # donotmesh
+        self.no_E = False # Dont mesh the East side
+        self.no_W = False # Dont mesh the West side
+        self.no_N = False # Dont mesh the North side
+        self.no_S = False # Dont mesh the South side
+
+    # find_cell_to_cell_neighbor and form_mesh_table_on_grid are from the MeshAlgorithm.py
+    # Other approach: you can make a child MeshAlgorthm object as well, this is my quick coding so it is not clean
+    def find_cell_to_cell_neighbor(self,mode= 'lev_1'):
+        if mode == 'lev_1': # Hanan grid
+            top_bound = self.Ny-1
+            bot_bound = 0
+            right_bound = self.Nx-1
+            left_bound = 0
+        # using cell ID to quickly find them
+        for cell_id in self.cell_table:
+            cell = self.cell_table[cell_id]
+            cell.is_child = True
+            # Reference cell to setup neighbours
+            if cell_id[0] == 0:
+                self.child_cell_left.append(cell) 
+            if cell_id[0] == right_bound:
+                self.child_cell_right.append(cell) 
+            if cell_id[1] == 0:
+                self.child_cell_bot.append(cell)
+            if cell_id[1] == top_bound:
+                self.child_cell_top.append(cell)
+            if mode == 'lev_2':
+                top_bound = cell.top_bound
+                bot_bound = cell.bot_bound
+                right_bound = cell.right_bound
+                left_bound = cell.left_bound
+            S_id = cell.find_South_id(bot_bound = bot_bound)
+            N_id = cell.find_North_id(top_bound = top_bound)
+            E_id = cell.find_East_id(right_bound = right_bound)
+            W_id = cell.find_West_id(left_bound = left_bound)
+            if S_id != None:
+                cell.South = self.cell_table[S_id]
+            if N_id != None:
+                cell.North = self.cell_table[N_id]
+            if E_id != None:
+                cell.East = self.cell_table[E_id]
+            if W_id != None:
+                cell.West = self.cell_table[W_id]
+
+    def form_mesh_table_on_grid(self, xs, ys):
+        # I copy this from MeshAlgorithm due to fast implementation, need to do this properly later !
+        '''
+        This is generally used for path finding and island forming. Given a set of xs and ys from the components placement
+        :param xs: a list of x locations
+        :param ys: a list of y locations
+        :return: update self.cell_table with all Hanan Grid cells
+        '''
+        Nx = len(xs)
+        Ny = len(ys)
+        self.Nx = Nx - 1
+        self.Ny = Ny - 1
+        for i_x in range(Nx - 1):
+            for i_y in range(Ny - 1):
+                x_rect = xs[i_x]
+                y_rect = ys[i_y]
+                W = xs[i_x + 1] - xs[i_x]
+                H = ys[i_y + 1] - ys[i_y]
+                new_cell = RectCell(x_rect, y_rect, W, H)
+                new_cell.id = (i_x, i_y)
+                self.cell_table[(i_x, i_y)] = new_cell 
+
+
+    def add_cut(self,point):
+        self.cuts.append(point)
+
+
+    def check_cell_neighbor(self):
+        """Before split cell check if the neighbour is also splited, if so, depending on the directions, need to add more child 
+        to form connections.
+
+        """
+        # Add horizontal cut points if hier-hier pair is found
+        if self.has_top() and self.North.splitted: # H hier-hier pair
+            for name in self.North.child:
+                c = self.North.child[name]
+                self.add_cut([c[0],self.top]) # add a cut line to let hier-hier cell connect
+        if self.has_bot() and self.South.splitted: # H hier-hier pair
+            for name in self.South.child:
+                c = self.South.child[name]
+                self.add_cut([c[0],self.bottom]) # add a cut line to let hier-hier cell connect
+    
+        # Add vertical cut points if hier-hier pair is found
+        if self.has_left() and self.West.splitted: # V hier-hier pair
+            for name in self.West.child:
+                c = self.West.child[name]
+                self.add_cut([self.left,c[1]]) # add a cut line to let hier-hier cell connect
+        if self.has_right() and self.East.splitted: # V hier-hier pair
+            for name in self.East.child:
+                c = self.East.child[name]
+                self.add_cut([self.right,c[1]]) # add a cut line to let hier-hier cell connect
+
+    def split_cell(self):
+        """
+        Depending the locations of the child-nodes and the shape of the piece
+        we perform hierachical meshing of the piece one more time
+        """
+        # just collect xs and ys and reuse them depending on different scenarios        
+        xs = [self.left,self.right] # make a list of xs
+        ys = [self.bottom,self.top]
+        for name in self.child:
+            pt = self.child[name]
+            xs.append(pt[0])
+            ys.append(pt[1])
+        for c in self.cuts:
+            xs.append(c[0])
+            ys.append(c[1])
+        # Make sure everything is organized! Sort them
+        xs = list(set(xs))
+        ys = list(set(ys))
+        xs.sort()
+        ys.sort()
+        # First check the trace_type: # This is hard, optimize later 
+        """w_l_ratio = float(self.width/self.height)
+        magic_number = 5.0 # just a ratio to define if the piece is "horizontal", "vertical", or "fat"
+        if w_l_ratio > magic_number: # Horizontal
+            # make vertical cuts!
+            ymin = ys[0]
+            ymax = ys[-1]
+            ys = [ymin,ymax] # keep only 2 locs for y to perform V Cuts
+        elif w_l_ratio < 1/magic_number:
+            # make horizontal cuts!
+            xmin = xs[0]
+            xmax = xs[-1]
+            xs = [xmin,xmax] # keep only 2 locs for x to perform H Cuts
+            print('H CUTS')"""
+        #else: this wont happen :) cause we will reuse the MeshAlgorithm stuff
+        # if the xs and ys are not modified here, it means the trace is FAT
+        self.form_mesh_table_on_grid(xs=xs,ys=ys)
+        # Now we have a cell-table on a cell :)
+        self.find_cell_to_cell_neighbor()
+        # Next step is to map the id back to the main table 
+
+    def add_child(self,name,loc):
+        self.child[name] = loc
         
         
     
-    def get_cell_corners(self):
+    def get_cell_nodes(self):
         # Return the xy locations of the cell and its type
         
         if not(self.has_left()): # check left boundary
@@ -218,14 +370,30 @@ class RectCell(Rect):
         if not(self.has_top()): # check top boundary
             self.node_dict[(self.left,self.top)] = 'boundary'
             self.node_dict[(self.right,self.top)] = 'boundary'
+        
+        if self.child!= {}:
+            for name in self.child:
+                pt = self.child[name]
+                self.node_dict[(pt[0],pt[1])] = 'hierachial'
+        
+        
+        
         return self.node_dict,self.node_index
     
     def get_cell_edges(self):
         # Return list of edges with center location
+        # Look at this to visulize the edges
+        # 1--------------2
+        # |              |
+        # |              |
+        # |              |
+        # 0------------- 3    
+        traces = []
         ratio = 1/2
-        edge_width = 100
+        edge_width = 25 # set the max frequency to 10 MHz range 
         cell_width = self.right-self.left
         cell_height = self.top - self.bottom
+        # Or look at this to know 0,1,2,3 locations
         pt_0 = (self.left,self.bottom)
         pt_1 = (self.left,self.top)
         pt_2 = (self.right,self.top)
@@ -236,17 +404,18 @@ class RectCell(Rect):
         # 0 --- 1 
         if not(self.has_left()):
             trace_left = self.left 
-            trace_width = edge_width #if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width = edge_width
             edge_type = 'boundary'
         else:
             trace_left = self.left - int(self.West.width*ratio)
             trace_width = int((self.West.width + self.width)*ratio)
             edge_type = 'internal'
-            
-        e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+        if not(self.no_W):  
+            e_0_1 = [pt_0,pt_1,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+            traces.append(e_0_1)
         # 2 --- 3
         if not(self.has_right()):
-            trace_width = edge_width #if int(cell_width*ratio) == 0 else int(cell_width*ratio)#edge_width
+            trace_width =  edge_width
             trace_left = self.right - trace_width
             edge_type = 'boundary'
             
@@ -254,12 +423,15 @@ class RectCell(Rect):
             trace_left = self.right - int(self.width*ratio)
             trace_width = int((self.East.width + cell_width)*ratio) 
             edge_type = 'internal'
+
+        if not(self.no_E):  
+            e_2_3 = [pt_2,pt_3,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
+            traces.append(e_2_3)   
             
-        e_2_3 = [pt_2,pt_3,(trace_left,self.bottom,trace_width,cell_height),edge_type,1]
         # Handle horizontal traces 
         # 1 -- 2
         if not(self.has_top()):
-            trace_height = edge_width #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height =  edge_width
             trace_bottom = self.top -trace_height
             edge_type = 'boundary'
             
@@ -267,11 +439,14 @@ class RectCell(Rect):
             trace_height = int((cell_height + self.North.height)*ratio)
             trace_bottom = self.top - int(cell_height*ratio)    
             edge_type = 'internal'
+        
+        if not(self.no_N):  
+            e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+            traces.append(e_1_2)    
             
-        e_1_2 = [pt_1,pt_2,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
         # 0 -- 3
         if not(self.has_bot()):#
-            trace_height = edge_width  #if int(cell_height*ratio) == 0 else int(cell_height*ratio)#edge_width
+            trace_height = edge_width
             trace_bottom = self.bottom
             edge_type = 'boundary'
             
@@ -279,10 +454,44 @@ class RectCell(Rect):
             trace_height = int((cell_height + self.South.height)*ratio)
             trace_bottom = self.bottom - int(self.South.height*ratio)  
             edge_type = 'internal'
-             
-        e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+
+        if not(self.no_S):  
+            e_0_3 = [pt_0,pt_3,(self.left,trace_bottom,cell_width,trace_height),edge_type,0]
+            traces.append(e_0_3)       
+                
         
-        return(e_0_1,e_2_3,e_1_2,e_0_3)
+
+
+        """# Edge width calibration
+        # We check 2 parallel edges, there must be cases where one is boudary and one is internal. 
+        # Then the differences in trace width must be corrected to fill most of the copper
+        # See the begining of the function to locate the edge
+        # Check the vertical pairs first:
+        e_0_1_type = e_0_1[3]
+        e_2_3_type = e_2_3[3]
+        if e_0_1_type == 'boundary' and e_2_3_type == 'internal': 
+            # modify e_2_3 left to e_0_1_right
+            e_0_1_right = e_0_1[2][0] + e_0_1[2][2] # left + width
+            l,b,w,h = e_2_3[2] # updating...
+            print(e_0_1_type,e_2_3_type)
+            print(l,e_0_1_right)
+            e_2_3 = [pt_2,pt_3,(e_0_1_right,b,w,h),e_2_3_type,1] # update the data
+
+        if e_0_1_type == 'internal' and e_2_3_type == 'boundary': 
+            # modify e_2_3 right to e_0_1_left
+
+            l,b,w,h = e_0_1[2] # updating...
+            l1,b1,w1,h1 = e_2_3[2] # updating...
+
+            trace_width = l1-l
+            print(e_0_1_type,e_2_3_type)
+            print(w,trace_width)
+            e_0_1 = [pt_0,pt_1,(l,b,trace_width,h),e_0_1_type,1]"""
+
+
+
+
+        return traces
         
 
     def __str__(self):
