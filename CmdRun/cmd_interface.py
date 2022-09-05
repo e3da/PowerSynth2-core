@@ -1431,7 +1431,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'}]
+                    {imam_nethome2:'3D_Case_3/Case_3_new/macro_script.txt'}]
 
 
         for tc in tc_list:
