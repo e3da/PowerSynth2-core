@@ -15,9 +15,10 @@ Init = '''
 GroundPlane = '''
 g_M{0} x1=-{1} y1=-{2} z1={3} x2={1} y2=-{2} z2={3} x3={1} y3={2} z3={3}
 + thick={4}
-+ seg1=100 seg2=2
++ seg1=10 seg2=2
 + sigma={5}
 + nhinc={6} 
++ nwinc=3
 '''
 
 

@@ -103,7 +103,7 @@ class Sheet(E_plate):
         self.component=None
         self.node = None  # node reference to Tree
         self.via_type = None
-        
+        self.parent_name = None # str to map to the parent island name
     def get_center(self):
         return self.rect.center()
 

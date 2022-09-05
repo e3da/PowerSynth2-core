@@ -310,7 +310,12 @@ class Rect:
         return hside, vside
 
     def get_all_corners(self):
-        return [(self.left, self.bottom), (self.left, self.top), (self.right, self.bottom), (self.right, self.top)]
+        # in this order, A->B->C->D
+        # B-----------C
+        # |           | 
+        # |           |  
+        # A-----------D             
+        return [(self.left, self.bottom), (self.left, self.top), (self.right, self.top) , (self.right, self.bottom)]
 
     def get_all_lines(self):
         l1 = Line((self.left, self.bottom), (self.left, self.top))
