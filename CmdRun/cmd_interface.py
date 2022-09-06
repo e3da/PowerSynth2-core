@@ -1432,7 +1432,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/Case_3_new/macro_script.txt'}]
+                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'}]
 
 
         for tc in tc_list:
@@ -1449,7 +1449,7 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        setting_dir = "/nethome/ialrazi/PS2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
+        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
