@@ -320,12 +320,14 @@ class CornerStitch_Emodel_API:
                     x,y,w,h = trace[1:5]
                     if 'C' in name: # THIS HANDLE THE DECOUPLING CAP CASE ONLY
                         for m in self.loop:
+                            
                             if name in m:
                                 while '(' in m or ')' in m:
                                     m = m.replace('(','')
                                     m = m.replace(')','') 
                                      
                                 m_s = m
+                                print(m_s)
                                 pin1,pin2 = m_s.split(',')
                                 
                                 net1 = "B_{}".format(pin1)
@@ -1461,7 +1463,7 @@ class CornerStitch_Emodel_API:
         
         if not(init): # OR running in the optimization loop
             return # self.loop_dv_state_map should be same
-        new = 1
+        new = 0
         self.dev_conn_file = self.workspace_path + '/connections.json'
         isfile = os.path.isfile
         self.loop_dv_state_map = {m:{} for m in self.loop}    
@@ -1470,8 +1472,8 @@ class CornerStitch_Emodel_API:
         print(msg)
         
         if isfile(self.dev_conn_file):
-            new = input("Input 1 to setup new connectivity, 0 to reuse the saved file from last run, your input: ")
-            new = int(new)
+            #new = input("Input 1 to setup new connectivity, 0 to reuse the saved file from last run, your input: ")
+            new = 0 #int(new)
             if new!=0 and new!=1: # Can setup an ininite loop later if this step is too tedious (quiting everytime)
                 print("Unexpected Input")
                 quit()

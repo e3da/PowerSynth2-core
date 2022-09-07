@@ -22,6 +22,7 @@ import os
 import sys
 import glob
 import copy
+import json
 import csv
 from core.general.settings import settings
 
@@ -174,7 +175,10 @@ class Cmd_Handler:
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    self.connectivity_setup = os.path.abspath(info[1])
+                    if info[1]=='None':
+                        self.connectivity_setup=None
+                    else:
+                        self.connectivity_setup = os.path.abspath(info[1])
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
@@ -305,22 +309,33 @@ class Cmd_Handler:
                     if info[0] == 'Device_Connection:':
                         dev_conn_mode = True
 
-                    ''' # old code for single objective - single loop    
+                    # old code for single objective - single loop    
                     if info[0] == 'Source:':
                         self.electrical_models_info['source']= info[1]
 
                     if info[0] == 'Sink:':
                         self.electrical_models_info['sink']= info[1]
+                        self.electrical_models_info['main_loops'] = (self.electrical_models_info['source'],self.electrical_models_info['sink'])
+                        self.electrical_models_info['multiport'] = 0
+                        
+                        self.dev_conn_file = self.model_char_path + '/connections.json'
+                        self.loop_dv_state_map={str(self.electrical_models_info['main_loops']):self.electrical_models_info['device_connections']}
+                        
+                        with open(self.dev_conn_file, 'w') as f:
+                            json.dump(self.loop_dv_state_map,f)
                     '''
                     if info[0] == 'Main_Loops:':
                         self.electrical_models_info['main_loops'] = info[1:]
                     if info[0] == 'Multiport:':
                         self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
+                    '''
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
         
         proceed = self.check_input_files() # only proceed if all input files are good. 
-
+        
+        
+        
         if proceed:
             self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
             self.init_cs_objects(run_option=run_option)
@@ -451,9 +466,10 @@ class Cmd_Handler:
                and check_file(self.layer_stack_file) \
                and rs_model_check\
                and check_file(self.constraint_file)
-        if self.connectivity_setup != None:
+        #print(self.connectivity_setup)
+        if self.connectivity_setup!=None:
             cont = check_file(self.connectivity_setup)
-        
+        #print(check_file(self.connectivity_setup))
         
         # Making Output Dirs for Figure
         if not (check_dir(self.fig_dir)):
@@ -535,6 +551,7 @@ class Cmd_Handler:
         else:
             netlist = self.electrical_models_info['netlist'] 
         self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
+        self.e_api_init.loop_dv_state_map=self.loop_dv_state_map
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
@@ -793,7 +810,7 @@ class Cmd_Handler:
         self.dbunit=1000 # in um
 
         # calling script parser function to parse the geometry and bondwire setup script
-        if self.connectivity_setup!=None:
+        if  self.connectivity_setup!=None:
             self.script_mode = 'Old' 
             all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         else:
@@ -1416,6 +1433,7 @@ if __name__ == "__main__":
                     {imam_nethome:'2D_Case_1/macro_script.txt'},
                     {imam_nethome:'2D_Case_2/macro_script.txt'},
                     {imam_nethome:'2D_Case_3/macro_script.txt'},
+                    {imam_nethome:'2D_Case_3_new/macro_script.txt'},
                     {imam_nethome:'2D_Case_4/macro_script.txt'},
                     {imam_nethome:'2D_Case_5/macro_script.txt'},
                     {imam_nethome:'2D_Case_6/macro_script.txt'},
@@ -1423,7 +1441,7 @@ if __name__ == "__main__":
                     {imam_nethome:'2D_Case_8/macro_script.txt'},
                     {imam_nethome:'2D_Case_9/macro_script.txt'},
                     {imam_nethome:'2D_Case_10/macro_script.txt'},
-                    {imam_nethome:'2D_Case_11/Case_11_new/macro_script.txt'},
+                    {imam_nethome:'2D_Case_11_new/macro_script.txt'},
                     {imam_nethome:'2D_Case_11/macro_script.txt'},
                     {imam_nethome:'3D_Case_1/macro_script.txt'},
                     {imam_nethome:'3D_Case_2/macro_script.txt'},
