@@ -811,7 +811,7 @@ class CornerStitch_Emodel_API:
         # TODO: need to handle capacitance smartly in the future
         src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
         sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
-        self.circuit.verbose = 1
+        #self.circuit.verbose = 1
         #self.circuit.add_component('RL5','L5',0,1e-6)
         #self.circuit.add_component('RL6','L6',0,1e-6)
         Iload = 100 # Change this for possible current density study
@@ -840,7 +840,7 @@ class CornerStitch_Emodel_API:
         
         #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
         #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
-        self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
+        #self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
         return R, L 
 
             
@@ -1145,7 +1145,7 @@ class CornerStitch_Emodel_API:
         # Detect if 3D then use the analytical equations
         # Otherwise for the cases where the traces are weird use RS-model
         
-        self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
+        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
         self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)
@@ -1157,7 +1157,7 @@ class CornerStitch_Emodel_API:
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
         # need to do this more efficiently 
         wrong_case = []
-        print('num_element',len(name_list))
+        #print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
             #R, L =RL_mat[i]
@@ -1223,10 +1223,10 @@ class CornerStitch_Emodel_API:
         #mutual_result = update_mutual_mat_64_py(m_mat)
         t = time.perf_counter()
         mutual_result = update_mutual_mat_64_py(m_mat)
-        print("M eval time",time.perf_counter()-t)
+        #print("M eval time",time.perf_counter()-t)
         mutual_result= [m*1e-9 for m in mutual_result] # convert to H
-        print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
-        print("num_M_eval", len(mutual_result))
+        #print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
+        #print("num_M_eval", len(mutual_result))
         #id = mutual_result.index(max(mutual_result))
         #val_id = list(self.mutual_edge_params.keys())[id]
         for i in range(len(mutual_result)):
@@ -1234,7 +1234,7 @@ class CornerStitch_Emodel_API:
             L_name1 = 'L' + m_pair[0].strip('Z')
             L_name2 = 'L' + m_pair[1].strip('Z')
             if mutual_result[i]<=0 or np.isnan(mutual_result[i]):
-                print("0, negative or NAN")
+                #print("0, negative or NAN")
                 mutual_result[i] = 1e-12 # Set small value but it wont throw numerical error in MNA
             
             self.circuit.add_mutual_term(m_names[i],L_name1,L_name2,mutual_result[i])

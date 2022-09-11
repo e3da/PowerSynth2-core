@@ -281,6 +281,7 @@ class Cmd_Handler:
                         t_amb = float(info[1])
                         self.thermal_models_info['ambient_temperature'] = t_amb
                 if self.electrical_mode != None:
+                    self.electrical_models_info['multiport'] = 0 # Default
                     if info[0] == 'Measure_Name:' and e_name==None:
                         e_name = info[1]
                         self.electrical_models_info['measure_name']= e_name
@@ -305,13 +306,13 @@ class Cmd_Handler:
                     if info[0] == 'Device_Connection:':
                         dev_conn_mode = True
 
-                    ''' # old code for single objective - single loop    
+                    # old code for single objective - single loop    
                     if info[0] == 'Source:':
                         self.electrical_models_info['source']= info[1]
 
                     if info[0] == 'Sink:':
                         self.electrical_models_info['sink']= info[1]
-                    '''
+
                     if info[0] == 'Main_Loops:':
                         self.electrical_models_info['main_loops'] = info[1:]
                     if info[0] == 'Multiport:':
@@ -568,9 +569,10 @@ class Cmd_Handler:
            
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh     
+        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
+        
         #self.e_api_init.print_and_debug_layout_objects_locations()
         #self.e_api_init.start_meshing_process(module_data=module_data)
-        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
         if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
@@ -1431,7 +1433,8 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'}]
+                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
+                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'}]
 
 
         for tc in tc_list:
