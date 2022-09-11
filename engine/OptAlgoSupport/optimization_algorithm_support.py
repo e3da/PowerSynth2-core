@@ -165,6 +165,8 @@ class new_engine_opt:
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
                 result.append(max_t-273)
         return result
+    
+    
     def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
         '''
         module data: for electrical layout evaluation 

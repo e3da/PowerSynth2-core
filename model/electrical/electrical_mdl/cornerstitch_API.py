@@ -1891,8 +1891,9 @@ class CornerStitch_Emodel_API:
                                 frequency=self.freq, inst_name = inst_name)
                     wire.wire_dir = wdir
                     self.wires[wire_name]=wire
-                else: 
-                    via_name = wire_data['Via_name']
+                else:
+                    list_v = wire_data['source_pad'].split('.')
+                    via_name = wire_data['Via_name'] if self.script_mode == 'New' else list_v[0]
                     via = EVia(start=s1,stop=s2,via_name = inst_name)
                     if s1.via_type != None:
                         via.via_type = s1.via_type
