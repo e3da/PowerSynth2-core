@@ -1287,6 +1287,7 @@ class CornerStitch_Emodel_API:
 
 
 
+
     def handle_potential_numerical_issues(self,input_map = []):
         # The mesh takes the center point of the pins and generate cut lines.
         # if these lines are too close (1um) potential zero-dimension rectangle can be generated --> wrong solution
