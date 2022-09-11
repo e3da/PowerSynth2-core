@@ -174,7 +174,10 @@ class Cmd_Handler:
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    self.connectivity_setup = os.path.abspath(info[1])
+                    if info[1] !='None':
+                        self.connectivity_setup = os.path.abspath(info[1])
+                    else:
+                        self.connectivity_setup=None
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
@@ -363,7 +366,7 @@ class Cmd_Handler:
             elif not(check_file(self.constraint_file)):
                 print((self.constraint_file, "is not a valid file path"))
             print ("Check your input again ! ")
-
+            
             return proceed
     
     def layout_generation_only(self):
@@ -1418,6 +1421,7 @@ if __name__ == "__main__":
                     {imam_nethome:'2D_Case_1/macro_script.txt'},
                     {imam_nethome:'2D_Case_2/macro_script.txt'},
                     {imam_nethome:'2D_Case_3/macro_script.txt'},
+                    {imam_nethome:'2D_Case_3_new/macro_script.txt'},
                     {imam_nethome:'2D_Case_4/macro_script.txt'},
                     {imam_nethome:'2D_Case_5/macro_script.txt'},
                     {imam_nethome:'2D_Case_6/macro_script.txt'},
