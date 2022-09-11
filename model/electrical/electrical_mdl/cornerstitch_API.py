@@ -1955,14 +1955,16 @@ class CornerStitch_Emodel_API:
     def measurement_setup(self, meas_data=None):
         e_measures = []
         type = meas_data['type']
-        main_loops = meas_data['main_loops']
+        loop = meas_data['main_loops']
+        
         multiport = meas_data['multiport']
         if multiport == 0:
-            for loop in main_loops:
-                src, sink = loop.split(',')
-                source = src.strip('(')
-                sink = sink.strip(')')
-                e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink,multiport=multiport))
+            #for loop in main_loops:
+            
+            src, sink = loop.split(',')
+            source = src.strip('(')
+            sink = sink.strip(')')
+            e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink,multiport=multiport))
         else:
             name = 'multiport'
             e_measures.append(ElectricalMeasure(measure=type, name=name, source='', sink='',multiport=multiport))

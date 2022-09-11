@@ -315,11 +315,18 @@ class Cmd_Handler:
 
                     if info[0] == 'Sink:':
                         self.electrical_models_info['sink']= info[1]
-                        self.electrical_models_info['main_loops'] = (self.electrical_models_info['source'],self.electrical_models_info['sink'])
+                        #main_loops = (self.electrical_models_info['source'],self.electrical_models_info['sink'])
+                        main_loop=(self.electrical_models_info['source'])+","+(self.electrical_models_info['sink'])
+                        self.electrical_models_info['main_loops'] = str(main_loop)
+                        #print(self.electrical_models_info['main_loops'])
+                        #main_loop=(self.electrical_models_info['source'])+","+(self.electrical_models_info['sink'])
+                        #print(main_loop.split(","))
+                        
                         self.electrical_models_info['multiport'] = 0
                         
                         self.dev_conn_file = self.model_char_path + '/connections.json'
-                        self.loop_dv_state_map={str(self.electrical_models_info['main_loops']):self.electrical_models_info['device_connections']}
+                        main_loop='('+(self.electrical_models_info['source']+','+self.electrical_models_info['sink'])+')'
+                        self.loop_dv_state_map={str(main_loop):self.electrical_models_info['device_connections']}
                         
                         with open(self.dev_conn_file, 'w') as f:
                             json.dump(self.loop_dv_state_map,f)
@@ -1445,12 +1452,14 @@ if __name__ == "__main__":
                     {imam_nethome:'2D_Case_11/macro_script.txt'},
                     {imam_nethome:'3D_Case_1/macro_script.txt'},
                     {imam_nethome:'3D_Case_2/macro_script.txt'},
+                    {imam_nethome:'3D_Case_2_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_3/macro_script.txt'},
-                    {imam_nethome:'3D_Case_3/Case_3_new/macro_script.txt'},
+                    {imam_nethome:'3D_Case_3_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
+                    {imam_nethome:'3D_Case_4_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'}]
+                    {imam_nethome2:'3D_Case_2_new/macro_script.txt'}]
 
 
         for tc in tc_list:
