@@ -351,7 +351,7 @@ class Graph():
 
 
 
-def find_longest_path(source=None,sink=None,adj_matrix=None,graph=None,debug=False):
+def find_longest_path(source=None,sink=None,adj_matrix=None,graph=None,debug=False,value_only=False):
     '''
     evaluates longest path for a graph/subgraph
     : param source: source of the longest path
@@ -367,9 +367,12 @@ def find_longest_path(source=None,sink=None,adj_matrix=None,graph=None,debug=Fal
     
     
     if connected_path==True:
-        
-      
-        PATH,Value,Max=longest_path(source,sink,visited=[],path=[],fullpath=[],adj_matrix=adj_matrix)
+        if value_only==True:
+            visited=[False for i in range(len(adj_matrix))]
+            PATH,Value,Max=longest_path(source,sink,visited=visited,path=[],fullpath=[],adj_matrix=adj_matrix,value_only=True)
+        else:
+            visited=[]
+            PATH,Value,Max=longest_path(source,sink,visited=visited,path=[],fullpath=[],adj_matrix=adj_matrix)
         # returns longest path, list of minimum constraint values in that path and summation of the values
         return PATH, Value, Max
 
@@ -562,14 +565,14 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
             
             adj_matrix_=graph.generate_adjacency_matrix()
             
-            if find_longest_path(ref_vert.index,vertex.index,adj_matrix_)[2]>fixed_dim: # checking longest distance from reference vertex > fixed dimension value or not
+            if find_longest_path(ref_vert.index,vertex.index,adj_matrix_,value_only=True)[2]>fixed_dim: # checking longest distance from reference vertex > fixed dimension value or not
             
                 removable=False
                 print("{} dimension cannot be fixed. Please update constraint table".format(fixed_dim/dbunit))
                 #print("HERE1",ID)
                 #input()
                 if dep_verts[vertex][0].comp_type=='Fixed':
-                    print(ID,ref_vert.coordinate,vertex.coordinate,fixed_dim,find_longest_path(ref_vert.index,vertex.index,adj_matrix_)[2])
+                    print(ID,ref_vert.coordinate,vertex.coordinate,fixed_dim,find_longest_path(ref_vert.index,vertex.index,adj_matrix_,value_only=True)[2])
                     exit()
                 
             else:
@@ -601,11 +604,11 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 exit()
                         else:
                             
-                            if find_longest_path(ref_vert.index,in_src.index,adj_matrix_)[2]==abs(backward_weight):#if longest distance(ref_vert, in_src)== |backward_weight|
+                            if find_longest_path(ref_vert.index,in_src.index,adj_matrix_,value_only=True)[2]==abs(backward_weight):#if longest distance(ref_vert, in_src)== |backward_weight|
                                 removable_edges.append(edge)
                                 new_edge=Edge(source=ref_vert, dest=in_src, constraint=abs(backward_weight), index=edge.index, type='fixed', weight=2*abs(backward_weight),comp_type='Fixed')
                                 new_edges.append(new_edge)
-                            elif find_longest_path(ref_vert.index,in_src.index,adj_matrix_)[2]>abs(backward_weight):
+                            elif find_longest_path(ref_vert.index,in_src.index,adj_matrix_,value_only=True)[2]>abs(backward_weight):
                                 
                                 removable=False
                                 print("{} dimension cannot be fixed.Please update constraint table",fixed_dim/dbunit)
@@ -618,7 +621,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                                 new_edge=Edge(source=in_src, dest=ref_vert, constraint=backward_weight, index=edge.index, type='non-fixed', weight=2*(backward_weight),comp_type='Flexible')
                                 new_edges.append(new_edge)
                     elif is_connected(in_src.index,ref_vert.index,adj_matrix_):    
-                        w1=find_longest_path(in_src.index,ref_vert.index,adj_matrix_)[2] #longest distance(in_src, ref_vert)
+                        w1=find_longest_path(in_src.index,ref_vert.index,adj_matrix_,value_only=True)[2] #longest distance(in_src, ref_vert)
                         w2=edge.constraint-fixed_dim
                         if w1<w2:
                             removable_edges.append(edge)
@@ -692,7 +695,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
                             else:
                                 
                                 if is_connected(out_dest.index,ref_vert.index,adj_matrix_) :
-                                    w1=find_longest_path(out_dest.index,ref_vert.index,adj_matrix_)[2] #longest distance(in_src, ref_vert)
+                                    w1=find_longest_path(out_dest.index,ref_vert.index,adj_matrix_,value_only=True)[2] #longest distance(in_src, ref_vert)
                                     w2=new_weight
                                     if w1==abs(w2):
                                         removable_edges.append(edge)
@@ -839,7 +842,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                 else:
                     
                     if is_connected(src=edge.source.index, dest=ref_vert.index,adj_matrix=adj_matrix):
-                        if find_longest_path(edge.source.index,ref_vert.index,adj_matrix)[2]+fixed_dim<=edge.constraint:
+                        if find_longest_path(edge.source.index,ref_vert.index,adj_matrix,value_only=True)[2]+fixed_dim<=edge.constraint:
                             #print(find_longest_path(edge.source.index,ref_vert.index,adj_matrix)[2]+fixed_dim,edge.constraint)
                             #print(edge.source.coordinate)
                             ref_vert=edge.source
@@ -860,7 +863,7 @@ def set_reference_vertex(dependent_vertices={},graph=None,adj_matrix=None,ID=Non
                 #path=is_connected(src=ref_vert.index, dest=edge.source.index,adj_matrix=adj_matrix)
                 if is_connected(src=ref_vert.index, dest=edge.source.index,adj_matrix=adj_matrix):
                     potential_fixed_vert=edge.source
-                    w1=find_longest_path(ref_vert.index,potential_fixed_vert.index,adj_matrix)[2] #longest distance
+                    w1=find_longest_path(ref_vert.index,potential_fixed_vert.index,adj_matrix,value_only=True)[2] #longest distance
                     w2=edge.constraint
                     pot_fix_dim=None
                     if edge.comp_type=='Flexible': #bw vertex
@@ -1114,51 +1117,115 @@ def find_longest_path1(source=None,sink=None,adj_matrix=None):
         Max=0
         return PATH, Value, Max
 
+def topologicalSortUtil(v,visited,stack,adj):
+
+    visited[v] = True
+
+    # Recur for all the vertices adjacent to this vertex
+    # list<AdjListNode>::iterator i
+    for j in adj[v]:
+        if j!=float('inf'):
+            i=adj[v].index(j)
+            if (not visited[i]):
+                topologicalSortUtil(i,visited,stack,adj)
+
+    # Push current vertex to stack which stores topological
+    # sort
+    stack.append(v)
+    return stack,visited,adj
+
+def longest_path(src,dest,visited,path,fullpath,adj_matrix,value_only=False):
+
+    if value_only==True:
+        dist = [-10**9 for i in range(len(adj_matrix))]
+
+        # Call the recursive helper function to store Topological
+        # Sort starting from all vertices one by one
+        for i in range(src,dest):
+            if (visited[i] == False):
+                path,visited,adj_matrix=topologicalSortUtil(i,visited,path,adj_matrix)
+        #print(path)
+
+        full_path=[path[::-1]]
+        fullpath=[full_path[0]]
+
+        for i in range(len(full_path)):
+
+            if full_path[i] == dest:
+                fullpath.append(dest)
+                break
+            else:
+                fullpath.append(full_path[i])
+        #print(fullpath)
+        # Initialize distances to all vertices as infinite and
+        # distance to source as 0
+        dist[src] = 0
+        # Stack.append(1)
+
+        # Process vertices in topological order
+        while (len(path) > 0):
+
+            # Get the next vertex from topological order
+            u = path[-1]
+            del path[-1]
+            #print(u)
+
+            # Update distances of all adjacent vertices
+            # list<AdjListNode>::iterator i
+            if (dist[u] != 10**9):
+                for i in adj_matrix[u]:
+                    # print(u, i)
+                    if i!=float('inf'):
+                        index_=adj_matrix[u].index(i)
+
+                        if (dist[index_] < dist[u] + i):
+                            dist[index_] = dist[u] + i
+        return [],0,dist[dest] # returning only the longest distance
 
 
-def longest_path(src,dest,visited,path,fullpath,adj_matrix):
-    #vertex = src
-    visited.append(src)
-    path.append(src)
+    else:
+        #vertex = src
+        visited.append(src)
+        path.append(src)
 
-    # save current path if we found end
-    if src == dest:
-        #fullpath.append({'path':list(path)})
-        fullpath.append(copy.deepcopy(path))
-    #print(path)
-    connections=[]
-    for k in range(len(adj_matrix[src])):
-        u=adj_matrix[src][k]
-        if u!=float('inf'):
-            connections.append(k)
-    #print(src,connections)
-    for k in connections:
-        if k not in visited:
-            #print(k,dest)
-            
-            longest_path(k, dest, visited, path, fullpath,adj_matrix)
+        # save current path if we found end
+        if src == dest:
+            #fullpath.append({'path':list(path)})
+            fullpath.append(copy.deepcopy(path))
+        #print(path)
+        connections=[]
+        for k in range(len(adj_matrix[src])):
+            u=adj_matrix[src][k]
+            if u!=float('inf'):
+                connections.append(k)
+        #print(src,connections)
+        for k in connections:
+            if k not in visited:
+                #print(k,dest)
 
-    # continue finding paths by popping path and visited to get accurate paths
-    path.pop()
-    visited.pop()
-    #print("K",path,fullpath)
-    if not path:
-        if len(fullpath)>0:
-            
-            max_cost=-1E10
-            for path in fullpath:
-                #path=list(path.values())[0]
-                
-                cost=0
-                values=[]
-                for i in range(len(path)-1):
-                    cost+=adj_matrix[path[i]][path[i+1]]
-                    values.append(adj_matrix[path[i]][path[i+1]])
-                if cost>max_cost:
-                    max_cost=cost
-                    result=[path,values,cost]
-        else:
-            result=[[],0,0]
+                longest_path(k, dest, visited, path, fullpath,adj_matrix)
+
+        # continue finding paths by popping path and visited to get accurate paths
+        path.pop()
+        visited.pop()
+        #print("K",path,fullpath)
+        if not path:
+            if len(fullpath)>0:
+
+                max_cost=-1E10
+                for path in fullpath:
+                    #path=list(path.values())[0]
+
+                    cost=0
+                    values=[]
+                    for i in range(len(path)-1):
+                        cost+=adj_matrix[path[i]][path[i+1]]
+                        values.append(adj_matrix[path[i]][path[i+1]])
+                    if cost>max_cost:
+                        max_cost=cost
+                        result=[path,values,cost]
+            else:
+                result=[[],0,0]
 
 
         return result[0],result[1],result[2]
