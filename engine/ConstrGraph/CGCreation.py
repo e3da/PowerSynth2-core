@@ -2114,7 +2114,7 @@ class ConstraintGraph:
                     
     def create_forward_cg(self,level=0):
         
-        import time
+        
         
         for k, v in list(self.edgesh_forward.items())[::-1]:
             ID, edgeh = k, v
@@ -2131,13 +2131,11 @@ class ConstraintGraph:
                             parent_id = None
 
                 # Function to create horizontal constraint graph using edge information
-                print(ID)
-                start=time.time()
+                
                 self.create_node_forward_hcg(ID, vertices, edgeh, parent_id, level, self.root[0])
-                end=time.time()
-                print("HRT",end-start)
+                
 
-        start1=time.time()
+        
         for k, v in list(self.edgesv_forward.items())[::-1]:
             ID, edgev = k, v
             self.update_indices(node_id=ID)
@@ -2153,8 +2151,7 @@ class ConstraintGraph:
                             parent_id = None
                 
                 self.create_node_forward_vcg(ID, vertices, edgev, parent_id, level, self.root[1])
-        end1=time.time()
-        print("VRT",end1-start1)
+        
         return self.tb_eval_h,self.tb_eval_v
 
     def remove_redundant_edges(self,graph_in=None):

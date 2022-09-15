@@ -418,7 +418,7 @@ class ScriptInputMethod():
                             else:
                                 via_type=None
                             element = Part(name=layout_info[j][k+1], info_file=self.info_files[layout_info[j][k+1]],layout_component_id=layout_component_id,layer_id=(layout_info[j][-2]))
-                            element.vai_type=via_type
+                            element.via_type=via_type
                             element.load_part()
                             self.all_parts_info[layout_info[j][k+1]].append(element)
 
