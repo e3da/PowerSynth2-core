@@ -271,7 +271,7 @@ class Graph():
             graph.add_weighted_edges_from(edge_list)
             return graph
 
-    def generate_adjacency_matrix(self,graph=None,print_=False):
+    def generate_adjacency_matrix(self,graph=None,redundant=False,print_=False):
         '''
         generates adjacency matrix from the graph
         '''
@@ -283,10 +283,12 @@ class Graph():
             edges=graph.nx_graph_edges
         adj_matrix=[[float('inf') for i in range(len(vertices))] for j in range(len(vertices))]
         dictList = []
+        dictList1=[]
         keys_considered=[]
         for edge in edges:
             
             dictList.append(edge.getEdgeDict())
+            dictList1.append(edge.getEdgeDict())
             if list(dictList[-1].keys())[0] not in keys_considered:
                 keys_considered.append(list(dictList[-1].keys())[0])
             else:
@@ -308,18 +310,26 @@ class Graph():
                         new_edge_dict[key].append(dict_[key][0])
             new_dictList.append(new_edge_dict)
         
+        if redundant==False:
+            for edge in new_dictList:
+                key=list(edge.keys())[0]
+                #value=list(edge.values())[0]
+                values=list(edge.values())
+                if len(values[0])>1:
+                    value=max(values[0])
+                else:
+                    value=values[0][0]
 
-        for edge in new_dictList:
-            key=list(edge.keys())[0]
-            #value=list(edge.values())[0]
-            values=list(edge.values())
-            if len(values[0])>1:
-                value=max(values[0])
-            else:
-                value=values[0][0]
+                
+                adj_matrix[key[0]][key[1]]=value
+        else:
+            for edge in dictList1:
+                key=list(edge.keys())[0]
+                value=list(edge.values())[0]
+                
 
-            
-            adj_matrix[key[0]][key[1]]=value
+                
+                adj_matrix[key[0]][key[1]]=value[0]
 
         
         return adj_matrix

@@ -2204,7 +2204,7 @@ class ConstraintGraph:
         
         graph.create_nx_graph()
         
-        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
 
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
@@ -2293,7 +2293,8 @@ class ConstraintGraph:
                     print("ERROR: No path from {} to {} vertex in HCG of node {}".format(src, dest, ID))
             else:
                 vertex.min_loc=0
-
+        
+        
         
         
         
@@ -2402,10 +2403,11 @@ class ConstraintGraph:
                                 self.edgesh_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
                                 
+                                
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
-
+                                
 
                     #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
                         #continue
@@ -2439,10 +2441,13 @@ class ConstraintGraph:
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
                                     
+                                    
 
 
 
-
+            
+                #for e in self.edgesh_forward[parentID]:
+                    #e.printEdge()
 
             
             vertices_index=[i.index for i in self.hcg_vertices[parentID]]
@@ -2474,7 +2479,7 @@ class ConstraintGraph:
         
         
         
-        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges,value_only=True)[2])>edge.constraint:
@@ -2544,7 +2549,7 @@ class ConstraintGraph:
                     print("ERROR: No path from {} to {} vertex in VCG of node {}".format(src, dest, ID))
             else:
                 vertex.min_loc=0
-
+        
         
         removable_vertex={}
         for vert, edge_list in removable_vertex_dict.items():
@@ -3442,6 +3447,7 @@ class ConstraintGraph:
                     
                     else:
                         ds_found=None
+                    
                     try:
                         loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
                     except:
