@@ -1779,7 +1779,7 @@ class Node_3D(Node):
         
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
-            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges,value_only=True)[2])>edge.constraint:
+            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
                 redundant_edges.append(edge)
                 
         for edge in redundant_edges:
@@ -1844,7 +1844,7 @@ class Node_3D(Node):
             
             if dest!=src:
                 
-                max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
+                max_dist=find_longest_path(src,dest,adj_matrix)[2]
                 
                 if max_dist!=0:
                     vertex.min_loc=max_dist
@@ -1933,7 +1933,7 @@ class Node_3D(Node):
                     
                     for edge in self.tb_eval_graph.edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]<edge.constraint or (edge.type=='fixed') :
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed') :
                             
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
                                 if e not in self.parent.edges:
@@ -1972,7 +1972,7 @@ class Node_3D(Node):
                                 index= constraint_name_list.index(cons_name)
                                 min_room=target.min_loc-src.min_loc 
                                 
-                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]
+                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
                                 
                                 if min_room>added_constraint and min_room>distance_in_parent_graph:
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
@@ -2181,7 +2181,7 @@ class Node_3D(Node):
                     for vert in self.vertices:
                         if coord==vert.coord:
                             src=vert.index
-                            max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
+                            max_dist=find_longest_path(src,dest,adj_matrix)[2]
                             if max_dist!=0:
                                 min_loc[vertex.coordinate]=min_loc[coord]+max_dist
         

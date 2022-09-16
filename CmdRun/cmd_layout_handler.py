@@ -410,7 +410,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             sol=PSSolution(solution_id=solution.index, module_data = solution.module_data)
             sol.make_solution(mode=mode,cs_solution=solution,module_data=solution.module_data)
             sol.cs_solution=solution
-            plot_solution_structure(sol)
+            #plot_solution_structure(sol)
             PS_solutions.append(sol)
 
         #------------------------for debugging---------------------------#
@@ -710,9 +710,12 @@ def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate m
                         break
             
             for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
+                
                 if node_id==root[0].id:
+                    
                     root[0].edges+=edgelist
                     break
+                
                 
             for node_id,ZDL_V in list(structure.layers[0].forward_cg.y_coordinates.items()):
                 if node_id==root[1].id:
@@ -839,6 +842,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
     
     edgesh_root=structure.root_node_h.edges
     edgesv_root=structure.root_node_v.edges
+
 
     
     structure.root_node_h.node_mode_2_locations,structure.root_node_v.node_mode_2_locations=fixed_location_evaluation.get_root_locations(ID=structure.root_node_h.id,edgesh=edgesh_root,ZDL_H=ZDL_H,edgesv=edgesv_root,ZDL_V=ZDL_V,level=mode,XLoc=Min_X_Loc,YLoc=Min_Y_Loc,seed=seed,num_solutions=num_layouts)

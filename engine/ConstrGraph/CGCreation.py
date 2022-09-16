@@ -2214,6 +2214,7 @@ class ConstraintGraph:
                 redundant_edges.append(edge)
                 
         for edge in redundant_edges:
+            
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
@@ -2294,6 +2295,7 @@ class ConstraintGraph:
         
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
         graph_for_top_down_evaluation.create_nx_graph()
+        
         mem = Top_Bottom(ID, parentID, graph_for_top_down_evaluation)  # top to bottom evaluation purpose
         self.tb_eval_h.append(mem)
         
@@ -2328,7 +2330,7 @@ class ConstraintGraph:
             coordinates_to_propagate=[self.x_coordinates[ID][0],self.x_coordinates[ID][-1]] # only via coordinates and each layer boundary coordinates need to be passed
             for vertex in self.hcg_vertices[ID]:
                 if vertex.coordinate in self.x_coordinates[parentID] :#and self.via_type in vertex.associated_type:
-                        coordinates_to_propagate.append(vertex.coordinate)
+                    coordinates_to_propagate.append(vertex.coordinate)
             coordinates_to_propagate.sort()
             parent_coord=[]
             for coord in parent_coordinates:
@@ -2444,6 +2446,9 @@ class ConstraintGraph:
             
             parent_graph=Graph(vertices=vertices_index,edges=self.edgesh_forward[parentID])
             parent_graph.create_nx_graph()
+            if parentID<0:
+                for edge in parent_graph.nx_graph_edges:
+                    edge.printEdge()
             parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
             
                          

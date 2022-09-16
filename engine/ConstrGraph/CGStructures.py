@@ -1228,7 +1228,7 @@ def longest_path(src,dest,visited,path,fullpath,adj_matrix,value_only=False):
                 result=[[],0,0]
 
 
-        return result[0],result[1],result[2]
+            return result[0],result[1],result[2]
 
 def dfs_longest_path(Preds,dist,position,source,sink,visited,X):
     
