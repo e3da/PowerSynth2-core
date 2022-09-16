@@ -2115,6 +2115,7 @@ class ConstraintGraph:
     def create_forward_cg(self,level=0):
         
         
+        
         for k, v in list(self.edgesh_forward.items())[::-1]:
             ID, edgeh = k, v
             self.update_indices(node_id=ID)
@@ -2132,6 +2133,8 @@ class ConstraintGraph:
                 # Function to create horizontal constraint graph using edge information
                 
                 self.create_node_forward_hcg(ID, vertices, edgeh, parent_id, level, self.root[0])
+                
+
         
         for k, v in list(self.edgesv_forward.items())[::-1]:
             ID, edgev = k, v
@@ -2148,6 +2151,7 @@ class ConstraintGraph:
                             parent_id = None
                 
                 self.create_node_forward_vcg(ID, vertices, edgev, parent_id, level, self.root[1])
+        
         return self.tb_eval_h,self.tb_eval_v
 
     def remove_redundant_edges(self,graph_in=None):
@@ -2200,16 +2204,17 @@ class ConstraintGraph:
         
         graph.create_nx_graph()
         
-        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
 
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
             
-            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges,value_only=True)[2])>edge.constraint:
                 
                 redundant_edges.append(edge)
                 
         for edge in redundant_edges:
+            
             if edge.constraint>0:
                 graph.nx_graph_edges.remove(edge)
                 graph.modified_edges.remove(edge)
@@ -2219,7 +2224,10 @@ class ConstraintGraph:
        
 
         if len(graph.nx_graph_edges)>0:
+            
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=ID)
+            
+            
         
        
         
@@ -2256,6 +2264,7 @@ class ConstraintGraph:
                     edge.dest.removable=True      
         
         #cleaning up redundant edges
+        
         graph.nx_graph_edges=list(set(graph.nx_graph_edges))
         graph.modified_edges=list(set(graph.modified_edges))
         for edge1 in graph.nx_graph_edges:
@@ -2267,7 +2276,7 @@ class ConstraintGraph:
                         graph.nx_graph_edges.remove(edge2)
                         if edge2 in graph.modified_edges:
                             graph.modified_edges.remove(edge2)
-                        
+        
         
         adj_matrix=graph.generate_adjacency_matrix()
         
@@ -2276,20 +2285,22 @@ class ConstraintGraph:
         for vertex in vertices:
             dest=vertex.index
             if dest!=src:
-                max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
                 
                 if max_dist!=0:
                     vertex.min_loc=max_dist
                 else:
-                    print("ERROR: No path from {} to {} vertex in VCG of node {}".format(src, dest, ID))
+                    print("ERROR: No path from {} to {} vertex in HCG of node {}".format(src, dest, ID))
             else:
                 vertex.min_loc=0
-
+        
+        
         
         
         
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
         graph_for_top_down_evaluation.create_nx_graph()
+        
         mem = Top_Bottom(ID, parentID, graph_for_top_down_evaluation)  # top to bottom evaluation purpose
         self.tb_eval_h.append(mem)
         
@@ -2324,7 +2335,7 @@ class ConstraintGraph:
             coordinates_to_propagate=[self.x_coordinates[ID][0],self.x_coordinates[ID][-1]] # only via coordinates and each layer boundary coordinates need to be passed
             for vertex in self.hcg_vertices[ID]:
                 if vertex.coordinate in self.x_coordinates[parentID] :#and self.via_type in vertex.associated_type:
-                        coordinates_to_propagate.append(vertex.coordinate)
+                    coordinates_to_propagate.append(vertex.coordinate)
             coordinates_to_propagate.sort()
             parent_coord=[]
             for coord in parent_coordinates:
@@ -2387,15 +2398,16 @@ class ConstraintGraph:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
                                 
+                                
                             elif edge.constraint<0:
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesh_forward[parentID].append(e) #edge.type
-
+                                
 
                     #if len(parent_coord)>2 and i==0 and j==len(parent_coord)-1:
                         #continue
@@ -2423,16 +2435,19 @@ class ConstraintGraph:
                                     if constraint.name==cons_name:
                                         index= self.constraint_info.constraints.index(constraint)
                                 min_room=target.min_loc-src.min_loc 
-                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
+                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]
                                 
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
                                     self.edgesh_forward[parentID].append(e)
                                     
+                                    
 
 
 
-
+            
+                #for e in self.edgesh_forward[parentID]:
+                    #e.printEdge()
 
             
             vertices_index=[i.index for i in self.hcg_vertices[parentID]]
@@ -2440,6 +2455,7 @@ class ConstraintGraph:
             
             parent_graph=Graph(vertices=vertices_index,edges=self.edgesh_forward[parentID])
             parent_graph.create_nx_graph()
+            
             parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
             
                          
@@ -2463,10 +2479,10 @@ class ConstraintGraph:
         
         
         
-        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
-            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges,value_only=True)[2])>edge.constraint:
                 
                 redundant_edges.append(edge)
         for edge in redundant_edges:
@@ -2525,7 +2541,7 @@ class ConstraintGraph:
         for vertex in vertices:
             dest=vertex.index
             if dest!=src:
-                max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
                 
                 if max_dist!=0:
                     vertex.min_loc=max_dist
@@ -2533,17 +2549,17 @@ class ConstraintGraph:
                     print("ERROR: No path from {} to {} vertex in VCG of node {}".format(src, dest, ID))
             else:
                 vertex.min_loc=0
-
-       
+        
+        
         removable_vertex={}
         for vert, edge_list in removable_vertex_dict.items():
             for edge in edge_list:
                 source=edge.source.index
                 dest_=edge.dest.index
-                if find_longest_path(source,dest_,adj_matrix)[2]<=edge.constraint:
+                if find_longest_path(source,dest_,adj_matrix,value_only=True)[2]<=edge.constraint:
                     removable_vertex[vert.coordinate]=[edge.source.coordinate,edge.constraint]
                 else:
-                    removable_vertex[vert.coordinate]=[edge.source.coordinate,find_longest_path(source,dest_,adj_matrix)[2]]
+                    removable_vertex[vert.coordinate]=[edge.source.coordinate,find_longest_path(source,dest_,adj_matrix,value_only=True)[2]]
         
         self.removable_vertices_v[ID]=removable_vertex
         graph_for_top_down_evaluation=Graph(vertices=vertices,edges=graph.nx_graph_edges)
@@ -2650,7 +2666,7 @@ class ConstraintGraph:
                     for edge in graph.nx_graph_edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
                             
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed'):
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]<edge.constraint or (edge.type=='fixed'):
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=2*edge.constraint,comp_type=edge.comp_type)
                                 self.edgesv_forward[parentID].append(e) #edge.type
                                 added_constraint=edge.constraint
@@ -2684,7 +2700,7 @@ class ConstraintGraph:
                                     if constraint.name==cons_name:
                                         index= self.constraint_info.constraints.index(constraint)
                                 min_room=target.min_loc-src.min_loc 
-                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
+                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]
                                 
                                 
                                 if min_room>added_constraint and min_room>distance_in_parent_graph : # making sure edge with same constraint is not added again
@@ -3356,6 +3372,7 @@ class ConstraintGraph:
         #"""
         if level == 2:
             for element in reversed(self.tb_eval_h):
+                
                 if element.parentID in list(self.LocationH.keys()):
                     for node in self.hcs_nodes:
                         if node.id == element.parentID:
@@ -3427,15 +3444,17 @@ class ConstraintGraph:
                     elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
                         ds_found=self.design_strings_h[element.ID]
                         
-
+                    
                     else:
                         ds_found=None
+                    
                     try:
                         loc,design_strings= solution_eval(graph_in=copy.deepcopy(element.graph), locations=loc_x, ID=element.ID, Random=ds_found, seed=seed,num_layouts=N,algorithm=algorithm)
                     except:
                         print("Please double check your layout geometry script/constraint table. Layout generation is failed")
                         exit()
                     loc_items=loc.items()
+                    
 
                     
                     count+=1

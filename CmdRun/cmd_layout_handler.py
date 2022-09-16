@@ -277,7 +277,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         measure_names=["perf_1","perf_2"]
 
     if mode == 0: # Minimum-sized layout generation
-
+        
         structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
         
         if structure.via_connected_layer_info!=None:
@@ -304,6 +304,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                         
                 
         else: # handling 2D layer only (no via case)
+            
             sub_tree_root=[structure.root_node_h,structure.root_node_v] # root of each via connected layes subtree
         
             for i in range(len(structure.layers)):
@@ -314,7 +315,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                     structure.layers[i].forward_cg.minY[sub_tree_root[1].id]=sub_tree_root[1].node_min_locations    
                     structure.layers[i].min_location_h,structure.layers[i].min_location_v=structure.layers[i].forward_cg.minValueCalculation(structure.layers[i].forward_cg.hcs_nodes,structure.layers[i].forward_cg.vcs_nodes,mode)
 
-        
+            
         
         module_data=structure.module_data
         bw_type=None
@@ -655,7 +656,9 @@ def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate m
                     interfacing_layer_node_lists.append(pair)
 
             for sub_root in interfacing_layer_node_lists:
+                
                 structure.sub_tree_root_handler(cg_interface=cg_interface,root=sub_root,dbunit=dbunit) #getting constraint graph created from bottom -to-top (upto via root node)
+                
                 for i in range(len(structure.layers)):
                     if structure.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and structure.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
 
@@ -694,6 +697,7 @@ def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate m
         structure.root_node_v.calculate_min_location()
     else: # no via connected layers (2D Case)
         root=[structure.root_node_h,structure.root_node_v]
+        
         structure.sub_tree_root_handler(cg_interface=cg_interface,root=root,dbunit=dbunit) #getting constraint graph created from bottom -to-top (upto root node)
         
         if structure.layers[0].new_engine.Htree.hNodeList[0].parent==root[0] and structure.layers[0].new_engine.Vtree.vNodeList[0].parent==root[1]:
@@ -706,9 +710,12 @@ def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate m
                         break
             
             for node_id,edgelist in list(structure.layers[0].forward_cg.edgesh_forward.items()):
+                
                 if node_id==root[0].id:
+                    
                     root[0].edges+=edgelist
                     break
+                
                 
             for node_id,ZDL_V in list(structure.layers[0].forward_cg.y_coordinates.items()):
                 if node_id==root[1].id:
@@ -720,9 +727,10 @@ def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate m
                 if node_id==root[1].id:
                     root[1].edges+=edgelist
                     break
-
+        
         structure.root_node_h.calculate_min_location()
         structure.root_node_v.calculate_min_location()
+        
 
     #assuming all layers have same footprint size.    
     structure.root_node_h.node_min_locations=structure.root_node_h.node_locations
@@ -835,6 +843,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
     edgesh_root=structure.root_node_h.edges
     edgesv_root=structure.root_node_v.edges
 
+
     
     structure.root_node_h.node_mode_2_locations,structure.root_node_v.node_mode_2_locations=fixed_location_evaluation.get_root_locations(ID=structure.root_node_h.id,edgesh=edgesh_root,ZDL_H=ZDL_H,edgesv=edgesv_root,ZDL_V=ZDL_V,level=mode,XLoc=Min_X_Loc,YLoc=Min_Y_Loc,seed=seed,num_solutions=num_layouts)
     
@@ -939,6 +948,8 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
                     
                     structure.layers[i].mode_1_location_h.append(mode_2_location_h[0])
                     structure.layers[i].mode_1_location_v.append(mode_2_location_v[0])
+
+                    
                 
                 
     return structure, cg_interface

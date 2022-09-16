@@ -703,6 +703,8 @@ def ps_feature_to_cell(powersynth_feature):
                     'Al': 'red',
                     'Air':'blue',
                     'SAC405':'yellow'}
+    if psf.material_name not in mat_to_color: # default color black
+        mat_to_color[psf.material_name]='black'
     
     cell = Cell(xyz=[float(psf.x), float(psf.y), float(psf.z)],
                 wlh=[float(psf.width), float(psf.length), float(psf.height)],

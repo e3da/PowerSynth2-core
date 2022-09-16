@@ -1775,7 +1775,7 @@ class Node_3D(Node):
         graph=Graph(vertices=vertices_index,edges=self.edges)
         graph.create_nx_graph()
         
-        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix()
+        adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
         
         redundant_edges=[]
         for edge in graph.nx_graph_edges:

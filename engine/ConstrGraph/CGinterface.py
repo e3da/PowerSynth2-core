@@ -291,19 +291,22 @@ class CS_to_CG():
         forward_cg.create_vertices(propagated=True)
         forward_cg.update_indices()
         
-        
         forward_cg.add_edges(direction='forward',Types=self.all_cs_types,all_component_types=self.component_types,comp_type=self.comp_type)
         
         # perform edge removal and prepare to propagate edges to parent node
         
         forward_cg.create_forward_cg(level=0)
-
+        
+        
+        """
         #---TODO: Backward CG Implementation-------------
         backward_cg = ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible) # right-to-left/ top-to-bottom
         backward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
         backward_cg.get_x_y_coordinates(direction='backward')
         backward_cg.populate_via_bw_propagation_dict(Types=self.all_cs_types,all_component_types=self.component_types,cs_islands=cs_islands)
         backward_cg.update_x_y_coordinates(direction='backward')
+        """
+        backward_cg= None
         
         return forward_cg, backward_cg
     

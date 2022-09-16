@@ -74,6 +74,7 @@ class fixed_floorplan_algorithms():
             edge_labels1 = d
             
             if level==1:
+                #print(edge_labels1)
                 for key,value in edge_labels1.items():
                     if len(value)>1:
                         maxm=0
@@ -97,20 +98,23 @@ class fixed_floorplan_algorithms():
                     
                     
                     if len(value)==1:
+                        #print(value)
                         if num_solutions>2:
                             max_lim=int((value[0][0])*((m+1)/num_solutions))+value[0][0]
                             
                             if max_lim<=value[0][0]:
                                 max_lim=2*value[0][0]
                             
-                            
+                            #print(max_lim)
+                            random.seed(seed)
                             val=random.randrange(value[0][0],max_lim)
+                            #print(val)
                             
                             value[0][0]=val
                             value[0][-2]=2*val
                         if num_solutions==2:
                             max_lim=2*value[0][0]
-                            
+                            random.seed(seed)
                             val=random.randrange(value[0][0],max_lim)
                             
                             value[0][0]=val

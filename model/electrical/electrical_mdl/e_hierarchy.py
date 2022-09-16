@@ -61,7 +61,7 @@ class EHier():
     
     def form_connectivity_graph(self):
         # Use an undirected graph to quicly find the connectivity among nets during meshing
-        print("form and resuse")
+        #print("form and resuse")
         
         for isl in self.trace_island_nets: # Add an edge for every 2 connected nets on island
             num_net = len(self.trace_island_nets[isl])
@@ -70,8 +70,8 @@ class EHier():
                 self.hyper_graph.graph.add_edge(nets[i],nets[i+1])
         # form wires/vias connections
         
-        for v in self.dev_via:
-            print(v)
+        #for v in self.dev_via:
+        #    print(v)
         
         for v in self.f2f_via:
             net1,net2 = self.f2f_via[v]
@@ -100,8 +100,8 @@ class EHier():
             net_name = 'HE_{}'.format(i)
             self.hyper_graph.hyper_edges[net_name] = edge_list[i]
         #TODO: Remove gate net for power loop (single loop) evaluation map the net name to island 
-        print(self.hyper_graph.hyper_edges)
-        print('finished')
+        #print(self.hyper_graph.hyper_edges)
+        #print('finished')
     def form_hypergraph(self): 
         # First find the relationsship among components, island trace and nets
         
@@ -143,7 +143,7 @@ class EHier():
                 isl_to_rm.append(isl)
         for rm_isl in isl_to_rm:
             del self.trace_island_nets[rm_isl]
-            print("removed", rm_isl)
-        debug = True
+            #print("removed", rm_isl)
+        debug = False
         if debug:      
             self.print_hypergraph() 
