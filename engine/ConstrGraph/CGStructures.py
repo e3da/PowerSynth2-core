@@ -30,11 +30,18 @@ class Edge():
         self.edgeDict = {(self.source, self.dest): [self.constraint, self.type, self.index, self.weight, self.comp_type]}
         # self.edgeDict = {(self.source, self.dest): self.constraint.constraintval}
 
-    def getEdgeDict(self):
+    def getEdgeDict(self,constraint_only=False):
         try:
-            self.edgeDict = {(self.source.index, self.dest.index): [self.constraint, self.type, self.index, self.comp_type]}
+            if constraint_only==False:
+                self.edgeDict = {(self.source.index, self.dest.index): [self.constraint, self.type, self.index, self.comp_type]}
+            else:
+                self.edgeDict = {(self.source.index, self.dest.index): self.constraint}
         except:
-            self.edgeDict = {(self.source, self.dest): [self.constraint, self.type, self.index, self.comp_type]}
+            if constraint_only==False:
+                self.edgeDict = {(self.source, self.dest): [self.constraint, self.type, self.index, self.comp_type]}
+
+            else:
+                self.edgeDict = {(self.source.index, self.dest.index): self.constraint}
         return self.edgeDict
 
     def getEdgeWeight(self, source, dest):
@@ -264,7 +271,7 @@ class Graph():
             graph.add_weighted_edges_from(edge_list)
             return graph
 
-    def generate_adjacency_matrix(self,graph=None):
+    def generate_adjacency_matrix(self,graph=None,print_=False):
         '''
         generates adjacency matrix from the graph
         '''
@@ -276,15 +283,43 @@ class Graph():
             edges=graph.nx_graph_edges
         adj_matrix=[[float('inf') for i in range(len(vertices))] for j in range(len(vertices))]
         dictList = []
-        
+        keys_considered=[]
         for edge in edges:
             
             dictList.append(edge.getEdgeDict())
-        for edge in dictList:
+            if list(dictList[-1].keys())[0] not in keys_considered:
+                keys_considered.append(list(dictList[-1].keys())[0])
+            else:
+                additional_constraint=edge.getEdgeDict()
+                dictList.append(additional_constraint)
+        
+        all_keys=[]
+        for dict_ in dictList:
+            if list(dict_.keys())[0] not in all_keys:
+                all_keys.append(list(dict_.keys())[0])
+        new_dictList=[]
+        for key in all_keys:
+            new_edge_dict={}
+            for dict_ in dictList:
+                if key in dict_:
+                    if key not in new_edge_dict:
+                        new_edge_dict[key]=[dict_[key][0]]
+                    else:
+                        new_edge_dict[key].append(dict_[key][0])
+            new_dictList.append(new_edge_dict)
+        
+
+        for edge in new_dictList:
             key=list(edge.keys())[0]
-            value=list(edge.values())[0]
+            #value=list(edge.values())[0]
+            values=list(edge.values())
+            if len(values[0])>1:
+                value=max(values[0])
+            else:
+                value=values[0][0]
+
             
-            adj_matrix[key[0]][key[1]]=value[0]
+            adj_matrix[key[0]][key[1]]=value
 
         
         return adj_matrix
@@ -532,7 +567,7 @@ def fixed_edge_handling(graph=None,ID=None,dbunit=1000.0):
     '''
     algorithm to handle fixed edges. Finds the removable vertices.
     '''
-
+    
     #makes sure each dependent vertex has a single reference vertex
     dependent_vertices,graph,fixed_edges=reference_edge_handling(graph_in=graph,ID=ID)        
     
@@ -1177,8 +1212,9 @@ def longest_path(src,dest,visited,path,fullpath,adj_matrix,value_only=False):
                     # print(u, i)
                     if i!=float('inf'):
                         index_=adj_matrix[u].index(i)
-
+                        
                         if (dist[index_] < dist[u] + i):
+                            
                             dist[index_] = dist[u] + i
         return [],0,dist[dest] # returning only the longest distance
 

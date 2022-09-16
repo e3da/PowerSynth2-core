@@ -2224,7 +2224,10 @@ class ConstraintGraph:
        
 
         if len(graph.nx_graph_edges)>0:
+            
             removable_vertex_dict,graph=fixed_edge_handling(graph,ID=ID)
+            
+            
         
        
         
@@ -2261,6 +2264,7 @@ class ConstraintGraph:
                     edge.dest.removable=True      
         
         #cleaning up redundant edges
+        
         graph.nx_graph_edges=list(set(graph.nx_graph_edges))
         graph.modified_edges=list(set(graph.modified_edges))
         for edge1 in graph.nx_graph_edges:
@@ -2272,7 +2276,7 @@ class ConstraintGraph:
                         graph.nx_graph_edges.remove(edge2)
                         if edge2 in graph.modified_edges:
                             graph.modified_edges.remove(edge2)
-                        
+        
         
         adj_matrix=graph.generate_adjacency_matrix()
         
@@ -2446,9 +2450,7 @@ class ConstraintGraph:
             
             parent_graph=Graph(vertices=vertices_index,edges=self.edgesh_forward[parentID])
             parent_graph.create_nx_graph()
-            if parentID<0:
-                for edge in parent_graph.nx_graph_edges:
-                    edge.printEdge()
+            
             parent_adj_matrix=self.remove_redundant_edges(graph_in=parent_graph)
             
                          
@@ -2543,7 +2545,7 @@ class ConstraintGraph:
             else:
                 vertex.min_loc=0
 
-       
+        
         removable_vertex={}
         for vert, edge_list in removable_vertex_dict.items():
             for edge in edge_list:
@@ -3365,6 +3367,7 @@ class ConstraintGraph:
         #"""
         if level == 2:
             for element in reversed(self.tb_eval_h):
+                
                 if element.parentID in list(self.LocationH.keys()):
                     for node in self.hcs_nodes:
                         if node.id == element.parentID:
@@ -3436,7 +3439,7 @@ class ConstraintGraph:
                     elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
                         ds_found=self.design_strings_h[element.ID]
                         
-
+                    
                     else:
                         ds_found=None
                     try:
@@ -3445,6 +3448,7 @@ class ConstraintGraph:
                         print("Please double check your layout geometry script/constraint table. Layout generation is failed")
                         exit()
                     loc_items=loc.items()
+                    
 
                     
                     count+=1

@@ -381,6 +381,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
         if (connected):
             longest_path,min_constraints,longest_distance=find_longest_path(source.index,sink.index,adj_matrix)
             
+            
             connected_graph_eval=False
 
             evaluation_done=False

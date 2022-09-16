@@ -948,6 +948,8 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
                     
                     structure.layers[i].mode_1_location_h.append(mode_2_location_h[0])
                     structure.layers[i].mode_1_location_v.append(mode_2_location_v[0])
+
+                    
                 
                 
     return structure, cg_interface
