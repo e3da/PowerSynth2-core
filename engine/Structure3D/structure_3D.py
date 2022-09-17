@@ -543,7 +543,7 @@ class Structure_3D():
                                     dots+=1
 
                             if isinstance(rect[-2],str) and ('_' in rect[-2]):
-                                if 'V' in rect_name or 'L' in rect_name or 'D' in rect_name:
+                                if 'L' in rect_name or 'D' in rect_name:
                                     layer_id=int(rect[-2].strip('_'))-1
                                     rect[-2]=layer_id
                             solder_layer_available=False
@@ -588,6 +588,22 @@ class Structure_3D():
                         length=0 #no length for wire bond (point connection)
                         height=0 # no height for wire bond (point connection)
                         material = 'Al' # hardcoded
+                        
+                        cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
+                        objects_3D.append(cell_3D_object)
+                    if rect.name[0]=='V':
+                        for obj_ in objects_3D:
+                            if obj_.name[0]=='V' and z==-1:
+                                print(obj_.x,obj_.y,obj_.name)
+                        input()
+                        for obj_ in objects_3D:
+                            
+                            if rect.parent.name ==obj_.name:
+                                if island.direction=='Z+':
+                                    z=obj_.z+obj_.h # thickness
+                                else:
+                                    z=obj_.z
+                        
                         
                         cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
                         objects_3D.append(cell_3D_object)
