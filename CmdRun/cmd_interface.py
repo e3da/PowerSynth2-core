@@ -1462,6 +1462,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_4_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
+                    {imam_nethome:'3D_Case_7/macro_script.txt'},
                     {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
                     {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'}]
 

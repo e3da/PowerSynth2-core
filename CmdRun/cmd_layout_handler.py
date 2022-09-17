@@ -414,12 +414,12 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             PS_solutions.append(sol)
 
         #------------------------for debugging---------------------------#
-        '''
+        #'''
         for sol in PS_solutions:
             for f in sol.features_list:
                 f.printFeature()
             plot_solution_structure(sol)
-        '''
+        #'''
         #----------------------------------------------------------------
         if optimization==True:
 

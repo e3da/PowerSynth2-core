@@ -1406,7 +1406,8 @@ class Structure_3D():
                                     ver_node.edges.append(new_edge)
         
         
-        
+        hor_node.add_forward_missing_edges(constraint_info='MinHorSpacing')
+        ver_node.add_forward_missing_edges(constraint_info='MinVerSpacing')
         
         hor_node.create_forward_cg(constraint_info='MinHorSpacing')
         ver_node.create_forward_cg(constraint_info='MinVerSpacing')
@@ -1774,6 +1775,8 @@ class Node_3D(Node):
         
         graph=Graph(vertices=vertices_index,edges=self.edges)
         graph.create_nx_graph()
+
+        
         
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
         
@@ -1835,7 +1838,6 @@ class Node_3D(Node):
         
         adj_matrix=graph.generate_adjacency_matrix()
         
-        
         src=vertices_index[0]
         
         for i in range(len(self.vertices)):
@@ -1853,7 +1855,7 @@ class Node_3D(Node):
             else:
                 vertex.min_loc=0
         
-       
+        
         
         self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
         

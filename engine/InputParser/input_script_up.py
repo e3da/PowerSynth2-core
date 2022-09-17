@@ -800,7 +800,7 @@ class ScriptInputMethod():
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rotate_angle=element.rotate_angle
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
                                 rects_info.append(rect_info)
                         else:
                             if element.layout_component_id.split('.')[0] in layout_data[j] :
@@ -819,7 +819,7 @@ class ScriptInputMethod():
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rotate_angle=element.rotate_angle
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
                                 rects_info.append(rect_info)
 
 
@@ -838,12 +838,14 @@ class ScriptInputMethod():
                                 type = component_to_cs_type[type_name]
                                 x = float(layout_data[j][3])
                                 y = float(layout_data[j][4])
+                                
                                 width = float(layout_data[j][5])
                                 height = float(layout_data[j][6])
                                 name=element.layout_component_id                                
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                
                                 rects_info.append(rect_info)
                         else:
                             if element.layout_component_id.split('.')[0] in layout_data[j] :
@@ -857,6 +859,7 @@ class ScriptInputMethod():
                                 type = component_to_cs_type[type_name]
                                 x = float(layout_data[j][3])
                                 y = float(layout_data[j][4])
+                                
                                 width = float(layout_data[j][5])
                                 height = float(layout_data[j][6])
                                 
@@ -864,7 +867,8 @@ class ScriptInputMethod():
                                 
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                
                                 rects_info.append(rect_info)
 
         
@@ -874,6 +878,7 @@ class ScriptInputMethod():
             for j in range(len(rects_info)):
                 if rects_info[j][5].split('.')[0] in layout_info[i]:
                     cs_info[i]=rects_info[j]
+                
         
         if 0 in cs_info:
             print("ERROR: all components in the layer are not found in the geometry description")

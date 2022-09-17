@@ -127,13 +127,13 @@ class PSSolution(object):
                         for comp_info in comp_list:
                             name_=comp_info[0]+'_attach'
 
-                            x=comp_info[1]/1000.0
-                            y=comp_info[2]/1000.0
+                            x=comp_info[1]/1000
+                            y=comp_info[2]/1000
 
 
                             z=layer_object.z_level
-                            width=comp_info[3]/1000.0
-                            length=comp_info[4]/1000.0
+                            width=comp_info[3]/1000
+                            length=comp_info[4]/1000
                             height=layer_object.thick
 
                             #print (layer_object.material)
@@ -232,11 +232,11 @@ class PSSolution(object):
                             for f1 in features:
                                 if f1.name==ceramic_name:
                                     
-                                    f1.x=layout_object.x/1000.0+min_offset_x
-                                    f1.y=layout_object.y/1000.0+min_offset_y 
+                                    f1.x=layout_object.x/1000+min_offset_x
+                                    f1.y=layout_object.y/1000+min_offset_y 
                                         
-                                    f1.width=layout_object.w/1000.0 # dynamically changing dimension to support variable sized solution
-                                    f1.length=layout_object.l/1000.0 # dynamically changing dimension to support variable sized solution
+                                    f1.width=layout_object.w/1000 # dynamically changing dimension to support variable sized solution
+                                    f1.length=layout_object.l/1000 # dynamically changing dimension to support variable sized solution
                                     #f1.printFeature()
                                     if f1.name=='Ceramic1':
                                         min_width=f1.width
