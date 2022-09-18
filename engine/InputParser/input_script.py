@@ -716,7 +716,7 @@ class ScriptInputMethod():
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rotate_angle=element.rotate_angle
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
                                 rects_info.append(rect_info)
                         else:
                             if element.layout_component_id.split('.')[0] in layout_data[j] :
@@ -735,7 +735,7 @@ class ScriptInputMethod():
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
                                 rotate_angle=element.rotate_angle
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,rotate_angle] #k1=hierarchy level,# added rotate_angle to reduce type in constraint table
                                 rects_info.append(rect_info)
 
 
@@ -761,7 +761,7 @@ class ScriptInputMethod():
                                 
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
                                 rects_info.append(rect_info)
                         else:
                             if element.layout_component_id.split('.')[0] in layout_data[j] :
@@ -782,7 +782,7 @@ class ScriptInputMethod():
                                 
                                 Schar = layout_data[j][0]
                                 Echar = layout_data[j][-1]
-                                rect_info = [type, x*dbunit, y*dbunit, width*dbunit, height*dbunit, name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
+                                rect_info = [type, int(x*dbunit), int(y*dbunit), int(width*dbunit), int(height*dbunit), name, Schar, Echar,k1,0] #k1=hierarchy level # 0 is for rotate angle (default=0 as r)
                                 rects_info.append(rect_info)
 
         
@@ -824,7 +824,7 @@ class ScriptInputMethod():
 
 
 # translates the input layout script and makes necessary information ready for corner stitch data structure
-def script_translator(input_script=None, bond_wire_info=None, flexible=None, layer_stack_info=None, dbunit=1000):
+def script_translator(input_script=None, bond_wire_info=None, flexible=False, layer_stack_info=None, dbunit=1000):
     '''
     :param input_script: layout geometry script
     :param bond_wire_info: bondwire setup file

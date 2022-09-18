@@ -163,8 +163,10 @@ class New_layout_engine():
         :param islands: list of islands created from initial input script
         :return:
         '''
-
+        
         input_ = self.cornerstitch.read_input('list',Rect_list=input_rects)  # Makes the rectangles compaitble to new layout engine input format
+        
+
         self.Htree, self.Vtree = self.cornerstitch.input_processing(input_, origin,size[0],size[1])  # creates horizontal and vertical corner stitch layouts
         patches, combined_graph = self.cornerstitch.draw_layout(rects=input_rects,types=all_cs_types,colors=all_colors,dbunit=dbunit)  # collects initial layout patches and combined HCS,VCS points as a graph for mode-3 representation
 
@@ -997,8 +999,7 @@ class New_layout_engine():
         cs_islands = []
         cs_mapped_input = {}
         for island in copy_islands:
-            #print(island.name)
-            #island.print_island(plot=False)
+            
             cs_island = Island()
             cs_island.name = island.name
             elements = island.elements
