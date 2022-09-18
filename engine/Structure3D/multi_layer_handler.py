@@ -902,6 +902,7 @@ class Layer():
                     continue
                 elif rect[5] not in all_layout_component_ids and i>start and i<end:
                     island.child_rectangles.append(rectangle)
+                    
                     if rectangle.hier_level==1: # child which are on top of traces
                         for r in island.rectangles:
                             
@@ -911,6 +912,7 @@ class Layer():
                         for rectangle_ in island.child_rectangles:
                             if rectangle_.contains_rect(rectangle) and rectangle_.hier_level<rectangle.hier_level:
                                 rectangle.parent=rectangle_
+                                
                     island.child.append(rect)
                     
                     island.child_names.append(rect[5])

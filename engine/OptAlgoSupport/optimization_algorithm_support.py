@@ -802,6 +802,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         
         solution = CornerStitchSolution(index=index)
         module_data=copy.deepcopy(structure.module_data)
+        module_data.solder_attach_info=structure.solder_attach_required
         for i in range(len(structure.layers)):
             sol_layer_i =structure.layers[i]
             cs_updated_info = sol_layer_i.updated_cs_sym_info[k][0]

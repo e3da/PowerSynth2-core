@@ -205,7 +205,7 @@ class CornerStitch_Tmodel_API:
                 solution.features_list.remove(f)
             pairs={}
             for f in via_objects:
-                f.printFeature()
+                
                 via_name=f.name.split('.')
                 if via_name[0] in pairs:
                     pairs[via_name[0]].append(f)
@@ -213,16 +213,11 @@ class CornerStitch_Tmodel_API:
                     pairs[via_name[0]]=[f]
             
             for via, via_pair in pairs.items():
-                if len(via_pair)==2:
-                    for v in via_pair:
-                        if '_' not in v.name:
-                            z=v.z
-                else:
-                    z=0
+                
                 name=via
                 x=via_pair[0].x
                 y=via_pair[0].y
-                z=z
+                z=via_pair[0].z
                 width=via_pair[0].width
                 length=via_pair[0].length
                 height=via_pair[0].height
@@ -232,8 +227,8 @@ class CornerStitch_Tmodel_API:
                 feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
                 solution.features_list.append(feature)
             
-            for f in solution.features_list:
-                f.printFeature()
+            '''for f in solution.features_list:
+                f.printFeature()'''
             if self.matlab_engine == None:
                 #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()
