@@ -74,9 +74,10 @@ class EHier():
         #    print(v)
         
         for v in self.f2f_via:
-            net1,net2 = self.f2f_via[v]
-            self.hyper_graph.graph.add_edge(net1.net,net2.net)
-        
+            if len(self.f2f_via[v]) == 2: # Means both side of the via is connected to a trace
+                net1,net2 = self.f2f_via[v]
+                self.hyper_graph.graph.add_edge(net1.net,net2.net)
+            
         for w in self.wires_data:
             wire_obj = self.wires_data[w] # 
             nets = wire_obj.connections[0]

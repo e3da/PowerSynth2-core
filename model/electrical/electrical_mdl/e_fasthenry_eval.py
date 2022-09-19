@@ -472,6 +472,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 zt = isl_z
                 x,y = [sh_obj.x,sh_obj.y]
                 cp = [x,y,zb]
+                if "V" in sh_name:
+                    print(sh_name)
                 touch = sh_obj.z == zb or sh_obj.z == zt  # Condition to see if the objects are touching to the conductor
                 name = 'N_'+sh_name
 

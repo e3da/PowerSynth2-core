@@ -416,9 +416,6 @@ class CornerStitch_Emodel_API:
         """
         obj, new_rect, name, N_v, z_part  = inputs 
         via_name,layer_id = name.split(".")
-        """if '_' in layer_id:
-            layer_id = layer_id.strip('_')    
-        z_via = self.get_z_loc(int(layer_id))"""
         pin = Sheet(rect=new_rect, net_name=name, net_type='internal', n=N_v, z=z_part)
         if not(via_name in self.via_dict): # Collect the via_name to the table
             self.via_dict[via_name] = []
@@ -1894,7 +1891,7 @@ class CornerStitch_Emodel_API:
                                 frequency=self.freq, inst_name = inst_name)
                     wire.wire_dir = wdir
                     self.wires[wire_name]=wire
-                else:
+                elif "Via_object" in wire_data:
                     list_v = wire_data['source_pad'].split('.')
                     via_name = wire_data['Via_name'] if self.script_mode == 'New' else list_v[0]
                     via = EVia(start=s1,stop=s2,via_name = inst_name)
