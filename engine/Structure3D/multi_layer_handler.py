@@ -490,9 +490,6 @@ class Layer():
                                             x_coord = str(trace_x+trace_width-0.5)
 
 
-
-
-
                                     new_line=['.','+',layout_id, type_, x_coord, y_coord, '0.25', '0.25', str(layer_id)]
                                     if new_line not in new_lines[i]:
                                         new_lines[i].append(new_line)

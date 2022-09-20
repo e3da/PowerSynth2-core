@@ -1008,6 +1008,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             elif key[0]=='V' and key[0] in all_via_data:
                 all_via_data[key].append(value)
     
+    
     for layer in all_layers:
         for ls in (layer.new_lines.values()):
             for line in ls:
@@ -1022,11 +1023,16 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                         line[index_+2]=all_via_data[j][0]['X']
                     if line[index_+3]=='0':
                         line[index_+3]=all_via_data[j][0]['Y']
+                    
                     new_content={'Destination':j+'.'+line[-1],'destination_pad':j+'.'+line[-1]}
+                    
                     if len(all_via_data[j])==1:
-                        all_via_data[j][0].update(new_content)
+                        if 'Destination' not in all_via_data[j][0]:
+                            if all_via_data[j][0]['source_pad']!=new_content['destination_pad']:
+                                all_via_data[j][0].update(new_content)
+                                
         
-        
+     
     
     
     layer_wise_continuity_map={}
@@ -1106,21 +1112,25 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
     """
     
     #----------------------------------------------------------------------#
-
+    
     for layer in all_layers:
         
         for i in layer.input_geometry:
+            
             if 'Via' in i:
                 for name,info in layer.bw_via_data.items():
+                    
                     if name in i and name in all_via_data:
                         if len(all_via_data[name])==2:
                             content=all_via_data[name][1]
                             new_content={'Destination':content['Source'],'destination_pad':content['source_pad']}
+                            
                             layer.bw_via_data[name].update(new_content)
                         else:
                             pad_name=name+'.'+i[-2] # layer id
                             if 'Destination' not in layer.bw_via_data[name] and pad_name!=layer.bw_via_data[name]['source_pad']:
                                 content={'Destination':pad_name, 'destination_pad':pad_name}
+                                
                                 layer.bw_via_data[name].update(content)
 
         
@@ -1188,7 +1198,7 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
                         if info['Via_name']==item:
                             via_table[con_name].update(layer.bw_via_data[item])
                             layer.via_table[con_name]=via_table[con_name]
-    
+            
     for layer in all_layers:
         layer.wire_table.update(layer.bw_info)
         layer.wire_table.update(layer.via_table)
@@ -1246,10 +1256,15 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=None, lay
             layer.print_layer()
             for wire in layer.bondwires:
                 wire.printWire()
+        for wire, wire_info in all_layers[i].wire_table.items():
+            print(wire)
+            print(wire_info)
+        input()
         '''
         #---------for debugging----------------------#
         
         bw_items=list(all_layers[i].wire_table.values())
+        
         all_layers[i].new_engine.islands=copy.deepcopy(all_layers[i].islands) # passing island info before removing any item (i.e.,extra child on device for layout engine only)
         
     
