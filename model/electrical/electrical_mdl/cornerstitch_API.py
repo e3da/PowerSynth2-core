@@ -1374,8 +1374,8 @@ class CornerStitch_Emodel_API:
             
             for island_name in self.layer_island_dict[layer_id]:
                 
-                if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
-                    continue
+                #if island_name in ['island_8.2','island_9.2','island_4.2_5.2','island_6.2_7.2','island_8.4','island_9.4','island_4.4_6.4','island_3.4_5.4']:
+                #    continue
                 #if island_name in ['island_5.4','island_10.4']:#,'island_3.4_2.4','island_6.4_7.4_8.4']:
                 #    continue
                 isl_mesh = TraceIslandMesh(island_name = island_name, id = self.isl_indexing[island_name])
@@ -1953,7 +1953,7 @@ class CornerStitch_Emodel_API:
     def measurement_setup(self, meas_data=None):
         e_measures = []
         type = meas_data['type']
-        loop = meas_data['main_loops']
+        loop = meas_data['main_loops'][0]
         
         multiport = meas_data['multiport']
         if multiport == 0:

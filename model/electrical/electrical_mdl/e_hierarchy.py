@@ -125,7 +125,10 @@ class EHier():
                 self.trace_map[trace.name] = trace
                 for sh_net in all_sheets_dict :
                     sh_obj = all_sheets_dict[sh_net]
+                    #if edge_name == 'island_1.7_2.7_3.7':
+                    #    print("debug")
                     if trace.include_sheet(sh_obj):
+                        
                         self.trace_island_nets[edge_name].append(sh_obj.net)   
                         self.inst_z_id[sh_obj.net] = sh_obj.z_id    
                         self.on_trace_pin_map[sh_obj.net] = sh_obj
@@ -145,6 +148,6 @@ class EHier():
         for rm_isl in isl_to_rm:
             del self.trace_island_nets[rm_isl]
             #print("removed", rm_isl)
-        debug = False
+        debug = True # 
         if debug:      
             self.print_hypergraph() 

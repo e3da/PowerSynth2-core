@@ -317,26 +317,13 @@ class Cmd_Handler:
                     if info[0] == 'Sink:':
                         self.electrical_models_info['sink']= info[1]
                         #main_loops = (self.electrical_models_info['source'],self.electrical_models_info['sink'])
-                        main_loop=(self.electrical_models_info['source'])+","+(self.electrical_models_info['sink'])
-                        self.electrical_models_info['main_loops'] = str(main_loop)
                         #print(self.electrical_models_info['main_loops'])
                         #main_loop=(self.electrical_models_info['source'])+","+(self.electrical_models_info['sink'])
                         #print(main_loop.split(","))
-                        
-                        self.electrical_models_info['multiport'] = 0
-                        
-                        self.dev_conn_file = self.model_char_path + '/connections.json'
-                        main_loop='('+(self.electrical_models_info['source']+','+self.electrical_models_info['sink'])+')'
-                        self.loop_dv_state_map={str(main_loop):self.electrical_models_info['device_connections']}
-                        
-                        with open(self.dev_conn_file, 'w') as f:
-                            json.dump(self.loop_dv_state_map,f)
-                    '''
                     if info[0] == 'Main_Loops:':
                         self.electrical_models_info['main_loops'] = info[1:]
                     if info[0] == 'Multiport:':
                         self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
-                    '''
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
         
@@ -573,7 +560,6 @@ class Cmd_Handler:
         else:
             netlist = self.electrical_models_info['netlist'] 
         self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
-        self.e_api_init.loop_dv_state_map=self.loop_dv_state_map
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
@@ -600,11 +586,16 @@ class Cmd_Handler:
         mode = self.electrical_models_info['multiport']    
         print("Initialize Multiport Setup") if mode else print("Single Loop Setup")
         obj_name_feature_map = {}
+        # TODO: for new student :)
+        # I perform some numerical process here to ensure correct z loc. 
+        # Ignore this in the future if the sol3D object is integer data        
         for f in features:
+            f.z = round(f.z,4)
             obj_name_feature_map[f.name] = f
         if len(module_data[0].islands) > 1: # means there is more than one layer:
             self.e_model_dim = '3D'
-           
+        
+    
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh
         if not ('device_connections' in self.electrical_models_info):  # Check if old device connection existed     
@@ -624,7 +615,8 @@ class Cmd_Handler:
         #self.e_api_init.start_meshing_process(module_data=module_data)
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
-        if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
+        runPEEC_anw = True # Developer flag set True and it will run 3D and 2D with PEEC
+        if self.e_model_dim == '2D' or runPEEC_anw: # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
             print("Dectected {} layout, using PEEC electrical model".format(self.e_model_dim))
             self.e_api_init.form_initial_trace_mesh('init')
             # Setup wire connection
@@ -646,11 +638,11 @@ class Cmd_Handler:
             self.e_model_choice = 'PEEC'
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
-            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
+            print("Detected {} layout, using FastHenry electrical model".format(self.e_model_dim))
 
             self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
             #PEEC works for any layout, but need to optimize the mesh for 3D later 
-        
+        #self.e_model_choice = 'PEEC'
         # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
         #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
@@ -1489,7 +1481,8 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
                     {imam_nethome:'3D_Case_7/macro_script.txt'},
                     {imam_nethome2:'2D_Case_12/macro_script.txt'},
-                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'}]
+                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
+                    {qmle_nethome:'PS2release/Debug/HaoCase/macro_script.txt'}]
 
 
         for tc in tc_list:
