@@ -805,11 +805,35 @@ class CornerStitch_Emodel_API:
         loop = loop.replace(')','')
         src,sink = loop.split(',')
         self.setup_device_states(dev_states)  # TODO: GET IT BACK IN THE CODE
+        
+        # Handle speical shorting between DC- and DC+ if "A-B" is found 
+        # TODO: a more elegant way for this :)
+        num_shorts=0
+        if '-' in src:
+            src_nets = src.split('-') # get the list of all shorted terminals
+            src_net =src_nets[0]
+            num_nets = len(src_nets)
+            for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
+                self.circuit.add_component('Rshort{}'.format(num_shorts),src_nets[i],src_nets[i+1],1e-6)
+                num_shorts+=1
+        if '-' in sink:
+            sink_nets = sink.split('-') # get the list of all shorted terminals
+            sink_net =sink_nets[0]
+            
+            num_nets = len(sink_nets)
+            for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
+                self.circuit.add_component('Rshort{}'.format(num_shorts),sink_nets[i],sink_nets[i+1],1e-6)
+                num_shorts+=1
+         
+                
+
+        
         # Now we check if there is a path from src to sink for this loop. 
         # If not, the user's setup is probably wrong
         # TODO: need to handle capacitance smartly in the future
-        src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
-        sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
+        src_net = 'B_{}'.format(src_net)   if(src[0]  == 'C') else src_net
+        sink_net = 'B_{}'.format(sink_net) if(sink[0] == 'C') else sink_net
+        
         #self.circuit.verbose = 1
         #self.circuit.add_component('RL5','L5',0,1e-6)
         #self.circuit.add_component('RL6','L6',0,1e-6)

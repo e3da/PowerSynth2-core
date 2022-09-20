@@ -148,6 +148,6 @@ class EHier():
         for rm_isl in isl_to_rm:
             del self.trace_island_nets[rm_isl]
             #print("removed", rm_isl)
-        debug = True # 
+        debug = False # 
         if debug:      
             self.print_hypergraph() 
