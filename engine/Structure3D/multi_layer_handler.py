@@ -828,7 +828,7 @@ class Layer():
                         #
                         
                         #all_rects.sort(key=lambda x: x.bottom, reverse=False)
-                        all_rects.sort(key=lambda x: (x.left, x.bottom))
+                        #all_rects.sort(key=lambda x: (x.left, x.bottom))
                         
                         for i in range(len(all_rects)):
                             all_rects[i].Netid = netid

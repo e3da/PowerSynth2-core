@@ -12,7 +12,7 @@ import fileinput
 if __name__ == "__main__":
     # print("----------------------PowerSynth Version 2.0: Command line version------------------")
     
-    path = '/nethome/ialrazi/PS_2_test_Cases/Trial_Batch/'
+    path = '/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test/3D_Case_7'
     macro_files=[]
     #macro_files =glob.glob("D:\Demo\\New_Flow_w_Hierarchy\Imam_journal\Cmd_flow_case\Imam_journal\Batch\macro_?.txt")
     #macro_files = [f for f in os.listdir(path) if f.endswith('.txt')]
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         debug = True
         if debug: # you can mannualy add the argument in the list as shown here
             
-            args = ['python','cmd.py','-m','D:/Demo/New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings.info"]
+            args = ['python','cmd.py','-m','D:/Demo/New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings_up.info"]
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Journal_Result_collection/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt
             #D:\Demo\New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt
             #D:/Demo/New_Flow_w_Hierarchy/Journal_Case/Testing_Journal_case_w_Py_3/Cmd_flow_case/Half_Bridge_Layout/half_bridge_pm_macro.txt

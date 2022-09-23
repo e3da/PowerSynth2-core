@@ -1480,7 +1480,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
                     {imam_nethome:'3D_Case_7/macro_script.txt'},
-                    {imam_nethome2:'2D_Case_12/macro_script.txt'},
+                    {imam_nethome2:'Tristan_Test_Case/macro_script.txt'},
                     {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
                     {qmle_nethome:'PS2release/Debug/HaoCase/macro_script.txt'}]
 
@@ -1500,7 +1500,7 @@ if __name__ == "__main__":
         macro_dir = os.path.join(k,v)
         
         setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
-        setting_dir = "/nethome/qmle/testcases/settings_up.info"
+        #setting_dir = "/nethome/qmle/testcases/settings_up.info"
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
