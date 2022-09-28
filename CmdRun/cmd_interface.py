@@ -1480,7 +1480,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
                     {imam_nethome:'3D_Case_7/macro_script.txt'},
-                    {imam_nethome2:'Tristan_Test_Case/macro_script.txt'},
+                    {imam_nethome2:'3D_Case_3/macro_script.txt'},
                     {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
                     {qmle_nethome:'PS2release/Debug/HaoCase/macro_script.txt'}]
 
