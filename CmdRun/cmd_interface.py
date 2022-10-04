@@ -26,7 +26,7 @@ import json
 import csv
 from core.general.settings import settings
 
-#import core.GUI.main as main
+import core.GUI.main as main
 from matplotlib.figure import Figure
 
 import json
@@ -1436,7 +1436,7 @@ class Logger(object):
 
 if __name__ == "__main__":  
     
-    '''
+   
     application = main.GUI()
     application.run()
 
@@ -1517,4 +1517,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    #'''
+    '''

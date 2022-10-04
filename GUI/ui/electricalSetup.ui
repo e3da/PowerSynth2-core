@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>500</height>
+    <height>585</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -43,22 +43,12 @@
          <widget class="QComboBox" name="combo_model_type">
           <item>
            <property name="text">
-            <string>Loop</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
             <string>FastHenry</string>
            </property>
           </item>
           <item>
            <property name="text">
             <string>PEEC</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Response Surface</string>
            </property>
           </item>
          </widget>
@@ -328,7 +318,16 @@
          <enum>QFrame::Raised</enum>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <property name="margin">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
           <number>0</number>
          </property>
          <item>
