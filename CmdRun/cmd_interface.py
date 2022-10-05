@@ -1484,7 +1484,7 @@ if __name__ == "__main__":
         macro_dir = os.path.join(k,v)
         
         setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
-        setting_dir = "/nethome/qmle/testcases/settings_up.info"
+        #setting_dir = "/nethome/qmle/testcases/settings_up.info"
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
