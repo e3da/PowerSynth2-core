@@ -73,10 +73,12 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.fh_bw_dict= {} # quick access to bws connections
         self.wire_id= 0
         self.tc_id = 0
+        self.emesh.feature_map = feature_map # connect the feature_map to emesh.
         
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             for isl in island_data:
+                isl_dir =isl.direction # Get the face of the island to get correct Z connect
                 z_id = isl.element_names[0].split('.')
                 z_id = int(z_id[-1])
                 z = self.get_z_loc(z_id)

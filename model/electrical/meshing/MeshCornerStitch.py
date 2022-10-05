@@ -56,7 +56,7 @@ class EMesh_CS(EMesh):
         self.contracted_node_dict = {} # node to contract to: [list of nodes on trace cell]
         self.contracted_map = {} # map of contracted node to anchor node
         self.measure = measure # use to get the src sink nets and contracted them
-    
+        self.feature_map = None # New in PS_V2 to get the feature's data from the Solution3D.
     def get_thick(self,layer_id):
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
@@ -499,7 +499,15 @@ class EMesh_CS(EMesh):
         pairs = {}
         if len(elements) == 1:
             el = elements[0]
-            l, r, b, t = self.get_elements_coord(el)
+            f_data = self.feature_map[el[5]] # get the key from element
+            #l, r, b, t = self.get_elements_coord(el) # deceperated # update all data from featuremap
+            # TODO: These rounding can lead to numerical issue, need to update Solution3D to pass integer instead
+            l = int(round(f_data.x*1000,4))
+            r = int(round((f_data.x+ f_data.width)*1000,4))
+            b = int(round((f_data.y)*1000,4))
+            t = int(round((f_data.y+ f_data.length)*1000,4))
+            
+            
             tc = TraceCell(left=l, right=r, bottom=b, top=t)
             #print (type(el_names[0]))
             #print (el_names[0])
