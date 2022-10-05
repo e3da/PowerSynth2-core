@@ -490,9 +490,6 @@ class Layer():
                                             x_coord = str(trace_x+trace_width-0.5)
 
 
-
-
-
                                     new_line=['.','+',layout_id, type_, x_coord, y_coord, '0.25', '0.25', str(layer_id)]
                                     if new_line not in new_lines[i]:
                                         new_lines[i].append(new_line)
@@ -742,7 +739,7 @@ class Layer():
             #print (rect)
         #---------------------------------------------------------------------------
         return self.size,self.cs_info,self.component_to_cs_type,self.all_components
-
+    
 
     def form_initial_islands(self):
         '''
@@ -806,7 +803,7 @@ class Layer():
                     if rect[5]==rectangle.name:
                         island.rectangles.append(rectangle)
                         island.elements.append(rect)
-                        #print(rect[5])
+                        
                         name = name + '_'+rect[5].strip('T')
                         
                         island.element_names.append(rect[5])
@@ -827,17 +824,30 @@ class Layer():
                     if sort_required==True:
                         netid = 0
                         all_rects = island.rectangles
+                        
+                        #
+                        
+                        #all_rects.sort(key=lambda x: x.bottom, reverse=False)
+                        #all_rects.sort(key=lambda x: (x.left, x.bottom))
+                        
                         for i in range(len(all_rects)):
                             all_rects[i].Netid = netid
                             netid += 1
+                        
                         rectangles = [all_rects[0]]
                         for rect1 in rectangles:
                             for rect2 in all_rects:
-                                if (rect1.right == rect2.left or rect1.bottom == rect2.top or rect1.left == rect2.right or rect1.top == rect2.bottom) and rect2.Netid != rect1.Netid:
-                                    if rect2.Netid > rect1.Netid:
-                                        if rect2 not in rectangles:
-                                            rectangles.append(rect2)
-                                            rect2.Netid = rect1.Netid
+                                if (((rect1.right == rect2.left or rect1.left == rect2.right)) or ((rect1.top == rect2.bottom or rect1.bottom == rect2.top))) and not ((rect1.bottom > rect2.top or rect1.top < rect2.bottom)) and rect2.Netid != rect1.Netid:
+                                #if (rect1.right == rect2.left or rect1.bottom == rect2.top or rect1.left == rect2.right or rect1.top == rect2.bottom) and rect2.Netid != rect1.Netid:
+                                    if rect1.intersects(rect2)==False: #(rect1.left,rect1.bottom)>=(rect2.right,rect2.top) or (rect1.right,rect1.bottom)==(rect2.left,rect2.top) or (rect1.right,rect1.top)==(rect2.left,rect2.bottom) or (rect1.left,rect1.top)==(rect2.right,rect2.bottom):
+                                        continue
+                                    elif (rect1.left,rect1.bottom)==(rect2.right,rect2.top) or (rect1.right,rect1.bottom)==(rect2.left,rect2.top) or (rect1.right,rect1.top)==(rect2.left,rect2.bottom) or (rect1.left,rect1.top)==(rect2.right,rect2.bottom):
+                                        continue
+                                    else:
+                                        if rect2.Netid > rect1.Netid:
+                                            if rect2 not in rectangles:
+                                                rectangles.append(rect2)
+                                                rect2.Netid = rect1.Netid
                                 else:
                                     continue
                         if len(rectangles) != len(island.elements):
@@ -902,6 +912,7 @@ class Layer():
                     continue
                 elif rect[5] not in all_layout_component_ids and i>start and i<end:
                     island.child_rectangles.append(rectangle)
+                    
                     if rectangle.hier_level==1: # child which are on top of traces
                         for r in island.rectangles:
                             
@@ -911,6 +922,7 @@ class Layer():
                         for rectangle_ in island.child_rectangles:
                             if rectangle_.contains_rect(rectangle) and rectangle_.hier_level<rectangle.hier_level:
                                 rectangle.parent=rectangle_
+                                
                     island.child.append(rect)
                     
                     island.child_names.append(rect[5])
@@ -951,8 +963,8 @@ class Layer():
 
                     
                     if v['source_pad'] in bondwire_landing_info:
-
-
+                        
+                        
                         wire.source_coordinate = [float(bondwire_landing_info[v['source_pad']][0]),
                                                 float(bondwire_landing_info[v['source_pad']][1])]
                     if v['destination_pad'] in bondwire_landing_info:
@@ -967,6 +979,7 @@ class Layer():
                     wire.wire_id=k
                     wire.num_of_wires=int(v['num_wires'])
                     wire.cs_type= self.component_to_cs_type['bonding wire pad']
+                    
                     try:
                         wire.set_dir_type() #dsetting direction: Horizontal/vertical
                     except:
@@ -1012,7 +1025,7 @@ class Layer():
                         else:
                             
                             if (child1[-2]>1 and child2[5] in comp_hierarchy) and (child1[1]>=child2[1]) and (child1[2]>= child2[2]) and (child1[1]+child1[3]<=child2[1]+child2[3]) and (child1[2]+child1[4]<=child2[2]+child2[4]):
-                                #print(child1,child2)
+                                
                                 comp_hierarchy[child1[5]]=child2[5]
 
             
@@ -1040,19 +1053,24 @@ class Layer():
                 start=-1
                 if not_connected_group==True:
                     for i in range(len(self.cs_info)):
-                        if self.cs_info[i][5] == island.element_names[0]:
+                        if self.cs_info[i][5] in island.element_names:
                             start=i
                             end=len(island.element_names)
                             break
-                if start>0:
+                
+                if start>-1:
+                    
                     self.cs_info[start:start+end]=island.elements
-   
+            
+                   
+            
     # converts cs_info list into list of rectangles to pass into corner stitch input function
     def convert_rectangle(self,flexible,shared=True):
         '''
         :return: list of rectangles with rectangle objects having all properties to pass it into corner stitch data structure
         '''
         #print (self.cs_info)
+        
         input_rects = []
         bondwire_landing_info={} # stores bonding wire landing pad location information
         if flexible==True:
@@ -1069,6 +1087,7 @@ class Layer():
                 input_rects.append(Rectangle(type, x, y, width, height, name, Schar=Schar, Echar=Echar, hier_level=hier_level,rotate_angle=rect[9]))
         elif shared==True and flexible==False:
             for rect in self.cs_info:
+                
                 if rect[5][0]!='B':
                     type = rect[0]
                     x = rect[1]
@@ -1104,6 +1123,7 @@ class Layer():
         #fig,ax=plt.subplots()
         #draw_rect_list(rectlist=input_rects,ax=ax)
         #-----------------------------------------------------------------
+        
         return input_rects, bondwire_landing_info
     
     #plots initial layout for each layer

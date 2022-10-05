@@ -57,6 +57,7 @@ class E_plate:
         # Assume 2 sheets on same plane xy and same z, check if trace enclose sheet
         #print self.n, -1*sheet.n, self.z ,sheet.z,self.dz
         if (self.n == sheet.n and (self.z +self.dz) == sheet.z) or (sum(self.n) == -1*sum(sheet.n) and self.z == sheet.z): #upper and lower faces of a trace
+        #if sheet.z <= self.z +self.dz and sheet.z >= self.z: # TODO: check this for all cases
             #print "found it"
             if self.rect.encloses(sheet.rect.center_x(), sheet.rect.center_y()):
                 return True

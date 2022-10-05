@@ -84,6 +84,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 z = self.get_z_loc(z_id)
                 dz = self.get_thick(z_id)
                 planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
+                all_trace_cells+=trace_cells
                 #print(planar_trace, trace_cells)
                 # Remove zero dim traces
                 for t in trace_cells: 

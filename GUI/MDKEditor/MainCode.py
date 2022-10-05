@@ -3,6 +3,7 @@ This is the main code of PCM
 """
 
 import sys, csv
+import os
 from PySide2.QtGui import *
 from PySide2 import QtCore, QtGui
 from core.GUI.MDKEditor.StructureCode import MaterialProperties
@@ -242,40 +243,47 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         Load material library information to mat_lib
         :return: Nothing
         """
-        with open("Materials.csv") as data:
-            reader = csv.DictReader(data)
-            for row in reader:
-                p_rat = None
-                th_cond = None
-                th_condL = None
-                dens = None
-                densL = None
-                spec = None
-                specL = None
-                melt = None
-                e_res = None
-                pmit = None
-                pmea = None
-                cte = None
-                y_mdl = row['young_modulus']
-                p_rat = row['poissons_ratios']
-                th_cond = row['thermal_cond']
-                th_condL = row['thermal_cond_liq']
-                dens = row['density']
-                densL = row['density_liq']
-                spec = row['spec_heat_cap']
-                specL = row['spec_heat_cap_liq']
-                melt = row['melting_temp']
-                e_res = row['electrical_res']
-                pmit = row['rel_permit']
-                pmea = row['rel_permeab']
-                cte = row['thermal_expansion_coeffcient']
-                data = MaterialProperties(name=row['name'], thermal_cond_so=th_cond, thermal_cond_liq=th_condL,
-                                          spec_heat_cap_so=spec, spec_heat_cap_liq=specL, density_so=dens,
-                                          density_liq=densL, electrical_res=e_res, rel_permit=pmit, rel_permeab=pmea,
-                                          young_modulus=y_mdl, poisson_ratio=p_rat, thermal_expansion_coefficient=cte,
-                                          type=row['type'], melting_temp=melt)
-                EditLibrary.mat_lib.append(data)
+        path_parent = os. path. dirname(os. getcwd())
+        material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
+        
+        if os.path.exists(material_lib):
+            with open(material_lib) as data:
+                reader = csv.DictReader(data)
+                for row in reader:
+                    p_rat = None
+                    th_cond = None
+                    th_condL = None
+                    dens = None
+                    densL = None
+                    spec = None
+                    specL = None
+                    melt = None
+                    e_res = None
+                    pmit = None
+                    pmea = None
+                    cte = None
+                    y_mdl = row['young_modulus']
+                    p_rat = row['poissons_ratios']
+                    th_cond = row['thermal_cond']
+                    th_condL = row['thermal_cond_liq']
+                    dens = row['density']
+                    densL = row['density_liq']
+                    spec = row['spec_heat_cap']
+                    specL = row['spec_heat_cap_liq']
+                    melt = row['melting_temp']
+                    e_res = row['electrical_res']
+                    pmit = row['rel_permit']
+                    pmea = row['rel_permeab']
+                    cte = row['thermal_expansion_coeffcient']
+                    data = MaterialProperties(name=row['name'], thermal_cond_so=th_cond, thermal_cond_liq=th_condL,
+                                            spec_heat_cap_so=spec, spec_heat_cap_liq=specL, density_so=dens,
+                                            density_liq=densL, electrical_res=e_res, rel_permit=pmit, rel_permeab=pmea,
+                                            young_modulus=y_mdl, poisson_ratio=p_rat, thermal_expansion_coefficient=cte,
+                                            type=row['type'], melting_temp=melt)
+                    EditLibrary.mat_lib.append(data)
+        else:
+            print("Please Import the Material.csv file from tech_lib")
+
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
         msg.setText("Materials.csv file is opened")
@@ -427,12 +435,14 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return:
         """
         rows = EditLibrary.mat_lib
-        with open("Materials.csv", 'wb') as csvFile:
-            header = ["name", "thermal_cond", "thermal_cond_liq", "spec_heat_cap",
-                      "spec_heat_cap_liq", "density", "density_liq", "electrical_res",
-                      "rel_permit", "rel_permeab", "q3d_id", "young_modulus", "poissons_ratios",
-                      "thermal_expansion_coeffcient", "type",
-                      "melting_temp"]
+        with open("Materials.csv", 'w') as csvFile:
+            header = ['name', 'thermal_cond', 'thermal_cond_liq', 'spec_heat_cap',
+                      'spec_heat_cap_liq', 'density', 'density_liq', 'electrical_res',
+                      'rel_permit', 'rel_permeab', 'q3d_id', 'young_modulus', 'poissons_ratios',
+                      'thermal_expansion_coeffcient', 'type',
+                      'melting_temp']
+            #header=[i.encode('utf_8') for i in header]
+            
             writer = csv.DictWriter(csvFile, fieldnames=header)
             writer.writeheader()
             for row in rows:

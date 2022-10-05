@@ -532,7 +532,7 @@ class Structure_3D():
                         if f.w==0:
                             f.w=float(rect[ind+4])*dbunit
                             f.l=float(rect[ind+5])*dbunit
-                        if f.z<0:
+                        if f.z<0 and rect_name[0]!='V':
                             
                             if layer.name in self.solder_attach_required:
                                 
@@ -543,7 +543,7 @@ class Structure_3D():
                                     dots+=1
 
                             if isinstance(rect[-2],str) and ('_' in rect[-2]):
-                                if 'V' in rect_name or 'L' in rect_name or 'D' in rect_name:
+                                if  'L' in rect_name or 'D' in rect_name:
                                     layer_id=int(rect[-2].strip('_'))-1
                                     rect[-2]=layer_id
                             solder_layer_available=False
@@ -570,6 +570,7 @@ class Structure_3D():
                                     f.z=f1.z_level-f.h*dots
                                     f.z=round(f.z,3)
             
+            
             for island in layer.islands:
                 for rect in island.child_rectangles:
                     if rect.name[0]=='B': # Bondwire objects
@@ -591,6 +592,24 @@ class Structure_3D():
                         
                         cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
                         objects_3D.append(cell_3D_object)
+                    if rect.name[0]=='V':
+                        
+                        for obj_ in objects_3D:
+                            if obj_.name==rect.name and obj_.z==-1:
+                               
+                                for obj_1 in objects_3D:
+                                    
+                                    if rect.parent.name ==obj_1.name:
+                                        
+                                        if island.direction=='Z+':
+                                            obj_.z=obj_1.z+obj_1.h # thickness
+                                        else:
+                                            
+                                            obj_.z=obj_1.z-obj_.h
+                        
+                        
+                        #cell_3D_object=Cell3D(name=name,x=x,y=y,z=z,w=width,l=length,h=height,material=material)
+                        #objects_3D.append(cell_3D_object)
 
             
             layer_x=self.module_data.layer_stack.all_layers_info[layer.id].x*dbunit
@@ -614,10 +633,11 @@ class Structure_3D():
                 if object_ not in removed_objects:
                     
                     layer.initial_layout_objects_3D.append(object_)
-        
-        '''for object_ in objects_3D:
-            object_.print_cell_3D()
-        input() '''    
+            '''print(layer.name)
+            for object_ in objects_3D:
+                object_.print_cell_3D()
+            input()'''
+              
             
     def update_initial_via_objects(self):
         '''
@@ -627,7 +647,9 @@ class Structure_3D():
         for layer in self.layers:
             for object_ in layer.initial_layout_objects_3D:
                 all_objects_3D.append(object_)
-
+                
+                
+        
 
         solder_layer_available=False
         solder_thick=0
@@ -670,8 +692,7 @@ class Structure_3D():
                                     else:
                                         height_=feat.z-solder_thick-object_.z
                                     object_.h=height_
-       
-
+            
     
     def create_sample_solution(self):
         '''
@@ -1406,7 +1427,8 @@ class Structure_3D():
                                     ver_node.edges.append(new_edge)
         
         
-        
+        hor_node.add_forward_missing_edges(constraint_info='MinHorSpacing')
+        ver_node.add_forward_missing_edges(constraint_info='MinVerSpacing')
         
         hor_node.create_forward_cg(constraint_info='MinHorSpacing')
         ver_node.create_forward_cg(constraint_info='MinVerSpacing')
@@ -1774,12 +1796,14 @@ class Node_3D(Node):
         
         graph=Graph(vertices=vertices_index,edges=self.edges)
         graph.create_nx_graph()
+
+        
         
         adj_matrix_w_redundant_edges=graph.generate_adjacency_matrix(redundant=True)
         
         redundant_edges=[]
         for edge in graph.nx_graph_edges:
-            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges)[2])>edge.constraint:
+            if (find_longest_path(edge.source.index,edge.dest.index,adj_matrix_w_redundant_edges,value_only=True)[2])>edge.constraint:
                 redundant_edges.append(edge)
                 
         for edge in redundant_edges:
@@ -1835,7 +1859,6 @@ class Node_3D(Node):
         
         adj_matrix=graph.generate_adjacency_matrix()
         
-        
         src=vertices_index[0]
         
         for i in range(len(self.vertices)):
@@ -1844,7 +1867,7 @@ class Node_3D(Node):
             
             if dest!=src:
                 
-                max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
                 
                 if max_dist!=0:
                     vertex.min_loc=max_dist
@@ -1853,7 +1876,7 @@ class Node_3D(Node):
             else:
                 vertex.min_loc=0
         
-       
+        
         
         self.tb_eval_graph=Graph(vertices=self.vertices,edges=graph.nx_graph_edges)
         
@@ -1933,7 +1956,7 @@ class Node_3D(Node):
                     
                     for edge in self.tb_eval_graph.edges:
                         if edge.source.coordinate==coord1 and edge.dest.coordinate==coord2 :
-                            if find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]<edge.constraint or (edge.type=='fixed') :
+                            if find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]<edge.constraint or (edge.type=='fixed') :
                             
                                 e = Edge(source=origin, dest=dest, constraint=edge.constraint, index=edge.index, type=edge.type, weight=edge.weight,comp_type=edge.comp_type)
                                 if e not in self.parent.edges:
@@ -1972,7 +1995,7 @@ class Node_3D(Node):
                                 index= constraint_name_list.index(cons_name)
                                 min_room=target.min_loc-src.min_loc 
                                 
-                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix)[2]
+                                distance_in_parent_graph=find_longest_path(origin.index,dest.index,parent_adj_matrix,value_only=True)[2]
                                 
                                 if min_room>added_constraint and min_room>distance_in_parent_graph:
                                     e = Edge(source=origin, dest=dest, constraint=min_room, index=index, type='non-fixed', weight=2*min_room,comp_type='Flexible')
@@ -2181,7 +2204,7 @@ class Node_3D(Node):
                     for vert in self.vertices:
                         if coord==vert.coord:
                             src=vert.index
-                            max_dist=find_longest_path(src,dest,adj_matrix)[2]
+                            max_dist=find_longest_path(src,dest,adj_matrix,value_only=True)[2]
                             if max_dist!=0:
                                 min_loc[vertex.coordinate]=min_loc[coord]+max_dist
         

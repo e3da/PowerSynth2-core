@@ -6,6 +6,7 @@ from time import perf_counter
 from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
 from core.model.thermal.rect_flux_channel_model import Baseplate, ExtaLayer, Device, layer_average, \
     compound_top_surface_avg
+from core.APIs.PowerSynth.solution_structures import PSFeature
 from core.MDK.Design.parts import Part
 import core.APIs.ParaPower.ParaPowerAPI as pp
 import sys
@@ -194,12 +195,40 @@ class CornerStitch_Tmodel_API:
             '''
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
             removable_features=[]
+            via_objects=[]
             for f in solution.features_list:
-                if f.name[0]=='L' or f.name[0]=='V':
+                if f.name[0]=='L' or (f.name[0]=='V'):
                     removable_features.append(f)
+                    if f.name[0]=='V':
+                        via_objects.append(f)
             for f in removable_features:
                 solution.features_list.remove(f)
-
+            pairs={}
+            for f in via_objects:
+                
+                via_name=f.name.split('.')
+                if via_name[0] in pairs:
+                    pairs[via_name[0]].append(f)
+                else:
+                    pairs[via_name[0]]=[f]
+            
+            for via, via_pair in pairs.items():
+                
+                name=via
+                x=via_pair[0].x
+                y=via_pair[0].y
+                z=via_pair[0].z
+                width=via_pair[0].width
+                length=via_pair[0].length
+                height=via_pair[0].height
+                
+                material_name=via_pair[0].material_name
+                
+                feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
+                solution.features_list.append(feature)
+            
+            '''for f in solution.features_list:
+                f.printFeature()'''
             if self.matlab_engine == None:
                 #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()
@@ -413,7 +442,7 @@ class CornerStitch_Tmodel_API:
             self.measure.append(ThermalMeasure(devices=devices, name=name))
             return self.measure
 
-    def eval_thermal_performance(self, module_data = None , solution = None, mode = 1):
+    def eval_thermal_performance(self, module_data = None , solution = None, mode = 0):
         """_summary_
 
         Args:

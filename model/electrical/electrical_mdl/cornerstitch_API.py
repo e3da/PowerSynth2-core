@@ -320,12 +320,14 @@ class CornerStitch_Emodel_API:
                     x,y,w,h = trace[1:5]
                     if 'C' in name: # THIS HANDLE THE DECOUPLING CAP CASE ONLY
                         for m in self.loop:
+                            
                             if name in m:
                                 while '(' in m or ')' in m:
                                     m = m.replace('(','')
                                     m = m.replace(')','') 
                                      
                                 m_s = m
+                                print(m_s)
                                 pin1,pin2 = m_s.split(',')
                                 
                                 net1 = "B_{}".format(pin1)
@@ -803,11 +805,35 @@ class CornerStitch_Emodel_API:
         loop = loop.replace(')','')
         src,sink = loop.split(',')
         self.setup_device_states(dev_states)  # TODO: GET IT BACK IN THE CODE
+        
+        # Handle speical shorting between DC- and DC+ if "A-B" is found 
+        # TODO: a more elegant way for this :)
+        num_shorts=0
+        if '-' in src:
+            src_nets = src.split('-') # get the list of all shorted terminals
+            src_net =src_nets[0]
+            num_nets = len(src_nets)
+            for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
+                self.circuit.add_component('Rshort{}'.format(num_shorts),src_nets[i],src_nets[i+1],1e-6)
+                num_shorts+=1
+        if '-' in sink:
+            sink_nets = sink.split('-') # get the list of all shorted terminals
+            sink_net =sink_nets[0]
+            
+            num_nets = len(sink_nets)
+            for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
+                self.circuit.add_component('Rshort{}'.format(num_shorts),sink_nets[i],sink_nets[i+1],1e-6)
+                num_shorts+=1
+         
+                
+
+        
         # Now we check if there is a path from src to sink for this loop. 
         # If not, the user's setup is probably wrong
         # TODO: need to handle capacitance smartly in the future
-        src_net = 'B_{}'.format(src)   if(src[0]  == 'C') else src
-        sink_net = 'B_{}'.format(sink) if(sink[0] == 'C') else sink
+        src_net = 'B_{}'.format(src_net)   if(src[0]  == 'C') else src_net
+        sink_net = 'B_{}'.format(sink_net) if(sink[0] == 'C') else sink_net
+        
         #self.circuit.verbose = 1
         #self.circuit.add_component('RL5','L5',0,1e-6)
         #self.circuit.add_component('RL6','L6',0,1e-6)
@@ -1459,7 +1485,7 @@ class CornerStitch_Emodel_API:
         
         if not(init): # OR running in the optimization loop
             return # self.loop_dv_state_map should be same
-        new = 1
+        new = 0
         self.dev_conn_file = self.workspace_path + '/connections.json'
         isfile = os.path.isfile
         self.loop_dv_state_map = {m:{} for m in self.loop}    
@@ -1468,8 +1494,8 @@ class CornerStitch_Emodel_API:
         print(msg)
         
         if isfile(self.dev_conn_file):
-            new = input("Input 1 to setup new connectivity, 0 to reuse the saved file from last run, your input: ")
-            new = int(new)
+            #new = input("Input 1 to setup new connectivity, 0 to reuse the saved file from last run, your input: ")
+            new = 0 #int(new)
             if new!=0 and new!=1: # Can setup an ininite loop later if this step is too tedious (quiting everytime)
                 print("Unexpected Input")
                 quit()
@@ -1951,14 +1977,16 @@ class CornerStitch_Emodel_API:
     def measurement_setup(self, meas_data=None):
         e_measures = []
         type = meas_data['type']
-        main_loops = meas_data['main_loops']
+        loop = meas_data['main_loops'][0]
+        
         multiport = meas_data['multiport']
         if multiport == 0:
-            for loop in main_loops:
-                src, sink = loop.split(',')
-                source = src.strip('(')
-                sink = sink.strip(')')
-                e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink,multiport=multiport))
+            #for loop in main_loops:
+            
+            src, sink = loop.split(',')
+            source = src.strip('(')
+            sink = sink.strip(')')
+            e_measures.append(ElectricalMeasure(measure=type, name=loop, source=source, sink=sink,multiport=multiport))
         else:
             name = 'multiport'
             e_measures.append(ElectricalMeasure(measure=type, name=name, source='', sink='',multiport=multiport))

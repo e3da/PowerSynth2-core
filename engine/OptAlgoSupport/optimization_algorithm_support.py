@@ -73,7 +73,7 @@ class new_engine_opt:
         self.e_api.init_layout_3D(module_data=module_data,feature_map=obj_name_feature_map)
         self.e_api.handle_net_hierachy(lvs_check = False) 
         self.e_api.check_device_connectivity(False)
-
+        #self.e_api.e_mdl = "PowerSynthPEEC"    
         if self.e_api.e_mdl == "PowerSynthPEEC":
             #self.e_api.print_and_debug_layout_objects_locations()
             # Setup wire connection
@@ -115,10 +115,11 @@ class new_engine_opt:
                     features = ps_sol.features_list
                     obj_name_feature_map = {}
                     for f in features:
+                        f.z = round(f.z,4) # need to handle the Z location better in sol3D
                         obj_name_feature_map[f.name] = f
                     self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
                     # EVALUATION PROCESS 
-                    if self.e_api.e_mdl == "PEEC":
+                    if self.e_api.e_mdl == "PowerSynthPEEC":
                         if measure.multiport:
                             multiport_result = self.e_api.eval_multi_loop_impedances()
                             self.multiport_result[solution.solution_id] = multiport_result
@@ -133,14 +134,11 @@ class new_engine_opt:
                             L_abs = abs(np.imag(L))
                             R_abs = R_abs[0]
                             L_abs = L_abs[0]
-                            """if L_abs <= 9e-9 and L_abs >=8e-9:
-                                print("found solution",solution.solution_id)
-                                input()"""
                             if abs(R_abs)>1e3:
                                 print("ID:",solution.solution_id)
                                 print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
                                 print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
-
+                                assert False, "Check connectivity: via connections, device connections, loop setup"    
                             result.append(L_abs)  
                     elif self.e_api.e_mdl == 'FastHenry':
                         
@@ -802,6 +800,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         
         solution = CornerStitchSolution(index=index)
         module_data=copy.deepcopy(structure.module_data)
+        module_data.solder_attach_info=structure.solder_attach_required
         for i in range(len(structure.layers)):
             sol_layer_i =structure.layers[i]
             cs_updated_info = sol_layer_i.updated_cs_sym_info[k][0]
