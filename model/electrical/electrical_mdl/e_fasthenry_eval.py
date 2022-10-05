@@ -124,10 +124,17 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             #print(self.via_dict[v])
             via_pins = self.via_dict[v]
             v1,v2 = via_pins
+            via_obj = self.device_vias[v]
             fh_pt1 = 'N_'+ v1.net
             fh_pt2 = 'N_'+ v2.net
-            text += equiv.format(fh_pt1,fh_pt2)
-
+            fh_pt1_dv = 'N_'+ via_obj.start_net
+            fh_pt2_dv = 'N_'+ via_obj.stop_net
+            
+            if fh_pt1 != fh_pt1_dv or fh_pt2 != fh_pt2_dv:
+                text += equiv.format(fh_pt1_dv,fh_pt2_dv) # connect via pins
+            text += equiv.format(fh_pt1,fh_pt2) # connect via to via
+            
+        # need to do same equip for device vias
         return text
     
     def form_isl_script_old(self):
