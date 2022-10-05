@@ -73,10 +73,12 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         self.fh_bw_dict= {} # quick access to bws connections
         self.wire_id= 0
         self.tc_id = 0
+        self.emesh.feature_map = feature_map # connect the feature_map to emesh.
         
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             for isl in island_data:
+                isl_dir =isl.direction # Get the face of the island to get correct Z connect
                 z_id = isl.element_names[0].split('.')
                 z_id = int(z_id[-1])
                 z = self.get_z_loc(z_id)
@@ -122,10 +124,17 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             #print(self.via_dict[v])
             via_pins = self.via_dict[v]
             v1,v2 = via_pins
+            via_obj = self.device_vias[v]
             fh_pt1 = 'N_'+ v1.net
             fh_pt2 = 'N_'+ v2.net
-            text += equiv.format(fh_pt1,fh_pt2)
-
+            fh_pt1_dv = 'N_'+ via_obj.start_net
+            fh_pt2_dv = 'N_'+ via_obj.stop_net
+            
+            if fh_pt1 != fh_pt1_dv or fh_pt2 != fh_pt2_dv:
+                text += equiv.format(fh_pt1_dv,fh_pt2_dv) # connect via pins
+            text += equiv.format(fh_pt1,fh_pt2) # connect via to via
+            
+        # need to do same equip for device vias
         return text
     
     def form_isl_script_old(self):
@@ -463,6 +472,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
+            if "V" in sh_name:
+                print(sh_name)
             parent_name = sh_obj.parent_name
             if island_name == parent_name:  # means if this sheet is in this island
                 if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object
@@ -472,6 +483,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 zt = isl_z
                 x,y = [sh_obj.x,sh_obj.y]
                 cp = [x,y,zb]
+                
                 touch = sh_obj.z == zb or sh_obj.z == zt  # Condition to see if the objects are touching to the conductor
                 name = 'N_'+sh_name
 

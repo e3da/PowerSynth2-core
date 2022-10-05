@@ -74,7 +74,7 @@ class new_engine_opt:
         self.e_api.handle_net_hierachy(lvs_check = False) 
         self.e_api.check_device_connectivity(False)
 
-        if self.e_api.e_mdl == "PEEC":
+        if self.e_api.e_mdl == "PowerSynthPEEC":
             #self.e_api.print_and_debug_layout_objects_locations()
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time

@@ -28,7 +28,7 @@ from core.general.settings import settings
 import core.GUI.main as main
 from matplotlib.figure import Figure
 
-
+import json
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
 
 
@@ -337,7 +337,7 @@ class Cmd_Handler:
                 self.run_options() # Start the tool here...
             else:
                 self.setup_models(mode=0) # setup thermal model
-                
+                self.check_main_loops()
                 self.electrical_init_setup() # init electrical loop model using PEEC one time
                 self.setup_models(mode=1) # setup electrical model
                 self.structure_3D = Structure_3D() # Clean it up
@@ -519,6 +519,10 @@ class Cmd_Handler:
                                 meas_data=t_measure_data,
                                 model_type=self.thermal_models_info['model'])
         if self.electrical_mode!=None and mode ==1:
+            # bypass main loops setup to match previous PowerSynth version
+            
+                
+            
             e_measure_data = {'name':self.electrical_models_info['measure_name']\
                         ,'type':self.electrical_models_info['measure_type']\
                         ,'main_loops': self.electrical_models_info['main_loops']\
@@ -527,6 +531,16 @@ class Cmd_Handler:
             """self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
                 ,frequency=self.electrical_models_info['frequency'], meas_data=e_measure_data,\
                  type = self.electrical_models_info['model_type'], netlist = self.electrical_models_info['netlist'])"""
+    
+    
+    def check_main_loops(self):
+        if not('main_loops' in self.electrical_models_info):
+            # Then source and sink must be provided
+            if 'source' in self.electrical_models_info and 'sink' in self.electrical_models_info:
+                self.electrical_models_info['main_loops'] = ['(' + self.electrical_models_info['source']\
+                                                            + ',' + self.electrical_models_info['sink'] + ')']
+            else: # Terminate with error
+                assert False, "Source Sink or Loop info must be provided, please check the manual !"
     
     def electrical_init_setup(self):
         '''
@@ -571,9 +585,20 @@ class Cmd_Handler:
             self.e_model_dim = '3D'
            
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
-        # Start the simple PEEC mesh     
-        self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
-        
+        # Start the simple PEEC mesh
+        if not ('device_connections' in self.electrical_models_info):  # Check if old device connection existed     
+            self.e_api_init.check_device_connectivity(mode = mode) # for single loop mode
+        else: 
+            # Here a single loop mode is assume and the first loop is used for evaluation setup
+            # If device state is set in the macro script, it will by pass the check connectivity step for multiloop
+            loop_device_state_map = {}
+            save_dir = self.model_char_path  + '/connections.json'
+            loop_device_state_map[self.electrical_models_info['main_loops'][0]] = self.electrical_models_info['device_connections']
+            self.e_api_init.loop_dv_state_map = loop_device_state_map
+            with open(save_dir, 'w') as f:
+                json.dump(loop_device_state_map,f)
+            print("save data in json")
+            # Store the device connection info into the characterization folder
         #self.e_api_init.print_and_debug_layout_objects_locations()
         #self.e_api_init.start_meshing_process(module_data=module_data)
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
@@ -1459,6 +1484,7 @@ if __name__ == "__main__":
         macro_dir = os.path.join(k,v)
         
         setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
+        setting_dir = "/nethome/qmle/testcases/settings_up.info"
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
