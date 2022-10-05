@@ -465,6 +465,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
+            if "V" in sh_name:
+                print(sh_name)
             parent_name = sh_obj.parent_name
             if island_name == parent_name:  # means if this sheet is in this island
                 if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object
@@ -474,8 +476,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 zt = isl_z
                 x,y = [sh_obj.x,sh_obj.y]
                 cp = [x,y,zb]
-                if "V" in sh_name:
-                    print(sh_name)
+                
                 touch = sh_obj.z == zb or sh_obj.z == zt  # Condition to see if the objects are touching to the conductor
                 name = 'N_'+sh_name
 

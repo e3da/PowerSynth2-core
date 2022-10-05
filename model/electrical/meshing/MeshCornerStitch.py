@@ -526,7 +526,14 @@ class EMesh_CS(EMesh):
             planar_flag = False
             for i in range(len(elements)):
                 el = elements[i]
-                l, r, b, t = self.get_elements_coord(el)  # get left right bottom top
+                f_data = self.feature_map[el[5]] # get the key from element
+                #l, r, b, t = self.get_elements_coord(el)  # get left right bottom top
+                
+                # TODO: These rounding can lead to numerical issue, need to update Solution3D to pass integer instead
+                l = int(round(f_data.x*1000,4))
+                r = int(round((f_data.x+ f_data.width)*1000,4))
+                b = int(round((f_data.y)*1000,4))
+                t = int(round((f_data.y+ f_data.length)*1000,4))
                 new_tc = TraceCell(left=l, right=r, bottom=b, top=t)
                 # In case the island is full of H and V types, we will apply the optimized mesh
                 if not (planar_flag):
