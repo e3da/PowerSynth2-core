@@ -22,7 +22,7 @@ def edge_split(start,split_point,end,fixed_vert_indices,adj_matrix,location):
             diff = location[split_point] - location[start]
             weight = adj_matrix[start][end]
             new_weight=weight-diff
-            if new_weight>find_longest_path(split_point,end,adj_matrix,value_only=True)[2] :
+            if new_weight>find_longest_path(split_point,end,adj_matrix)[2] :
                 new_edge[(split_point,end)]=new_weight
 
             
@@ -31,7 +31,7 @@ def edge_split(start,split_point,end,fixed_vert_indices,adj_matrix,location):
             diff = location[end] - location[split_point]
             weight = adj_matrix[start][end]
             new_weight=weight-diff
-            if new_weight>find_longest_path(start,split_point,adj_matrix,value_only=True)[2]:
+            if new_weight>find_longest_path(start,split_point,adj_matrix)[2]:
                 new_edge[(start,split_point)]=new_weight
         
         return new_edge
@@ -144,7 +144,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                 continue
             elif src_vertex.removable==True or dest_vertex.removable==True: # edge from/to a removable vertex
                 continue
-            elif find_longest_path(src_index,dest_index,adj_matrix,value_only=True)[2]>=constraint: # new weight<existing longest path
+            elif find_longest_path(src_index,dest_index,adj_matrix)[2]>=constraint: # new weight<existing longest path
                 continue
             else:
                 e_type=edge.type
@@ -743,7 +743,7 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
         for i in sources:
             for j in non_fixed_vertices:
                 
-                longest_dist=find_longest_path(i,j,adj_matrix,value_only=True)[2]
+                longest_dist=find_longest_path(i,j,adj_matrix)[2]
                 if longest_dist!=0:
                     if j in min_val:
                         min_value=locations[all_verts[i].coordinate]+longest_dist
@@ -755,7 +755,7 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
         for i in non_fixed_vertices:
             for j in sinks:
                 
-                longest_dist=find_longest_path(i,j,adj_matrix,value_only=True)[2]
+                longest_dist=find_longest_path(i,j,adj_matrix)[2]
                 
                 if longest_dist!=0:
                     if i in max_val:

@@ -150,15 +150,15 @@ print("num_layouts:",num_layouts)
 print("opt_algo:",opt_algo)
 
 # assign directory
-root=batch_run_dir#'/nethome/ialrazi/PS_2_test_Cases/Trial_Batch'
+root=batch_run_dir#'/nethome/ialrazi/PS_2_test_Cases/Trial_Batch2'
 dirlist = [ item for item in os.listdir(root) if os.path.isdir(os.path.join(root, item)) ]
 
 dirlist= [os.path.join(root,item) for item in dirlist]
 
-print(dirlist)
+#print(dirlist)
 macro_scripts=[]
 for dir_ in dirlist:
-	print(os.listdir(dir_))
+	#print(os.listdir(dir_))
 	
 	for f in os.listdir(dir_) :
 		
