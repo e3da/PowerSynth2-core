@@ -22,11 +22,10 @@ import os
 import sys
 import glob
 import copy
-import json
 import csv
 from core.general.settings import settings
 
-import core.GUI.main as main
+#import core.GUI.main as main
 from matplotlib.figure import Figure
 
 import json
@@ -175,10 +174,10 @@ class Cmd_Handler:
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    if info[1]=='None':
-                        self.connectivity_setup=None
-                    else:
+                    if info[1] !='None':
                         self.connectivity_setup = os.path.abspath(info[1])
+                    else:
+                        self.connectivity_setup=None
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
@@ -316,10 +315,7 @@ class Cmd_Handler:
 
                     if info[0] == 'Sink:':
                         self.electrical_models_info['sink']= info[1]
-                        #main_loops = (self.electrical_models_info['source'],self.electrical_models_info['sink'])
-                        #print(self.electrical_models_info['main_loops'])
-                        #main_loop=(self.electrical_models_info['source'])+","+(self.electrical_models_info['sink'])
-                        #print(main_loop.split(","))
+
                     if info[0] == 'Main_Loops:':
                         self.electrical_models_info['main_loops'] = info[1:]
                     if info[0] == 'Multiport:':
@@ -328,9 +324,7 @@ class Cmd_Handler:
                         self.electrical_models_info['frequency']= float(info[1])
         
         proceed = self.check_input_files() # only proceed if all input files are good. 
-        
-        
-        
+
         if proceed:
             self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
             self.init_cs_objects(run_option=run_option)
@@ -461,10 +455,9 @@ class Cmd_Handler:
                and check_file(self.layer_stack_file) \
                and rs_model_check\
                and check_file(self.constraint_file)
-        #print(self.connectivity_setup)
-        if self.connectivity_setup!=None:
+        if self.connectivity_setup != None:
             cont = check_file(self.connectivity_setup)
-        #print(check_file(self.connectivity_setup))
+        
         
         # Making Output Dirs for Figure
         if not (check_dir(self.fig_dir)):
@@ -586,16 +579,11 @@ class Cmd_Handler:
         mode = self.electrical_models_info['multiport']    
         print("Initialize Multiport Setup") if mode else print("Single Loop Setup")
         obj_name_feature_map = {}
-        # TODO: for new student :)
-        # I perform some numerical process here to ensure correct z loc. 
-        # Ignore this in the future if the sol3D object is integer data        
         for f in features:
-            f.z = round(f.z,4)
             obj_name_feature_map[f.name] = f
         if len(module_data[0].islands) > 1: # means there is more than one layer:
             self.e_model_dim = '3D'
-        
-    
+           
         self.e_api_init.init_layout_3D(module_data=module_data[0],feature_map=obj_name_feature_map) # We got into the meshing and layout init !!! # This is where we need to verify if the API works or not ?
         # Start the simple PEEC mesh
         if not ('device_connections' in self.electrical_models_info):  # Check if old device connection existed     
@@ -615,8 +603,7 @@ class Cmd_Handler:
         #self.e_api_init.start_meshing_process(module_data=module_data)
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
-        runPEEC_anw = True # Developer flag set True and it will run 3D and 2D with PEEC
-        if self.e_model_dim == '2D' or runPEEC_anw: # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
+        if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
             print("Dectected {} layout, using PEEC electrical model".format(self.e_model_dim))
             self.e_api_init.form_initial_trace_mesh('init')
             # Setup wire connection
@@ -638,11 +625,11 @@ class Cmd_Handler:
             self.e_model_choice = 'PEEC'
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
-            print("Detected {} layout, using FastHenry electrical model".format(self.e_model_dim))
+            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
 
             self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
             #PEEC works for any layout, but need to optimize the mesh for 3D later 
-        #self.e_model_choice = 'PEEC'
+        
         # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
         #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
@@ -836,7 +823,7 @@ class Cmd_Handler:
         self.dbunit=1000 # in um
 
         # calling script parser function to parse the geometry and bondwire setup script
-        if  self.connectivity_setup!=None:
+        if self.connectivity_setup!=None:
             self.script_mode = 'Old' 
             all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
         else:
@@ -1436,7 +1423,7 @@ class Logger(object):
 
 if __name__ == "__main__":  
     
-   
+    '''
     application = main.GUI()
     application.run()
 
@@ -1476,13 +1463,10 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_3_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_4_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_4/macro_script.txt'},
-                    {imam_nethome:'3D_Case_4_new/macro_script.txt'},
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome:'3D_Case_7/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/macro_script.txt'},
-                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
-                    {qmle_nethome:'PS2release/Debug/HaoCase/macro_script.txt'}]
+                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
+                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'}]
 
 
         for tc in tc_list:
@@ -1517,4 +1501,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    '''
+    #'''
