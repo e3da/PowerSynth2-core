@@ -775,9 +775,13 @@ class ScriptInputMethod():
                                 type = component_to_cs_type[type_name]
                                 x = float(layout_data[j][3])
                                 y = float(layout_data[j][4])
-                                width = float(layout_data[j][5])
-                                height = float(layout_data[j][6])
                                 
+                                if element.layout_component_id.split('.')[0][0]!='B':
+                                    width = float(layout_data[j][5])
+                                    height = float(layout_data[j][6])
+                                else:
+                                    width=0.25
+                                    height=0.25
                                 name=element.layout_component_id
                                 
                                 Schar = layout_data[j][0]
