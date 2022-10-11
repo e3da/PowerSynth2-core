@@ -148,6 +148,7 @@ class new_engine_opt:
                             R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
                             L_abs = abs(L)
                             result.append(L_abs)  
+                            print("FH", L_abs)
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
@@ -210,6 +211,7 @@ class new_engine_opt:
                     self.e_api.generate_fasthenry_inputs(solution.solution_id)
                     if sol_len==1:
                         R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                        print('FH:',abs(L) , "nH")
                     
                         
                     

@@ -1464,8 +1464,17 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_5/macro_script.txt'},
                     {imam_nethome:'3D_Case_6/macro_script.txt'},
                     {imam_nethome:'3D_Case_7/macro_script.txt'},
-                    {imam_nethome2:'2D_Case_11/macro_script.txt'},
-                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'}]
+                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
+                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
+                    {qmle_nethome:'PS2release/test/3D_Case_1/macro_script.txt'}, # FH 1.04 nH  -- ParaPower (Pass)
+                    {qmle_nethome:'PS2release/test/3D_Case_2/macro_script.txt'}, # FH 1.12 nH -- ParaPower (Fail)
+                    {qmle_nethome:'PS2release/test/3D_Case_3_new/macro_script.txt'}, # FH  3.62 nH (new)  Para (Pass) # Old script fails
+                    {qmle_nethome:'PS2release/test/3D_Case_3/macro_script.txt'},# FH  3.88 nH (old)  Para (Pass) # Old script fails
+                    {qmle_nethome:'PS2release/test/3D_Case_4/macro_script.txt'}, # FH 1.42 nH Para (Pass)  
+                    {qmle_nethome:'PS2release/test/3D_Case_4_new/macro_script.txt'},  # FH 0.55 nH  Para (Pass)
+                    {qmle_nethome:'PS2release/test/3D_Case_5/macro_script.txt'}, # FH 11 nH (wtf ?) PEEC 2.88 nH Para (Pass)
+                    {qmle_nethome:'PS2release/test/3D_Case_6/macro_script.txt'}, # FH 3.65 nH Para (Pass)
+                    {qmle_nethome:'PS2release/test/3D_Case_7/macro_script.txt'},] # FH (not supported) PEEC 2.37 nH Para (Pass)
 
 
         for tc in tc_list:
@@ -1482,8 +1491,8 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
-        #setting_dir = "/nethome/qmle/testcases/settings_up.info"
+        #setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
+        setting_dir = "/nethome/qmle/testcases/settings_up.info"
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
@@ -1491,7 +1500,7 @@ if __name__ == "__main__":
         
      
         log_file_name=os.path.dirname(macro_dir)+'/output.log'
-        sys.stdout = Logger(file_name=log_file_name)
+        #sys.stdout = Logger(file_name=log_file_name)
         
         
         cmd.cmd_handler_flow(arguments= args)

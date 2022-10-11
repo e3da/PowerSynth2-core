@@ -119,19 +119,22 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         """
         text =''
         for v in self.via_dict:
-            #print(v)
+            via_pins = self.via_dict[v] # this via_dict stores all via info
+            dv_via =False
+            if len(via_pins) == 2: # in case of device via it will be 1 since the via is connected 1 sided only
+                v1,v2 = via_pins 
             
-            #print(self.via_dict[v])
-            via_pins = self.via_dict[v]
-            v1,v2 = via_pins
-            via_obj = self.device_vias[v]
-            fh_pt1 = 'N_'+ v1.net
-            fh_pt2 = 'N_'+ v2.net
-            fh_pt1_dv = 'N_'+ via_obj.start_net
-            fh_pt2_dv = 'N_'+ via_obj.stop_net
-            
-            if fh_pt1 != fh_pt1_dv or fh_pt2 != fh_pt2_dv:
-                text += equiv.format(fh_pt1_dv,fh_pt2_dv) # connect via pins
+            if v in self.device_vias: # this only stores the via that is connected to devices
+                via_obj = self.device_vias[v]
+                dv_via = True
+            if dv_via: # special via
+                fh_pt1 = 'N_'+ via_obj.start_net
+                fh_pt2 = 'N_'+ via_obj.stop_net
+            else: # normal via    
+                fh_pt1 = 'N_'+ v1.net
+                fh_pt2 = 'N_'+ v2.net
+                
+           
             text += equiv.format(fh_pt1,fh_pt2) # connect via to via
             
         # need to do same equip for device vias
@@ -472,8 +475,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
-            if "V" in sh_name:
-                print(sh_name)
+            #if "V" in sh_name:
+            #    print(sh_name)
             parent_name = sh_obj.parent_name
             if island_name == parent_name:  # means if this sheet is in this island
                 if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object

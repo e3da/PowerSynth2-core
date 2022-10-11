@@ -402,7 +402,9 @@ class CornerStitch_Emodel_API:
                         if "MOS" in obj.name:
                             spc_type = 'MOSFET'
                         elif "DIODE" in obj.name:
-                            spc_type = 'DIODE' 
+                            spc_type = 'DIODE'
+                        elif "IGBT" in obj.name:
+                            spc_type = 'IGBT' 
                         if self.script_mode == "Old":
                             self.handle_comp_pins_old_script(inputs = [obj, dev_name, isl_dir, x_feature, y_feature, z_id,spc_type,N_v,isl])
                         elif self.script_mode == 'New':
@@ -809,6 +811,7 @@ class CornerStitch_Emodel_API:
         # Handle speical shorting between DC- and DC+ if "A-B" is found 
         # TODO: a more elegant way for this :)
         num_shorts=0
+
         if '-' in src:
             src_nets = src.split('-') # get the list of all shorted terminals
             src_net =src_nets[0]
@@ -816,6 +819,9 @@ class CornerStitch_Emodel_API:
             for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
                 self.circuit.add_component('Rshort{}'.format(num_shorts),src_nets[i],src_nets[i+1],1e-6)
                 num_shorts+=1
+        else:
+            src_net = src
+            
         if '-' in sink:
             sink_nets = sink.split('-') # get the list of all shorted terminals
             sink_net =sink_nets[0]
@@ -824,7 +830,8 @@ class CornerStitch_Emodel_API:
             for i in range(num_nets-1): # add bunch of Resistors to short, dummy but fast way :)
                 self.circuit.add_component('Rshort{}'.format(num_shorts),sink_nets[i],sink_nets[i+1],1e-6)
                 num_shorts+=1
-         
+        else:
+            sink_net = sink
                 
 
         
