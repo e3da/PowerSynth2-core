@@ -937,7 +937,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
             msg.setText(message)
             msg.setWindowTitle("Message")
             msg.exec_()
-            #self.ok()
+            self.ok()
         else:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
@@ -945,7 +945,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
             msg.setText(message)
             msg.setWindowTitle("Message")
             msg.exec_()
-            #self.ok()
+            self.ok()
 
     def remove_all(self):
         """
