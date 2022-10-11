@@ -120,8 +120,10 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         text =''
         for v in self.via_dict:
             via_pins = self.via_dict[v] # this via_dict stores all via info
-            v1,v2 = via_pins
             dv_via =False
+            if len(via_pins) == 2: # in case of device via it will be 1 since the via is connected 1 sided only
+                v1,v2 = via_pins 
+            
             if v in self.device_vias: # this only stores the via that is connected to devices
                 via_obj = self.device_vias[v]
                 dv_via = True
@@ -473,8 +475,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
-            if "V" in sh_name:
-                print(sh_name)
+            #if "V" in sh_name:
+            #    print(sh_name)
             parent_name = sh_obj.parent_name
             if island_name == parent_name:  # means if this sheet is in this island
                 if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object
