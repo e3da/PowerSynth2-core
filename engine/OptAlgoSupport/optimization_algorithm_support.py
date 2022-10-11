@@ -161,7 +161,7 @@ class new_engine_opt:
                 #print(self.t_api.matlab_engine)
                 #measure.mode = 1 #Need to input from macro
                 max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
-                result.append(max_t-273)
+                result.append(max_t)
         return result
     
     

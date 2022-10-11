@@ -1353,8 +1353,7 @@ class Cmd_Handler:
             for key in sol.parameters:
                 perf_metrices.append(key)
         for sol in solutions:
-            #if sol.params['Inductance']>50:
-                #continue
+            
             data_x.append(sol.parameters[perf_metrices[0]])
             if (len(sol.parameters)>=2):
                 data_y.append(sol.parameters[perf_metrices[1]])
@@ -1364,13 +1363,12 @@ class Cmd_Handler:
         plt.cla()
         
         axes = self.solutionsFigure.gca()
-        #print (data_x,data_y)
-        axes.scatter(data_x, data_y, picker=True)
+        
+        axes.scatter(data_x, data_y)
         for solution in solutions:
             labels=list(solution.parameters.keys())
             break
-        #if len(labels)==2:
-        #print(labels)
+        
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
@@ -1383,7 +1381,7 @@ class Cmd_Handler:
         
         
         if plot:
-            
+            plt.scatter(data_x, data_y)  
             plt.xlim(min(data_x)-2, max(data_x)+2)
             plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
@@ -1394,9 +1392,9 @@ class Cmd_Handler:
             # giving a title to my graph
             plt.title('Solution Space')
 
-        # function to show the plot
-        #plt.show()
-        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+            # function to show the plot
+            #plt.show()
+            plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
 
 
 

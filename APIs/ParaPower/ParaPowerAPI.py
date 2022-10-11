@@ -212,7 +212,7 @@ class ParaPowerInterface(object):
         temperature_dict = {}
         for f in results_full:
             name = f['feature']
-            if name[0] == 'D':
+            if name[0] == 'D' and '_attach' not in name:
                 temperature_dict[name] = f['temperature'][-1] + 273.5
                 
 
