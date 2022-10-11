@@ -54,6 +54,8 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         self.clone_sem_button.clicked.connect(self.clone_semiconductor)
         self.edit_sem_button.clicked.connect(self.edit_semiconductor)
         self.remove_sem_button.clicked.connect(self.remove_semiconductor)
+        path_parent = os. path. dirname(os. getcwd())
+        self.material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
 
     def check_alpha(self, name):
         """
@@ -243,11 +245,11 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         Load material library information to mat_lib
         :return: Nothing
         """
-        path_parent = os. path. dirname(os. getcwd())
-        material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
-        
-        if os.path.exists(material_lib):
-            with open(material_lib) as data:
+        #path_parent = os. path. dirname(os. getcwd())
+        #self.material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
+        #print(material_lib)
+        if os.path.exists(self.material_lib):
+            with open(self.material_lib) as data:
                 reader = csv.DictReader(data)
                 for row in reader:
                     p_rat = None
@@ -281,6 +283,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
                                             young_modulus=y_mdl, poisson_ratio=p_rat, thermal_expansion_coefficient=cte,
                                             type=row['type'], melting_temp=melt)
                     EditLibrary.mat_lib.append(data)
+                    
         else:
             print("Please Import the Material.csv file from tech_lib")
 
@@ -334,6 +337,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         for row in rows:
             # ALL table contents
             self.tableWidget.setItem(row_id, 0, QTableWidgetItem(row.name))
+            #self.tableWidget.setItem(QTableWidgetItem(row.name))
             type = row.type
             combo = QComboBox()
             option = ["PCM", "Conductor", "Insulator", "Semiconductor", "None"]
@@ -435,43 +439,48 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return:
         """
         rows = EditLibrary.mat_lib
-        with open("Materials.csv", 'w') as csvFile:
-            header = ['name', 'thermal_cond', 'thermal_cond_liq', 'spec_heat_cap',
-                      'spec_heat_cap_liq', 'density', 'density_liq', 'electrical_res',
-                      'rel_permit', 'rel_permeab', 'q3d_id', 'young_modulus', 'poissons_ratios',
-                      'thermal_expansion_coeffcient', 'type',
-                      'melting_temp']
-            #header=[i.encode('utf_8') for i in header]
-            
-            writer = csv.DictWriter(csvFile, fieldnames=header)
-            writer.writeheader()
-            for row in rows:
-                data={'name':None, 'thermal_cond':None, 'thermal_cond_liq':None, 'spec_heat_cap':None,
-                      'spec_heat_cap_liq':None, 'density':None, 'density_liq':None, 'electrical_res':None,
-                      'rel_permit':None, 'rel_permeab':None, 'q3d_id':None, 'young_modulus':None, 'poissons_ratios':None,
-                      'thermal_expansion_coeffcient':None, 'type':None, 'melting_temp':None}
-                data['name'] = row.name
-                data['thermal_cond'] = row.thermal_cond_so
-                data['thermal_cond_liq'] = row.thermal_cond_liq
-                data['spec_heat_cap'] = row.spec_heat_cap_so
-                data['spec_heat_cap_liq'] = row.spec_heat_cap_liq
-                data['density'] = row.density_so
-                data['density_liq'] = row.density_liq
-                data['electrical_res'] = row.electrical_res
-                data['rel_permit'] = row.rel_permit
-                data['rel_permeab'] = row.rel_permeab
-                data['q3d_id'] = row.name
-                data['young_modulus'] = row.young_modulus
-                data['poissons_ratios'] = row.poisson_ratio
-                data['thermal_expansion_coeffcient'] = row.thermal_expansion_coefficient
-                data['type'] = row.type
-                data['melting_temp'] = row.melting_temp
-                writer.writerow(data)
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setText("All materials are saved to Materials.csv file")
-        msg.setWindowTitle("Message")
-        msg.exec_()
+        if os.path.exists(self.material_lib):
+            with open(self.material_lib, 'w') as csvFile:
+                header = ['name', 'thermal_cond', 'thermal_cond_liq', 'spec_heat_cap',
+                        'spec_heat_cap_liq', 'density', 'density_liq', 'electrical_res',
+                        'rel_permit', 'rel_permeab', 'q3d_id', 'young_modulus', 'poissons_ratios',
+                        'thermal_expansion_coeffcient', 'type',
+                        'melting_temp']
+                #header=[i.encode('utf_8') for i in header]
+                
+                writer = csv.DictWriter(csvFile, fieldnames=header)
+                writer.writeheader()
+                for row in rows:
+                    data={'name':None, 'thermal_cond':None, 'thermal_cond_liq':None, 'spec_heat_cap':None,
+                        'spec_heat_cap_liq':None, 'density':None, 'density_liq':None, 'electrical_res':None,
+                        'rel_permit':None, 'rel_permeab':None, 'q3d_id':None, 'young_modulus':None, 'poissons_ratios':None,
+                        'thermal_expansion_coeffcient':None, 'type':None, 'melting_temp':None}
+                    data['name'] = row.name
+                    data['thermal_cond'] = row.thermal_cond_so
+                    data['thermal_cond_liq'] = row.thermal_cond_liq
+                    data['spec_heat_cap'] = row.spec_heat_cap_so
+                    data['spec_heat_cap_liq'] = row.spec_heat_cap_liq
+                    data['density'] = row.density_so
+                    data['density_liq'] = row.density_liq
+                    data['electrical_res'] = row.electrical_res
+                    data['rel_permit'] = row.rel_permit
+                    data['rel_permeab'] = row.rel_permeab
+                    data['q3d_id'] = row.name
+                    data['young_modulus'] = row.young_modulus
+                    data['poissons_ratios'] = row.poisson_ratio
+                    data['thermal_expansion_coeffcient'] = row.thermal_expansion_coefficient
+                    data['type'] = row.type
+                    data['melting_temp'] = row.melting_temp
+                    writer.writerow(data)
+                    
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("All materials are saved to Materials.csv file in tech lib")
+            msg.setWindowTitle("Message")
+            msg.exec_()
+        else:
+            print("Please export the data to a file using File->Export flow.")
+        
 
     def search(self):
         """
@@ -481,7 +490,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         rows = EditLibrary.mat_lib
         text = self.comboBox.currentText()
         item = self.SearchItem.text()
-        value2 = item.encode("utf-8")
+        value2 = item
         if text == 'Name':
             row_id = 0
             for row in rows:
@@ -815,7 +824,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         :return: Nothing
         """
         num = self.tableWidget.currentRow()
-        name = self.tableWidget.item(num,0).text().encode('utf-8')
+        name = self.tableWidget.item(num,0).text()
         widget = self.tableWidget.cellWidget(num, 1)
         type = widget.currentText()
         y_mdl = self.tableWidget.item(num, 2).text()
@@ -831,12 +840,14 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         pmit = self.tableWidget.item(num, 12).text()
         pmea = self.tableWidget.item(num, 13).text()
         tm_co = self.tableWidget.item(num,14).text()
+        
         check = False
         while not check:
             if check == self.check_alpha(name):
                 break
             if check == self.check_same(name):
                 break
+            '''
             if check == self.check_num(y_mdl):
                 break
             if check == self.check_num(p_rat):
@@ -844,21 +855,27 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
             if melt != '':
                 if check == self.check_num(melt):
                     break
+            '''
             if dens != '':
                 if check == self.check_num(dens):
                     break
+            '''
             if densL != '':
                 if check == self.check_num(densL):
                     break
+            '''
             if th_cond != '':
                 if check == self.check_num(th_cond):
                     break
+            '''
             if th_condL != '':
                 if check == self.check_num(th_condL):
                     break
+            '''
             if sp_cap != '':
                 if check == self.check_num(sp_cap):
                     break
+            '''
             if sp_capL != '':
                 if check == self.check_num(sp_capL):
                     break
@@ -874,6 +891,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
             if tm_co != '':
                 if check == self.check_num(tm_co):
                     break
+            '''
             check = True
             break
         if check:
@@ -883,6 +901,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
                 if num == id2:
                     row.name = name
                     row.type = type
+                    '''
                     row.young_modulus = y_mdl.encode('utf-8')
                     row.poisson_ratio = p_rat.encode('utf-8')
                     row.melting_temp = melt.encode('utf-8')
@@ -896,23 +915,37 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
                     row.rel_permit = pmit.encode('utf-8')
                     row.rel_permeab = pmea.encode('utf-8')
                     row.thermal_expansion_coefficient = tm_co.encode('utf-8')
+                    '''
+                    row.young_modulus = y_mdl
+                    row.poisson_ratio = p_rat
+                    row.melting_temp = melt
+                    row.density_so = dens
+                    row.density_liq = densL
+                    row.thermal_cond_so = th_cond
+                    row.thermal_cond_liq = th_condL
+                    row.spec_heat_cap_so = sp_cap
+                    row.spec_heat_cap_liq = sp_capL
+                    row.electrical_res = e_res
+                    row.rel_permit = pmit
+                    row.rel_permeab = pmea
+                    row.thermal_expansion_coefficient = tm_co
                 id2 += 1
             EditLibrary.mat_lib = rows
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
-            message = name + " is edited"
+            message = str(name) + " is edited"
             msg.setText(message)
             msg.setWindowTitle("Message")
             msg.exec_()
-            self.ok()
+            #self.ok()
         else:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
-            message = "Some values are inappropriate"
+            message = "Some values are inappropriate. Please enter at least density, specific heat, and thermal conductivity of a material at solid state."
             msg.setText(message)
             msg.setWindowTitle("Message")
             msg.exec_()
-            self.ok()
+            #self.ok()
 
     def remove_all(self):
         """
@@ -926,7 +959,7 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         for row in rows:
             if value == num:
                 name = row.name
-                name = name.encode('utf-8')
+                #name = name.encode('utf-8')
             num += 1
         rows.pop(value)
         EditLibrary.mat_lib = rows
