@@ -887,8 +887,8 @@ class CornerStitch_Emodel_API:
         for d in self.e_devices:
             dev_obj = self.e_devices[d]
             para = dev_obj.conn_order # get the connection order
-            if dev_obj.spice_type == 'MOSFET':
-                rds = para[('Drain','Source')]['R'] # TODO: This must be added to the Manual
+            #if dev_obj.spice_type == 'MOSFET':
+            #    rds = para[('Drain','Source')]['R'] # TODO: This must be added to the Manual
             #print("Device name {}, rdson {}".format(d,rds))
             connections = list(para.keys())
             for i in range(len(connections)):
@@ -897,13 +897,13 @@ class CornerStitch_Emodel_API:
                     conn_tupple = connections[i]
                     start_net = '{}_{}'.format(d,conn_tupple[0])
                     end_net = '{}_{}'.format(d,conn_tupple[1]) 
-                    if conn_tupple == ('Drain','Source'): # TODO: User Manual
+                    """if conn_tupple == ('Drain','Source'): # TODO: User Manual
                         int_pin = '{}_internal'.format(d) # e.g D1_internal
                         self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
                                                             .format(d,conn_tupple[0],conn_tupple[1]))
                         #self.circuit.add_component('Rrds_{}'.format(d),int_pin,end_net,rds ) 
-                    else:
-                        self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
+                    else:"""
+                    self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
                                                             .format(d,conn_tupple[0],conn_tupple[1])) 
                 else: # Grounding all gate pins for single loop
                     
@@ -1415,6 +1415,9 @@ class CornerStitch_Emodel_API:
                 all_net_off_trace = self.hier.off_trace_pin_map
                 for trace_name in self.hier.isl_name_traces[island_name]:
                     all_trace_copper.append(self.hier.trace_map[trace_name])
+                if not(island_name in self.hier.trace_island_nets):
+                    # Not net on trace --> dummy floating trace from layout engine
+                    continue
                 for net_name in self.hier.trace_island_nets[island_name]:
                     all_net_on_trace.append(self.hier.on_trace_pin_map[net_name])
                 
@@ -1936,7 +1939,12 @@ class CornerStitch_Emodel_API:
                 connection_order = dev_obj.conn_dict    # THis is the connection order defined by the user.    
                 dev_pins = {}
                 dev_para = []
-                spc_type = 'MOSFET'
+                # :) I dont know who get to define these definition layout or electrical, but fine
+                if 'diode' in dev_obj.name.lower():
+                    spc_type = 'DIODE'
+                elif 'mos' in dev_obj.name.lower():
+                    spc_type = 'MOSFET'
+                    
                 for n in net_to_update:
                     if net_to_update[n] == 0: # means we hae to update this net
                         wires = device_wire_map[device] # Get all the wires that are connected to this device.
