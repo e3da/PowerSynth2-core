@@ -69,7 +69,12 @@ def showSolutionBrowser(self):
                     data_y.append(sol.parameters[perf_metrices[1]])
                 else:
                     data_y.append(sol.solution_id)
-
+        
+        # to save the plot figures in the fig directory
+        try:
+            self.cmd.export_solution_params(self.pathToFigs,self.pathToSolutions, self.cmd.structure_3D.solutions,int(self.layoutMode))
+        except:
+            print("Couldn't save the solution space figure. Please use the exported CSV file to regenearte the figure.")
         
         def on_pick(event):
             self.solution_ind = event.ind[0]
@@ -77,7 +82,7 @@ def showSolutionBrowser(self):
             #try:
                 #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
             #print ('sel_point', sel_point)
-            axes.clear()
+            #axes.clear()
             axes.scatter(data_x, data_y, picker=1, marker='o', c='b',s = 50)
             axes.scatter(data_x[sel_point], data_y[sel_point], picker=1, marker='o', c='r',s=100)
             canvas.draw()

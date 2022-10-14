@@ -25,7 +25,7 @@ import copy
 import csv
 from core.general.settings import settings
 
-#import core.GUI.main as main
+import core.GUI.main as main
 from matplotlib.figure import Figure
 
 import json
@@ -1353,8 +1353,7 @@ class Cmd_Handler:
             for key in sol.parameters:
                 perf_metrices.append(key)
         for sol in solutions:
-            #if sol.params['Inductance']>50:
-                #continue
+            
             data_x.append(sol.parameters[perf_metrices[0]])
             if (len(sol.parameters)>=2):
                 data_y.append(sol.parameters[perf_metrices[1]])
@@ -1364,13 +1363,12 @@ class Cmd_Handler:
         plt.cla()
         
         axes = self.solutionsFigure.gca()
-        #print (data_x,data_y)
-        axes.scatter(data_x, data_y, picker=True)
+        
+        axes.scatter(data_x, data_y)
         for solution in solutions:
             labels=list(solution.parameters.keys())
             break
-        #if len(labels)==2:
-        #print(labels)
+        
         if len(labels)<2:
             for i in range(2-len(labels)):
                 labels.append('index')
@@ -1383,7 +1381,7 @@ class Cmd_Handler:
         
         
         if plot:
-            
+            plt.scatter(data_x, data_y)  
             plt.xlim(min(data_x)-2, max(data_x)+2)
             plt.ylim(min(data_y)-0.5, max(data_y)+0.5)
             # naming the x axis
@@ -1394,9 +1392,9 @@ class Cmd_Handler:
             # giving a title to my graph
             plt.title('Solution Space')
 
-        # function to show the plot
-        #plt.show()
-        plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
+            # function to show the plot
+            #plt.show()
+            plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
 
 
 
@@ -1423,7 +1421,7 @@ class Logger(object):
 
 if __name__ == "__main__":  
     
-    '''
+    #'''
     application = main.GUI()
     application.run()
 
@@ -1504,8 +1502,8 @@ if __name__ == "__main__":
         v = list(tc.values())[0]
         macro_dir = os.path.join(k,v)
         
-        #setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
-        setting_dir = "/nethome/qmle/testcases/settings_up.info"
+        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
+        #setting_dir = "/nethome/qmle/testcases/settings_up.info"
         print("MACRO DIR:", macro_dir)
         print("SETTING DIR", setting_dir)
         # From now all of these testcases serve for recursive test for the inductance model
@@ -1522,4 +1520,4 @@ if __name__ == "__main__":
     else:
         cmd.cmd_handler_flow(arguments=sys.argv) # Default
 
-    #'''
+    '''

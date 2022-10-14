@@ -18,7 +18,7 @@ def createMacro(file: TextIOWrapper, self):
     figDir = "/".join(figDir) + "/Figs"
     solutionDir = self.pathToLayoutScript.split("/")
     solutionDir.pop(-1)
-    solutionDir = "/".join(solutionDir) + "/Characterization"
+    solutionDir = "/".join(solutionDir) + "/Solutions"
     
     file.write("Fig_dir: " + figDir + "\n")
     file.write("Solution_dir: " + solutionDir + "\n")
@@ -26,6 +26,7 @@ def createMacro(file: TextIOWrapper, self):
     charDir = self.pathToLayoutScript.split("/")
     charDir.pop(-1)
     charDir = "/".join(charDir) + "/Characterization"
+    file.write("Model_char: " + charDir + "\n")
     if self.pathToBondwireSetup=='None':
         file.write("Model_char: " + charDir + "\n")
 
