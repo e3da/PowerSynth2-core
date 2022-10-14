@@ -755,7 +755,60 @@ class ModifiedNodalAnalysis():
             plt.plot()
             #print((np.where(~V.any(axis=1))[0]))
 
+    def netlist_dump(self, id, path,output_nets = []):
+        """Take the solution id to generate the subckt
 
+        Args:
+            id (int): sol_id
+            path (str): path to save netlist
+            output_nets (list): list of (assumed) net names of some components on the layout e.g leads, device-pins
+        """
+        out = ""
+        out += "* PEEC Circuit for layout solution {}\n".format(id)
+        output_str = ""
+        for net in output_nets:
+            output_str+= " "+net
+        out += ".SUBCKT Module_{} {}\n".format(id,output_str)
+        
+        """
+        out += "* Layout net to net-id table:\n"
+        out += "*|| Layout Net ||   Net ID   ||\n"
+        
+        for net_name in self.net_name_to_net_id:
+            net_id = str(self.net_name_to_net_id[net_name])
+            net_name = 'N'+str(net_name)
+            net_spaces = " "*(12 - len(net_name))
+            id_spaces = " "*(12 - len(net_id))
+            net_line =  "||" + net_name + net_spaces + "||" + id_spaces+ net_id   + '\n'
+            out+= net_line
+        """
+        el_format = "{name} {n1} {n2} {val} \n"
+        mu_format = "{name} {l1} {l2} {val} \n"
+        # Dump the raw PEEC matrix
+        mutual_list =[]
+        for e in self.element:
+            # Disconnect PEEC attempts to short source sink in the loop
+            if 'V' in e:
+                continue
+            if 'M' in e:
+                mutual_list.append(e)
+                continue # Handle M later
+            val = self.value[e]
+            val = np.imag(val) if 'L' in e else val
+            line = el_format.format(name = e, n1 = self.pnode[e], n2 =self.nnode[e], val = val)
+            
+            out+=line
+        
+        for mu in mutual_list:
+            l1 = self.Lname1[mu]
+            l2 = self.Lname2[mu]
+            m_val = self.value[mu]
+            m_line = mu_format.format(name = mu,l1=l1,l2= l2,val =m_val)     
+            out+=m_line   
+        out+=".ENDS\n"
+        with open(path, 'w') as f:
+            f.write(out)
+        f.close()        
 def test_ModifiedNodalAnalysis1():
     print("new method")
     circuit = ModifiedNodalAnalysis()
@@ -887,3 +940,4 @@ if __name__ == "__main__":
     test_ModifiedNodalAnalysis4()
     stime= perf_counter()
     print("solving time",perf_counter()-stime,'s')
+    
