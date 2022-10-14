@@ -204,25 +204,26 @@ class ParaPowerInterface(object):
         md_json = json.dumps(self.to_dict())
         # temperature = matlab_engine.PowerSynthImport_V2(md_json)
         temperature = 5
-        #results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
-        results_full = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
-        #results = json.loads(results)
-        results_full = json.loads(results_full)
+        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+        #results_full = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
+        results = json.loads(results)
+        #results_full = json.loads(results_full)
         #print(results)
-        temperature_dict = {}
+        '''temperature_dict = {}
         for f in results_full:
             name = f['feature']
             if name[0] == 'D' and '_attach' not in name:
-                temperature_dict[name] = f['temperature'][-1] + 273.5
+                temperature_dict[name] = f['temperature'][-1] + 273.5'''
                 
 
-        #temperature = results['temperature'][-1]
+        temperature = {'D1':results['temperature'][-1]+273.5}
         # self.eng.workspace['test_md'] = self.eng.ImportPSModuleDesign(json.dumps(self.to_dict()), nargout=1)
         # self.eng.save('test_md_file.mat', 'test_md')
         # return temperature + 273.5
         #self.save_parapower()
         #print (temperature, ' K')
-        return temperature_dict
+        #return temperature_dict
+        return temperature
 
 
     def save_parapower(self):
