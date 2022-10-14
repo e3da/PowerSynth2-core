@@ -1466,6 +1466,7 @@ if __name__ == "__main__":
                     {imam_nethome:'3D_Case_7/macro_script.txt'},
                     {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
                     {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
+                    # Below are testcases with setup to option 0, some corner cases need to be fixed
                     {qmle_nethome:'PS2release/test/3D_Case_1/macro_script.txt'}, # FH 1.04 nH  -- ParaPower (Pass)
                     {qmle_nethome:'PS2release/test/3D_Case_2/macro_script.txt'}, # FH 1.12 nH -- ParaPower (Fail)
                     {qmle_nethome:'PS2release/test/3D_Case_3_new/macro_script.txt'}, # FH  3.62 nH (new)  Para (Pass) # Old script fails
@@ -1474,9 +1475,19 @@ if __name__ == "__main__":
                     {qmle_nethome:'PS2release/test/3D_Case_4_new/macro_script.txt'},  # FH 0.55 nH  Para (Pass)
                     {qmle_nethome:'PS2release/test/3D_Case_5/macro_script.txt'}, # FH 11 nH (wtf ?) PEEC 2.88 nH Para (Pass)
                     {qmle_nethome:'PS2release/test/3D_Case_6/macro_script.txt'}, # FH 3.65 nH Para (Pass)
-                    {qmle_nethome:'PS2release/test/3D_Case_7/macro_script.txt'},] # FH (not supported) PEEC 2.37 nH Para (Pass)
-
-
+                    {qmle_nethome:'PS2release/test/3D_Case_7/macro_script.txt'}, # FH (not supported) PEEC 2.37 nH Para (Pass)
+                    {qmle_nethome:'PS2release/test/2D_Case_1/macro_script.txt'}, # 12.8 nH PEEC , resolve dummy trace :) 
+                    {qmle_nethome:'PS2release/test/2D_Case_2/macro_script.txt'}, # Mesh issue
+                    {qmle_nethome:'PS2release/test/2D_Case_3_new/macro_script.txt'}, # Mesh issue old # Handle spc type based on generic types decided by layout engine
+                    {qmle_nethome:'PS2release/test/2D_Case_4/macro_script.txt'}, # 40 nH ? PD effect
+                    {qmle_nethome:'PS2release/test/2D_Case_5/macro_script.txt'}, # 16.4nH
+                    {qmle_nethome:'PS2release/test/2D_Case_6/macro_script.txt'}, # 16nH
+                    {qmle_nethome:'PS2release/test/2D_Case_7/macro_script.txt'}, # 10.6 nH
+                    {qmle_nethome:'PS2release/test/2D_Case_8/macro_script.txt'}, # 8.3 nH
+                    {qmle_nethome:'PS2release/test/2D_Case_9/macro_script.txt'}, # Meshing issue ? or the spc issue
+                    {qmle_nethome:'PS2release/test/2D_Case_10/macro_script.txt'}, # Quang 2nd journal, R comp Not supported yet!
+                    {qmle_nethome:'PS2release/test/2D_Case_11/macro_script.txt'}, # Meshing issue ? or the spc issue
+                    {qmle_nethome:'PS2release/test/2D_Case_11_new/macro_script.txt'}] # 9.98 nH
         for tc in tc_list:
             print("Case id:", tc_list.index(tc))
             k = list(tc.keys())[0]
