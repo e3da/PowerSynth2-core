@@ -842,9 +842,7 @@ class CornerStitch_Emodel_API:
         src_net = 'B_{}'.format(src_net)   if(src[0]  == 'C') else src_net
         sink_net = 'B_{}'.format(sink_net) if(sink[0] == 'C') else sink_net
         
-        #self.circuit.verbose = 1
-        #self.circuit.add_component('RL5','L5',0,1e-6)
-        #self.circuit.add_component('RL6','L6',0,1e-6)
+    
         Iload = 100 # Change this for possible current density study
         self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
         self.circuit.add_component('Rsink',sink_net,0,1e-6)
@@ -853,9 +851,12 @@ class CornerStitch_Emodel_API:
         self.circuit.assign_freq(self.freq*1000)
         self.circuit.graph_to_circuit_minimization()
         # Test feature:
-        if os.getenv("EXPORT_NETLIST"):
-            output_nets = []
-            for lead in self.lead_dict:
+        # This will be triggered if the user setenv EXPORT_NETLIST 1 in the terminal
+        if os.getenv("EXPORT_NETLIST"): 
+            output_nets = [] 
+            # Treat the MOSFET pins, Lead-pins as output nets 
+            # so that user can use their MOSFET models
+            for lead in self.lead_dict: 
                 output_nets.append(lead)
             for d in self.e_devices:
                 dev_obj = self.e_devices[d]
@@ -884,7 +885,7 @@ class CornerStitch_Emodel_API:
         R = np.real(imp)
         L = np.imag(imp) / self.circuit.s
         #print("R: {}, L: {}".format(R,L))
-        #TODO:
+        #TODO for David :
         self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
         self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
         self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
