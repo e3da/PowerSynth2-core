@@ -123,8 +123,8 @@ class LayoutVsSchematic():
         elif count ==4:
             self.circuit_type = 'full-bridge'
         self.paralel_group = parallel_group
-        print(parallel_group,'number of swtiching-cell group',count)
-        print(self.circuit_type)
+        #print(parallel_group,'number of swtiching-cell group',count)
+        #print(self.circuit_type)
 
     def lvs_check(self, hypergraph_layout: dict):
         '''
@@ -193,7 +193,7 @@ class LayoutVsSchematic():
     def read_netlist(self):
         self.update_report_log('Read input netlist')
         if self.netlist == '':
-            print("LVS: No input netlist provided, skip LVS step")
+            #print("LVS: No input netlist provided, skip LVS step")
             self.netlist_provided = False
         else:
             self.netlist_provided = True

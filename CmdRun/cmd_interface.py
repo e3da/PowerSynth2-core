@@ -550,7 +550,7 @@ class Cmd_Handler:
         '''
         # always init with a PEEC run to handle planar type traces
         if not 'netlist' in self.electrical_models_info:
-            print("No netlist provided, no LVS will be run")
+            #print("No netlist provided, no LVS will be run")
             netlist = ''
         else:
             netlist = self.electrical_models_info['netlist'] 
@@ -579,7 +579,7 @@ class Cmd_Handler:
         self.e_api_init.loop = self.electrical_models_info['main_loops']
         features = ps_sol.features_list
         mode = self.electrical_models_info['multiport']    
-        print("Initialize Multiport Setup") if mode else print("Single Loop Setup")
+        #print("Initialize Multiport Setup") if mode else print("Single Loop Setup")
         obj_name_feature_map = {}
         for f in features:
             obj_name_feature_map[f.name] = f
@@ -599,7 +599,7 @@ class Cmd_Handler:
             self.e_api_init.loop_dv_state_map = loop_device_state_map
             with open(save_dir, 'w') as f:
                 json.dump(loop_device_state_map,f)
-            print("save data in json")
+            #print("save data in json")
             # Store the device connection info into the characterization folder
         #self.e_api_init.print_and_debug_layout_objects_locations()
         #self.e_api_init.start_meshing_process(module_data=module_data)
@@ -1480,14 +1480,14 @@ if __name__ == "__main__":
                     {qmle_nethome:'PS2release/test/3D_Case_6/macro_script.txt'}, # FH 3.65 nH Para (Pass)
                     {qmle_nethome:'PS2release/test/3D_Case_7/macro_script.txt'}, # FH (not supported) PEEC 2.37 nH Para (Pass)
                     {qmle_nethome:'PS2release/test/2D_Case_1/macro_script.txt'}, # 12.8 nH PEEC , resolve dummy trace :) 
-                    {qmle_nethome:'PS2release/test/2D_Case_2/macro_script.txt'}, # Mesh issue
+                    {qmle_nethome:'PS2release/test/2D_Case_2/macro_script.txt'}, # 37nH no RS
                     {qmle_nethome:'PS2release/test/2D_Case_3_new/macro_script.txt'}, # Mesh issue old # Handle spc type based on generic types decided by layout engine
                     {qmle_nethome:'PS2release/test/2D_Case_4/macro_script.txt'}, # 40 nH ? PD effect
                     {qmle_nethome:'PS2release/test/2D_Case_5/macro_script.txt'}, # 16.4nH
                     {qmle_nethome:'PS2release/test/2D_Case_6/macro_script.txt'}, # 16nH
                     {qmle_nethome:'PS2release/test/2D_Case_7/macro_script.txt'}, # 10.6 nH
                     {qmle_nethome:'PS2release/test/2D_Case_8/macro_script.txt'}, # 8.3 nH
-                    {qmle_nethome:'PS2release/test/2D_Case_9/macro_script.txt'}, # Meshing issue ? or the spc issue
+                    {qmle_nethome:'PS2release/test/2D_Case_9/macro_script.txt'}, # 22.4 nH (without RS)
                     {qmle_nethome:'PS2release/test/2D_Case_10/macro_script.txt'}, # Quang 2nd journal, R comp Not supported yet!
                     {qmle_nethome:'PS2release/test/2D_Case_11/macro_script.txt'}, # Meshing issue ? or the spc issue
                     {qmle_nethome:'PS2release/test/2D_Case_11_new/macro_script.txt'}] # 9.98 nH

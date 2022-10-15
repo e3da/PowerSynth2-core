@@ -392,6 +392,7 @@ class CornerStitch_Emodel_API:
                         if type == 'L':
                             new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
                             pin = Sheet(rect=new_rect, net_name=name, net_type='external', n=N_v, z=z_part)
+                            self.lead_dict[name] = pin
                         if type == 'V': # Handling Vias type # No dz #
                             new_rect = Rect(top=(y_feature + height), bottom=y_feature, left=x_feature, right=(x_feature + width))
                             pin = self.handle_vias_from_layout_script(inputs = [obj, new_rect, name, N_v, z_part ] )                           
@@ -399,11 +400,11 @@ class CornerStitch_Emodel_API:
                         self.e_sheets[name] = pin
                     elif obj.type == 1:  # Device type
                         dev_name = obj.layout_component_id 
-                        if "MOS" in obj.name:
+                        if "mos" in obj.name.lower():
                             spc_type = 'MOSFET'
-                        elif "DIODE" in obj.name:
+                        elif "diode" in obj.name.lower():
                             spc_type = 'DIODE'
-                        elif "IGBT" in obj.name:
+                        elif "igbt" in obj.name.lower():
                             spc_type = 'IGBT' 
                         if self.script_mode == "Old":
                             self.handle_comp_pins_old_script(inputs = [obj, dev_name, isl_dir, x_feature, y_feature, z_id,spc_type,N_v,isl])
@@ -841,16 +842,38 @@ class CornerStitch_Emodel_API:
         src_net = 'B_{}'.format(src_net)   if(src[0]  == 'C') else src_net
         sink_net = 'B_{}'.format(sink_net) if(sink[0] == 'C') else sink_net
         
-        #self.circuit.verbose = 1
-        #self.circuit.add_component('RL5','L5',0,1e-6)
-        #self.circuit.add_component('RL6','L6',0,1e-6)
+    
         Iload = 100 # Change this for possible current density study
         self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
         self.circuit.add_component('Rsink',sink_net,0,1e-6)
         #self.circuit.add_component(sink_net,0,'Zsink',1e-12)
-        print("frequency",self.freq,'kHz')            
+        #print("frequency",self.freq,'kHz')            
         self.circuit.assign_freq(self.freq*1000)
         self.circuit.graph_to_circuit_minimization()
+        # Test feature:
+        # This will be triggered if the user setenv EXPORT_NETLIST 1 in the terminal
+        if os.getenv("EXPORT_NETLIST"): 
+            output_nets = [] 
+            # Treat the MOSFET pins, Lead-pins as output nets 
+            # so that user can use their MOSFET models
+            for lead in self.lead_dict: 
+                output_nets.append(lead)
+            for d in self.e_devices:
+                dev_obj = self.e_devices[d]
+                if dev_obj.spice_type == "MOSFET":
+                    output_nets.append(d+'_'+'Gate')
+                    output_nets.append(d+'_'+'Drain')
+                    output_nets.append(d+'_'+'Source')
+                elif dev_obj.spice_type == "DIODE":
+                    output_nets.append(d+'_'+'Anode')
+                    output_nets.append(d+'_'+'Cathode')
+                elif dev_obj.spice_type == "IGBT":
+                    output_nets.append(d+'_'+'Gate')
+                    output_nets.append(d+'_'+'Emitter')
+                    output_nets.append(d+'_'+'Collector')    
+            path = self.workspace_path + '/netlist_{}.net'.format(sol_id)
+            self.circuit.netlist_dump(sol_id,path,output_nets)
+        
         self.circuit.handle_branch_current_elements()  
         self.circuit.solve_MNA()
         #res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
@@ -1003,7 +1026,7 @@ class CornerStitch_Emodel_API:
                 # for each edge, get the node_name from where we can get the node_obj
                 node1 = node_table[e[0]]
                 node2 = node_table[e[1]]
-                node12_int = 'int_{}_{}'.format(e[0],e[1])
+                node12_int = 'N_{}_{}'.format(e[0].replace('.','_'),e[1].replace('.','_'))
                     
                 self.circuit.add_component(name= Rcomp_name, pnode=node1.net_name,nnode = node12_int,val = 1e-6)
                 self.circuit.add_component(name= Lcomp_name, pnode=node12_int,nnode = node2.net_name,val = 1e-12j)
@@ -1400,7 +1423,7 @@ class CornerStitch_Emodel_API:
             self.layer_id_to_lmesh[layer_id] = LayerMesh(z=int(z*1000),thick = int(thick*1000),zid = layer_id)
             #z = self.hier.z_dict[layer_id]
             layer_name = 'Layer_{}'.format(layer_id)
-            print("forming graph for layer:", layer_name)
+            #print("forming graph for layer:", layer_name)
             layer_components = [] # to verify which components are on this layer
             
             for island_name in self.layer_island_dict[layer_id]:
