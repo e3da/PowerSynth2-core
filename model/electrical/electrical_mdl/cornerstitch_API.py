@@ -852,6 +852,7 @@ class CornerStitch_Emodel_API:
         self.circuit.graph_to_circuit_minimization()
         # Test feature:
         # This will be triggered if the user setenv EXPORT_NETLIST 1 in the terminal
+        #print(os.getenv("EXPORT_NETLIST"))
         if os.getenv("EXPORT_NETLIST"): 
             output_nets = [] 
             # Treat the MOSFET pins, Lead-pins as output nets 
