@@ -245,8 +245,8 @@ class EditLibrary(QMainWindow, Ui_MDKWindow):
         Load material library information to mat_lib
         :return: Nothing
         """
-        #path_parent = os. path. dirname(os. getcwd())
-        #self.material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
+        path_parent = os. path. dirname(os. getcwd())
+        self.material_lib=os.path.join(path_parent,'tech_lib/Material/Materials.csv')
         #print(material_lib)
         if os.path.exists(self.material_lib):
             with open(self.material_lib) as data:

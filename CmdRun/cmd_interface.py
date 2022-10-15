@@ -76,7 +76,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        print ("settings.PARAPOWER_FOLDER",settings.PARAPOWER_FOLDER)
+        #print ("settings.PARAPOWER_FOLDER",settings.PARAPOWER_FOLDER)
         
 class Cmd_Handler: 
     def __init__(self,debug=False):

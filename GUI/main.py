@@ -89,8 +89,14 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
+            cur_dir=os.getcwd()
+            
             try:
-                webbrowser.open_new("./Manual/PowerSynth_v2.0.pdf") 
+                manual_path=cur_dir+'/'+'Manual/PowerSynth_v2.0.pdf'
+                webbrowser.open_new(manual_path) 
+                
+                
+
             except:
                 print("Sorry Manual Path is not correct. Please open Manual from the PowerSynth 2 package directory.") 
             #webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v2.0.pdf")
