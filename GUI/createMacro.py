@@ -27,8 +27,7 @@ def createMacro(file: TextIOWrapper, self):
     charDir.pop(-1)
     charDir = "/".join(charDir) + "/Characterization"
     file.write("Model_char: " + charDir + "\n")
-    if self.pathToBondwireSetup=='None':
-        file.write("Model_char: " + charDir + "\n")
+    
 
     if self.option!=0 or self.pathToTraceOri!="" :
         file.write("Trace_Ori: " + self.pathToTraceOri + "\n")

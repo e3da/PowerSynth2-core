@@ -149,6 +149,8 @@ class new_engine_opt:
                             L_abs = abs(L)
                             result.append(L_abs)  
                             print("FH", L_abs)
+                        else:
+                            result.append(-1)
                 else:
                     result.append(-1)
             if isinstance(measure, ThermalMeasure):
@@ -815,8 +817,8 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-            if plot:
-                layer_sol.export_layer_info(sol_path=sol_dir,id=index)
+            #if plot:
+                #layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
             module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]

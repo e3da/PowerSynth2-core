@@ -89,8 +89,8 @@ class GUI():
         self.setWindow(openingWindow)
 
         def manual():
-            #webbrowser.open_new("./GUI/pdfs/PowerSynth_v1.9.pdf")  
-            webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v1.9.pdf")
+            webbrowser.open_new("./Manual/PowerSynth_v2.0.pdf")  
+            #webbrowser.open_new("https://e3da.csce.uark.edu/release/PowerSynth/manual/PowerSynth_v2.0.pdf")
         
         def startProject():
             self.editMaterials()
@@ -839,8 +839,8 @@ class GUI():
         self.currentWindow.close()
         self.currentWindow = None
         # FIXME Currently provide path hardcoded -- Is it supposed to be always necessary?
-        if not self.pathToParasiticModel:
-            self.pathToParasiticModel = '/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits_Migrated_Codebase/Case_8/imam_journal.rsmdl'
+        if self.pathToParasiticModel!='default':
+            self.pathToParasiticModel = 'default'
         macroPath = self.pathToLayoutScript.split("/")
         macroPath.pop(-1)
         macroPath = "/".join(macroPath) + "/macro_script.txt"

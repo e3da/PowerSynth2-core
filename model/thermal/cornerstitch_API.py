@@ -226,9 +226,8 @@ class CornerStitch_Tmodel_API:
                 
                 feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
                 solution.features_list.append(feature)
+            solution.features_list.sort(key=lambda x: x.z, reverse=False)
             
-            '''for f in solution.features_list:
-                f.printFeature()'''
             if self.matlab_engine == None:
                 #print("starting MATLAB engine from cornerstitch_API")
                 self.init_matlab()

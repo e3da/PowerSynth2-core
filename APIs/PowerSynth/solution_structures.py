@@ -91,6 +91,7 @@ class PSSolution(object):
         self.parameters= parameters
         self.boundary_conditions = boundary_conditions
         self.module_data = module_data
+        self.cs_solution= None
     def add_feature(self, name, x, y, z, width, length, height, material_name, power=0, h_val=0):
         if self.features_list is None:
             self.features_list = []
@@ -282,6 +283,13 @@ class PSSolution(object):
                     if min_width != None and min_length != None:
                         f.width=min_width+10 # dynamically changing dimension to support variable sized solution
                         f.length=min_length+10 # dynamically changing dimension to support variable sized solution
+                if 'Baseplate' in f.name and f.material_name=='Air':
+                    f.width=min_width
+                    f.length=min_length
+                    f.z=0.0
+                    
+
+
                 '''if f.name=='Bottom_Metal':
                     f.width=min_width # dynamically changing dimension to support variable sized solution
                     f.length=min_length # dynamically changing dimension to support variable sized solution

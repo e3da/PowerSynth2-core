@@ -645,8 +645,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
         #print ('R',r_list,'L',l_list)
-        #return r_list[0],l_list[0]
-        return -1,-1
+        return r_list[0],l_list[0]
+        #return -1,-1
 
     def parallel_run(self,solutions):
         num_cpu = multiprocessing.cpu_count()

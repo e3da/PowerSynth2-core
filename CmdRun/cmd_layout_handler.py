@@ -69,11 +69,14 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
             
             for layer_sol in layout_solutions[i].layer_solutions:
                 
-                if size[0]>dbunit:
+                '''if size[0]>dbunit:
                     data=[layer_sol.name,size[0]/dbunit,size[1]/dbunit]
                 else:
                     data=[layer_sol.name,size[0],size[1]]
-                csv_writer.writerow(data)
+                csv_writer.writerow(data)'''
+                if len(layout_solutions[i].layer_solutions)>1:
+                    data=[layer_sol.name]
+                    csv_writer.writerow(data)
                 csv_writer.writerow(["Component_Name", "x_coordinate", "y_coordinate", "width", "length"])
                 
                 for k,v in layer_sol.abstract_infos[layer_sol.name]['rect_info'].items():
@@ -84,7 +87,7 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
                     csv_writer.writerow(layout_data)
         
         my_csv.close()
-        print("Export Complete")
+        
 
 def opt_choices(algorithm=None): # for step-by-step mode option.
     
@@ -158,6 +161,7 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
         
     if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
         e_results = opt_problem.e_api.parallel_run(solutions)
+        #print(e_results)
         type_= 1# opt_problem.e_api.measure[0].measure
 
         for i in range(len(solutions)):
@@ -364,7 +368,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             layer_sol.abstract_infos=structure.layers[i].abstract_info
             layer_sol.layout_rects=structure.layers[i].layer_layout_rects
             layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-            layer_sol.export_layer_info(sol_path=sol_dir,id=index)
+            #layer_sol.export_layer_info(sol_path=sol_dir,id=index)
             layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
             solution.layer_solutions.append(layer_sol)
        
@@ -418,7 +422,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         for sol in PS_solutions:
             for f in sol.features_list:
                 f.printFeature()
-            plot_solution_structure(sol)
+            #plot_solution_structure(sol)
         '''
         #----------------------------------------------------------------
         if optimization==True:
@@ -501,7 +505,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 layer_sol.abstract_infos=structure.layers[i].abstract_info
                 layer_sol.layout_rects=structure.layers[i].layer_layout_rects[k]
                 layer_sol.min_dimensions=structure.layers[i].new_engine.min_dimensions
-                layer_sol.export_layer_info(sol_path=sol_dir,id=k)
+                #layer_sol.export_layer_info(sol_path=sol_dir,id=k)
                 layer_sol.update_objects_3D_info(initial_input_info=structure.layers[i].initial_layout_objects_3D)
                 solution.layer_solutions.append(layer_sol)
                 module_data.islands[structure.layers[i].name]=structure.layers[i].cs_islands_up[k]

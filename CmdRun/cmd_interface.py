@@ -67,6 +67,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.ANSYS_IPY64 = os.path.abspath(info[1])
                 if info[0] == "FASTHENRY_FOLDER:":
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
+                if info[0] == "FASTHENRY_EXE:":
+                    settings.FastHenry_exe = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_FOLDER:":
                     settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_CODEBASE:":
@@ -974,7 +976,8 @@ class Cmd_Handler:
             
         elif self.e_model_choice == 'FastHenry': # For 3D only
             self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
-            self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+            #self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+            self.e_api.set_fasthenry_env(settings.FastHenry_exe)
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
             if self.layout_ori_file != None:

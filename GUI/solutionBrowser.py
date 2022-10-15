@@ -45,36 +45,42 @@ def showSolutionBrowser(self):
         data_x=[]
         data_y=[]
         perf_metrices=[]
-        if self.option:
+        labels=[]
+        if self.option>0:
             for sol in self.cmd.structure_3D.solutions:
                 for key in sol.parameters:
                     perf_metrices.append(key)
+                break
+                
             if len(perf_metrices)==2:
                 axes.set_xlabel(perf_metrices[0])
                 axes.set_ylabel(perf_metrices[1])
+                labels.append(perf_metrices[0])
+                labels.append(perf_metrices[1])
             else:
                 axes.set_xlabel(perf_metrices[0])
                 axes.set_ylabel('None')
+                labels.append(perf_metrices[0])
+                labels.append('None')
         else:
             axes.set_xlabel("Solution Index")
             axes.set_ylabel("Solution Index")
-
+            labels.append('Solution Index')
+            labels.append('Solution Index')
+        
         for sol in self.cmd.structure_3D.solutions:
             if self.option == 0:
                 data_x.append(sol.solution_id)
                 data_y.append(sol.solution_id)
             else:
+                
                 data_x.append(sol.parameters[perf_metrices[0]])
                 if (len(sol.parameters)>=2):
                     data_y.append(sol.parameters[perf_metrices[1]])
                 else:
                     data_y.append(sol.solution_id)
+                
         
-        # to save the plot figures in the fig directory
-        try:
-            self.cmd.export_solution_params(self.pathToFigs,self.pathToSolutions, self.cmd.structure_3D.solutions,int(self.layoutMode))
-        except:
-            print("Couldn't save the solution space figure. Please use the exported CSV file to regenearte the figure.")
         
         def on_pick(event):
             self.solution_ind = event.ind[0]
@@ -82,7 +88,10 @@ def showSolutionBrowser(self):
             #try:
                 #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
             #print ('sel_point', sel_point)
-            #axes.clear()
+            axes.clear()
+            if labels!=[]:
+                axes.set_xlabel(labels[0])
+                axes.set_ylabel(labels[1])
             axes.scatter(data_x, data_y, picker=1, marker='o', c='b',s = 50)
             axes.scatter(data_x[sel_point], data_y[sel_point], picker=1, marker='o', c='r',s=100)
             canvas.draw()
@@ -151,12 +160,19 @@ def showSolutionBrowser(self):
 
 
         axes.scatter(data_x, data_y, picker=True)
+        
         canvas = FigureCanvas(self.cmd.solutionsFigure)
         canvas.draw()
         canvas.callbacks.connect('pick_event', on_pick)
         scene2 = QtWidgets.QGraphicsScene()
         scene2.addWidget(canvas)
         ui.grview_sols_browser.setScene(scene2)
+
+        # to save the plot figures in the fig directory
+        try:
+            self.cmd.export_solution_params(self.pathToFigs,self.pathToSolutions, self.cmd.structure_3D.solutions,int(self.layoutMode))
+        except:
+            print("Couldn't save the solution space figure. Please use the exported CSV file to regenearte the figure.")
         
         #try:
             #axes.scatter(data_x, data_y, picker=1, marker='o', c='b')
@@ -196,7 +212,9 @@ def showSolutionBrowser(self):
                 return
             
             solution=self.cmd.structure_3D.solutions[self.solution_ind]
+            #for layer_sol in layout_solutions[i].layer_solutions:
             for feature in solution.features_list:
+                
                 if 'Ceramic' in feature.name:
                     self.floorPlan[0]=feature.width
                     
@@ -206,13 +224,24 @@ def showSolutionBrowser(self):
             if self.cmd.structure_3D.solutions:
                 
                 export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=[self.cmd.structure_3D.solutions[self.solution_ind]], size=[float(self.floorPlan[0]), float(self.floorPlan[1])])
+                print("Export Complete")
             else:
                 print("Error: Something went wrong.")
             
         def export_all():
+            solution=self.cmd.structure_3D.solutions[0]
+            #for layer_sol in layout_solutions[i].layer_solutions:
+            for feature in solution.features_list:
+                
+                if 'Ceramic' in feature.name:
+                    self.floorPlan[0]=feature.width
+                    
+                    self.floorPlan[1]=feature.length
+                    
+                    break
             if self.cmd.structure_3D.solutions:
                 export_solution_layout_attributes(sol_path=self.pathToSolutions, solutions=self.cmd.structure_3D.solutions, size=[float(self.floorPlan[0]), float(self.floorPlan[1])])
-            
+                print("Export Complete")
 
         def close_GUI():
             solutionBrowser.close()

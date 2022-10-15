@@ -860,7 +860,7 @@ class CornerStitch_Emodel_API:
         # Test look up these lists, can be used for future reliability study
         imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
         R = np.real(imp)
-        L = np.imag(imp) / self.circuit.s
+        L = np.imag(imp)*1e9 / self.circuit.s
         print("R: {}, L: {}".format(R,L))
         #TODO:
         self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
@@ -2086,7 +2086,7 @@ class CornerStitch_Emodel_API:
         #print ("R,L",R,L)
         if export_netlist:
             self.export_netlist(dir = "mynet.net",mode =1, loop_L = L,src=src,sink=sink) # comment this out if you dont want to extract netlist
-
+        print(L)
         return R, L
 
         '''
