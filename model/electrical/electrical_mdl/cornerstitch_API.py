@@ -885,7 +885,7 @@ class CornerStitch_Emodel_API:
         imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
         R = np.real(imp)
         L = np.imag(imp)*1e9 / self.circuit.s
-        print("R: {}, L: {}".format(R,L))
+        #print("R: {}, L: {}".format(R,L))
         #TODO:
         self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
         self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
