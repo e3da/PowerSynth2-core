@@ -1366,19 +1366,44 @@ if __name__ == "__main__":
 
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
     while (True):
-        settings_file= input("Please enter the full path to settings.info file: ")
-        if not os.path.isfile(settings_file):
-            print("Please enter a valid path to the settings.info file\n")
-        else:
-            macro_script= input("Please enter the full path to macro_script.txt: ")
+        if len(sys.argv)==3:
+            settings_file=os.path.abspath(sys.argv[1])
+            if not os.path.isfile(settings_file):
+                print("Please enter a valid path to the settings.info file\n")
+            macro_script=os.path.abspath(sys.argv[2])
             if not os.path.isfile(macro_script):
                 print("Please enter a valid path to the macro script\n")
-            else:
-                cmd = Cmd_Handler(debug=False)
-                args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
+            cmd = Cmd_Handler(debug=False)
+            args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
+            try:
                 log_file_name=os.path.dirname(macro_script)+'/output.log'
                 sys.stdout = Logger(file_name=log_file_name) 
-                cmd.cmd_handler_flow(arguments= args)
+            except:
+                pass
+            cmd.cmd_handler_flow(arguments= args)
+            break
+        else:
+            if len(sys.argv)<3:
+                
+                print(" Please enter two arguments: 1. Path to the settings file, and 2. Path to the macro script.")
                 break
+            
+
+    '''else:
+        while (True):
+            settings_file= input("Please enter the full path to settings.info file: ")
+            if not os.path.isfile(settings_file):
+                print("Please enter a valid path to the settings.info file\n")
+            else:
+                macro_script= input("Please enter the full path to macro_script.txt: ")
+                if not os.path.isfile(macro_script):
+                    print("Please enter a valid path to the macro script\n")
+                else:
+                    cmd = Cmd_Handler(debug=False)
+                    args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
+                    log_file_name=os.path.dirname(macro_script)+'/output.log'
+                    sys.stdout = Logger(file_name=log_file_name) 
+                    cmd.cmd_handler_flow(arguments= args)
+                    break'''
     
     
