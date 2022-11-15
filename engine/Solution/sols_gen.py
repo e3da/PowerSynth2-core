@@ -4,7 +4,6 @@ import copy
 import matplotlib
 import os
 import collections
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import itertools
 
@@ -448,11 +447,7 @@ class New_layout_engine():
         :param bar: show progress bar if True
         :return: Layout solutions and mapped  new layout engine solutions back to symbolic layout (old engine) objects
         """
-        #global min_dimensions
-        if bar:
-            p_bar = tqdm(total=num_layouts,ncols=50)
-        else:
-            p_bar=None
+        
         CG1 = CS_to_CG(level)
         self.constraint_info=CG1.getConstraints(self.cons_df)
         self.get_min_dimensions()
@@ -896,14 +891,6 @@ class New_layout_engine():
             if count==None:
                 #for i in range(len(Layout_Rects)):
                 self.save_layouts(Layout_Rects, db=db)
-
-
-
-
-
-
-        if bar:
-            p_bar.close()
 
         return CS_SYM_Updated, module_data
 

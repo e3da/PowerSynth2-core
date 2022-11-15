@@ -1,4 +1,4 @@
-PowerSynth Core: all of the necessary things to run PowerSynth2 from command line
+PowerSynth Core: This is the PowerSynth backend with the command line interface (CLI)
 
 Naming scheme:
 Generally, if it is a single short (<10 character) word, use all lower case, like ‘core’ ‘engine’. Use abbreviations if needed, like ‘opt’ (optimization). 

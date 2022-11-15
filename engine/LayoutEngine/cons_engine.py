@@ -3,7 +3,6 @@ import copy
 import matplotlib
 import os
 import collections
-from tqdm import tqdm
 import matplotlib.pyplot as plt
 import itertools
 
