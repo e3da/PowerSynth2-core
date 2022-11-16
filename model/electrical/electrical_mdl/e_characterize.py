@@ -41,7 +41,6 @@ import multiprocessing
 from multiprocessing import Pool
 # For loop base characterization
 from mpl_toolkits.mplot3d import Axes3D
-from memory_profiler import profile
 from pykrige.rk import UniversalKriging3D as uk3d
 from pykrige.rk import Krige
 

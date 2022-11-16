@@ -575,7 +575,6 @@ class ModifiedNodalAnalysis():
         self.X_mat()
         self.A_mat(self.num_nodes, num_branch)
     #precision = 10
-    #fp = open('memory_profiler_basic_mean.log', 'w+')
     #@profile(precision=precision, stream=fp)
     
         

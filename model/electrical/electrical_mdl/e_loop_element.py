@@ -30,7 +30,6 @@ from matplotlib.collections import PatchCollection
 from matplotlib import cm
 import matplotlib as mpl
 from collections import OrderedDict
-from memory_profiler import profile
 import joblib
 from sklearn.preprocessing import PolynomialFeatures
 from core.model.electrical.parasitics.equations import self_ind_py # Trace indcutance for a rectangular bar w,l,t
@@ -1447,7 +1446,6 @@ def eval_single_M():
     param = [1,25,0.2,1,25,0.2,0,0,2]
     M0 = mutual_between_bars(*param)  
     print (M0)
-@profile
 def run_multiple():
     for i in range(900):
         read_input('/nethome/qmle/loop_model/simple_test_case/simple.txt')
