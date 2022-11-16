@@ -15,7 +15,6 @@ from core.engine.LayoutSolution.database import create_connection, insert_record
 from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 from core.engine.Structure3D.structure_3D import Structure_3D
-from pympler import muppy,summary
 from core.MDK.LayerStack.layer_stack import LayerStack
 import matplotlib.pyplot as plt
 import os

@@ -6,7 +6,6 @@ import csv
 import math
 
 import numpy as np
-from pyrsistent import s
 from core.MDK.LayerStack.layer_stack import LayerStack
 from core.general.data_struct.util import draw_rect_list
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier

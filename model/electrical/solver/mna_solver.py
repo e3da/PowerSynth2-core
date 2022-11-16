@@ -5,7 +5,6 @@ from time import perf_counter
 import scipy
 import warnings
 import sys
-from sympy import Matrix
 import networkx as nx 
 from multiprocessing import Pool
 import multiprocessing 
