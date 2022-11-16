@@ -10,7 +10,6 @@ from pandas import DataFrame
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 from core.model.electrical.meshing.MeshStructure import EMesh
-from core.general.settings.save_and_load import load_file
 
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
@@ -1199,7 +1198,6 @@ class CornerStitch_Emodel_API:
         # Detect if 3D then use the analytical equations
         # Otherwise for the cases where the traces are weird use RS-model
         
-        #self.rs_model = load_file('/nethome/qmle/RS_Build/Model/modle_rerun_journal_again.rsmdl')
         self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         #print(min_len)

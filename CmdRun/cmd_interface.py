@@ -1,3 +1,4 @@
+#!/bin/env python
 # This is the layout generation and optimization flow using command line only
 import sys, os
 # Remember to setenv PYTHONPATH yourself.
@@ -45,28 +46,12 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     continue
                 if line[0] == "#":
                     continue
-                if info[0] == "DEFAULT_TECH_LIB_DIR:":
-                    settings.DEFAULT_TECH_LIB_DIR = os.path.abspath(info[1])
-                if info[0] == "LAST_ENTRIES_PATH:":
-                    settings.LAST_ENTRIES_PATH = os.path.abspath(info[1])
-                if info[0] == "TEMP_DIR:":
-                    settings.TEMP_DIR = os.path.abspath(info[1])
-                if info[0] == "CACHED_CHAR_PATH:":
-                    settings.CACHED_CHAR_PATH = os.path.abspath(info[1])
                 if info[0] == "MATERIAL_LIB_PATH:":
                     settings.MATERIAL_LIB_PATH = os.path.abspath(info[1])
-                if info[0] == "EXPORT_DATA_PATH:":
-                    settings.EXPORT_DATA_PATH = os.path.abspath(info[1])
-                if info[0] == "GMSH_BIN_PATH:":
-                    settings.GMSH_BIN_PATH = os.path.abspath(info[1])
-                if info[0] == "ELMER_BIN_PATH:":
-                    settings.ELMER_BIN_PATH = os.path.abspath(info[1])
-                if info[0] == "ANSYS_IPY64:":
-                    settings.ANSYS_IPY64 = os.path.abspath(info[1])
                 if info[0] == "FASTHENRY_FOLDER:":
                     settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
                 if info[0] == "FASTHENRY_EXE:":
-                    settings.FastHenry_exe = os.path.abspath(info[1])
+                    settings.FASTHENRY_EXE = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_FOLDER:":
                     settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
                 if info[0] == "PARAPOWER_CODEBASE:":
@@ -944,7 +929,7 @@ class Cmd_Handler:
         elif self.e_model_choice == 'FastHenry': # For 3D only
             self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             #self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
-            self.e_api.set_fasthenry_env(settings.FastHenry_exe)
+            self.e_api.set_fasthenry_env(settings.FASTHENRY_EXE)
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
             if self.layout_ori_file != None:
@@ -1062,11 +1047,6 @@ class Cmd_Handler:
                     if os.path.isfile(filep):
                         # macro file exists
                         filename = os.path.basename(filep)
-                        # change current directory to workspace
-                        work_dir = filep.replace(filename,'')
-                        os.chdir(work_dir)
-                        print("Jump to current working dir")
-                        print(work_dir)
                         checked = self.load_macro_file(filep)
                         if not (checked):
                             continue
@@ -1096,8 +1076,8 @@ class Cmd_Handler:
                 setting_file = arg_dict['-settings'][0]
                 print("Loading settings file")
                 read_settings_file(setting_file)
-                self.layer_stack = LayerStack()
                 print("This will change the default settings file location")
+            self.layer_stack = LayerStack()
             if "-m" in arg_dict.keys(): # - m: macro flag
                 filep = arg_dict['-m'][0]
                 print("Loading macro file")
@@ -1106,11 +1086,6 @@ class Cmd_Handler:
                 if os.path.isfile(filep):
                     # macro file exists
                     filename = os.path.basename(filep)
-                    # change current directory to workspace
-                    work_dir = filep.replace(filename,'')
-                    os.chdir(work_dir)
-                    print("Jump to current working dir")
-                    print(work_dir)
                     checked = self.load_macro_file(filep)
                 else:
                     print("wrong macro file format or wrong directory, please try again !")
@@ -1365,28 +1340,25 @@ class Logger(object):
 if __name__ == "__main__":  
 
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
-    while (True):
-        if len(sys.argv)==3:
-            settings_file=os.path.abspath(sys.argv[1])
-            if not os.path.isfile(settings_file):
-                print("Please enter a valid path to the settings.info file\n")
-            macro_script=os.path.abspath(sys.argv[2])
-            if not os.path.isfile(macro_script):
-                print("Please enter a valid path to the macro script\n")
-            cmd = Cmd_Handler(debug=False)
-            args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
-            try:
-                log_file_name=os.path.dirname(macro_script)+'/output.log'
-                sys.stdout = Logger(file_name=log_file_name) 
-            except:
-                pass
-            cmd.cmd_handler_flow(arguments= args)
-            break
-        else:
-            if len(sys.argv)<3:
-                
-                print(" Please enter two arguments: 1. Path to the settings file, and 2. Path to the macro script.")
-                break
+    if len(sys.argv)==3:
+        settings_file=os.path.abspath(sys.argv[1])
+        if not os.path.isfile(settings_file):
+            print("Please enter a valid path to the settings.info file\n")
+        macro_script=os.path.abspath(sys.argv[2])
+        if not os.path.isfile(macro_script):
+            print("Please enter a valid path to the macro script\n")
+        cmd = Cmd_Handler(debug=False)
+        args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
+        try:
+            log_file_name=os.path.dirname(macro_script)+'/output.log'
+            sys.stdout = Logger(file_name=log_file_name) 
+        except:
+            pass
+        cmd.cmd_handler_flow(arguments= args)
+        sys.exit(0)
+    else:
+        if len(sys.argv)<3:
+            sys.exit(" Please enter two arguments: 1. Path to the settings file, and 2. Path to the macro script.")
             
 
     '''else:

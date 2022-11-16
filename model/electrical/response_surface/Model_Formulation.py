@@ -23,7 +23,6 @@ from core.MDK.LayerStack.layer_stack import LayerStack
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, load_mdl
 from core.model.electrical.response_surface.Response_Surface import RS_model
 import csv
-from core.general.settings import settings
 import platform
 import multiprocessing
 import psutil

@@ -10,13 +10,11 @@ from core.MDK.Design.parts import Part
 import core.APIs.ParaPower.ParaPowerAPI as pp
 import sys
 from collections import deque
-import core.general.settings.settings as settings
 import shutil
 
 from numpy import min, max, array, average
 
 from core.general.data_struct.util import Rect
-from core.general.settings.save_and_load import load_file, save_file
 import copy
 import numpy as np
 import os
