@@ -20,15 +20,11 @@ import numpy as np
 import os
 
 
-TFSM_MODEL = 1
-RECT_FLUX_MODEL = 2
+
 
 
 class ThermalMeasure(object):
-    FIND_MAX = 1
-    FIND_AVG = 2
-    FIND_STD_DEV = 3
-    Find_All = 4
+    
 
     UNIT = ('K', 'Kelvin')
 
@@ -74,45 +70,13 @@ class CornerStitch_Tmodel_API:
         self.matlab_engine = matlab.engine.start_matlab()
         # TODO: MATLAB path is hardcoded
         if ParaPower_dir=='':
-            self.matlab_engine.cd('/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/lib/ParaPower/')
+            print("ParaaPower Directory Not Found!")
+
+            exit()
         else:
             self.matlab_engine.cd(ParaPower_dir)
 
-    def set_up_thermal_props(self, module_data=None):  # for analytical model of a simple 6 layers
-        layer_average_list = []
-        layers_info = self.layer_stack.all_layers_info
-        for k in layers_info:
-            if k != 1:  # first layer is baseplate layer
-                layer = layers_info[k]
-                if layer.type == 'p':  # if this is a passive layer
-                    layer_average_list.append((layer.thick, layer.material.thermal_cond))
-
-        thickness, thermal_cond = layer_average(layer_average_list)
-        layer = ExtaLayer(thickness * 1e-3, thermal_cond)
-        bp_layer = layers_info[1]
-
-        self.width = bp_layer.width
-        self.height = bp_layer.length
-        # thermal baseplate object
-        t_bp = Baseplate(width=(self.width + 2) * 1e-3,
-                         length=(self.height + 2) * 1e-3,
-                         thickness=bp_layer.thick * 1e-3,
-                         conv_coeff=self.bp_conv[0],
-                         thermal_cond=bp_layer.material.thermal_cond)
-        
-        module_device_locs = module_data.get_devices_on_layer()
-
-        devices = []
-        for k in self.devices:
-            dev = self.devices[k]
-            dev_heat_flow = self.dev_powerload_table[k]
-            dev_center = module_device_locs[k]
-            device = Device(width=dev.footprint[0] * 1e-3,
-                            length=dev.footprint[1] * 1e-3,
-                            center=(dev_center[0] * 1e-3, dev_center[1] * 1e-3),
-                            Q=dev_heat_flow)
-            devices.append(device)
-        return t_bp, layer, devices
+    
 
     def dev_result_table_eval(self, module_data=None,solution=None):
         solution = copy.deepcopy(solution) # Has to add this to prevent some removes functions

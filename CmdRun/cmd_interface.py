@@ -36,7 +36,7 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
         
         filename = os.path.basename(filepath)
         work_dir = filepath.replace(filename,'')
-        os.chdir(work_dir)
+        #os.chdir(work_dir)
         with open(filename, 'r') as inputfile:
             for line in inputfile.readlines():
                 #line = line.strip("\r\n")

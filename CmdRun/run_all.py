@@ -233,10 +233,12 @@ log_file_name=os.path.dirname(batch_run_dir)+'/output.log'
 	
 for file_ in macro_scripts:
 	print(file_)
-	args = ['python','cmd_interface.py','-m','D:/Demo/New_Flow_w_Hierarchy/Imam_journal/Cmd_flow_case/Imam_journal/half_bridge_pm_macro.txt','-settings',"/nethome/ialrazi/PS_2_test_Cases/settings_up.info"]
-	args[3]=file_
-	cmd = Cmd_Handler(debug=False)
-	sys.stdout = Logger(file_name=log_file_name)
-	cmd.cmd_handler_flow(arguments= args)
+	cmd ="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/core/CmdRun/PowerSynth2-CLI.py {}".format(file_)
+	
+	import os
+	os.system(cmd)
+	#cmd = Cmd_Handler(debug=False)
+	#sys.stdout = Logger(file_name=log_file_name)
+	#cmd.cmd_handler_flow(arguments= args)
 		
 	
