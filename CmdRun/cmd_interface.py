@@ -1042,7 +1042,7 @@ class Cmd_Handler:
                     print("Loading macro file")
                     m, filep = mode.split(" ")
                     filep = os.path.abspath(filep)
-                    print (filep)
+                    #print (filep)
                     if os.path.isfile(filep):
                         # macro file exists
                         filename = os.path.basename(filep)
@@ -1056,10 +1056,10 @@ class Cmd_Handler:
         else: # Real CMD mode
             arg_dict = {"temp":[]}
             i = 0
-            print (arguments)
+            #print (arguments)
             cur_flag = "temp"
             while i < len(arguments): # Read through a list of arguments and build a table 
-                print(i,arguments[i])    
+                #print(i,arguments[i])    
                 if i == 0: # cmd.py 
                     i+=1
                     continue
@@ -1081,7 +1081,7 @@ class Cmd_Handler:
                 filep = arg_dict['-m'][0]
                 print("Loading macro file")
                 filep = os.path.abspath(filep)
-                print (filep)
+                #print (filep)
                 if os.path.isfile(filep):
                     # macro file exists
                     filename = os.path.basename(filep)
