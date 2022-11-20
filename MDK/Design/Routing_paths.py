@@ -82,7 +82,8 @@ class BondingWires():
 
         with open(self.info_file, 'r') as inputfile:
             for line in inputfile.readlines():
-                line = line.strip("\r\n")
+                #line = line.strip("\r\n")
+                line = line.rstrip()
                 info = line.split(" ")
                 if info[0]=='JEDEC-4 points':
                     self.profile_type=0

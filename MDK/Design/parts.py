@@ -109,7 +109,8 @@ class Part:
             pin_read = False
             para_read = False
             for line in inputfile.readlines():
-                line = line.strip("\r\n")
+                #line = line.strip("\r\n")
+                line = line.rstrip()
                 info = line.split(" ")
                 #print(info)
                 if info[0] == "Material":

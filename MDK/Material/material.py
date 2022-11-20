@@ -61,7 +61,8 @@ class Material_lib:
         print(file_data)
         check=[]
         for line in file_data:
-            line=line.strip('\n').strip('\r')
+            #line=line.strip('\n').strip('\r')
+            line=line.rstrip()
             if "$begin" in line:
                 # start to record a mateial
                 check.append(1)

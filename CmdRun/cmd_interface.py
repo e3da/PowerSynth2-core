@@ -39,7 +39,8 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
         os.chdir(work_dir)
         with open(filename, 'r') as inputfile:
             for line in inputfile.readlines():
-                line = line.strip("\r\n")
+                #line = line.strip("\r\n")
+                line= line.rstrip()
                 info = line.split(" ")
                 if line == '':
                     continue
@@ -144,10 +145,12 @@ class Cmd_Handler:
         num_gen=None
         dev_conn ={}
         with open(file, 'r') as inputfile:
-
+            
+            
             dev_conn_mode=False
             for line in inputfile.readlines():
-                line = line.strip("\r\n")
+                #line = line.strip("\r\n")
+                line = line.rstrip()
                 info = line.split(" ")
                 if line == '':
                     continue
@@ -157,6 +160,7 @@ class Cmd_Handler:
                     self.layout_ori_file = os.path.abspath(info[1])
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
+                    
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
                     if info[1] !='None':
                         self.connectivity_setup = os.path.abspath(info[1])
