@@ -28,6 +28,7 @@ class Escript:
         self.materials ={} # keys = mat index by user, values = material names
         self.comp_def={} #keys=def name by user, values = num of pins for components.
         self.pins={} # a dictionary to relate between pin names and pin pad
+        
     def make_module(self):
         #["Materials","Layer Stack","Traces","Terminals","Device Definition","Componetns"]
         mode = None
@@ -79,6 +80,7 @@ class Escript:
         dz = float(self.stack.thick[lid])
         trace=E_plate(rect=rect, z=z, dz=dz)
         self.module.plate.append(trace)
+        
     def _handle_terminals(self,line):
         print("handle Terminals")
         data = line.strip('\t').split(" ")

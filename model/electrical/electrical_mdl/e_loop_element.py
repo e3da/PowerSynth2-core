@@ -46,6 +46,8 @@ PI = np.pi
 class ETrace():
     
     def __init__(self):
+        """_summary_
+        """
         self.name = ''
         self.start_pt = (0,0,0) # in mm lower left corner
         self.end_pt = (0,0,0) # in mm
@@ -68,6 +70,16 @@ class ETrace():
         self.struct = "trace" # trace, bw, via ... 
 
     def form_mesh_uniform_width(self,start_id,filament_type='trace',fixed_width=200):
+        """_summary_
+
+        Args:
+            start_id (_type_): _description_
+            filament_type (str, optional): _description_. Defaults to 'trace'.
+            fixed_width (int, optional): _description_. Defaults to 200.
+
+        Returns:
+            _type_: _description_
+        """
         # 200 um is the skindepth at 100kHz for copper
         mode = 'regression'
         if filament_type == 'wire':
@@ -83,7 +95,17 @@ class ETrace():
             dws,dhs,id = self.form_mesh_uniform(start_id=start_id,filament_type='trace')
         #print(dws,dhs,id)
         return [dws,dhs,id]
+    
     def form_mesh_uniform(self,start_id =0,filament_type = 'trace'):
+        """_summary_
+
+        Args:
+            start_id (int, optional): _description_. Defaults to 0.
+            filament_type (str, optional): _description_. Defaults to 'trace'.
+
+        Returns:
+            _type_: _description_
+        """
         id = start_id
         if filament_type =='wire':
             self.nwinc = 3
@@ -119,16 +141,21 @@ class ETrace():
                     
                 new_fil.start_pt[2] += dh*j
                 new_fil.end_pt[2] += dh*j
-                
-                
                 new_fil.type = self.type
                 self.elements.append(new_fil)
                 id +=1
         return dws,dhs,id
     
     def form_mesh_frequency_dependent(self,start_id =0):
+        """_summary_
+
+        Args:
+            start_id (int, optional): _description_. Defaults to 0.
+
+        Returns:
+            _type_: _description_
+        """
         id = start_id
-        
         dws = form_skd(self.width,N=self.nwinc)
         dhs = form_skd(self.thick,N=self.nhinc)
         for i in range(self.nwinc):
@@ -163,6 +190,15 @@ class ETrace():
         return [dws,dhs,id]
 
     def form_mesh_ground_plane(self,trace_shadows = {},start_id =0):
+        """_summary_
+
+        Args:
+            trace_shadows (dict, optional): _description_. Defaults to {}.
+            start_id (int, optional): _description_. Defaults to 0.
+
+        Returns:
+            _type_: _description_
+        """
         # Nw will be applied for unifor mesh with no trace-shadow
         dhs = form_skd(self.thick,N=self.nhinc)
         x_left = self.start_pt[0]
@@ -230,6 +266,11 @@ class ETrace():
 
 class EFilament():
     def __init__(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         self.ori = 0  # 0 - horizontal 1-vertical 2-vertical 3-diagonal
         self.start_pt = (0,0,0) # in mm
         self.end_pt = (0,0,0) # in mm
@@ -248,9 +289,18 @@ class EFilament():
         self.frequency = 1e7 # for rs model only #TODO: pass the frequency from loop -> filament
         self.R = 0 
         self.L = 0 
+        
     def gen_name(self):
+        """_summary_
+        """
         self.name = "el"+str(self.id)
+        
     def get_length(self):  
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         if self.ori ==0:
             return abs(self.end_pt[0]-self.start_pt[0])
         elif self.ori == 1:
@@ -262,7 +312,13 @@ class EFilament():
             dy = self.end_pt[1]-self.start_pt[1]
             dz = self.end_pt[2]-self.start_pt[2]
             return sqrt(dx**2+dy**2+dz**2)
+        
     def get_element_input(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         self.start_pt = list(input("element start pt:"))
         self.end_pt = list(input("element end pt:"))
         if self.start_pt[0] == self.end_pt[0]:
@@ -272,6 +328,14 @@ class EFilament():
         self.type = int(input("1 for normal element 0 for return path"))
     
     def get_self_params(self,mode = 'regression'):
+        """_summary_
+
+        Args:
+            mode (str, optional): _description_. Defaults to 'regression'.
+
+        Returns:
+            _type_: _description_
+        """
         length = self.get_length()
         width = self.width
         thick = self.thick  # for equation mode only
@@ -279,8 +343,16 @@ class EFilament():
             return [width,length,thick]
         elif mode == 'regression':
             return [width,length] 
+        
     def get_mutual_params(self,element):
-        '''use for rheuli equation'''
+        """_summary_
+
+        Args:
+            element (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         l1 = self.get_length()
         l2 = element.get_length()
         w1 = self.width    
@@ -311,6 +383,11 @@ class EFilament():
         return params # w1,l1,t1,w2,l2,t2,l3,p,E
     
     def eval_self(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         # use eqs for simple wires 
         # TODO: This method will be removed for performance purpose :) 
         
@@ -356,6 +433,14 @@ class EFilament():
         return Rval,Lval # Ohm, H check unit with Dr.Peng
 
     def eval_distance(self,element):
+        """_summary_
+
+        Args:
+            element (_type_): _description_
+
+        Returns:
+            _type_: _description_
+        """
         el2 = element
         el1 = self
         

@@ -40,8 +40,15 @@ class EdgeData():
         self.dir = 1 # 1: left to right, 2: bot to top, 3: z- to z+. negative integer for the opposite dir.
 
 class LayoutLoopInterface():
-    # all unit in um
     def __init__(self,islands = None, hier_E = None, freq =1e6, layer_stack =None):
+        """_summary_
+
+        Args:
+            islands (_type_, optional): _description_. Defaults to None.
+            hier_E (_type_, optional): _description_. Defaults to None.
+            freq (_type_, optional): _description_. Defaults to 1e6.
+            layer_stack (_type_, optional): _description_. Defaults to None.
+        """
         self.frequency = freq
         self.short_bw = False # Set true to short all bw for trace validation
         self.layout_info = islands
@@ -93,8 +100,10 @@ class LayoutLoopInterface():
         self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
     
     def check_number_of_electrical_layer(self):
-        ''' Read the layerstack and define number of trace layers'''
-        ''' Although these data are in the layerstack already, we need to rearrange them for quick access'''
+        """
+        Read the layerstack and and rearrange the layers for quick access
+        """
+        
         all_layer_info = self.layer_stack.all_layers_info
         for layer in all_layer_info:
             layer_obj = all_layer_info[layer]

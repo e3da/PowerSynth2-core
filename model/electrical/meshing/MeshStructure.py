@@ -47,8 +47,6 @@ class EMesh(): # rewrite and clean up old EMesh
         self.mesh_graph = nx.Graph()
         self.edge_flag = {}
     
-    # display_methods   
-    
     def add_node(self,pt_xyz,node_obj):
         node_name = "{}.{}".format(self.name,self.node_id)
         if not pt_xyz in self.map_xyz_node:

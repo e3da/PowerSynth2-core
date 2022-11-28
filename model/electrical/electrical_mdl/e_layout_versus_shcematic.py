@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 import networkx
 import os
 
-
 class LayoutVsSchematic():
-    def __init__(self, netlist: str= '') -> None:
-        '''
+    
+    def __init__(self, netlist: str= ''):
+              
+        """
         This class get the input netlist from electrical model and perform LVS check
-        param netlist: str object -- directory to the user defined input netlist
-        '''
+            param netlist: str object -- directory to the user defined input netlist
+        """
         self.netlist = netlist
         self.hypergraph_netlist = {}
         self.hypergraph_layout = {}
@@ -33,12 +34,25 @@ class LayoutVsSchematic():
         self.paralel_group = {} # dictionary of parallel devices
         
     def update_report_log(self,msg: str):
+        """_summary_
+
+        Args:
+            msg (str): _description_
+        """
         self.log_count += 1
         message = ''' LVS--{}: {}
         '''
         self.log += message.format(self.log_count, msg)
 
     def check_exist_component_type(self,name: str):
+        """_summary_
+
+        Args:
+            name (str): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for k in self.key_type:
             if k in name:
                 msg = "{} is a {}".format(name,self.key_type[k])
@@ -94,8 +108,11 @@ class LayoutVsSchematic():
         
                         
     def check_circuit_type(self):
-        # Once the hypergraph is generated, lets check parallel device groups
-        # A parallel group will share drain and source to the hyper-edge -- or they share same gate rail
+        """
+        Once the hypergraph is generated, lets check parallel device groups
+        A parallel group will share drain and source to the hyper-edge -- or they share same gate rail
+        """
+        
         hypergraph = self.hypergraph_netlist
         parallel_group = {}
         count = 0 # to count how many in parallel
@@ -191,6 +208,8 @@ class LayoutVsSchematic():
 
 
     def read_netlist(self):
+        """_summary_
+        """
         self.update_report_log('Read input netlist')
         if self.netlist == '':
             #print("LVS: No input netlist provided, skip LVS step")

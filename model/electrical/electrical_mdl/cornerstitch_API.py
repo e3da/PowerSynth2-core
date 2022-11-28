@@ -4,13 +4,9 @@
 # Description:
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
 
-from audioop import mul
-
-from pandas import DataFrame
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
 from core.model.electrical.meshing.MeshStructure import EMesh
-
 from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 from core.MDK.Design.parts import Part
@@ -25,36 +21,20 @@ from core.model.electrical.electrical_mdl.e_layout_versus_shcematic import Layou
 from core.model.electrical.parasitics.equations import self_imp_py_mat
 from core.model.electrical.parasitics.equations import update_mutual_mat_64_py
 from core.model.electrical.parasitics.equations import unpack_and_eval_RL_Krigg
-
 import networkx as nx
 import matplotlib.pyplot as plt
-from datetime import datetime
-import pickle
 import json
-#import mpl_toolkits.mplot3d.Axes3D as a3d
-
-import psutil
 import networkx
-import cProfile
-import pstats
-import re
 from mpl_toolkits.mplot3d import Axes3D
 from collections import deque
-import gc
 import numpy as np
 import copy
 import os
 import time
 import pandas as pd
 
-
-#import objgraph
-
-
 class ElectricalMeasure():
-    """
-    This object is sent to the optimizer as instruction to know which value being used for evaluation
-    """
+    
     # Need to rethink a bit about these. 
     MEASURE_RES = 1
     MEASURE_IND = 2
@@ -64,7 +44,16 @@ class ElectricalMeasure():
     # UNIT_CAP = ('pF', 'picoFarad')
 
     def __init__(self, measure, name='', main_loops = '', source='', sink='',multiport =0):
-        
+        """This object is used for electrical model setup
+
+        Args:
+            measure (_type_): _description_
+            name (str, optional): _description_. Defaults to ''.
+            main_loops (str, optional): _description_. Defaults to ''.
+            source (str, optional): _description_. Defaults to ''.
+            sink (str, optional): _description_. Defaults to ''.
+            multiport (int, optional): _description_. Defaults to 0.
+        """
         self.name = name
         self.measure = measure
         self.source = source # Old for single loop eval only
@@ -76,25 +65,16 @@ class ElectricalMeasure():
 
 
 class CornerStitch_Emodel_API:
-    # This is an API with NewLayout Engine
+   
     def __init__(self, layout_obj={}, wire_conn={},e_mdl = None,netlist = ''):
-        """_summary_
-
-        Args:
-            layout_obj (dict, optional): _description_. Defaults to {}.
-            wire_conn (dict, optional): _description_. Defaults to {}.
-            e_mdl (_type_, optional): _description_. Defaults to None.
-            netlist (str, optional): _description_. Defaults to ''.
         """
-        
-        
-        '''
-
-        :param layout_obj: list of all layout objects and routing objects
-        :param wire_conn: a simple table for bondwires setup
-        :param e_mdl: name of the selected model Loop or PEEC
-        :param netlist: input netlist for LVS and Loop generation
-        '''
+        Layout to Electrical model API
+        Args:
+            :param layout_obj: list of all layout objects and routing objects
+            :param wire_conn: a simple table for bondwires setup
+            :param e_mdl: name of the selected model Loop or PEEC
+            :param netlist: input netlist for LVS and Loop generation
+        """
         self.e_mdl = e_mdl
         self.pins = None
         self.layout_obj_dict = layout_obj

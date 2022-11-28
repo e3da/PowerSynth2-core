@@ -131,30 +131,31 @@ class Cmd_Handler:
 
     def load_macro_file(self, file):
         '''
-
-        :param file:
-        :return:
+        This function loads and processs the macrofile for PowerSynth CLI.
+        Loop through each line in the file and get the line infomation [target]:[value]
+        :param file: macro file for PowerSynth CLI mode
+        :return: None
         '''
         run_option = None
-        num_layouts = None
         floor_plan = None
-        seed = None
-        algorithm = None
         t_name =None
         e_name = None
-        num_gen=None
+        dev_conn_mode=False
         dev_conn ={}
+        self.num_layouts = None
+        self.seed = None
+        self.algorithm = None
+        self.num_gen=None
+        
         with open(file, 'r') as inputfile:
-            
-            
-            dev_conn_mode=False
+            # Load the macrofile and loop through each line to collect the infomation
             for line in inputfile.readlines():
                 #line = line.strip("\r\n")
                 line = line.rstrip()
                 info = line.split(" ")
                 if line == '':
                     continue
-                if line[0] == '#':  # Comments ? Need to have inline comments too...
+                if line[0] == '#':  # Comments
                     continue
                 if info[0] == "Trace_Ori:": # Will be removed
                     self.layout_ori_file = os.path.abspath(info[1])
@@ -185,19 +186,16 @@ class Cmd_Handler:
                     self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
                 if info[0] =="New:":
                     self.new_mode = int(info[1])
-
                 if info[0]=="Plot_Solution:":
                     if int(info[1])==1:
                         self.plot=True
                     else:
                         self.plot = False
-
                 if info[0]=="Flexible_Wire:":
                     if int(info[1])==1:
                         self.flexible=True
                     else:
                         self.flexible = False
-
                 if info[0] == "Option:":  # engine option
                     self.run_option = int(info[1])
                 if info[0] == "Num_of_layouts:":  # engine option
@@ -293,10 +291,8 @@ class Cmd_Handler:
                         conn = [int(i) for i in conn]
                         dev_conn[dev_name] = conn
                         self.electrical_models_info['device_connections']= dev_conn
-
                     if info[0] == 'Device_Connection:':
                         dev_conn_mode = True
-
                     # old code for single objective - single loop    
                     if info[0] == 'Source:':
                         self.electrical_models_info['source']= info[1]
@@ -331,10 +327,8 @@ class Cmd_Handler:
                 self.structure_3D = Structure_3D() # Clean it up
                 self.init_cs_objects(run_option=run_option)
                 self.run_options() # Run options with the initial loop model ready
-
             # Export figures, ANsysEM, Netlist etc.     
             #self.generate_export_files()    
-
         else:
             # First check all file path
             check_file = os.path.isfile
@@ -353,20 +347,26 @@ class Cmd_Handler:
                 print(( "{} is not a valid file path".format(self.constraint_file)))
             
             print ("Check your input again ! ")
-            
             return proceed
     
     def layout_generation_only(self):
-        '''Set optimization to False and generate layouts'''
+        '''
+        This function generates layout solutions and stores the results in workspace/Solution. 
+        All electrical and thermal optimization targets are bypassed in this mode.
+        '''
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                     optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
                                     floor_plan=self.floor_plan,dbunit=self.dbunit)
 
     def single_layout_evaluation(self, init = False):
-        '''Evaluate the user initial layout input
-        1. create a signle solution in solutions list
-        2. update single solution
-        -- THis is used to initially define LVS, Electrical Netlist, and Electrical Loops Reduction
+        '''
+        This functions evaluates the initial layout given by the user.
+        1. Convert the inital layout script into PowerSynth Solution object
+        2. Perform electrical and thermal evaluation as defined in the macroscript 
+        :param init(bool): False.
+            If init is True, this function is used in the layout_optimization initial setup to verify the correctness of the setup.
+            Otherwise, it is default as False.
+        :return md_data, solution if init == True
          '''
         solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
         solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
@@ -381,7 +381,7 @@ class Cmd_Handler:
             sol.cs_solution=solution
             PS_solutions.append(sol)
         
-        if init: # IF the electrical init is running, rerturn the initial module data for single eval
+        if init: # If the electrical init is running, rerturn the initial module data for single eval
             return md_data,sol
 
         measure_names=[None,None]
@@ -396,7 +396,10 @@ class Cmd_Handler:
     
     def layout_optimization(self):
         '''
-        Populate the optimization solutions space, might require a single layout evaluation in the future to init
+        This function populates the optimization solutions space using different optimization algorithms defined in the macroscript.
+            If electrical and thermal setups are defined in macroscript, this function will first init the Electrical and Thermal APIs.
+            The electrical and thermal APIs are then connected with the optimizer to perform layout optimization.
+            Final solutions are exported into the workspace/Fig_dir and workspace/Sol_dir.
         '''
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
@@ -421,13 +424,12 @@ class Cmd_Handler:
         elif self.run_option == 2:
             self.layout_optimization()
             
-
-
     #------------------- Models Setup and Init----------------------------------------------------
 
     def check_input_files(self):
         '''
-        Check for the input file from macro_script and return True or False to continue to evaluation
+        This functions verifies if the macros_script directories and files are valides
+        :return: True if valid, False otherwise
         '''
         check_file = os.path.isfile
         check_dir = os.path.isdir
@@ -440,7 +442,6 @@ class Cmd_Handler:
                and check_file(self.constraint_file)
         if self.connectivity_setup != None:
             cont = check_file(self.connectivity_setup)
-        
         
         # Making Output Dirs for Figure
         if not (check_dir(self.fig_dir)):
@@ -485,12 +486,12 @@ class Cmd_Handler:
 
     def setup_models(self, mode = 0):
         '''
-        mode input to setup the models one at a time
-        mode = 0 to setup thermal
-        mode = 1 to setup electrical
+        This function initializes the thermal/electrical APIs
+        :param mode(int)
+            mode = 0 to setup thermal
+            mode = 1 to setup electrical
+        :return None
         '''
-        
-
         if self.thermal_mode!=None and mode ==0:
             t_setup_data = {'Power': self.thermal_models_info['devices_power'],\
                             'heat_conv': self.thermal_models_info['heat_convection'],\
@@ -501,11 +502,7 @@ class Cmd_Handler:
             self.setup_thermal(mode='macro', setup_data=t_setup_data,\
                                 meas_data=t_measure_data,
                                 model_type=self.thermal_models_info['model'])
-        if self.electrical_mode!=None and mode ==1:
-            # bypass main loops setup to match previous PowerSynth version
-            
-                
-            
+        elif self.electrical_mode!=None and mode ==1:
             e_measure_data = {'name':self.electrical_models_info['measure_name']\
                         ,'type':self.electrical_models_info['measure_type']\
                         ,'main_loops': self.electrical_models_info['main_loops']\

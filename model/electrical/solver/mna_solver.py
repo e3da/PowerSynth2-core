@@ -1,23 +1,20 @@
-from termios import PENDIN
 import numpy as np
 import matplotlib.pyplot as plt
 from time import perf_counter
 import scipy
 import warnings
 import sys
-import networkx as nx 
 from multiprocessing import Pool
 import multiprocessing 
 warnings.filterwarnings("ignore")
 
 
-
-
 class ModifiedNodalAnalysis():
     def __init__(self):
-        '''
-        Accelerated RL computation, no Capacitance
-        '''
+        """
+        This module is used for most of the parasitic evaluation
+        After the meshing state, the parasitic elements are processed and evaluated using this MNA solver
+        """
         self.num_rl = 0  # number of RL elements
         self.num_ind = 0  # number of inductors
         self.num_V = 0  # number of independent voltage sources
@@ -29,15 +26,12 @@ class ModifiedNodalAnalysis():
         self.num_cccs = 0
         self.num_ccvs = 0
         self.num_cpld_ind = 0  # number of coupled inductors
-
         # Element names are used as keys
         self.element =[]
         self.el_type = {}        
         self.pnode={}
         self.nnode={}
-        
         self.net_map = {}
-        
         self.cp_node={}
         self.cn_node={}
         self.vout={}
@@ -48,7 +42,6 @@ class ModifiedNodalAnalysis():
         self.Lname2={}
         self.L_id = {} # A relationship between Lname and current id in the matrix
         self.V_node=None
-
         # Data frame for unknown current
         # Element names are used as keys
         self.cur_element = []
@@ -56,7 +49,6 @@ class ModifiedNodalAnalysis():
         self.cur_nnode = {}
         self.cur_value = {}
         self.terminal_names = {}
-
         self.net_data = None  # storing data from netlist or graph
         self.branch_cnt = 0  # number of branches in the netlist
         # Matrices:
@@ -80,39 +72,38 @@ class ModifiedNodalAnalysis():
         self.node_dict={}
         self.Rport=50
         self.freq = 1000
-
         self.cur_src=[]
         self.src_pnode = {}
         self.src_nnode = {}
         self.src_value = {}
         self.equiv_dict = {}
         self.imp_value = {} # to compute the s multiplication outside to speed up the matrix formation
-            
-
         # Counting number of elements
         self.L_count = 0
         self.R_count = 0
         self.C_count = 0
         self.M_count = 0
         self.mode = 'RL'
-        # to print or not
         self.verbose =0 
-    # The functions below will handle circuit elements for the analysis
+   
     def assign_freq(self,freq=1000):
-        '''
-        Assign the frequency for the analysis
-        '''
+        """Set the frequency for the solver and calculate s
+
+        Args:
+            freq (int): frequency of the solver. Defaults to 1000 Hz.
+        """
         self.freq = freq
         self.s = 2 * freq * np.pi * 1j
 
     def add_z_component(self,name,pnode,nnode,val):
-        """to quickly add R and L at the same time
-
+        """
+        Add a circuit component to the MNA solver
+            Z = R + jwL
         Args:
-            name (_type_): _description_
-            pnode (_type_): _description_
-            nnode (_type_): _description_
-            val (_type_): _description_
+            name (string): component name start with Z
+            pnode (int): positive node
+            nnode (int): negative node
+            val (float): component value
         """
         int_node = 'in{}_{}'.format(pnode,nnode)
         Rname = 'R' + name.strip('Z')
@@ -122,27 +113,41 @@ class ModifiedNodalAnalysis():
         
     
     def add_component(self,name, pnode, nnode, val):
-        '''
+        """
         Add a circuit component to the MNA solver
-        '''
+
+        Args:
+            name (string): component name start with R/L/C
+            pnode (int): positive node
+            nnode (int): negative node
+            val (float): component value
+        """
         self.element.append(name)
         self.pnode[name] = pnode
         self.nnode[name] = nnode
         self.value[name] = val
         
     def remove_component(self,name):
-        '''
+        """
         Remove a circuit component
-        '''
+        Args:
+            name (string): component name
+        """
         self.element.remove(name)
         del self.pnode[name]
         del self.nnode[name]
         del self.value[name]
 
     def add_mutual_term(self,name,Z1_name,Z2_name,val):
-        '''
+        """
         Define a mutual term between two branch elements
-        '''
+
+        Args:
+            name (string): Mutual element name
+            Z1_name (string): L/Z name of the first branch
+            Z2_name (string): L/Z name of the second branch
+            val (float): Mutual value
+        """
         self.element.append(name)
         self.Lname1[name] = Z1_name
         self.Lname2[name] = Z2_name
@@ -172,24 +177,30 @@ class ModifiedNodalAnalysis():
         '''
         self.V_node=pnode
         self.element.append(name)
-        
         self.pnode[name] = pnode
         self.nnode[name] = nnode
         self.value[name] = float(val)
 
     def remove_voltage_src(self,name):
-        '''
+        """
         Remove a voltage source using its name
-        '''
+
+        Args:
+            name (_type_): remove a voltage source by name
+        """
         self.element.remove(name)
         del self.pnode[name] 
         del self.nnode[name] 
         del self.value[name] 
 
     def add_path_to_ground(self, node, ground=0,val=1e-4 + 1e-10j):
-        '''
+        """        
         Ground a net, with a very small impedance branch
-        '''
+        Args:
+            node (int): net id
+            ground (int): . Defaults to 0.
+            val (float): terminal impedance value. Defaults to 1e-4+1e-10j.
+        """
         equiv_name = 'Zt' + str(node)
         self.terminal_names[node] = equiv_name
         self.add_component(equiv_name, node, ground, val)
@@ -204,9 +215,9 @@ class ModifiedNodalAnalysis():
         self.add_component(name, n1, n2, 1e-9 + 1e-10j)
   
     def refresh(self):
-        '''
+        """       
         Clean up all stored info to reuse the solver for different analysis
-        '''
+        """
         self.cur_element = []
         self.cur_pnode = {}
         self.cur_nnode = {}
@@ -246,7 +257,6 @@ class ModifiedNodalAnalysis():
     def handle_branch_current_elements(self):
         '''
         Loop through all elements and create unknown variable for each element
-        
         '''
         self.cur_element=[]
         cur_id = 0
@@ -263,8 +273,6 @@ class ModifiedNodalAnalysis():
                     self.L_id[el]=cur_id
                 cur_id+=1
 
-
-
     def find_vname(self, name):
         for i in range(len(self.cur_element)):
             el = self.cur_element[i]
@@ -272,7 +280,6 @@ class ModifiedNodalAnalysis():
                 n1 = self.cur_pnode[name]
                 n2 = self.cur_nnode[name]
                 return n1, n2, i
-
         print('failed to find matching branch element in find_vname')
 
     def mod_R_direct(self,name, net1, net2,val,add=True):
@@ -292,15 +299,13 @@ class ModifiedNodalAnalysis():
     
     def handle_G_mat_element(self,n1,n2,el_name):
         """Handle the G value with given net id so we dont need to rewrite them
-
+         If neither side of the element is connected to ground
+         then subtract it from appropriate location in matrix.
         Args:
-            n1 (_type_): _description_
-            n2 (_type_): _description_
-            g (_type_): _description_
+            n1 (int): first net
+            n2 (int): second net
+            g (float): g value
         """
-        # If neither side of the element is connected to ground
-        # then subtract it from appropriate location in matrix.
-        
         g = self.imp_value[el_name]
         if g <0:
             input("negative R or C")   
@@ -309,20 +314,26 @@ class ModifiedNodalAnalysis():
             self.G[n2 - 1, n1 - 1] += -g
             self.G[n2 - 1, n2 - 1] += g
             self.G[n1 - 1, n1 - 1] += g
-            
-
         # If node 1 is connected to ground, add element to diagonal of matrix
         if n1 == 0:
             self.G[n2 - 1, n2 - 1] += g
-
         # same for for node 2
         if n2 == 0:
             self.G[n1 - 1, n1 - 1] += g
       
     
     def process_elements_impedances(self,s,x,elval):
-        """Perform the s*L 1/R and s*C calculation outside of the loop for fast matrix formation
+        """
+        Perform the s*L 1/R and s*C calculation outside of the loop for fast matrix formation
         Using Pool.star_map and map the values only, so it wont have collisions in the memory access
+
+        Args:
+            s (float): s value
+            x (string): component type
+            elval (float): compoent value
+
+        Returns:
+            imag or float: conductance value
         """
         
         if x =='C':
@@ -339,6 +350,9 @@ class ModifiedNodalAnalysis():
         
             
     def sequential_process_impednaces(self):
+        """
+        Evaluate all impedances sequentially
+        """
         el_vals = [self.value[self.element[i]] for i in range(len(self.element))] 
         el_types = [el[0] for el in self.element]
         results = []
@@ -349,9 +363,10 @@ class ModifiedNodalAnalysis():
                     
         
     def parallel_process_elements_impedances(self):
-        """I have tried this and found the multiprocessing is actually slower.
+        """
+        I have tried this and found the multiprocessing is actually slower in some scenario.
         This is because the multiplication using numpy is not quite optimized.
-        The processes are vying for the same CPU instead of using all the resources.
+        The processes are using for the same CPU instead of using all the resources.
         Need to have further look into this if the matrix setup is slowe. 
         For now the sequencetial is probably fast enought 
         """
@@ -363,7 +378,13 @@ class ModifiedNodalAnalysis():
         with Pool(num_cpu) as p:
             results = p.starmap(self.process_elements_impedances,zip(s_list,el_types,el_vals))
         self.imp_value = {self.element[i]:results[i] for i in range(len(self.element))}
+    
     def matrix_formation(self, num_branch):
+        """_summary_
+
+        Args:
+            num_branch (_type_): _description_
+        """
         sn =0
         t = perf_counter()
         self.sequential_process_impednaces()
@@ -465,6 +486,8 @@ class ModifiedNodalAnalysis():
             self.J[i] = 'I({0})'.format(self.cur_element[i])
 
     def Ii_mat(self):
+        """_summary_
+        """
         if self.cur_src!=[]:
             for i in range(len(self.cur_src)):
                 el = self.cur_src[i]
@@ -478,6 +501,8 @@ class ModifiedNodalAnalysis():
                 if n2 != 0:
                     self.Ii[n2 - 1] += -g
     def Vi_mat(self):
+        """_summary_
+        """
         # generate the E matrix
         sn = 0  # count source number
         for i in range(len(self.cur_element)):
@@ -521,12 +546,22 @@ class ModifiedNodalAnalysis():
         if 'Gate' in all_net:
             print("Failed to remove gate")
         return all_net
+    
     def equiv_nets(self,net1,net2):
+        """
+        Form a short between 2 nets
+        Args:
+            net1 (int): _description_
+            net2 (int): _description_
+        """
         self.equiv_dict[net1] = net2
     
     def graph_to_circuit_minimization(self):
-        # This function will search for all equiv nets in the Graph to minimize the maxtrix size
-        # Check whether the circuit formulation is correct and map the nets into integers
+        """
+        This function will search for all equiv nets in the Graph to minimize the maxtrix size
+        Check whether the circuit formulation is correct and map the nets into integers
+        """
+        
         all_net = self.process_all_nets()
         if not 0 in all_net:
             if self.verbose:
@@ -543,18 +578,9 @@ class ModifiedNodalAnalysis():
             self.net_name_to_net_id[all_net[net_id-1]] = net_id # map a net in the netlist with an integer in the matrix
             self.net_id_to_net_name[net_id] = all_net[net_id-1]
     
-    
-    
-    
-    
-    
     def matrix_init(self):
-        # initialize some symbolic matrix with zeros
-        # A is formed by [[G, M] [M_t, D]]
-        # Z = [I,E]
-        # X = [V, J] 
-        # Forming matrices
-        #self.add_gmin()
+        """Initialize different matrices in the MNA solver
+        """
         self.V = np.chararray((self.num_nodes,1), itemsize=20)
         self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex_)
         self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
@@ -573,10 +599,6 @@ class ModifiedNodalAnalysis():
         self.Z_mat() # this is the sources info
         self.X_mat()
         self.A_mat(self.num_nodes, num_branch)
-    #precision = 10
-    #@profile(precision=precision, stream=fp)
-    
-        
     
     def add_gmin(self, cmin = 1e-12):
         '''
@@ -594,29 +616,17 @@ class ModifiedNodalAnalysis():
         Solve the MNA for current and voltage results
         '''
         self.matrix_init()
-
         t = perf_counter()
-        #print("Matrix Init", perf_counter() - t)
-        
         Z = self.Z
         A = self.A
-        #print('mat_size',A.shape)
-        #Z = self.Vi
-        #A = self.D
         convergence = 0
-        """for n in self.net_id_to_net_name:
-            name = self.net_id_to_net_name[n]
-            if name[0]!= 'p' and not('int' in name):
-                print(name)"""
+        
         try: 
-            #self.results = scipy.sparse.linalg.spsolve(A,Z) # This method is good in the good time. BUT it wont tell you if the matrix is singular
             self.results = scipy.linalg.solve(A, Z) # Direct solve is a bit slower, dont sweat. Try GMRES later if you want
         except:
             print("# The matrix is singular, there are many things can happen")
             print("# Numerically unstable due to small RL")
             print("# Floating Mesh there is something that is not setup properly/not grounded")
-        
-        #self.results,convergence = scipy.sparse.linalg.gmres(A,Z,maxiter = 1000)
         if convergence!=0:
             if self.verbose:
                 print("the GMRES simulation did not converge for given tolerance")
@@ -632,8 +642,8 @@ class ModifiedNodalAnalysis():
     
     
     def check_all_zeroes(self,matrix):
-        """For debugging purpose to check if matrix A has all zeroes row.
-
+        """
+        For debugging purpose to check if matrix A has all zeroes row.
         Args:
             matrix (_type_): _description_
         """
@@ -681,14 +691,8 @@ class ModifiedNodalAnalysis():
             Z = self.Vi
             A = self.D
 
-        t = perf_counter()
         if debug: # for debug and time analysis
-            print('matrix rank')
             self.debug_singular_mat_issue(A)
-
-            #print (Matrix(A).rank())
-            #print(A.shape)
-            print(('RL', np.shape(A)))
             self.check_all_zeroes(self.A)
             
 
@@ -703,17 +707,9 @@ class ModifiedNodalAnalysis():
         elif method ==5: # direct inverse method.
             self.results = np.linalg.inv(A)*Z
             self.results=np.squeeze(np.asarray(self.results))
-        #print(("solve", time.time() - t, "s"))
-        #print np.shape(self.A)
-        #print "RESULTS",self.results
-        
-        print(("solve", perf_counter() - t, "s"))
-        
-        
-        
+        #print(("solve", perf_counter() - t, "s"))
         self.results_dict={}
         rlmode=True
-
         if case == "no_current":
             names = self.V
         elif case =='full_eval':
@@ -729,6 +725,9 @@ class ModifiedNodalAnalysis():
         #print "R,L,M", self.R_count,self.L_count,self.M_count
     
     def display_results(self):
+        """
+        Display the computed voltage and current results
+        """
         for r in self.results:
             r_val = self.results[r]
             print("name: {} -- real {} imag {}".format(r,np.real(r_val),np.imag(r_val)))
@@ -748,10 +747,8 @@ class ModifiedNodalAnalysis():
                 for c in range(N):
                     if int(mat_A[r,c]) != 0:
                         V[r,c] =1
-            #print(V)
             plt.imshow(V)
             plt.plot()
-            #print((np.where(~V.any(axis=1))[0]))
 
     def netlist_dump(self, id, path,output_nets = []):
         """Take the solution id to generate the subckt
@@ -767,19 +764,6 @@ class ModifiedNodalAnalysis():
         for net in output_nets:
             output_str+= " "+net
         out += ".SUBCKT Module_{} {}\n".format(id,output_str)
-        
-        """
-        out += "* Layout net to net-id table:\n"
-        out += "*|| Layout Net ||   Net ID   ||\n"
-        
-        for net_name in self.net_name_to_net_id:
-            net_id = str(self.net_name_to_net_id[net_name])
-            net_name = 'N'+str(net_name)
-            net_spaces = " "*(12 - len(net_name))
-            id_spaces = " "*(12 - len(net_id))
-            net_line =  "||" + net_name + net_spaces + "||" + id_spaces+ net_id   + '\n'
-            out+= net_line
-        """
         el_format = "{name} {n1} {n2} {val} \n"
         mu_format = "{name} {l1} {l2} {val} \n"
         # Dump the raw PEEC matrix
@@ -794,9 +778,7 @@ class ModifiedNodalAnalysis():
             val = self.value[e]
             val = np.imag(val) if 'L' in e else val
             line = el_format.format(name = e, n1 = self.pnode[e], n2 =self.nnode[e], val = val)
-            
             out+=line
-        
         for mu in mutual_list:
             l1 = self.Lname1[mu]
             l2 = self.Lname2[mu]
@@ -807,24 +789,16 @@ class ModifiedNodalAnalysis():
         with open(path, 'w') as f:
             f.write(out)
         f.close()        
+        
 def test_ModifiedNodalAnalysis1():
-    print("new method")
     circuit = ModifiedNodalAnalysis()
     circuit.add_component('B1', 1, 2, 1 + 1e-9j)
     circuit.add_component('B2', 3, 4, 1 + 1e-9j)
-    #circuit.add_component('B3', 2, 0, 1 + 1e-9j)
     circuit.add_mutual_term('M12', 'B1', 'B2', 0.2e-9)
-
     circuit.add_indep_current_src(1,0,1)
-    #circuit.add_indep_voltage_src(1, 0, 1)
-
     circuit.assign_freq(10000)
     circuit.handle_branch_current_elements()
     circuit.solve_iv()
-    print((circuit.results))
-
-
-
     imp = (circuit.results['v1'])# / circuit.results['I_Vs']
     print((np.real(imp), np.imag(imp) / circuit.s))
 
@@ -835,12 +809,8 @@ def test_ModifiedNodalAnalysis2():
     circuit.add_component('B2', 2, 3, 1 + 1e-9j)
     circuit.add_component('B3', 1, 3, 1 + 1e-9j)
     circuit.add_component('B4', 3, 0, 1 + 1e-9j)
-
     circuit.add_mutual_term('M13', 'B1', 'B3', 1e-9)
     circuit.add_mutual_term('M12', 'B2', 'B3', 1e-9)
-
-    # circuit.add_component('C1', 1, 0, 1e-12)
-    # circuit.add_component('C2', 2, 0, 2e-12)
     circuit.add_indep_current_src(0, 1, 1)
     circuit.assign_freq(100)
     circuit.handle_branch_current_elements()
@@ -861,13 +831,8 @@ def test_ModifiedNodalAnalysis3():
     circuit.add_component('B5', 6, 7, 1 + 1.7e-9j)
     circuit.add_component('B6', 6, 0, 1 + 3.54e-9j)
     circuit.add_component('B7', 7, 0, 1 + 3.54e-9j)
-
-
     circuit.add_mutual_term('M23', 'B2', 'B3', 2.22e-9)
     circuit.add_mutual_term('M67', 'B6', 'B7', 0.79e-9)
-
-    # circuit.add_component('C1', 1, 0, 1e-12)
-    # circuit.add_component('C2', 2, 0, 2e-12)
     circuit.add_indep_voltage_src(0, 1, 1)
     circuit.assign_freq(1e9)
     circuit.handle_branch_current_elements()
@@ -879,27 +844,19 @@ def test_ModifiedNodalAnalysis3():
 
 def test_ModifiedNodalAnalysis4():
     circuit = ModifiedNodalAnalysis()
-
     circuit.add_z_component('Z1', 'a', 'b', 1 +10e-9j)
     circuit.add_z_component('Z2', 'a', 'b', 1 +10e-9j)
-    
     circuit.add_indep_voltage_src('a', 0, 1)
     circuit.add_component('R1','b',0, 1e-6)
-    
-    
     circuit.assign_freq(1e9)
     circuit.graph_to_circuit_minimization()
-
     circuit.handle_branch_current_elements()
     circuit.solve_MNA()
     print (circuit.results)
 
-    #input()
-
 
 def test_ModifiedNodalAnalysis5(): # mutual wire group
     circuit = ModifiedNodalAnalysis()
-
     #circuit.add_z_component('Z1', 1, 0, 1 + 18.2e-9j)
     #circuit.add_z_component('Z2', 1, 0, 1 + 18.2e-9j)
     circuit.add_component('R5', 'bw1', 0, 1e-6 ) 
@@ -922,15 +879,6 @@ def test_ModifiedNodalAnalysis5(): # mutual wire group
 
     imp = (circuit.results['V(bw2)']) 
     print((np.real(imp), np.imag(imp) / circuit.s))
-    
-
-    
-    
-    
-    
-    
-    
-    
     
 if __name__ == "__main__":
     #validate_solver_simple()

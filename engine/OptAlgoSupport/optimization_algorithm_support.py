@@ -11,15 +11,10 @@ import numpy as np
 import random
 import os
 import time
-import matplotlib
 import copy
 import math
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
-
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
-from core.model.electrical.electrical_mdl.e_ltspice_visualize import LtSpice_layout_to_schematic
-
-
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.engine.CornerStitch.CSinterface import Rectangle
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
@@ -61,9 +56,6 @@ class new_engine_opt:
         self.sol_gen_runtime = 0
         self.eval_time = 0
         self.multiport_result = {}
-    def extract_3D_loop_schematic_beta(self,e_api = None):
-        schem = LtSpice_layout_to_schematic(e_api)
-        
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
         

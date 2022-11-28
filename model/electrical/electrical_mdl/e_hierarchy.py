@@ -8,7 +8,8 @@ warnings.filterwarnings("ignore")
 # This will organize the module info into different nets and island group
 
 class HyperGraph():
-    
+    """_summary_
+    """
     def __init__(self) -> None:
         self.graph = nx.Graph()
         self.hyper_edges = {} # for net only hyper edge
@@ -18,6 +19,11 @@ class HyperGraph():
 class EHier():
     # Convert the E module design to hierachy tree representation for more useful data access
     def __init__(self, module):
+        """_summary_
+
+        Args:
+            module (_type_): _description_
+        """
         self.module = module
         self.tree = None
         self.hyper_net_graph = None #  hypergraph for island-trace to every net
@@ -41,43 +47,38 @@ class EHier():
         
         self.hyper_graph = HyperGraph()
         self.dv_states = {}
-    #def __del__(self): 
-        
-    #    print ("delete hier object")
         
     def update_module(self,new_module):
+        """_summary_
+
+        Args:
+            new_module (_type_): _description_
+        """
         #form new hierarchy.
         self.module=new_module
         
     def print_hypergraph(self):
-        #print(self.isl_name_traces) 
-        #print(self.trace_island_nets)   
-        
-        # create a lvs hypergraph for checking
-        
+        """_summary_
+        """
         for isl in self.trace_island_nets:
             print ("Island: {} -- Nets: {}".format(isl,self.trace_island_nets[isl]))
     
     
     def form_connectivity_graph(self):
-        # Use an undirected graph to quicly find the connectivity among nets during meshing
-        #print("form and resuse")
+        """
+        Use an undirected graph to quicly find the connectivity among nets during meshing
+        """
+        
         
         for isl in self.trace_island_nets: # Add an edge for every 2 connected nets on island
             num_net = len(self.trace_island_nets[isl])
             nets = self.trace_island_nets[isl]
             for i in range(num_net-1):
                 self.hyper_graph.graph.add_edge(nets[i],nets[i+1])
-        # form wires/vias connections
-        
-        #for v in self.dev_via:
-        #    print(v)
-        
         for v in self.f2f_via:
             if len(self.f2f_via[v]) == 2: # Means both side of the via is connected to a trace
                 net1,net2 = self.f2f_via[v]
                 self.hyper_graph.graph.add_edge(net1.net,net2.net)
-            
         for w in self.wires_data:
             wire_obj = self.wires_data[w] # 
             nets = wire_obj.connections[0]
@@ -104,8 +105,8 @@ class EHier():
         #print(self.hyper_graph.hyper_edges)
         #print('finished')
     def form_hypergraph(self): 
-        # First find the relationsship among components, island trace and nets
-        
+        """_summary_
+        """
         comp_dict  = self.module.components
         all_sheets_dict = self.module.sheet
         for comp_name in comp_dict:
