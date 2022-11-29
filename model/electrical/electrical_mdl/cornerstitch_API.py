@@ -1166,10 +1166,6 @@ class CornerStitch_Emodel_API:
             else: #1 
                 trace_width = dim[2]  
                 trace_len = dim[3]
-            #if trace_len < min_len:
-            #    trace_len = min_len # Set the system min len to 500 to avoid numerical unstability 
-            
-
             mat.append([trace_width,trace_len,thickness])
             name_list.append(imp_name) # making sure the dictionary is ordered    
         # This take a bit for the first compilation using JIT then it should be fast.
@@ -1178,9 +1174,7 @@ class CornerStitch_Emodel_API:
         # Detect if 3D then use the analytical equations
         # Otherwise for the cases where the traces are weird use RS-model
         
-        self.rs_model = None
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
-        #print(min_len)
         if self.rs_model == None:
             RL_mat = self_imp_py_mat(input_mat = mat) # trace by default
             #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000)*1e-9 for m in mat]
@@ -1192,26 +1186,21 @@ class CornerStitch_Emodel_API:
         #print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
-            #R, L =RL_mat[i]
             R = R_t
             L = L_t
-
-            #R = R_t # This theoretical R value is more stable
-            #L = L_t
             if L>L_t: # means numerical error has occured
                 wrong_case.append([mat[i][0],mat[i][1],L_t-L])
                 L = L_t*0.8
             # Handle weird mesh 
             if R <=0  or R_t <=0: # IF this happens, we need to add minimum value
-                #print('response surface numerical error')
                 R = 1e-6
-            
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
             L_name  = 'L' +name
             self.circuit.value[R_name] = R 
             self.circuit.value[L_name] = 1j*L
+            
         debug= False
         if debug:
             if wrong_case!=[]:

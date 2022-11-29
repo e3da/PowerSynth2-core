@@ -88,7 +88,7 @@ def self_res(w,l,t):
     return R
 
 def self_imp_py_mat(input_mat=[],f=1e8,type = 'wire',eval_type ='equation'):
-    """_summary_
+    """Using theoretical open-loop equation to evaluate the trace inductance and resistance value
 
     Args:
         input_mat (list, optional): [[w,l,t]] 2 dimensions array of w,l,t. Defaults to [].
@@ -112,15 +112,15 @@ def self_imp_py_mat(input_mat=[],f=1e8,type = 'wire',eval_type ='equation'):
                 L = l*1e-6*CalVal2(k)
                 
             mat_result.append([R,L])
-    
     elif eval_type == 'regression':
-        print(input_mat)
         ws = input_mat[:,0]
         ls = input_mat[:,1]        
-                
         all_R, all_L = self_ind_test_rs(ws/1000,ls/1000,f)
         for i in range(len(all_R)):
             mat_result.append([all_R[i],all_L[i]])
+    
+        
+    
     return mat_result    
 
 '''Equation for different cases -- move these to a different location. '''  
@@ -223,7 +223,7 @@ def trace_inductance(w, l, t=0.2, h=0.64):
     except:
         Ind = 1000
         return Ind
-    # averaged model for inductance calculation:
+    # average model for inductance calculation:
     Ind = 0.5 * (Ind_0 + Ind_1)
 
     if Ind <= 0.0:

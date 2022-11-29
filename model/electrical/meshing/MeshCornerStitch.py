@@ -57,7 +57,14 @@ class EMesh_CS(EMesh):
         self.contracted_map = {} # map of contracted node to anchor node
         self.measure = measure # use to get the src sink nets and contracted them
         self.feature_map = None # New in PS_V2 to get the feature's data from the Solution3D.
+    
     def get_thick(self,layer_id):
+        """Get the layer thickness of the module
+        Args:
+            layer_id (int): integer id for each layer in the layerstack
+        Returns:
+            layer thickness (float)
+        """
         all_layer_info = self.layer_stack.all_layers_info
         layer = all_layer_info[layer_id]
         return layer.thick
@@ -95,10 +102,7 @@ class EMesh_CS(EMesh):
         :return:
         '''
         method = "skin_depth"
-        #method = "uniform-fixed_width"
-        
         print("accelerate the mesh generation")
-        #fig, ax = plt.subplots()
         ax = None
         isl_dict = {isl.name: isl for isl in self.islands}
         self.hier_group_dict = {}
@@ -119,7 +123,6 @@ class EMesh_CS(EMesh):
                 continue
             z = self.hier_E.z_dict[g.z_id]
             dz = self.get_thick(g.z_id)
-            #print ('z_level',z,'z_id',g.z_id,dz)
             isl = isl_dict[g.name]
             planar_flag,trace_cells = self.handle_trace_trace_connections(island=isl)
             min_Nw=3
@@ -165,10 +168,8 @@ class EMesh_CS(EMesh):
         #self.update_E_comp_parasitics(net=self.comp_net_id, comp_dict=self.comp_dict)
     def handle_node_contraction(self):
         # go through each node in the contracted node table and connect their edges to the anchor node
-
         for anchor_node_id in self.contracted_node_dict:
             anchor_node = self.graph.nodes[anchor_node_id]['node'] # get the anchor node object
-            
             for mesh_node_id in self.contracted_node_dict[anchor_node_id]:
                 try:
                     self.graph =  nx.contracted_nodes(self.graph,anchor_node_id,mesh_node_id)
@@ -177,6 +178,7 @@ class EMesh_CS(EMesh):
                               
                 except:
                     continue # node is contracted already
+                
     def mesh_edges_cell(self,thick=None, cond=5.96e7, z_level = 0,mesh_table = None):
         # Use to mesh cell type
         store_edge = self.store_edge_info
@@ -357,42 +359,7 @@ class EMesh_CS(EMesh):
         tbl_ys = list(set(tbl_ys))
         mesh_tbl = MeshNodeTable(node_dict=mesh_nodes, xs=tbl_xs, ys=tbl_ys, z_pos=z_pos)
         return mesh_tbl
-    def add_ground_mirror(self):
-        print("find ground pair-signal pair")
-        
-    '''
-    def add_ground_uniform_mesh(self,t = 0.2, z = 0, width = 40 , length = 40, N = 10,z_id =0):
-        # Default a 10x10 mesh
-        # create a uniform mesh grid to get points
-        # assume plane's lower left corner to be (0,0)
-        x_array = np.linspace(0, length, N)
-        y_array = np.linspace(0, width, N)
-        X, Y = np.meshgrid(x_array, y_array)  # XY on each layer
-        mesh_points = list(zip(X.flatten(), Y.flatten())) # get all mesh points on this layer
-        mesh_nodes = []
-        print ('z_id ground',z_id)
-        ## TEMP NEED TO FIX, this is simply used to pass the name
-        parent_isl = T_Node(name='G_'+str(z), type='isl', tree=Tree(),z_id = z_id) # Temp for now, need to add to hierachy later
-        ###
-        for p in mesh_points:
-            mesh_node = MeshNode(pos=[p[0],p[1],z])
-            mesh_node.type = 'internal' # default to be internal type
-            mesh_node.parent_isl = parent_isl
-            if  p[0] == 0:
-                mesh_node.b_type.append('W')
-            if  p[1] == 0:
-                mesh_node.b_type.append('S')
-            if  p[0] == length:
-                mesh_node.b_type.append('E')
-            if  p[1] == width:
-                mesh_node.b_type.append('N')
-            if mesh_node.b_type != []: # this must be a boundary type
-                mesh_node.type = 'boundary'
-            mesh_node.z_id = z_id
-            mesh_nodes.append(mesh_node)
-        self.mesh_nodes_planar(mesh_nodes=mesh_nodes,z=z)
-        self.mesh_edges(thick= t, z_level=z)                
-    '''
+    
     def handle_hier_node_opt(self, mesh_tbl, key):
         '''
         For each island, iterate through each component connection and connect them to the grid.
@@ -400,10 +367,8 @@ class EMesh_CS(EMesh):
             mesh_tbl:
 
         Returns:
-
         '''
         nodes = mesh_tbl.nodes
-        z_loc = mesh_tbl.z_pos
         if self.comp_nodes != {} and key in self.comp_nodes:  # case there are components
             for cp_node in self.comp_nodes[key]:
                 min_dis = 1e9
@@ -413,7 +378,6 @@ class EMesh_CS(EMesh):
                     dx = cp[0] - n[0]
                     dy = cp[1] - n[1]
                     distance = math.sqrt(dx ** 2 + dy ** 2)
-
                     if distance < min_dis:
                         anchor_node = n
                         min_dis = distance
@@ -500,7 +464,6 @@ class EMesh_CS(EMesh):
         if len(elements) == 1:
             el = elements[0]
             f_data = self.feature_map[el[5]] # get the key from element
-            #l, r, b, t = self.get_elements_coord(el) # deceperated # update all data from featuremap
             # TODO: These rounding can lead to numerical issue, need to update Solution3D to pass integer instead
             l = int(round(f_data.x*1000,4))
             r = int(round((f_data.x+ f_data.width)*1000,4))
@@ -509,8 +472,6 @@ class EMesh_CS(EMesh):
             
             
             tc = TraceCell(left=l, right=r, bottom=b, top=t)
-            #print (type(el_names[0]))
-            #print (el_names[0])
             if self.trace_ori[el_names[0]] == 'P':
                 tc.type =3 # for planar type mesh, corner stitch adaptive mesh will be used
                 return True,[tc]
@@ -527,8 +488,6 @@ class EMesh_CS(EMesh):
             for i in range(len(elements)):
                 el = elements[i]
                 f_data = self.feature_map[el[5]] # get the key from element
-                #l, r, b, t = self.get_elements_coord(el)  # get left right bottom top
-                
                 # TODO: These rounding can lead to numerical issue, need to update Solution3D to pass integer instead
                 l = int(round(f_data.x*1000,4))
                 r = int(round((f_data.x+ f_data.width)*1000,4))
@@ -544,10 +503,8 @@ class EMesh_CS(EMesh):
                     new_tc.type = 3
                 raw_trace_cells.append(new_tc)
                 map_el_cuts[new_tc] = []
-
             if planar_flag: # a more elegant method will be developed later for this planar type. For now, we use cornerstitch mesh
                 return planar_flag,raw_trace_cells
-
             for i in range(len(elements)):
                 tc1 = raw_trace_cells[i]
                 el1 = elements[i]
@@ -629,7 +586,6 @@ class EMesh_CS(EMesh):
                             if swap: # if we swapped them, make sure we swapped back for element 1 for correct pair check
                                 el1 = elements[i]
                                 tc1 = raw_trace_cells[i]
-                                
                         else:
                             continue
                     else:
@@ -705,7 +661,6 @@ class EMesh_CS(EMesh):
             self.mesh_edges(thick=0.2)  # the thickness is fixed right now but need to be updated by MDK later
         #self.plot_isl_mesh(plot=True, mode ='matplotlib')
     
-    
     def handle_net_connection_planar(self,island=None,mesh_table=None,dz=0):
         # this is the upgraded version of the e_mesh.handle_pin_connections. e_mesh will be removed later
         # First search through all sheet (device pins) and add their edges, nodes to the mesh
@@ -771,6 +726,7 @@ class EMesh_CS(EMesh):
                         # just in case the pad is very long (we have a lot bondwires in parallel)
                         trace_child_nodes = [x.center_node.node_id for x in mesh_table.net_to_cells[sheet_name]]
                         self.contracted_node_dict[cp_node.node_id] = trace_child_nodes
+                        
     def generate_planar_mesh_cells(self,island=None,z = 0):
         mesh_table = TraceIslandMesh()
         
@@ -797,16 +753,10 @@ class EMesh_CS(EMesh):
             if 'L'  in name:
                 mesh_table.leads.append(trace_cell)
                 #mesh_table.lead_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
-
             if 'B'  in name:
                 mesh_table.pads.append(trace_cell)
                 #mesh_table.pad_to_rect_cell[name] = trace_cell # un-spitted oritinal cell
-
-
-
             mesh_table.traces.append(trace_cell)
-            
-        
         start = time.time()
         mesh_table.form_hanan_mesh_table_on_island()
         mesh_table.place_devices_and_components()

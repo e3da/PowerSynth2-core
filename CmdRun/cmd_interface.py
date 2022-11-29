@@ -433,7 +433,7 @@ class Cmd_Handler:
         '''
         check_file = os.path.isfile
         check_dir = os.path.isdir
-        self.rs_model_file = 'default'
+        #self.rs_model_file = 'default'
         rs_model_check = True
             
         cont = check_file(self.layout_script) \
@@ -528,11 +528,15 @@ class Cmd_Handler:
             netlist = ''
         else:
             netlist = self.electrical_models_info['netlist'] 
+            
         self.e_api_init = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
         # Now we read the netlist to:
             # 1. check what type of circuit is input here
             # 2. generate an LVS model which is use later to verify versus layout hierarchy
-        
+        if self.rs_model_file != 'default':
+            self.e_api_init.load_rs_model(self.rs_model_file)
+        else:
+            self.e_api_init.rs_model = None
         
         self.e_api_init.layout_vs_schematic.read_netlist()
         self.e_api_init.layout_vs_schematic.gen_lvs_hierachy()
@@ -580,7 +584,7 @@ class Cmd_Handler:
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
         if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
-            print("Dectected {} layout, using PEEC electrical model".format(self.e_model_dim))
+            print("Detected {} layout, using PEEC electrical model".format(self.e_model_dim))
             self.e_api_init.form_initial_trace_mesh('init')
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time
@@ -923,7 +927,10 @@ class Cmd_Handler:
             measure_data (dict, optional): _description_. Defaults to {}.
         """
         if self.e_model_choice == 'PEEC': # for most 2D layout
-            # Should setup rs model somewhere here
+            if self.rs_model_file != 'default':
+                self.e_api.load_rs_model(self.rs_model_file)
+            else:
+                self.e_api.rs_model = None
             self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
             
         elif self.e_model_choice == 'FastHenry': # For 3D only
