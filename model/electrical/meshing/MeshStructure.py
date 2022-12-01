@@ -659,7 +659,6 @@ class EMesh2():
         res = 1e-6
         ind = 1e-9
         cap = 1 * 1e-13
-
         parent_data = edge_data  # info of neighbouring nodes.
         edge_data = MeshEdge(m_type='hier', nodeA=n1, nodeB=n2, data={'type': 'hier', 'name': str(n1) + '_' + str(n2)})
         self.hier_edge_data[(n1, n2)] = parent_data
@@ -667,6 +666,11 @@ class EMesh2():
             self.graph.add_edge(n1, n2, data=edge_data, ind=ind, res=res, cap=cap)
 
     def remove_edge(self, edge):
+        """Remove a branch in the layout
+
+        Args:
+            edge (_type_): _description_
+        """
         try:
             self.rm_edges.append([edge.nodeA.node_id, edge.nodeB.node_id])
             self.graph.remove_edge(edge.nodeA.node_id, edge.nodeB.node_id)
@@ -676,7 +680,7 @@ class EMesh2():
 
     def mutual_data_prepare(self, mode=0):
         '''
-
+        Prepare the width, length, thickness values to be evaluated using mutual inductance equations
         :param mode: 0 for bar, 1 for plane
         :return:
         '''
@@ -741,12 +745,7 @@ class EMesh2():
                             continue
                         cond1 = ori1 == 'h' and ori2 == ori1 and  (int(p2_2[1]) != int(p1_2[1]))
                         cond2 = ori1 == 'v' and ori2 == ori1 and  (int(p2_2[0]) != int(p1_2[0]))
-                        
-                    
                         if cond1:  # 2 horizontal parallel pieces
-                            #x1_s = [p1_1[0], p1_2[0]]  # get all x from trace 1
-                            #x2_s = [p2_1[0], p2_2[0]]  # get all x from trace 2
-                            #x1_s.sort(), x2_s.sort()
                             if rect1.left >= rect2.left:
                                 r2 = rect1
                                 r1 = rect2
@@ -758,22 +757,15 @@ class EMesh2():
                                 w1, l1, t1, z1 = rect1_data
                                 w2, l2, t2, z2 = rect2_data
                             p = abs(z2 - z1)/1000
-                            
                             E = abs(r2.bottom/1000.0 - r1.bottom / 1000.0 + diff1 + diff2)
                             l3 = abs(r2.left / 1000.0 - r1.left / 1000.0)
 
                             if mode == 0:
-                                # print [w1, l1, t1, w2, l2, t2, l3, p, E]
                                 m_m_append([w1, l1, t1, w2, l2, t2, l3, p, E])  # collect data for bar equation
                             elif mode == 1:
                                 m_m_append([w1, l1, w2, l2, l3, p, E])  # collect data for plane equation
                             e_append([e1_name, e2_name])
-
                         elif cond2:  # 2 vertical parallel pieces
-
-                            #y1_s = [p1_1[1], p1_2[1]]  # get all y from trace 1
-                            #2_s = [p2_1[1], p2_2[1]]  # get all y from trace 2
-                            #y1_s.sort(), y2_s.sort()
                             if rect1.top <= rect2.top:
                                 r2 = rect1
                                 r1 = rect2

@@ -33,10 +33,6 @@ class ThermalMeasure(object):
         self.name = name
         self.mode = 0 # 0 for maxtemp, 1 for thermal resistance
 
-#class Thermal_data_collect_main():
-    #def __init__(self):
-        #QtGui.QMainWindow.__init__(self, None)
-
 
 class CornerStitch_Tmodel_API:
     def __init__(self, comp_dict={}):

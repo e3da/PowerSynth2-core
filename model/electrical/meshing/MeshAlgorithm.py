@@ -392,7 +392,7 @@ class TraceIslandMesh():
             N (int, optional): _description_. Defaults to 3.
             mat (str, optional): _description_. Defaults to 'Copper'.
         """
-        mat_dict = {'Copper': 200 , 'Al': 100} # We fix this to 1MHz for good enough accuracy. Going down to much is too computationally expensive
+        mat_dict = {'Copper': 25 , 'Al': 100} # We fix this to 1MHz for good enough accuracy. Going down to much is too computationally expensive
         # Because the mesh algorithm will further calculate based on 1/2 of edge to edge, we will double these values.
         for c in self.corners_type:
             if self.corners_type[c] == 'intersection':

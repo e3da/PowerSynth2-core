@@ -1,19 +1,12 @@
 import time
-from joblib import Parallel
 from numba import njit,prange
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
-import operator
 
-from mpl_toolkits.mplot3d import Axes3D
 from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 
 from multiprocessing import Pool
-
-
-
-
 
 
 

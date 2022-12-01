@@ -1,12 +1,16 @@
+"""@ author qmle
+This module allow an alternative evaluation for mutual_inductance.
+The equations are first compiled in C to optimize speed
+However the just in time compiler is good enough for most cases.
+"""
+
 try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
 
-from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 from distutils.extension import Extension
-import os
 import numpy
 
 

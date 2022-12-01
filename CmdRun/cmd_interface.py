@@ -927,12 +927,11 @@ class Cmd_Handler:
             measure_data (dict, optional): _description_. Defaults to {}.
         """
         if self.e_model_choice == 'PEEC': # for most 2D layout
+            self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
             if self.rs_model_file != 'default':
                 self.e_api.load_rs_model(self.rs_model_file)
             else:
                 self.e_api.rs_model = None
-            self.e_api = CornerStitch_Emodel_API(layout_obj=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = '')
-            
         elif self.e_model_choice == 'FastHenry': # For 3D only
             self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             #self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')

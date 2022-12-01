@@ -12,11 +12,8 @@ import random
 import os
 import time
 import copy
-import math
-from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
-from core.engine.CornerStitch.CSinterface import Rectangle
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
 from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
 
@@ -120,7 +117,6 @@ class new_engine_opt:
                             # 2 Using the full matrix (without mutual for now) to estimate thermal performance
                             result.append(0)    
                         else:
-                            
                             R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
                             R_abs = abs(R)
                             L_abs = abs(np.imag(L))
@@ -128,8 +124,7 @@ class new_engine_opt:
                             L_abs = L_abs[0]
                             if abs(R_abs)>1e3:
                                 print("ID:",solution.solution_id)
-                                print("Scenario 1. Meshing issues, there is no path between Src and Sink leading to infinite resistance")
-                                print("Scenario 2. RL calculation issues, some R or L became negative leading to no current path")
+                                print("EVALUATION ERROR: there is no path between Src and Sink leading to infinite resistance")
                                 assert False, "Check connectivity: via connections, device connections, loop setup"    
                             result.append(L_abs)  
                     elif self.e_api.e_mdl == 'FastHenry':
@@ -159,115 +154,7 @@ class new_engine_opt:
                 result.append(max_t)
         return result
     
-    
-    def eval_3D_layout_old(self,module_data=None,solution=None,init = False,sol_len=1):
-        '''
-        module data: for electrical layout evaluation 
-        solution: single PS_Solution object for thermal evaluation (ParaPower API)
-        '''
-        result = []
-        
-        measures=[None,None]
-
-        for measure in self.measures:
-            if isinstance(measure,ElectricalMeasure):
-                measures[0]=measure
-            if isinstance(measure,ThermalMeasure):
-                measures[1]=measure
-        self.measures=measures
-        # TODO: THIS IS JUST A TEMP FOR CAP EVALUATION FOR IMAM 's JOURNAL--- DO NOT MERGE:
-        
-        for i in range(len(self.measures)):
-            measure=self.measures[i]
-            # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
-            if isinstance(measure, ElectricalMeasure):
-                type = measure.measure
-                #TODO: UPDATE LATER
-                bypassing = False # Set this True for electrical model maintainance
-                if bypassing:
-                    R,L = [-1,-1] # set -1 as default values to detect error
-                    result.append(-1)  
-                    continue
-                if not "compare" in self.e_api.e_mdl: # use this when there is no compare mode
-                    self.e_api.init_layout_3D(module_data=module_data)
-                
-                id_select = None # specify a value for debug , None otherwise
-
-                if self.e_api.e_mdl == 'PowerSynthPEEC':
-                    start = time.time()
-                    self.e_api.mesh_and_eval_elements()
-                    R, L = self.e_api.extract_RL(src=measure.source, sink=measure.sink)
-                    print ('eval time', time.time()-start)
-                if self.e_api.e_mdl == 'FastHenry':
-                    self.e_api.form_isl_script()
-                    self.e_api.add_source_sink(measure.source,measure.sink)
-                    self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
-                    self.e_api.generate_fasthenry_inputs(solution.solution_id)
-                    if sol_len==1:
-                        R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
-                        print('FH:',abs(L) , "nH")
-                    
-                        
-                    
-                if self.e_api.e_mdl == "Loop":
-                    R,L = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
-                    self.extract_3D_loop_schematic_beta(self.e_api)
-
-                if self.e_api.e_mdl == "LoopFHcompare": # Compare mode = Inductance
-                    # Reinit and recalculate
-                    print ("enter comparison mode")
-                    self.e_api.e_mdl = 'Loop'
-
-                    self.e_api.init_layout_3D(module_data=module_data)
-                    R_loop,L_loop = self.e_api.eval_RL_Loop_mode(src=measure.source, sink=measure.sink)
-                    if self.e_api_1 == None: # Copy e_api info to compare
-                        self.e_api_1 = FastHenryAPI(comp_dict = self.e_api.comp_dict, wire_conn = self.e_api.wire_dict)
-                        self.e_api_1.rs_model = None
-                        self.e_api_1.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
-                        self.e_api_1.e_mdl = 'FastHenry'
-                        self.e_api_1.conn_dict = self.e_api.conn_dict
-                        self.e_api_1.trace_ori = self.e_api.trace_ori
-                        self.e_api_1.layer_stack = self.e_api.layer_stack
-                        self.e_api_1.freq = self.e_api.freq
-                    self.e_api_1.init_layout_3D(module_data=module_data)
-                    self.e_api_1.form_isl_script()    
-                    self.e_api_1.add_source_sink(measure.source,measure.sink)
-                    R_FH,L_FH = self.e_api_1.run_fast_henry_script(parent_id = solution.solution_id)
-                    
-                    # Temp to store result
-                    R = L_FH
-                    L = L_loop
-                    
-                    self.e_api.e_mdl = 'LoopFHcompare'
-                    #input()
-                if math.isnan(R) or math.isnan(L) : 
-                    print ("ERROR: No loop found. Please check the electrical loop description.")
-                    
-                    R,L= [-1,-1]
-                    
-                
-
-                if type == 0:  # LOOP RESISTANCE
-                    result.append(R)  # resistance in mOhm
-                if type == 1:  # LOOP INDUCTANCE
-                    #result = [L_FH,L_loop]         
-
-                    result.append(L)  # resistance in mOhm
-
-            if isinstance(measure, ThermalMeasure):
-                # DISABLED ON QUANG's branch, if you see this line, you need to ENABLE ParaPower.
-                solution=self.populate_thermal_info_to_sol_feat(solution) # populating heat generation and heat transfer coefficeint
-                
-                max_t = self.t_api.eval_max_temp(module_data=module_data,solution=solution)
-                result.append(max_t)
-        return result
-    
-
-    
-
     def populate_thermal_info_to_sol_feat(self,solution=None):
-        
-        
         
         h_conv=self.t_api.bp_conv
             
@@ -339,118 +226,6 @@ class new_engine_opt:
 
         return results
 
-    """
-    # implementation by Danny
-
-    def cost_func2(self, individual=None, alpha=None, opt_mode=True, feval_init=[],update=None):
-        # OBJECTIVE CALCULATION
-        OBJS = self.cost_func1(individual)
-        if opt_mode == False:
-            return OBJS
-        OBJS_0 = feval_init
-        #print "UP",update
-        # CALCULATE WEIGHTED OBJECTIVE VALUE!
-        alpha_new = np.asarray(alpha)
-        objs_current = np.asarray(OBJS)
-        objs_0 = np.asarray(OBJS_0)
-        power = 2 # 2
-        obj_current = sum(alpha_new * (objs_current / objs_0) ** power)
-        OBJ = obj_current.tolist()
-        #print OBJ,objs_0
-        GRAD = []  # Will hold all data to transfer
-        GRAD.append(OBJ)
-
-        # PERFORM LOOP TO CALCULATE GRADIENT
-        #start = time.time()
-        #deltaX = 0.001  # forward difference step size
-        deltaX = 0.001
-        #print "IN",individual
-        for i in range(0, len(individual)):
-            DELTAX = np.zeros(len(individual))
-            DELTAX[i] = deltaX
-
-            #print individual, len(individual)
-            INDIVIDUAL = individual + DELTAX
-            #print INDIVIDUAL
-            #raw_input()
-            OBJS = self.cost_func1(INDIVIDUAL)
-            objs_new = np.asarray(OBJS)
-            obj_new = sum(alpha_new * (objs_new / objs_0) ** 2)
-            OBJ_NEW = obj_new.tolist()
-            GRAD.append((OBJ_NEW - OBJ) / deltaX)
-        #print "G",GRAD
-        #print time.time()-start,'s'
-        #raw_input()
-        XSEND = GRAD
-        #print GRAD
-        return XSEND
-
-
-    """
-
-    """
-    # implementation from Quang
-
-    def compute_grad(self,alpha,objs_0,individual,deltaX,obj,dx,GRAD,index):
-        INDIVIDUAL = individual + deltaX
-
-        OBJS = self.cost_func1(INDIVIDUAL)
-        objs_new = np.asarray(OBJS)
-        obj_new = sum(alpha * (objs_new / objs_0) ** 2)  # noremalization
-        OBJ_NEW = obj_new.tolist()
-        GRAD[index]=((OBJ_NEW - obj) / dx)
-    def cost_func_fmincon(self, individual=None, alpha=None, opt_mode=True, feval_init=[],update=None):
-        # OBJECTIVE CALCULATION
-        # print "alpha",alpha
-
-        OBJS = self.cost_func1(individual)
-        if opt_mode == False:
-            return OBJS
-        OBJS_0 = feval_init
-        #print"obj", OBJS_0
-        # CALCULATE WEIGHTED OBJECTIVE VALUE!
-        alpha_new = np.asarray(alpha)
-        objs_current = np.asarray(OBJS)
-        objs_0 = np.asarray(OBJS_0)
-        power = 2  # 2
-        obj_current = sum(alpha_new * (objs_current / objs_0) ** power)
-        OBJ = obj_current
-        #print OBJ
-        GRAD = np.zeros((len(individual)+1)).tolist()  # Will hold all data to transfer
-        GRAD[0]=OBJ
-        indexlist = range(0,len(individual))
-        random.seed(300)
-        random.shuffle(indexlist)
-        # PERFORM LOOP TO CALCULATE GRADIENT
-        deltaX = 0.1  # forward difference step size
-        DELTAX=np.zeros(len(individual))
-
-        if update<=self.num_disc/4:
-            start = 0
-            stop = len(individual)/4
-        elif update<=self.num_disc/2:
-            start = len(individual) / 4+1
-            stop = len(individual) / 2
-        elif update<=3*self.num_disc/4:
-            start = len(individual) / 2+1
-            stop = len(individual) / 4*3
-        else:
-            start = len(individual) / 4*3 + 1
-            stop = len(individual)
-        index = start+1
-        for j in range(start,stop):
-            DELTAX[j]=deltaX
-            id_sf = indexlist[index]
-            #print index,len(indexlist),start
-            self.compute_grad(alpha=alpha_new,objs_0=objs_0,individual=individual,deltaX=DELTAX,obj=OBJ,dx=deltaX,GRAD=GRAD,index=id_sf)
-            if(index<len(indexlist)-1):
-                index+=1
-
-        XSEND = GRAD
-        return XSEND
-
-
-    """
 
     def cost_func1(self, individual):
         if not (isinstance(individual, list)):

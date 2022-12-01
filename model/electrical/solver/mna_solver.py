@@ -306,9 +306,9 @@ class ModifiedNodalAnalysis():
             n2 (int): second net
             g (float): g value
         """
-        g = self.imp_value[el_name]
-        if g <0:
-            input("negative R or C")   
+        g = abs(self.imp_value[el_name])
+        #if g <0:
+        #    input("negative R or C")   
         if (n1 != 0) and (n2 != 0):
             self.G[n1 - 1, n2 - 1] += -g
             self.G[n2 - 1, n1 - 1] += -g

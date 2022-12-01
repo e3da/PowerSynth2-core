@@ -1431,15 +1431,11 @@ def test_build_trace_model_fh(freq_range = [1,9,5], width_range = [] , length_ra
     
     #mdk_dir = "C:\\Users\qmle\Desktop\\New_Layout_Engine\Quang_Journal\Mutual_IND_Case\\mutual_test.csv"
     #w_dir = "C:\Users\qmle\Desktop\Documents\Conferences\ECCE\Imam_Quang\Model\workspace"
-    
     u = 4 * math.pi * 1e-7
     metal_cond = 5.96*1e7
     freq = 1e8
-    sd_met = math.sqrt(1 / (math.pi * freq * u * metal_cond )) *1000
-
     Width = width_range
     Length =length_range
-    #freq = [0.01, 100000, 100] # in kHz
     form_fasthenry_trace_response_surface(layer_stack=ls, Width=Width, Length=Length, freq=freq_range, wdir=w_dir,
                                           savedir=mdl_dir
                                           , mdl_name=generic_name, env=env, doe_mode=2,mode='log',ps_vers=2)
@@ -1509,7 +1505,7 @@ def test_build_corner_correction():
                                  , env=env_dir, options=options, trace_model=rs_mdl)
 
 def test_bw_group(l):
-    from powercad.parasitics.analytical.models_bk import wire_group
+    from powercad.parasitics.analytical.parasitic_equations import wire_group
     mdl=load_mdl('C://Users//qmle//Desktop//Testing//FastHenry//Fasthenry3_test_gp//WorkSpace_bw',mdl_name='bw.mdl')
     t1=time.time()
     R,L=wire_group(mdl,l)

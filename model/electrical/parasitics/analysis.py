@@ -3,6 +3,9 @@ Created on Nov 2, 2012
 
 @author: bxs003
 '''
+'''
+This is the old Laplacian code from PSV1 might not be needed here
+'''
 # To Do:
 # -Check that measure path is even possible (connected)
 

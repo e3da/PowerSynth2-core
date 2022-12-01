@@ -1,4 +1,5 @@
 '''
+@author: qmle
 This module is for LVS check. It compares the user input netlist versus the layout hierarchy 
 It also makes a quick assumption of the circuit type.
 '''

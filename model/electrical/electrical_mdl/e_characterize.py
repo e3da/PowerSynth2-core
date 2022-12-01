@@ -20,29 +20,18 @@ from scipy.optimize import least_squares
 from scipy.optimize import curve_fit
 import math
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval,ETrace,form_skd,self_ind_py
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
-from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import Pipeline
-from pyDOE import ccdesign,lhs
 import pandas as pd
 from math import log, log10
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from sklearn import linear_model
 from sklearn.neural_network import MLPRegressor
 import time
 from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell
-import multiprocessing
 from multiprocessing import Pool
-# For loop base characterization
-from mpl_toolkits.mplot3d import Axes3D
-from pykrige.rk import UniversalKriging3D as uk3d
-from pykrige.rk import Krige
 
 trace_model_2d ='''
 Mesh_method uniform

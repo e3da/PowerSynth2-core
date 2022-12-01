@@ -10,18 +10,14 @@ import sys, os
 #import dill
 from networkx.readwrite import edgelist
 import pandas as pd
-from matplotlib.pyplot import Arrow
-from core.model.electrical.electrical_mdl.plot3D import network_plot_3D
 from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh,LayerMesh
 
-from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
-from core.model.electrical.electrical_mdl.e_loop_element import LoopEval, update_all_mutual_ele
-#import _thread
+from core.model.electrical.meshing.MeshObjects import TraceCell,RectCell
+from core.model.electrical.electrical_mdl.e_loop_element import LoopEval
 import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import pickle
-from mpl_toolkits import mplot3d
 from docx import Document
 from docx.shared import Inches
 from datetime import date
@@ -29,6 +25,7 @@ from multiprocessing import Pool,cpu_count
 import math
 import io
 from enum import Enum
+
 class StackType(Enum):
     # Types for characterization decision
     SDG = 1 # S-D-G

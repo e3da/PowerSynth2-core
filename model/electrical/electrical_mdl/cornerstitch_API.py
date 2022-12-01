@@ -18,9 +18,8 @@ from core.model.electrical.electrical_mdl.e_loop_finder import LayoutLoopInterfa
 from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
 from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh,LayerMesh
 from core.model.electrical.electrical_mdl.e_layout_versus_shcematic import LayoutVsSchematic
-from core.model.electrical.parasitics.equations import self_imp_py_mat
-from core.model.electrical.parasitics.equations import update_mutual_mat_64_py
-from core.model.electrical.parasitics.equations import unpack_and_eval_RL_Krigg
+from core.model.electrical.parasitics.equations import self_imp_py_mat,update_mutual_mat_64_py,unpack_and_eval_RL_Krigg
+from core.model.electrical.parasitics.parasitic_equations import trace_inductance
 import networkx as nx
 import matplotlib.pyplot as plt
 import json
@@ -263,8 +262,11 @@ class CornerStitch_Emodel_API:
         """
         This function was originally used to convert the 2D objects from CornerStitch to 3D objects for electrical evaluation.
         All of the connectivity has been done through layer_based and 2D.
-        Note1: A feature_map has been added for 3D objects ... In the feature, this function should use the feature_map only.
-        Note2: All of the dimensions are converted to um and converted to integer based system for more robust calculation 
+        Notes
+            1: A feature_map has been added for 3D objects ... In the feature, this function should use the feature_map only.
+            2: All of the dimensions are converted to um and converted to integer based system for more robust calculation 
+            3: Need to handle components in a different place. (R,L). For quick implementation, the components names are taken 
+                from macro_script measurement pins.
         Args:
             islands (_type_, optional): _description_. Defaults to None. # 2D map for layout hierachy
             feature_map (_type_, optional): _description_. Defaults to None. # 3D map between feature name and objects (unit in mm)
@@ -304,24 +306,26 @@ class CornerStitch_Emodel_API:
                                 while '(' in m or ')' in m:
                                     m = m.replace('(','')
                                     m = m.replace(')','') 
-                                     
-                                m_s = m
-                                print(m_s)
+                                # Create connection pins based on the measure names
+                                m_s = m 
                                 pin1,pin2 = m_s.split(',')
-                                
                                 net1 = "B_{}".format(pin1)
                                 net2 = "B_{}".format(pin2) 
                                 # We create 2 pins that connected to the trace at .left,.right,.top,or .bot location of the cap
                                 # Assume that we only have .top .bot or .left .right scenario for now
+                                # Add some diff to ensure the pins are within the trace
+                                # The actual node is locate at diff/2 for validation, need to play with the number (e.g soldering iron locations)
+                                ydiff = 1000
+                                xdiff = 1000
                                 if '.top' in m and '.bot' in m:     # Need to mannualy adding the gap for the measurement case validation, dont know where is capacitor connected
-                                    rect1 = Rect(top=y +h + 500, bottom=y +h, left=x, right=x + w)
+                                    rect1 = Rect(top=y +h + ydiff, bottom=y +h, left=x, right=x + w)
                                     sh1 = Sheet(rect=rect1, net_name=net1, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
-                                    rect2 = Rect(top=y, bottom=y-500, left=x, right=x + w)
+                                    rect2 = Rect(top=y, bottom=y-ydiff, left=x, right=x + w)
                                     sh2 = Sheet(rect=rect2, net_name=net2, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
                                 if '.left' in m and '.right' in m:    
-                                    rect1 = Rect(top=(y +h), bottom=y, left=x-4000, right=x)
+                                    rect1 = Rect(top=(y +h), bottom=y, left=x-xdiff, right=x)
                                     sh1 = Sheet(rect=rect1, net_name=net1, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
-                                    rect2 = Rect(top=(y +h), bottom=y, left=x+w, right=x + w+4000)
+                                    rect2 = Rect(top=(y +h), bottom=y, left=x+w, right=x + w+xdiff)
                                     sh2 = Sheet(rect=rect2, net_name=net2, net_type='internal', n=(0,0,1), z= trace_z + trace_dz) # ASSUME ON SAME LEVEL WITH TRACE
                                 self.e_sheets[net1] = sh1
                                 self.e_sheets[net2] = sh2
@@ -1177,23 +1181,24 @@ class CornerStitch_Emodel_API:
         RL_mat_theory = self_imp_py_mat(input_mat = mat) # trace by default
         if self.rs_model == None:
             RL_mat = self_imp_py_mat(input_mat = mat) # trace by default
-            #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000)*1e-9 for m in mat]
         else: 
             np_mat = np.array(mat)
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
-        # need to do this more efficiently 
+            # need to do this more efficiently 
+            #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000,m[2]/1000,0.64)*1e-9 for m in mat]
+        
         wrong_case = []
         #print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
-            R = R_t
-            L = L_t
-            if L>L_t: # means numerical error has occured
-                wrong_case.append([mat[i][0],mat[i][1],L_t-L])
-                L = L_t*0.8
+            R, L = RL_mat[i]
+            if L > L_t:
+                L = L_t
+            #R= R_t
+            #L = L_t
             # Handle weird mesh 
-            if R <=0  or R_t <=0: # IF this happens, we need to add minimum value
-                R = 1e-6
+            if R <=0 : # IF this happens, we need to add minimum value
+                R = R_t
             name = name_list[i]
             name = name.strip('Z')
             R_name = 'R'+name
@@ -1242,10 +1247,14 @@ class CornerStitch_Emodel_API:
         #mutual_result = update_mutual_mat_64_py(m_mat[0:1])
         #print("JIT evaluation for the full matrix")  
         #mutual_result = update_mutual_mat_64_py(m_mat)
-        t = time.perf_counter()
-        mutual_result = update_mutual_mat_64_py(m_mat)
-        #print("M eval time",time.perf_counter()-t)
-        mutual_result= [m*1e-9 for m in mutual_result] # convert to H
+        M_mat = update_mutual_mat_64_py(m_mat)
+        """mutual_result =[]
+        for m in M_mat:
+            if m*1e-9 <= 1e-12:
+                m =0
+            mutual_result.append(m*1e-9)"""
+        mutual_result= [m*1e-9 for m in M_mat] # convert to H
+        
         #print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
         #print("num_M_eval", len(mutual_result))
         #id = mutual_result.index(max(mutual_result))
@@ -1620,9 +1629,14 @@ class CornerStitch_Emodel_API:
         self.emesh.mutual_data_prepare(mode=0)
         self.emesh.update_mutual(mode=0)
         print("formation time PEEC",time.time()-start)
-
         
     def eval_cap_mesh(self,layer_group = None, mode = '2D'):
+        """Eval the capacitive mesh of each traces
+
+        Args:
+            layer_group (_type_, optional): _description_. Defaults to None.
+            mode (str, optional): _description_. Defaults to '2D'.
+        """
         if mode == '2D': # Assume there is no ground mesh
             # handle for 2D only assume  the GDS layer rule
             for l_data in layer_group:
@@ -1632,8 +1646,6 @@ class CornerStitch_Emodel_API:
                     rel_perf = mat.rel_permit
                 elif l_data[1]=='S':
                     t = l_data[2].thick
-                
-            print('height',h,'thickness',t,"permitivity",rel_perf)
             self.emesh.update_C_val(h=h,t=t,mode=2,rel_perv = rel_perf)
         elif mode == '3D': # Go through layer_group and generate mesh for each ground plane. 
             # First go through each ground layer and mesh them
@@ -1673,11 +1685,6 @@ class CornerStitch_Emodel_API:
             self.emesh.mutual_data_prepare(mode=0)
             self.emesh.update_mutual(mode=0)
             
-            #print ("to be implemented")
-            #print ("add groundplane mesh to the structure")
-            #print ("extract layer to layer capacitance")
-            #print ("case 1 capacitance to ground")
-            #print ("case 2 trace to trace capacitance")
     def export_netlist(self,dir= "",mode = 0, loop_L = 0,src='',sink=''):
         # Loop_L value is used in mode 1 to approximate partial branches values
         print (loop_L,src,sink)

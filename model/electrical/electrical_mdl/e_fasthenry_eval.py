@@ -5,37 +5,24 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 3. Can be used for post optimization extraction
 '''
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
-#from core.engine.Structure3D.structure_3D import Node_3D
-from core.model.electrical.solver.mna_solver import ModifiedNodalAnalysis
-from core.model.electrical.meshing.MeshStructure import EMesh
-from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
-#from corner_stitch.input_script import *
-from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
-from core.model.electrical.electrical_mdl.e_hierarchy import EHier
-from core.MDK.Design.parts import Part
-from core.general.data_struct.util import Rect
-from core.model.electrical.electrical_mdl.e_netlist import ENetlist
-from core.MDK.Design.Routing_paths import RoutingPath
-from core.model.electrical.parasitics.mdl_compare import load_mdl
-from core.APIs.FastHenry.Standard_Trace_Model import Uniform_Trace,Uniform_Trace_2, Velement, write_to_file
-from core.APIs.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text, output_fh_script
+from core.APIs.FastHenry.Standard_Trace_Model import write_to_file
+from core.APIs.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
 import os
 from datetime import datetime
-import networkx as nx
-import matplotlib.pyplot as plt
 import math
 from datetime import datetime
 import sys
 import numpy as np
-from subprocess import Popen,PIPE, DEVNULL
 import multiprocessing
 from multiprocessing import Pool
+
+# OLD TEAM MEMBER CONSTANTs FOR DEBUGING ONLY
 IMAM_path = '/nethome/ialrazi/PS_2_test_Cases/fasthenry'
 QLE_path = '/nethome/qmle/temp_fh'
+
 class FastHenryAPI(CornerStitch_Emodel_API):
-    # Hardcodded paths from previous students for default debug mode only.
-    fh_default = QLE_path
+    fh_default = QLE_path # or IMAM_path
     def __init__(self, layout_obj={}, wire_conn={},ws = fh_default):
         """
         Inherited to CornerStitch_Emodel_API
@@ -94,7 +81,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 z = self.get_z_loc(z_id)
                 dz = self.get_thick(z_id)
                 planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
-                #print(planar_trace, trace_cells)
                 # Remove zero dim traces
                 for t in trace_cells: 
                     t.z = z
@@ -132,7 +118,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             dv_via =False
             if len(via_pins) == 2: # in case of device via it will be 1 since the via is connected 1 sided only
                 v1,v2 = via_pins 
-            
             if v in self.device_vias: # this only stores the via that is connected to devices
                 via_obj = self.device_vias[v]
                 dv_via = True
@@ -143,37 +128,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 fh_pt1 = 'N_'+ v1.net
                 fh_pt2 = 'N_'+ v2.net
             text += equiv.format(fh_pt1,fh_pt2) # connect via to via
-        # need to do same equip for device vias
         return text
     
-    def form_isl_script_old(self):
-        """_summary_
-        """
-        isl_dict = {isl.name: isl for isl in self.emesh.islands}
-        ts = datetime.now().timestamp()
-        self.out_text = Begin.format(str(ts))
-        self.locs_name_dict={}
-        self.fh_point_dict={} # can be used to manage equivalent net and 
-        self.fh_bw_dict= {} # quick access to bws connections
-        self.wire_id= 0
-        self.tc_id = 0
-        for g in self.emesh.hier_E.isl_group:
-            z = self.get_z_loc(g.z_id)
-            dz = self.get_thick(g.z_id)
-            #print ('z_level',z,'z_id',g.z_id)
-            isl = isl_dict[g.name]
-            planar_trace, trace_cells = self.emesh.handle_trace_trace_connections(island=isl)
-            for t in trace_cells: 
-                if t.eval_length() == 0:
-                    trace_cells.remove(t)
-            trace_cells = self.handle_pins_connect_trace_cells_fh(trace_cells=trace_cells, island_name=g.name, isl_z =z + dz)
-            self.out_text+=self.convert_trace_cells_to_fh_script(trace_cells=trace_cells,z_pos=z,dz=dz)
-        self.out_text += self.gen_fh_points()
-        self.connect_fh_pts_to_isl_trace() # ADD THIS TO THE TRACE CELL TO FH CONVERSION
-        self.out_text += self.gen_wires_text() # THE BONDWIRES ARE SHORTED TO EXCLUDE THEIR CONTRIBUTION FOR COMPARISION
-        self.out_text += self.gen_equiv_list()
-        self.out_text += self.gen_virtual_connection()
-        
     
     def add_source_sink(self,source=None,sink=None):
         """Define the source and sink in FastHenry script
@@ -444,14 +400,12 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             start = wire_obj.sheet[0]
             stop = wire_obj.sheet[1]
             # create new net in FastHerny for the whole bondwire group
-            
             start_name = 'N_'+start.net
             stop_name = 'N_'+stop.net
             # Note these are 2D pts only
             if 'D' in start_name: # Move the wire loc to device center 
                 dv_name = start.net.split("_")
                 dv_name = dv_name[0] # get Dx
-            
             start_pt = start.get_center()
             stop_pt = stop.get_center()
             self.add_fh_points(start_name,[start_pt[0],start_pt[1],start.z])
@@ -461,7 +415,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 bw_text+=FH_point.format(start_name,start_pt[0]/1000,start_pt[1]/1000,start.z/1000)
             if not stop_name in self.fh_point_dict:
                 bw_text+=FH_point.format(stop_name,stop_pt[0]/1000,stop_pt[1]/1000,stop.z/1000)
-            
             numwires = wire_obj.num_wires
             # for now handle perpendicular cases for wires 
             ori =1 # vertical by default
@@ -526,12 +479,9 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         Returns:
             List of TraceCells: List of splitted tracecells after finding the relationship versus components/bondwires nets
         """
-        debug = False
         
         for sh_name in self.e_sheets:
             sh_obj = self.e_sheets[sh_name]
-            #if "V" in sh_name:
-            #    print(sh_name)
             parent_name = sh_obj.parent_name
             if island_name == parent_name:  # means if this sheet is in this island
                 if not (parent_name in self.emesh.comp_nodes):  # Create a list in dictionary to store all hierarchy node for each group # Note: this is old meshing for special CS object
@@ -565,23 +515,6 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 self.fh_ignore_dict[name] =1 # So we never do it twice
                 text += FH_point.format(name,pt[0]/1000,pt[1]/1000,pt[2]/1000)
         return text
-    
-    def connect_fh_pts_to_isl_trace(self): # BAD IMPLEMENTATION 
-        """_summary_
-        """
-        
-        for net_name in self.fh_point_dict:
-            pt = self.fh_point_dict[net_name]
-            min_dis = 1e9
-            best_loc = None
-            for loc in self.locs_name_dict:
-                if loc[2] == pt[2]: # only connect if they are on same level
-                   dis = math.sqrt((pt[0]-loc[0])**2 + (pt[1]-loc[1])**2) 
-                   if dis < min_dis:
-                       min_dis = dis
-                       best_loc = loc
-            if best_loc != None:
-                self.locs_name_dict[best_loc].append(net_name)
     
     def gen_virtual_connection_for_devices(self,device_states):
         """_summary_
@@ -656,9 +589,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
                 elif row[0]!='Row':
                     r_list.append(float(row[0]))            # resistance in ohm
                     l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
-        # removee the Zc.mat file incase their is error
+        # remove the Zc.mat file incase their is error
         cmd = 'rm '+outputfile
-        print (cmd)
         try:
             r_list=np.array(r_list)*1e3 # convert to mOhm
             l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
@@ -666,16 +598,19 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
         return r_list[0],l_list[0]
 
-    def parallel_run(self,solutions):
-        """_summary_
-
-        Args:
-            solutions (_type_): _description_
-
-        Returns:
-            _type_: _description_
+    def parallel_run(self,solutions=[], num_cpu=40):
         """
-        num_cpu = multiprocessing.cpu_count()
+        Get a list of solutions, iteratively goes through the list and generate output files for the optimization
+        
+        Args:
+            solutions (list): layout solution list
+            num_cpu (int): number of cpus run in parallel default to 40 for a farm machine
+        Returns:
+            _type_: Parasitic results from fasthenry
+        """
+        machine_num_cpu = multiprocessing.cpu_count()
+        if machine_num_cpu <= num_cpu:
+            num_cpu = machine_num_cpu
         sol_ids = [sol.solution_id for sol in solutions ]
         with Pool(num_cpu) as p:
             results = p.map(self.run_fasthenry,sol_ids)
@@ -684,16 +619,14 @@ class FastHenryAPI(CornerStitch_Emodel_API):
     def run_fast_henry_script(self,parent_id = None):
         
         """
-        This assumes the script is generated in Linux OS. Can be easily rewritten for Windows
-
+        This function assumes the script is generated in Linux OS. Can be easily rewritten for Windows
         Returns:
-            _type_: _description_
+            A pair for R and L values
         """
         
 
         script_name = 'eval'+str(parent_id)+'.inp'
         script_file = os.path.join(self.work_space,script_name)
-        script_out = os.path.join(self.work_space,'result') 
         write_to_file(script=self.out_text,file_des=script_file)    
         fasthenry_option= '-siterative -mmulti -pcube'
         cmd = self.fh_env + " " + fasthenry_option +" "+script_file + "> /dev/null" #+ script_out #+" &" # uncomment for possible parrallel computing
@@ -702,8 +635,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         if os.path.isfile(outputfile):
             print ("CLEAR OLD RESULT")
             os.system("rm "+outputfile)
-
-        os.system(cmd)
+        os.system(cmd)  # Run command in the terminal
         f_list =[]
         r_list = []
         l_list = []
