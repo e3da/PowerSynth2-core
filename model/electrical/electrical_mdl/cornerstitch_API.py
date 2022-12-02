@@ -6,16 +6,16 @@
 
 from core.model.electrical.solver.impedance_solver import ImpedanceSolver
 from core.model.electrical.meshing.MeshCornerStitch import EMesh_CS
-from core.model.electrical.meshing.MeshStructure import EMesh
-from core.model.electrical.electrical_mdl.e_module import E_plate,Sheet,EWires,EModule,EComp,EVia
+from core.model.electrical.electrical_mdl.e_module import EWires,EModule,EComp,EVia
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
+from core.model.electrical.electrical_mdl.e_struct import E_plate,Sheet
 from core.MDK.Design.parts import Part
 from core.general.data_struct.util import Rect
 from core.model.electrical.electrical_mdl.e_netlist import ENetlist
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.model.electrical.parasitics.mdl_compare import load_mdl
 from core.model.electrical.electrical_mdl.e_loop_finder import LayoutLoopInterface
-from core.model.electrical.meshing.MeshObjects import MeshEdge,MeshNode,TraceCell,RectCell
+from core.model.electrical.meshing.MeshObjects import RectCell
 from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh,LayerMesh
 from core.model.electrical.electrical_mdl.e_layout_versus_shcematic import LayoutVsSchematic
 from core.model.electrical.parasitics.equations import self_imp_py_mat,update_mutual_mat_64_py,unpack_and_eval_RL_Krigg
@@ -24,8 +24,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import json
 import networkx
-from mpl_toolkits.mplot3d import Axes3D
-from collections import deque
 import numpy as np
 import copy
 import os
@@ -44,7 +42,6 @@ class ElectricalMeasure():
 
     def __init__(self, measure, name='', main_loops = '', source='', sink='',multiport =0):
         """This object is used for electrical model setup
-
         Args:
             measure (_type_): _description_
             name (str, optional): _description_. Defaults to ''.
@@ -182,12 +179,8 @@ class CornerStitch_Emodel_API:
             print ("No layer_stack input, the tool will use single layer for extraction")
         else:
             self.layer_stack = layer_stack
-
         # TODO: Future student need to redefine layerstack to handle special case such as soldering.
         # For now, remove the 'Si' layer type so that electrical would work correctly (fiding z locs)
-        
-            
-
 
     def get_z_loc(self,layer_id=0):
         '''
@@ -226,8 +219,11 @@ class CornerStitch_Emodel_API:
         return None
 
     def load_rs_model(self, mdl_file):
+        """Load the stored characterized trace model from the ModelFormualtion.py
+        Args:
+            mdl_file (string): file_dir to the model
+        """
         extension = os.path.splitext(mdl_file)[1]
-        print ("extension",extension)
         if extension == '.rsmdl':
             self.mdl_type = 0
         elif extension == '.lmmdl':
@@ -359,12 +355,11 @@ class CornerStitch_Emodel_API:
                         self.e_sheets[name] = pin 
                 elif isinstance(obj, Part):
                     z_part= z_feature + thickness if sum(N_v) == -1 else z_feature # This is for upward and downward only
-                    
                     # handle 'S' layer for soldering material. If this appears, move the component z up or down to touch the trace
                     # Check 'S'
                     layer_obj = self.layer_stack.all_layers_info[z_id]
                     if sum(N_v) == 1: # upward
-                        if layer_obj.name[0] == 'S': # Need to define this is manual # Elegant way is to detect soldering material in mat-lib
+                        if layer_obj.name[0] == 'S': # Need to define this in manual # Elegant way is to detect soldering material in mat-lib
                             z_part = int( z_part - layer_obj.thick *1000) #  remove the solder thickness                   
                     elif sum(N_v)== -1: # doward
                         if layer_obj.name[0] == 'S': # Need to define this is manual # Elegant way is to detect soldering material in mat-lib
@@ -476,7 +471,6 @@ class CornerStitch_Emodel_API:
             pin = Sheet(rect=rect, net_name=net_name, z=z,n=N_v)
             pin.parent_name = isl.name
             self.e_sheets[net_name] = pin
-            #self.net_to_sheet[net_name] = pin
             dev_pins[net_name]= pin
         dev_conn_list = [] # Init this to blank, dynamically change this list depending on the list under analysis
         comp = EComp(inst_name =dev_name, sheet=dev_pins, connections=dev_conn_list, val=dev_para,spc_type=spc_type)
@@ -495,15 +489,11 @@ class CornerStitch_Emodel_API:
         """
         # get all layer IDs
         layer_ids = list(module_data.islands.keys())
-        
         # get footprint
         footprints = module_data.footprint
-        
         # get per layer width and height
         self.width = {k: footprints[k][0] for k in layer_ids }
         self.height = {k: footprints[k][1] for k in layer_ids }
-        
-        
         # init lists for parasitic model objects
         self.e_traces = {}  # dictionary of electrical components
         self.e_sheets = {}  # dictionary of sheets for connector presentaion
@@ -514,17 +504,13 @@ class CornerStitch_Emodel_API:
         # convert the layout info to electrical objects per layer
         # get the measure name
         self.src_sink_dir ={}
-        # NEED TO HANDLE THE SOURCE SINK AND MEASURE LATER
-        #for m in self.measure:
-        #    self.src_sink_dir[m.source] = 'Z+'
-        #    self.src_sink_dir[m.sink] = 'Z+'
-        mode = '3d' if len(layer_ids)>1 else '2d'  
         for  l_key in layer_ids:
             island_data = module_data.islands[l_key]
             self.convert_layout_to_electrical_objects(islands=island_data,feature_map = feature_map)
         # handle bondwire group 
         self.handle_components_connectivity()
-    # TEMPORARY CODE ONLY DONT MERGE TO MAIN ...
+        
+   
     def eval_trace_trace_cap(self,tc1,tc2,iso_thick=0, mode = 1 ,epsilon = 8.854*1e-12 ): # TODO: MOVE THIS TO PARASITIC EQUATION
         """Eval trace to trace capacitance for each trace is a rectangular object from island
 
@@ -593,8 +579,6 @@ class CornerStitch_Emodel_API:
                 layer_isl_dict[layer_id] = isl.elements # first create the list 
         input("Begin cap extraction, press any button to continue ...")        
         
-        # First eval the mutual-cap on each layer
-        
         for layer_id in layer_isl_dict:
             cap_table = {} # it is tc1-tc2 if case 2, else tc-grd if case 1
             trace_list = layer_isl_dict[layer_id] # get each trace list
@@ -612,9 +596,7 @@ class CornerStitch_Emodel_API:
             for trace_pair in cap_table: # might have some overlaping
                 if not(cap_table[trace_pair] == -1 or cap_table[trace_pair] == 0): # ignor non-overlap cases
                     line = "Cap value between {} and {} is {} F".format(trace_pair[0],trace_pair[1],cap_table[trace_pair])
-                    print(line)
-        
-        
+                    print(line) # Print out the capacitance between 2 traces
         # Eval trace-trace in 3d
         all_layer_pair = []
         all_layer_pair_to_thick = {}
@@ -650,10 +632,7 @@ class CornerStitch_Emodel_API:
                             cap = self.eval_trace_trace_cap(tc1,tc2,iso_thick,mode=1) # mode 1 for 3d trace-trace
                             cap_table[(tc1_name,tc2_name)] = cap
                             cap_table[(tc2_name,tc1_name)] = -1 # Here we dont need to store this value again, but marked as calculated
-                
-                            
             layer_pair_to_cap_table[(layer_1,layer_2)] = cap_table
-        # I print all the cap here, please check
         for layer_pair in layer_pair_to_cap_table:
             print("Begin printing cap values between layer {} and layer {}".format(layer_pair[0],layer_pair[1]))
             cap_table = layer_pair_to_cap_table[layer_pair]
@@ -663,7 +642,6 @@ class CornerStitch_Emodel_API:
                     print(line)
         input("End cap extraction, press any button to continue ...") 
         print("end")       
-
 
     def generate_layout_lvs(self):
         hypergraph = {}
@@ -694,7 +672,6 @@ class CornerStitch_Emodel_API:
                 net2 = replace_dash_to_dot(nets[i+1])
                 self.net_graph.add_edge(net1,net2,type='trace_nets_connect')
         # Now that we have the net_graph, perform the DFS algorithm with locked_net (copy from e_layout_versus_shematic)
-
         # Use depth first search to search and locked nodes
         locked_nodes = {} # group of nodes that have been grouped
         group_id = 0
@@ -791,11 +768,10 @@ class CornerStitch_Emodel_API:
         loop = loop.replace(')','')
         src,sink = loop.split(',')
         self.setup_device_states(dev_states)  # TODO: GET IT BACK IN THE CODE
-        
         # Handle speical shorting between DC- and DC+ if "A-B" is found 
         # TODO: a more elegant way for this :)
         num_shorts=0
-
+        
         if '-' in src:
             src_nets = src.split('-') # get the list of all shorted terminals
             src_net =src_nets[0]
@@ -805,7 +781,7 @@ class CornerStitch_Emodel_API:
                 num_shorts+=1
         else:
             src_net = src
-            
+
         if '-' in sink:
             sink_nets = sink.split('-') # get the list of all shorted terminals
             sink_net =sink_nets[0]
@@ -816,16 +792,11 @@ class CornerStitch_Emodel_API:
                 num_shorts+=1
         else:
             sink_net = sink
-                
-
-        
         # Now we check if there is a path from src to sink for this loop. 
         # If not, the user's setup is probably wrong
         # TODO: need to handle capacitance smartly in the future
         src_net = 'B_{}'.format(src_net)   if(src[0]  == 'C') else src_net
         sink_net = 'B_{}'.format(sink_net) if(sink[0] == 'C') else sink_net
-        
-    
         Iload = 100 # Change this for possible current density study
         self.circuit.add_indep_current_src(sink_net,src_net,Iload,'Is')
         self.circuit.add_component('Rsink',sink_net,0,1e-6)
@@ -835,7 +806,6 @@ class CornerStitch_Emodel_API:
         self.circuit.graph_to_circuit_minimization()
         # Test feature:
         # This will be triggered if the user setenv EXPORT_NETLIST 1 in the terminal
-        #print(os.getenv("EXPORT_NETLIST"))
         if os.getenv("EXPORT_NETLIST"): 
             output_nets = [] 
             # Treat the MOSFET pins, Lead-pins as output nets 
@@ -857,31 +827,19 @@ class CornerStitch_Emodel_API:
                     output_nets.append(d+'_'+'Collector')    
             path = self.workspace_path + '/netlist_{}.net'.format(sol_id)
             self.circuit.netlist_dump(sol_id,path,output_nets)
-        
         self.circuit.handle_branch_current_elements()  
         self.circuit.solve_MNA()
-        #res = [self.circuit.value[r] for r in self.circuit.value if 'R' in r]
-        #max_res = max(res)
-        #self.circuit.solve_iv(mode =2)
         results = self.circuit.results
         # Test look up these lists, can be used for future reliability study
         imp = (results['V({0})'.format(src_net)] - results['V({0})'.format(sink_net)] )/Iload
         R = np.real(imp)
         L = np.imag(imp)*1e9 / self.circuit.s
-        #print("R: {}, L: {}".format(R,L))
         #TODO:
         self.I_device_dict = {k:np.abs(results[k]) for k in results if 'VD' in k}
         self.I_wire_dict = {k:np.abs(results[k]) for k in results if 'BW' in k}
         self.I_via_dict = {k:np.abs(results[k]) for k in results if "VC" in k or 'f2f' in k}
-        #imp = 1 / results['I(Vs)']
         
-        #res_df = pd.DataFrame.from_dict(self.I_wire_dict)
-        #res_df.to_csv(self.workspace_path+'/Iwire_result{}.csv'.format(sol_id)) 
-        #self.single_loop_netlist_eval_half_bridge(dc_plus=src_net,dc_minus=sink_net,out='B6',results = self.circuit.results,sol_id =sol_id)
         return R, L 
-
-            
-        #print("Finish pseudo loop by loop evaluation")    
             
     def setup_device_states(self,dev_states):
         """Here we need to check for floating nets.
@@ -894,9 +852,6 @@ class CornerStitch_Emodel_API:
         for d in self.e_devices:
             dev_obj = self.e_devices[d]
             para = dev_obj.conn_order # get the connection order
-            #if dev_obj.spice_type == 'MOSFET':
-            #    rds = para[('Drain','Source')]['R'] # TODO: This must be added to the Manual
-            #print("Device name {}, rdson {}".format(d,rds))
             connections = list(para.keys())
             for i in range(len(connections)):
                 if dev_states[d][i] == 1: # if the user set these pins to be connected
@@ -913,7 +868,6 @@ class CornerStitch_Emodel_API:
                     self.circuit.add_indep_voltage_src(start_net,end_net,0,'V{}_{}_{}'
                                                             .format(d,conn_tupple[0],conn_tupple[1])) 
                 else: # Grounding all gate pins for single loop
-                    
                     conn_tupple = connections[i]
                     start_net = '{}_{}'.format(d,conn_tupple[0])
                     end_net = '{}_{}'.format(d,conn_tupple[1])
@@ -984,7 +938,6 @@ class CornerStitch_Emodel_API:
 
 
             print("graph constraction and combined")
-            #self.emesh.graph_to_circuit_transfomation()
             print("solve MNA")
         
 

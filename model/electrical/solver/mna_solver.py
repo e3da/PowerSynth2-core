@@ -238,7 +238,6 @@ class ModifiedNodalAnalysis():
         self.max_net_id = 0  # maximum used net id value
         self.results_dict = {}
         self.node_dict = {}
-
         self.L_count = 0
         self.R_count = 0
         self.C_count = 0

@@ -1,20 +1,7 @@
 
 # This is the layout generation and optimization flow using command line only
-import sys, os
-#sys.path.append('..')
-# Set relative location
-cur_path =sys.path[0] # get current path (meaning this file location)
-print(cur_path)
-
-cur_path = cur_path[0:-len('core/model/electrical/meshing')]
-print(cur_path)
-sys.path.append(cur_path)
-
-
-from core.model.electrical.meshing.MeshObjects import RectCell,MeshNode,MeshEdge
+from core.model.electrical.meshing.MeshObjects import RectCell,MeshNode
 from core.model.electrical.meshing.MeshStructure import EMesh
-
-
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt

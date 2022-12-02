@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import random
 from itertools import combinations, groupby
 import time
+
 class Port:
     def __init__(self, pnode:int,nnode:int, index:int, MNA_obj) -> None:
         '''
@@ -71,10 +72,9 @@ class Port:
         M = np.imag(Z)/self.s * 1e9 # nH - mutal inductance Mij == Mji
         return abs(m_R), abs(M)
         
-        
 class ImpedanceSolver(ModifiedNodalAnalysis):
     '''
-    Default unit R: miliohm L: nH for rounding purpose
+    Default unit R: mOhm L: nH for rounding purpose
     One can rewrite this module to extract and convert Z to S to Y paramters
     '''
     def __init__(self):
@@ -296,6 +296,9 @@ class ImpedanceSolver(ModifiedNodalAnalysis):
                 self.add_mutual_term(M_name,L1_name,L2_name,M_val)
                 self.M_count+=1
 
+
+
+
 def example1():
     # this case have 3 ports with a grid RL mesh and a single RL wire
     solver = ImpedanceSolver()
@@ -456,5 +459,5 @@ def eval_multi_src_sink_automate():
     
     
 if __name__ == '__main__':
-   #eval_multi_src_sink_manual() 
+   eval_multi_src_sink_manual() 
    eval_multi_src_sink_automate()

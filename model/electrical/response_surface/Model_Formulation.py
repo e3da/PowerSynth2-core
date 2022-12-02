@@ -1534,17 +1534,16 @@ def test_continuous(w, l1, l2, f):
     print(trace_ind_krige(f, w, l1 + l2, mdl) - trace_ind_krige(f, w, l2, mdl) - trace_ind_krige(f, w, l1, mdl))
 
 def create_large_scale_model_to_prevent_numerical_issues():
-    WL_list= [{'w':[0.02,1],'l':[0.02,50]},\
-                {'w':[1,5],'l':[0.02,50]},\
-                    {'w':[5,10],'l':[0.02,50]},\
-                    {'w':[10,15],'l':[0.02,50]},\
-                    {'w':[15,20],'l':[0.02,50]},\
-                    {'w':[20,30],'l':[0.02,50]}]   
+    """Some mesh elements can get very small, need to vary trace widths to have 2 models
+    """
+    WL_list = [{'w':[0.02,1],'l':[0.02,50]},\
+                    {'w':[1,30],'l':[0.02,50]}]   
+    WL_list = [{'w':[0.1,15],'l':[0.1,50]}]
     mdk_dir = "/nethome/qmle/RS_Build/layer_stacks/layer_stack_new.csv"
     for wl in WL_list:
         w_range = wl['w']
         l_range = wl['l']
-        name = '2_64_2_wr_{},{}_lr_{},{}'.format(w_range[0],w_range[1],l_range[0],l_range[1])
+        name = 'model_[{}_{}]_[{}_{}]_2_64_2'.format(w_range[0],w_range[1],l_range[0],l_range[1])
         
         test_build_trace_model_fh(width_range= w_range,length_range= l_range,generic_name= name, mdk_dir = mdk_dir)
     

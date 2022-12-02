@@ -1,10 +1,11 @@
+# Author: qmle
 # This will be used for electrical meshing in PowerSynth loop bases model
 # Includes:
 # A generic method to detect all concave vs convex corners
 # A method to form trace islands after placement
 
 from core.general.data_struct.util import Rect
-from typing import Type
+
 class TraceCell(Rect):
     def __init__(self, **kwargs):
         if 'rect' in kwargs:  # init by keyword rect
@@ -44,7 +45,7 @@ class TraceCell(Rect):
         3 : z+
         -3: z- 
         '''
-        
+
     def get_cell_nodes(self):
         # Return the xy locations of the cell and its type
         pt_dict = {(self.left,self.bottom): 'internal',(self.left,self.top): 'internal',(self.right,self.top): 'internal',(self.right,self.bottom): 'internal'}
@@ -65,7 +66,6 @@ class TraceCell(Rect):
             pt_dict[(self.left,self.top)] = 'boundary'
             pt_dict[(self.right,self.top)] = 'boundary'
         return pt_dict,pt_index
-            
         
     def find_corner_type(self):
         # Define corner type based on the neighbour
@@ -126,7 +126,6 @@ class MeshNode:
 class MeshNode2:
     def __init__(self, pos=[], type='', node_id=0, group_id=None, mode=1):
         '''
-
         Args:
             pos: position, a tuple object of (x,y,z)
             type: "boundary" or "internal"

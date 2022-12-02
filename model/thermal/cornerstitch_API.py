@@ -24,11 +24,14 @@ import os
 
 
 class ThermalMeasure(object):
-    
-
     UNIT = ('K', 'Kelvin')
-
     def __init__(self, devices=None, name=None):
+        """Define a ThermalMeasure object for the layout evaluation
+
+        Args:
+            devices (list, optional): List of all devices names. Defaults to None.
+            name (string, None): Name of the measure. Defaults to None.
+        """
         self.devices = devices
         self.name = name
         self.mode = 0 # 0 for maxtemp, 1 for thermal resistance
@@ -36,6 +39,11 @@ class ThermalMeasure(object):
 
 class CornerStitch_Tmodel_API:
     def __init__(self, comp_dict={}):
+        """API between thermal model and layout engine
+
+        Args:
+            comp_dict (dict, optional): The keys are device name, the values are power losses. Defaults to {}.
+        """
         self.width = 0  # substrate width
         self.height = 0  # substrate height
         self.layer_stack = None  # a layer stack object
@@ -76,8 +84,6 @@ class CornerStitch_Tmodel_API:
 
     def dev_result_table_eval(self, module_data=None,solution=None):
         solution = copy.deepcopy(solution) # Has to add this to prevent some removes functions
-        
-        
         if self.model== 2:
             '''
             parapower evaluation goes here
@@ -102,7 +108,6 @@ class CornerStitch_Tmodel_API:
                     pairs[via_name[0]]=[f]
             
             for via, via_pair in pairs.items():
-                
                 name=via
                 x=via_pair[0].x
                 y=via_pair[0].y
@@ -154,7 +159,6 @@ class CornerStitch_Tmodel_API:
             value = eval(input("enter a value for ambient temperature:"))
             self.t_amb = float(value)
         else:
-            
             power_list = deque(data['Power'])  # pop from left to right
             for k in self.comp_dict:
                 comp = self.comp_dict[k]
@@ -251,11 +255,7 @@ class CornerStitch_Tmodel_API:
                     thermal_net[i:] = rth_values
                 j+=1
             i+=1    
-        print("thermal extraction time {}s".format(perf_counter()- time_start))   
-        thermal_ws ='/nethome/qmle/testcases/Unit_Test_Cases/New_Script/Test_Cases/2D_Case_1_Dev/thermal_net_40x50_h1000/'
-        np.savetxt(thermal_ws+"/thermal_net_single_size_{}.csv".format(solution.solution_id), thermal_net, delimiter=",")
-        #rth_max = max(list(rth_dict.values()))
-        #print("RTH:{}".format(rth_max))
+        
         return rth_dict
 
 
