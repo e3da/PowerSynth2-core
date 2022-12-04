@@ -633,8 +633,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         curdir = os.getcwd()
         outputfile = os.path.join(curdir,'Zc.mat')
         if os.path.isfile(outputfile):
-            print ("CLEAR OLD RESULT")
-            os.system("rm "+outputfile)
+            os.system("rm "+outputfile) # Clear old result
         os.system(cmd)  # Run command in the terminal
         f_list =[]
         r_list = []

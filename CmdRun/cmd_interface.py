@@ -116,6 +116,7 @@ class Cmd_Handler:
         self.data_y = None
         self.e_model_choice = 'PEEC'
         self.e_model_dim = '2D' # default as 2D and 2.5D
+        
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
@@ -306,9 +307,11 @@ class Cmd_Handler:
                         self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
-        
-        proceed = self.check_input_files() # only proceed if all input files are good. 
-
+        try:
+            proceed = self.check_input_files() # only proceed if all input files are good. 
+        except:
+            print("Permission Denided")
+            proceed = True # Mannually set by Dev for now
         if proceed:
             self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
             self.init_cs_objects(run_option=run_option)

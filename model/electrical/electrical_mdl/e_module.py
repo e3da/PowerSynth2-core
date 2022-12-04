@@ -152,7 +152,7 @@ class EWires(EComp):
         """
         c_s = self.sheet[0].get_center()
         c_e = self.sheet[1].get_center()
-        cali = 0.75 # Calibration factor versus actual length in the physical design [0.75-1.25]
+        cali = 0.9 # Calibration factor versus actual length in the physical design [0.9-1.1]
         length = cali*int(math.sqrt((c_s[0] - c_e[0]) ** 2 + (c_s[1] - c_e[1]) ** 2))/1000 # using integer input
         group = {}  # all mutual inductance pair
         R_val = wire_resistance(f=self.f, r=self.r, p=self.p, l=length) * 1e-3
@@ -173,7 +173,7 @@ class EWires(EComp):
                         L2_name = 'Z{0}_{1}'.format(self.inst_name,j)
                         M_val =  wire_partial_mutual_ind(length, distance) * 1e-9
                         self.mutual_map[(L1_name,L2_name)] = M_val
-        else: # Single wire
+        else: # Case 2: Single wire
             RLname = 'Z{0}_{1}'.format(self.inst_name,0)
             self.imp_map[RLname] = branch_val
 

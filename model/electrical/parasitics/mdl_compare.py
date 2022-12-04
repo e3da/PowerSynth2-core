@@ -1,19 +1,16 @@
-import csv
-import math
 import math as m
 import os
 from math import fabs
-
 import matplotlib.pyplot as plt
 import numpy as np
 from core.model.electrical.parasitics.equations import self_imp_py_mat,unpack_and_eval_RL_Krigg
 from core.general.settings.save_and_load import load_file
 from core.model.electrical.response_surface.RS_build_function import f_ms
-LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 Quang as stated in Brett's thesis
+LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 as stated in Brett's thesis
 LOWEST_ASPECT_IND = 1.0
 # Constants:
 c = 3.0e8                       # speed of light
-u_0 = 4.0*math.pi*1e-7          # permeability of vaccum;
+u_0 = 4.0*m.pi*1e-7          # permeability of vaccum;
 e_0 = 8.85e-12                  # permittivity of vaccum;
 
 
@@ -359,152 +356,3 @@ def trace_cap_krige(w,l,mdl):
     c=np.ma.asarray(c[0])
 
     return c
-
-def trace_90_corner_ind(f,w1,w2,mdl):
-    # unit is nH
-    # f in kHz
-    # Select a model for the closest frequency point
-    frange = []
-    # print 'freq', f
-    for m in mdl:
-        frange.append(m['f'])
-    ferr = [f for i in range(len(frange))]
-    ferr = (abs(np.array(frange) - np.array(ferr))).tolist()
-    f_index = ferr.index(min(ferr))
-    # print 'selected f', frange[f_index]
-    m_sel = mdl[f_index]['mdl']
-    model = m_sel.model[0]
-    l = model.execute('points', w1, w2)
-    l = np.ma.asarray(l[0])
-
-    if isinstance(l, np.ma.masked_array) and isinstance(w1, float):
-        return l[0]
-    else:
-        return l
-
-if __name__ == '__main__':
-    #c1=trace_capacitance(5,8,0.035,0.2,4.4,True)
-    #c2=trace_capacitance(3,15, 0.035, 0.2, 4.4, True)
-    #c3 = trace_capacitance(2, 20, 0.035, 0.2, 4.4, True)
-    #c4 = trace_capacitance(0.035, 20, 1, 1, 1, False)
-
-    #print((c1+c2,c3))
-    
-    mdl = load_file('/nethome/qmle/RS_Build/Model/simple_trace_40_50_it.rsmdl')
-    w = np.linspace(1,10,100)
-    l = np.linspace(1,10,100)
-    t = 0.2
-    mat = []
-    for i in range(100):
-        mat.append([w[i]*1000,l[i]*1000,t*1000])
-    
-
-
-    #trace_ind_krige(f = 1e6,w=w,l=l,mdl=mdl)
-    RL_mat_rs = unpack_and_eval_RL_Krigg(f=1e6, w=w,l=l, mdl = mdl)
-    RL_mat_eq = self_imp_py_mat(mat)
-
-    err = []
-    rat = []
-    for i in range(len(mat)):
-        r_eq,l_eq = RL_mat_eq[i]    
-        r_rs,l_rs = RL_mat_rs[i]
-        if l_rs>0:
-            err.append(l_eq-l_rs)
-            rat.append(l_eq/l_rs)
-        else:
-            print(mat[i])
-            continue
-    plt.figure(1)
-    plt.plot(err)
-    plt.figure(2)
-    plt.plot(rat)
-    plt.show()
-    '''
-    mdl_dir='D:\Testing\Py_Q3D_test\All rs models'
-    mdl_dir='C:\\Users\qmle\Desktop\Testing\Py_Q3D_test\All rs models'
-    mdl1=load_mdl(mdl_dir,'RAC[4x4].rsmdl')
-    DOE=mdl1.DOE
-    Q3D_R=mdl1.input[0]
-    print mdl1.unit.to_string()
-    print Q3D_R # uOhm
-    mdl2 = load_mdl(mdl_dir, 'Mdl2.rsmdl')
-    Q3D_L=mdl2.input[0]
-    mdl2=load_mdl(mdl_dir, 'Validation_10_10_LAC_accurate.rsmdl')
-    print mdl2.op_point
-    #print Q3D_L # nH
-    mdl3=load_mdl(mdl_dir,'C_mesh_100_krige.rsmdl')
-    Q3D_C=mdl3.input[0]
-    '''
-    '''
-    print Q3D_C # pF
-    print 'here resistance', trace_res_krige(110,7.5,7.5,mdl1)
-
-    '''
-    '''
-    #Test Corner Cases Overestimation
-    fig1 = plt.figure(1)
-    L=[]
-    W=np.linspace(1,10,10)
-    l=10
-    for w in W:
-        L.append(2*trace_ind_krige(100,w,l+w/2,mdl2))
-    plt.plot(W,L)
-    plt.show()
-    with open('C:/Users\qmle\Desktop\POETS\Corner_Cases\corner_case_PS.csv', 'wb') as csvfile:
-        fieldnames = ['W', 'Inductance']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        out=[]
-        for i in range(len(L)):
-            out.append({'W':W[i],'Inductance':L[i][0]})
-        writer.writerows(out)
-    '''
-'''
-    fig1 = plt.figure(1)
-    ax = fig1.gca(projection='3d')
-    Z=np.zeros((5,5))
-    ZL=np.zeros((5,5))
-    w1=np.linspace(1.2,10,5)
-    w2=np.linspace(1.2,10,5)
-    X,Y=np.meshgrid(w1,w2)
-
-    for i in range(5):
-        for j in range(5):
-            Z[i,j]=trace_res_krige(100,w2[j],w1[i]/2+10,mdl1)+trace_res_krige(100,w1[i],10+w2[j]/2,mdl1)
-            ZL[i,j]=trace_ind_krige(100,w2[j],w1[i]/2+10,mdl2)+trace_ind_krige(100,w1[i],w2[j]/2+10,mdl2)
-    surf1 = ax.plot_surface(X, Y, Z)
-    #ax.scatter(X,Y,Z,c='b',s=10)
-    Z2 = []
-    with open('C:\\Users\qmle\Desktop\Testing\Comparison\Weekly_3_28\Corner.csv','rb') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            Z2.append(float(row['ACR'])*1000)
-
-    ax.scatter(X, Y, Z2,c='r',s=10)
-    ax.set_xlabel('W1 (mm)')
-    ax.set_ylabel('W2 (mm)')
-    ax.set_zlabel('Resistance (mOhm)')
-    plt.show()
-    fig2 = plt.figure(2)
-    ax = fig2.gca(projection='3d')
-    surf1 = ax.plot_surface(X, Y, ZL)
-    ax.set_xlabel('W1 (mm)')
-    ax.set_ylabel('W2 (mm)')
-    ax.set_zlabel('Inductance (nH)')
-    plt.show()
-    with open('C:\\Users\qmle\Desktop\Testing\Comparison\RAC_BEST CASE\PowerSynth.csv', 'wb') as csvfile:
-        fieldnames = ['W1', 'W2','Resistance']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        out=[]
-        for i in range(10):
-            for j in range(10):
-                out.append({'W1':w1[i],'W2':w2[j],'Resistance':Z[i,j]})
-        writer.writerows(out)
-'''
-'''
-    x=[7.85, 6.196498239728797, 6.196498239728797, 2.211162556616547, 10.0, 7.85, 10.0, 10.0, 10.0, 3.821071579100021, 3.821071579100021, 0.2, 8.751288903373872, 0.2, 8.751288903373872, 6.627639517526106, 6.627639517526106, 10.0, 2.211162556616547, 10.0]
-    y=[2.0982491198643984, 7.486180241236948, 8.889464210449987, 4.0, 23.77618336577696, 4.0, 17.0, 5.0, 17.0, 3.0982491198643984, 4.027318394494245, 4.175644451686935, 9.874432485641357, 4.175644451686939, 0.0, 3.0982491198643984, 4.027318394494245, 5.0, 4.0, 23.77618336577696]
-    trace_res_krige(100,x,y,mdl1)
-'''

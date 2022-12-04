@@ -522,7 +522,7 @@ class EMesh_CS(EMesh):
                         l2, r2, b2, t2 = tc2.get_locs()
                         c_type = self.check_trace_to_trace_type(el1, el2)  # get types and check whether 2 pieces touch
                         if c_type == T_SHAPE:
-                            print("handle T_SHAPE cut")
+                            continue
                         elif c_type == L_SHAPE:
                             s = 0  # check the cases if not correct then switch el1 and el2 to handle all possible case
                             swap = False

@@ -128,14 +128,12 @@ class new_engine_opt:
                                 assert False, "Check connectivity: via connections, device connections, loop setup"    
                             result.append(L_abs)  
                     elif self.e_api.e_mdl == 'FastHenry':
-                        
                         self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
                         self.e_api.generate_fasthenry_inputs(solution.solution_id)
                         if sol_len==1:
                             R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
                             L_abs = abs(L)
                             result.append(L_abs)  
-                            print("FH", L_abs)
                         else:
                             result.append(-1)
                 else:

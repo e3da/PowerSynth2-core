@@ -935,8 +935,6 @@ class CornerStitch_Emodel_API:
                     print("Dense Matrix eval time", time.time() - s, 's')
                     #self.emesh.solve_bundle_PEEC()
 
-
-
             print("graph constraction and combined")
             print("solve MNA")
         

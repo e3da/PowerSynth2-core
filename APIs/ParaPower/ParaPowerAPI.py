@@ -72,7 +72,7 @@ class PPFeature(object):
     :param name: Name of the feature.
 
     """
-    def __init__(self, ref_loc=[0., 0., 0.],  x=None, y=None, z=None, w=None, l=None, h=None,
+    def __init__(self, ref_loc=[0., 0., 0.],  x=0, y=0, z=0, w=0, l=0, h=0,
                  dx=2, dy=2, dz=2, material=None, substrate=None, power=0, name=None):
         self.name = name
         self.ref_loc = ref_loc
