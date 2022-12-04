@@ -1102,7 +1102,7 @@ class CornerStitch_Emodel_API:
                 self.circuit.add_z_component(v,start_net,stop_net,via_obj.imp_map[v])   # add single via for now, but support array in the future
                   
     def eval_and_update_trace_RL_analytical(self):
-        """This function get the edge-param_map variable which is built after the impedance solver is made
+        """This function gets the edge-param_map variable which is built after the impedance solver is made
         edge-param maps the auto-generated edge name to their w,l and t value.
         This function will efficienty evaluate the w,l,t matrix and update the branch (edge) componentn'value in the solver
         """
@@ -1135,11 +1135,8 @@ class CornerStitch_Emodel_API:
         else: 
             np_mat = np.array(mat)
             RL_mat = unpack_and_eval_RL_Krigg(f = self.freq*1e3,w = np_mat[:,0]/1e3, l = np_mat[:,1]/1e3,mdl = self.rs_model) # PS 1.9 and before.
-            # need to do this more efficiently 
-            #L_mat = [ trace_inductance(m[0]/1000,m[1]/1000,m[2]/1000,0.64)*1e-9 for m in mat]
-        
+            
         wrong_case = []
-        #print('num_element',len(name_list))
         for i in range(len(name_list)): 
             R_t, L_t = RL_mat_theory[i]
             R, L = RL_mat[i]
@@ -1157,14 +1154,14 @@ class CornerStitch_Emodel_API:
             self.circuit.value[R_name] = R 
             self.circuit.value[L_name] = 1j*L
             
-        debug= False
+        debug= False # This will dump all wrong results if exist
         if debug:
             if wrong_case!=[]:
                 print(" + error: {}%".format(len(wrong_case)/len(name_list)*100))
                 df = pd.DataFrame(wrong_case)
                 df.to_csv(self.workspace_path +'/need_to_double_check.csv')
                 print("check numerical err")
-            dump_all_rl = False
+            dump_all_rl = False # This will dump all RL values
             if dump_all_rl:
                 df = pd.DataFrame(RL_mat)
                 df.to_csv(self.workspace_path +'/all_RL_values_rs.csv')
@@ -1206,10 +1203,6 @@ class CornerStitch_Emodel_API:
             mutual_result.append(m*1e-9)"""
         mutual_result= [m*1e-9 for m in M_mat] # convert to H
         
-        #print('MAX M',max(mutual_result), 'MIN M', min(mutual_result))
-        #print("num_M_eval", len(mutual_result))
-        #id = mutual_result.index(max(mutual_result))
-        #val_id = list(self.mutual_edge_params.keys())[id]
         for i in range(len(mutual_result)):
             m_pair = m_pairs[i]
             L_name1 = 'L' + m_pair[0].strip('Z')
@@ -1956,12 +1949,6 @@ class CornerStitch_Emodel_API:
             e_measures.append(ElectricalMeasure(measure=type, name=name, source='', sink='',multiport=multiport))
         return e_measures
 
-    def extract_RL_1(self,src=None,sink =None):
-        print("TEST HIERARCHY LEAK")
-        del self.emesh
-        del self.circuit
-        del self.module
-        return 1,1
 
 
     def extract_RL(self, src=None, sink=None,export_netlist=False):
@@ -1987,15 +1974,7 @@ class CornerStitch_Emodel_API:
         count = 1    
         self.circuit = ImpedanceSolver()
         self.circuit._graph_read(self.emesh.graph)
-        # CHECK IF A PATH EXIST
-        #print (pt1,pt2)
-
-        #if not(networkx.has_path(self.emesh.graph,pt1,pt2)):
-        #    print (pt1,pt2)
-        #    eval(input("NO CONNECTION BETWEEN SOURCE AND SINK"))
-        #else:
-        #    pass
-        #    #print "PATH EXISTS"
+        
         for src in sources[1:]:
             self.circuit.equiv(src_pt,self.emesh.comp_net_id[src],name = sort_name.format(count))
             count+=1
@@ -2016,53 +1995,12 @@ class CornerStitch_Emodel_API:
         R = abs(np.real(imp) * 1e3)
         L = abs(np.imag(imp)) * 1e9 / (2*np.pi*self.circuit.freq)
         
-        #self.emesh.graph.clear()
-        #self.emesh.m_graph.clear()
-        #self.emesh.graph=None
-        #self.emesh.m_graph=None
-        #del self.emesh
-        #del self.circuit
-        #del self.hier
-        #del self.module
-        #gc.collect()
-        #print R, L
-        #process = psutil.Process(os.getpid())
-        #now = datetime.now()
-        #dt_string = now.strftime("%d-%m-%Y-%H-%M-%S")
-        #print "Mem use at:", dt_string
-        #print(process.memory_info().rss), 'bytes'  # in bytes
-        #return R[0], L[0]
-        #print ("R,L",R,L)
         if export_netlist:
             self.export_netlist(dir = "mynet.net",mode =1, loop_L = L,src=src,sink=sink) # comment this out if you dont want to extract netlist
         print(L)
         return R, L
 
-        '''
-        self.circuit.indep_current_source(0, pt1, 1)
         
-
-        # print "src",pt1,"sink",pt2
-        self.circuit.add_path_to_ground(pt2)
-        self.circuit.handle_branch_current_elements()
-        self.circuit.solve_iv(mode=1)
-        print self.circuit.results
-        #netlist = ENetlist(self.module, self.emesh)
-        #netlist.export_netlist_to_ads(file_name='cancel_mutual.net')
-        vname1 = 'v' + str(pt1)
-        vname2 = 'v' + str(pt2)
-        i_out  = 'I_Bt_'+  str(pt2)
-        imp = (self.circuit.results[vname1]- self.circuit.results[vname2])/self.circuit.results[i_out]
-        R = abs(np.real(imp) * 1e3)
-        L = abs(np.imag(imp)) * 1e9 / (2 * np.pi * self.circuit.freq)
-        self.hier.tree.__del__()
-
-        gc.collect()
-        print R, L
-
-        #self.show_current_density_map(layer=0,thick=0.2)
-        return R, L
-        '''
     def show_current_density_map(self,layer=None,thick=0.2):
         result = self.circuit.results
         all_V = []

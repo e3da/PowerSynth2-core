@@ -33,13 +33,9 @@ from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_st
 def read_settings_file(filepath): #reads settings file given by user in the argument
     
     if os.path.isfile(filepath): 
-        
         filename = os.path.basename(filepath)
-        work_dir = filepath.replace(filename,'')
-        #os.chdir(work_dir)
         with open(filename, 'r') as inputfile:
             for line in inputfile.readlines():
-                #line = line.strip("\r\n")
                 line= line.rstrip()
                 info = line.split(" ")
                 if line == '':
@@ -58,7 +54,6 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                     settings.PARAPOWER_CODEBASE = os.path.abspath(info[1])
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
-        print ("Settings loaded.")
         
         
 class Cmd_Handler: 
@@ -81,7 +76,6 @@ class Cmd_Handler:
         # Data storage
         self.db_file = None  # A file to store layout database
         self.solutionsFigure = Figure()
-
         # CornerStitch Initial Objects
         self.structure_3D=Structure_3D()
         self.engine = None
@@ -98,7 +92,6 @@ class Cmd_Handler:
         self.t_api = None
         # Solutions
         self.solutions = None
-
         self.macro =None
         self.layout_ori_file = None
         # Macro mode
@@ -587,7 +580,7 @@ class Cmd_Handler:
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
         if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
-            print("Detected {} layout, using PEEC electrical model".format(self.e_model_dim))
+            print("Detected {} layout: Using PEEC electrical model".format(self.e_model_dim))
             self.e_api_init.form_initial_trace_mesh('init')
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time
@@ -608,7 +601,7 @@ class Cmd_Handler:
             self.e_model_choice = 'PEEC'
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
-            print("Dectected {} layout, using FasHenry electrical model".format(self.e_model_dim))
+            print("Dectected {} layout: Using FasHenry electrical model".format(self.e_model_dim))
 
             self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
             #PEEC works for any layout, but need to optimize the mesh for 3D later 
@@ -1049,7 +1042,6 @@ class Cmd_Handler:
                 elif mode == '-quit':
                     cont = False
                 elif mode[0:2] == '-m':
-                    print("Loading macro file")
                     m, filep = mode.split(" ")
                     filep = os.path.abspath(filep)
                     #print (filep)
@@ -1083,7 +1075,6 @@ class Cmd_Handler:
             # Process args
             if "-settings" in arg_dict.keys(): # Special case
                 setting_file = arg_dict['-settings'][0]
-                print("Loading settings file")
                 read_settings_file(setting_file)
                 print("This will change the default settings file location")
             self.layer_stack = LayerStack()
