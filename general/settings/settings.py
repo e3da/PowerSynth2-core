@@ -13,5 +13,6 @@ PSTemp=''
 #temp folders
 FASTHENRY_FOLDER = 'FastHenry'
 PARAPOWER_FOLDER = 'ParaPower'
+RESPONSE_SURFACE_FOLDER = 'RS_MODELS'
 
 PSWork=''
