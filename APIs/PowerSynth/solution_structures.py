@@ -243,34 +243,19 @@ class PSSolution(object):
                                         min_width=f1.width
                                         min_length=f1.length
                                     
-                                        
+            else: # for initial layout evaluation
+                for layer_solution in cs_solution.layer_solutions:
+                    for layout_object in layer_solution.objects_3D:
+                        if layout_object.name=='Substrate':
+                            min_width= layout_object.w/1000
+                            min_length=  layout_object.l/1000                       
                             
                 
                 
                     
                             
                             
-                #print("P",min_width,min_length)
-                """
-                if 'Ceramic' in f.name:
-                    #width=min_off_set_x+
-                    #print("Hello",f.width,width)
-                    id=list(f.name)[-1]
-                    for layer_solution in cs_solution.layer_solutions:
-                        for f1 in layer_solution.objects_3D:
-                            if f1.name=='Substrate'+id:
-                                print(f1.name,f1.x,f1.width,f1.y,f1.height)
-                                f.x=  f1.x
-                                f.y=f1.y      
-                                f.width=f1.width/1000.0 # dynamically changing dimension to support variable sized solution
-                                f.length=f1.height/1000.0 # dynamically changing dimension to support variable sized solution
-                    '''for f1 in features:
-                        if f1.name=='Substrate'+id:
-                            f.x=  f1.x
-                            f.y=f1.y      
-                            f.width=f1.width # dynamically changing dimension to support variable sized solution
-                            f.length=f1.length # dynamically changing dimension to support variable sized solution'''
-                """
+                
         for f in features:
             #if mode!=2:
             if (min_width!=None and min_length!=None) or mode == -1: # initial layout evaluation
@@ -284,19 +269,13 @@ class PSSolution(object):
                         f.width=min_width+10 # dynamically changing dimension to support variable sized solution
                         f.length=min_length+10 # dynamically changing dimension to support variable sized solution
                 if 'Baseplate' in f.name and f.material_name=='Air':
-                    f.width=min_width
-                    f.length=min_length
-                    f.z=0.0
+                    if min_width != None and min_length != None:
+                        f.width=min_width
+                        f.length=min_length
+                        f.z=0.0
+                    
                     
 
-
-                '''if f.name=='Bottom_Metal':
-                    f.width=min_width # dynamically changing dimension to support variable sized solution
-                    f.length=min_length # dynamically changing dimension to support variable sized solution
-                if f.name=='Baseplate':
-                    f.width=min_width+10 # dynamically changing dimension to support variable sized solution
-                    f.length=min_length+10 # dynamically changing dimension to support variable sized solution '''         
-                  
         self.features_list=features
 
 '''
