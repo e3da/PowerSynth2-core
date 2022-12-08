@@ -2,7 +2,7 @@
 # One can improve the speed by converting these equations to Cython version (under the parasitics/mutual_inductance)
 # mutual_between_bars:
 from multiprocessing import Pool
-#from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
+from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from core.model.electrical.parasitics.parasitic_equations import trace_inductance, trace_resistance
 from numba import njit
 import numpy as np

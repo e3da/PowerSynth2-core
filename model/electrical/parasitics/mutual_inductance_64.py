@@ -4,7 +4,7 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
+#from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 
 from multiprocessing import Pool
 
@@ -264,20 +264,6 @@ def multi_process_outer_add(params):
     #res += signs[i] * inter_func1(p[0], p[1], p[2])
     return results
 if __name__ == '__main__':
-    # JIT compile
-    """res = mutual_between_bars(np.array([1,1,1,1,1,1,1,1,1]))
-    mutual_mat = []
-    num_eval = 1000000
-    for i in range(num_eval):
-        mutual_mat.append([1,1,1,1,1,1,1,1,1])
-    start = time.time()
-    for p in mutual_mat:
-        mutual_between_bars(np.array(p))
-    print(("JIT time",time.time()-start))
-    start = time.time()
-    mutual_mat_eval(np.array(mutual_mat,dtype=float),12,0)
-    print(("Cython time",time.time()-start))"""
-    #w1,l1,t1,w2,l2,t2,l3,p,E
     res1 = mutual_between_bars(np.array([100,1000,200,100,1000,200,1000,1000,500])) # init
     perf = time.perf_counter()
     for i in range(30000):
