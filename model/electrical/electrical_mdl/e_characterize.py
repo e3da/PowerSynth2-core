@@ -10,7 +10,7 @@ import joblib
 
 cur_path =sys.path[0] # get current path (meaning this file location)
 modify = len("core/model/electrical/electrical_mdl/")
-cur_path = cur_path[0:-modify] #exclude "powercad/electrical_mdl"
+cur_path = cur_path[0:-modify] 
 sys.path.append(cur_path)
 from dataclasses import dataclass
 import numpy as np

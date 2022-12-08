@@ -7,16 +7,7 @@ import collections
 import matplotlib.pyplot as plt
 import itertools
 
-"""#from corner_stitch.API_PS import draw_rect_list_cs
-from powercad.corner_stitch.CornerStitch import CornerStitch,CS_to_CG
-#from design.library_structures import MaterialProperties, Device, Lead,BondwireLanding
-from powercad.cons_aware_en.database import create_connection,insert_record
-from powercad.design import parts
-from powercad.design.group import Island
-from powercad.electrical_mdl.e_mesh_direct import MeshNode
-from powercad.corner_stitch.constraintGraph_Dev import constraintGraph
-#from general.data_struct.util import Rect
-from powercad.design.layout_module_data import ModuleDataCornerStitch"""
+
 
 # GLOBAL VARIABLE FOR DEBUG ONLY
 plot_CS = False

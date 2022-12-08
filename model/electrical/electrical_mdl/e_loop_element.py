@@ -10,10 +10,10 @@ cur_path = cur_path[0:-36] #exclude
 sys.path.append(cur_path)
 # print (sys.path[0])
 # get the 3 fold integral mutual equation.
-from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind # 
+#from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind # 
 
 # Cython implementation:
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
+#from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 # Python multiproces:
 from core.model.electrical.parasitics.equations import update_mutual_mat_64_py # JIT compoler based
 #from core.model.electrical.visualization.view_matrix import matrix_view_autoscale

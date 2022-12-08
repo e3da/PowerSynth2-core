@@ -28,12 +28,10 @@ class LayerStackHandler:
         # Load Material Lib
         self.material_lib=Material_lib()
         if mat_lib==None:
-            if getpass.getuser() == "qmle":
-                    material_path = "C:\PowerSynth_git\Electrical_Dev\PowerCAD-full\\tech_lib\Material\Materials.csv"
-            else:
-                material_path = MATERIAL_LIB_PATH
+            
+            material_path = MATERIAL_LIB_PATH
             self.material_lib.load_csv(material_path)
-            print((os.path.abspath(MATERIAL_LIB_PATH)))
+            #print((os.path.abspath(MATERIAL_LIB_PATH)))
         else:
             self.material_lib.load_csv(mat_lib)
         # Initialize design stucture

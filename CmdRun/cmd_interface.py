@@ -930,7 +930,7 @@ class Cmd_Handler:
                 self.e_api.rs_model = None
         elif self.e_model_choice == 'FastHenry': # For 3D only
             self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
-            #self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+            
             self.e_api.set_fasthenry_env(settings.FASTHENRY_EXE)
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
@@ -960,7 +960,8 @@ class Cmd_Handler:
         elif type == 'FastHenry':
             self.e_api = FastHenryAPI(comp_dict = self.layout_obj_dict, wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
             self.e_api.rs_model = None
-            self.e_api.set_fasthenry_env(dir='/nethome/qmle/PowerSynth_V1_git/PowerCAD-full/FastHenry/fasthenry')
+            self.e_api.set_fasthenry_env(settings.FASTHENRY_EXE)
+            
         elif type == 'LoopFHcompare':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
             

@@ -23,8 +23,8 @@ from core.model.electrical.electrical_mdl.plot3D import network_plot_3D,plot_com
 from core.general.data_struct.util import Rect
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
     trace_inductance,trace_resistance_full,trace_ind_lm
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
-from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
+#from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
+#from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from core.model.electrical.electrical_mdl.e_module import EComp
 from core.model.electrical.electrical_mdl.e_loop_element import self_ind_py
 
