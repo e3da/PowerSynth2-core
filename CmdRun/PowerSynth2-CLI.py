@@ -31,6 +31,9 @@ if __name__ == "__main__":
 
         settings.MATERIAL_LIB_PATH = os.path.join(PSRoot,settings.MATERIAL_LIB_PATH)
         settings.FASTHENRY_EXE = os.path.join(PSRoot,settings.FASTHENRY_EXE)
+        if os.name == 'nt':
+            settings.FASTHENRY_EXE+=".exe"
+
         settings.PARAPOWER_CODEBASE = os.path.join(PSRoot,settings.PARAPOWER_CODEBASE)
         settings.MANUAL = os.path.join(PSRoot,settings.MANUAL)
 
