@@ -8,7 +8,7 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 from core.APIs.FastHenry.Standard_Trace_Model import write_to_file
 from core.APIs.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
-import os
+import os,subprocess
 from datetime import datetime
 import math
 from datetime import datetime
@@ -544,8 +544,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         script_name = 'eval{}.inp'.format(parent_id)
         script_file = os.path.join(self.work_space+'/Solutions/s{}'.format(parent_id),script_name)
         write_to_file(script=self.out_text,file_des=script_file)    
-        fasthenry_option= '-siterative -mmulti -pcube'
-        cmd = self.fh_env + " " + fasthenry_option +" "+script_file
+        cmd=[self.fh_env, "-siterative", "-mmulti","-pcube",script_file]
         self.commands.append(cmd)
 
     def generate_fasthenry_solutions_dir(self,solution_id =0):
@@ -561,7 +560,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         try:
             os.mkdir(new_dir)
         except:
-            print("existed")
+            #print("existed")
+            pass
             
     def run_fasthenry(self,id):
         """_summary_
@@ -572,39 +572,40 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         Returns:
             _type_: _description_
         """
+        # remove the Zc.mat file incase their is error
+        if os.path.isfile(outputfile):
+            os.remove(outputfile) # Clear old result
+
         print("solving solution {}".format(id))
-        os.chdir(self.solution_paths[id])
-        os.system(self.commands[id])
-        curdir = os.getcwd()
-        outputfile = os.path.join(curdir,'Zc.mat')
+        subprocess.run(self.commands[id], cwd=self.solution_paths[id], stdout=subprocess.DEVNULL)
+        outputfile = os.path.join(self.solution_paths[id],'Zc.mat')
+
         f_list =[]
         r_list = []
         l_list = []
-        with open(outputfile,'r') as f:
-            for row in f:
-                row= row.strip(' ').split(' ')
-                row=[i for i in row if i!='']
-                if row[0]=='Impedance':
-                    f_list.append(float(row[5]))
-                elif row[0]!='Row':
-                    r_list.append(float(row[0]))            # resistance in ohm
-                    l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
-        # remove the Zc.mat file incase their is error
-        cmd = 'rm '+outputfile
         try:
-            r_list=np.array(r_list)*1e3 # convert to mOhm
-            l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
+            with open(outputfile,'r') as f:
+                for row in f:
+                    row= row.strip(' ').split(' ')
+                    row=[i for i in row if i!='']
+                    if row[0]=='Impedance':
+                        f_list.append(float(row[5]))
+                    elif row[0]!='Row':
+                        r_list.append(float(row[0]))            # resistance in ohm
+                        l_list.append(float(row[1].strip('j'))) # imaginary impedance in ohm convert to H later
+                r_list=np.array(r_list)*1e3 # convert to mOhm
+                l_list=np.array(l_list)/(np.array(f_list)*2*math.pi)*1e9 # convert to nH unit
         except:
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
         return r_list[0],l_list[0]
 
-    def parallel_run(self,solutions=[], num_cpu=40):
+    def parallel_run(self,solutions=[], num_cpu=os.cpu_count()/2):
         """
         Get a list of solutions, iteratively goes through the list and generate output files for the optimization
         
         Args:
             solutions (list): layout solution list
-            num_cpu (int): number of cpus run in parallel default to 40 for a farm machine
+            num_cpu (int): number of cpus run in parallel default to half logicial cores
         Returns:
             _type_: Parasitic results from fasthenry
         """
@@ -628,13 +629,11 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         script_name = 'eval'+str(parent_id)+'.inp'
         script_file = os.path.join(self.work_space,script_name)
         write_to_file(script=self.out_text,file_des=script_file)    
-        fasthenry_option= '-siterative -mmulti -pcube'
-        cmd = self.fh_env + " " + fasthenry_option +" "+script_file + "> /dev/null" #+ script_out #+" &" # uncomment for possible parrallel computing
         curdir = os.getcwd()
         outputfile = os.path.join(curdir,'Zc.mat')
         if os.path.isfile(outputfile):
-            os.system("rm "+outputfile) # Clear old result
-        os.system(cmd)  # Run command in the terminal
+            os.remove(outputfile) # Clear old result
+        subprocess.run([self.fh_env, "-siterative", "-mmulti","-pcube",script_file], stdout=subprocess.DEVNULL)   # modified for windows
         f_list =[]
         r_list = []
         l_list = []
