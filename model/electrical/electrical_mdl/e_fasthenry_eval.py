@@ -572,13 +572,15 @@ class FastHenryAPI(CornerStitch_Emodel_API):
         Returns:
             _type_: _description_
         """
-        # remove the Zc.mat file incase their is error
+
+        outputfile = os.path.join(self.solution_paths[id],'Zc.mat')
+
+        # remove the Zc.mat file in case there is an error
         if os.path.isfile(outputfile):
             os.remove(outputfile) # Clear old result
 
         print("solving solution {}".format(id))
         subprocess.run(self.commands[id], cwd=self.solution_paths[id], stdout=subprocess.DEVNULL)
-        outputfile = os.path.join(self.solution_paths[id],'Zc.mat')
 
         f_list =[]
         r_list = []
@@ -599,7 +601,7 @@ class FastHenryAPI(CornerStitch_Emodel_API):
             print ("ERROR, it must be that FastHenry has crashed, no output file is found")
         return r_list[0],l_list[0]
 
-    def parallel_run(self,solutions=[], num_cpu=os.cpu_count()/2):
+    def parallel_run(self,solutions=[], num_cpu=os.cpu_count()//2):
         """
         Get a list of solutions, iteratively goes through the list and generate output files for the optimization
         
