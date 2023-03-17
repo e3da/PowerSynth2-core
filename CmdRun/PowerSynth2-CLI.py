@@ -6,47 +6,60 @@ import tempfile
 from core.general.settings import settings
 from core.CmdRun.cmd_interface import Cmd_Handler
 
-if __name__ == "__main__":  
-    if len(sys.argv)<2:
-        sys.exit(f"Usage: {sys.argv[0]} Macrofile [TempDir]")
+class PS2Core:
+    def __init__(self,MacroScript,TempDir=""):
+        if not os.path.isfile(MacroScript):
+            sys.exit(f"ERROR: Not a valid macro script {MacroScript}")
+        self.MacroScript=os.path.abspath(MacroScript)
 
-    with tempfile.TemporaryDirectory() as tempdir:
-        print("----------------------PowerSynth Version 2.0: Command line version------------------")
-        macro_script=os.path.abspath(sys.argv[1])
-        
-        PSRoot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        PSWork=os.path.dirname(macro_script)
-        
-        if len(sys.argv)>2:
-            PSTemp=os.path.abspath(sys.argv[2])
+        print("INFO: Initializing PowerSynth 2")
+        self.cwd = os.getcwd()
+        if len(TempDir)>2:
+            self.TempDir=None
+            self.PSTemp=os.path.abspath(TempDir)
         else:
-            PSTemp=tempdir
+            self.TempDir=tempfile.TemporaryDirectory()
+            self.PSTemp=self.TempDir.name
 
-        print(f"INFO: PowerSynth Root: {PSRoot}")
-        print(f"INFO: PowerSynth Work: {PSWork}")
-        print(f"INFO: PowerSynth Temp: {PSTemp}")
-        settings.PSRoot=PSRoot
-        settings.PSWork=PSWork
-        settings.PSTemp=PSTemp
+        self.PSRoot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.PSWork=os.path.dirname(self.MacroScript)
 
-        settings.MATERIAL_LIB_PATH = os.path.join(PSRoot,settings.MATERIAL_LIB_PATH)
-        settings.FASTHENRY_EXE = os.path.join(PSRoot,settings.FASTHENRY_EXE)
-        if os.name == 'nt':
-            settings.FASTHENRY_EXE+=".exe"
+        settings.PSRoot=self.PSRoot
+        settings.PSWork=self.PSWork
+        settings.PSTemp=self.PSTemp
 
-        settings.PARAPOWER_CODEBASE = os.path.join(PSRoot,settings.PARAPOWER_CODEBASE)
-        settings.MANUAL = os.path.join(PSRoot,settings.MANUAL)
+        print(f"INFO: PowerSynth Root: {self.PSRoot}")
+        print(f"INFO: PowerSynth Work: {self.PSWork}")
+        print(f"INFO: PowerSynth Temp: {self.PSTemp}")
 
-        settings.FASTHENRY_FOLDER = os.path.join(PSTemp,settings.FASTHENRY_FOLDER)
-        settings.PARAPOWER_FOLDER = os.path.join(PSTemp,settings.PARAPOWER_FOLDER)
+        settings.FASTHENRY_FOLDER = os.path.join(self.PSTemp,settings.FASTHENRY_FOLDER)
+        settings.PARAPOWER_FOLDER = os.path.join(self.PSTemp,settings.PARAPOWER_FOLDER)
 
         os.makedirs(settings.FASTHENRY_FOLDER, exist_ok=True)
         os.makedirs(settings.PARAPOWER_FOLDER, exist_ok=True)
 
-        if not os.path.isfile(macro_script):
-            sys.exit(f"ERROR: Not a valid macro script {macro_script}")
+        settings.MATERIAL_LIB_PATH = os.path.join(self.PSRoot,settings.MATERIAL_LIB_PATH)
+        settings.FASTHENRY_EXE = os.path.join(self.PSRoot,settings.FASTHENRY_EXE)
+        if os.name == 'nt':
+            settings.FASTHENRY_EXE+=".exe"
+
+        settings.PARAPOWER_CODEBASE = os.path.join(self.PSRoot,settings.PARAPOWER_CODEBASE)
+        settings.MANUAL = os.path.join(self.PSRoot,settings.MANUAL)
+
+    def run(self):
+        print("INFO: Run Macro File "+self.MacroScript)
+
         cmd = Cmd_Handler(debug=False)
-        args = ['python','cmd.py','-m',macro_script]
-        os.chdir(PSWork)
+        args = ['python','cmd.py','-m',self.MacroScript]
+
+        os.chdir(self.PSWork)
         cmd.cmd_handler_flow(arguments= args)
-        sys.exit(0)
+        os.chdir(self.cwd)
+
+if __name__ == "__main__":  
+    if len(sys.argv)<2:
+        sys.exit(f"Usage: {sys.argv[0]} Macrofile [TempDir]")
+
+    print("----------------------PowerSynth Version 2.0: Command line version------------------")
+    core=PS2Core(sys.argv[1],sys.argv[2] if len(sys.argv)>2 else "")
+    core.run()
