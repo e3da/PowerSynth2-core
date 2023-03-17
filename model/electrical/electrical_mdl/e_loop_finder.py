@@ -18,8 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from copy import deepcopy
 import pickle
-from docx import Document
-from docx.shared import Inches
+
 from datetime import date
 from multiprocessing import Pool,cpu_count
 import math
@@ -94,8 +93,12 @@ class LayoutLoopInterface():
         self.z_list =[]
 
         self.doc_report = None
-        self.debug = True # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
-    
+        self.debug = False # Turn to True to report mode. It will write all info to report.docx in the same directory. Currently working with single layout evaluation
+
+        if self.debug:
+            from docx import Document
+            from docx.shared import Inches
+                
     def check_number_of_electrical_layer(self):
         """
         Read the layerstack and and rearrange the layers for quick access
