@@ -14,6 +14,8 @@ class PS2Core:
 
         print("INFO: Initializing PowerSynth 2")
         self.cwd = os.getcwd()
+        self.cmd = None
+
         if len(TempDir)>2:
             self.TempDir=None
             self.PSTemp=os.path.abspath(TempDir)
@@ -21,7 +23,14 @@ class PS2Core:
             self.TempDir=tempfile.TemporaryDirectory()
             self.PSTemp=self.TempDir.name
 
-        self.PSRoot=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if os.name == 'nt':
+        #default on windows PowerSynth2.0\Lib\site-packages\core\CmdRun
+            self.PSRoot="/../../../../../"
+        else:
+        #default on linux PowerSynth2.0/lib/python3.x/site-packages/core/CmdRun
+            self.PSRoot="/../../../../../../"
+
+        self.PSRoot=os.path.abspath(os.path.realpath(__file__)+self.PSRoot)
         self.PSWork=os.path.dirname(self.MacroScript)
 
         settings.PSRoot=self.PSRoot
@@ -49,11 +58,11 @@ class PS2Core:
     def run(self):
         print("INFO: Run Macro File "+self.MacroScript)
 
-        cmd = Cmd_Handler(debug=False)
+        self.cmd = Cmd_Handler(debug=False)
         args = ['python','cmd.py','-m',self.MacroScript]
 
         os.chdir(self.PSWork)
-        cmd.cmd_handler_flow(arguments= args)
+        self.cmd.cmd_handler_flow(arguments= args)
         os.chdir(self.cwd)
 
 if __name__ == "__main__":  
