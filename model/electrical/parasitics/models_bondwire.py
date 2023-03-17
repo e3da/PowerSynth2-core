@@ -13,7 +13,6 @@ import subprocess
 from math import fabs
 
 import matplotlib.pyplot as plt
-from pyDOE import *
 
 LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 Quang as stated in Brett's thesis
 LOWEST_ASPECT_IND = 1.0

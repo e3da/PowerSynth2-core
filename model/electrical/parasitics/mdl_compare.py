@@ -3,9 +3,7 @@ import os
 from math import fabs
 import matplotlib.pyplot as plt
 import numpy as np
-from core.model.electrical.parasitics.equations import self_imp_py_mat,unpack_and_eval_RL_Krigg
 from core.general.settings.save_and_load import load_file
-from core.model.electrical.response_surface.RS_build_function import f_ms
 LOWEST_ASPECT_RES = 1.0         # I changed it back to 1.0 as stated in Brett's thesis
 LOWEST_ASPECT_IND = 1.0
 # Constants:
@@ -13,9 +11,12 @@ c = 3.0e8                       # speed of light
 u_0 = 4.0*m.pi*1e-7          # permeability of vaccum;
 e_0 = 8.85e-12                  # permittivity of vaccum;
 
-
-
-
+#copied from core.model.electrical.response_surface.RS_build_function 
+def f_ms(x=(1,1),a=1,b1=1,b2=1,c=1,d=1):
+    # micro strip equation
+    w= x[:,0]
+    l = x[:,1]
+    return a*l*(np.log(b1*l/(w+b2)) +c + d * ((w+b2)/l) ) 
 # -----------  resistance model of traces on ground plane ------------------
 # --------------------------------------------------------------------------
 

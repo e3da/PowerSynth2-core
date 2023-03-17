@@ -17,7 +17,6 @@ import subprocess
 from math import fabs
 
 import matplotlib.pyplot as plt
-from pyDOE import *
 
 from core.APIs.Q3D.Parasistic_Zihao_test import Generate_Zihao_Thesis_Q3D_Analysis_Resistance_and_Inductance
 
