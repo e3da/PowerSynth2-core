@@ -24,11 +24,11 @@ class PS2Core:
             self.PSTemp=self.TempDir.name
 
         if os.name == 'nt':
-        #default on windows PowerSynth2.0\Lib\site-packages\core\CmdRun
-            self.PSRoot="/../../../../../"
+        #default on windows PowerSynth2.0\Lib\site-packages\core
+            self.PSRoot="/../../../../"
         else:
-        #default on linux PowerSynth2.0/lib/python3.x/site-packages/core/CmdRun
-            self.PSRoot="/../../../../../../"
+        #default on linux PowerSynth2.0/lib/python3.x/site-packages/core
+            self.PSRoot="/../../../../../"
 
         self.PSRoot=os.path.abspath(os.path.realpath(__file__)+self.PSRoot)
         self.PSWork=os.path.dirname(self.MacroScript)
