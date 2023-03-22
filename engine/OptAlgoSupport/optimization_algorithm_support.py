@@ -1,10 +1,7 @@
 #@authors: qmle, ialrazi
 
 from copy import deepcopy
-from core.opt.optimizer import NSGAII_Optimizer, DesignVar
-import platform
-if platform.system() == 'Windows': # Matlab doesnt work on the server yet, this must be fixed later 
-    from core.opt.optimizer import SimulatedAnnealing
+from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
 import collections
 import numpy as np
@@ -16,10 +13,6 @@ from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeas
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution, plot_solution_structure
 from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSolution
-
-
-
-
 
 
 class new_engine_opt:

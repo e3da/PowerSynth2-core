@@ -112,7 +112,7 @@ class NSGAII_Optimizer(object):
     
     def _init_individual(self, Individual):
         ind = []
-        print("initialization")
+        #print("initialization")
         for dv in self.design_vars:
             random.seed(self.seed)
             init0=dv.init_values[0]
