@@ -76,7 +76,7 @@ def trace_inductance(w, l, t, h):
     # and return a larger worst case value.
     w = fabs(w)
     l = fabs(l)
-    print (w,l,t,h)
+    #print (w,l,t,h)
     #if w > l*LOWEST_ASPECT_IND:
     #    w = l*LOWEST_ASPECT_IND
 
@@ -300,4 +300,4 @@ def wire_resistance(f, l, r, p=1.724e-8):
         r_w = 1e-6
 
     return r_w
-print (trace_inductance(3,20,0.2,0.6))
+#print (trace_inductance(3,20,0.2,0.6))
