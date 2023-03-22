@@ -17,7 +17,7 @@ import csv
 
 from core.MDK.Design.library_structures import *
 from core.general.material.material import *
-from core.general.settings.settings import MATERIAL_LIB_PATH
+from core.general.settings import settings
 import getpass
 
 class LayerStackHandler:
@@ -29,7 +29,7 @@ class LayerStackHandler:
         self.material_lib=Material_lib()
         if mat_lib==None:
             
-            material_path = MATERIAL_LIB_PATH
+            material_path = settings.MATERIAL_LIB_PATH
             self.material_lib.load_csv(material_path)
             #print((os.path.abspath(MATERIAL_LIB_PATH)))
         else:

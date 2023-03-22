@@ -904,11 +904,11 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=False, la
     
     #----------------------------------------------------------------------#
 
-    if bond_wire_info != None:
+    layer_wise_table={}
+    if bond_wire_info != None and len(bond_wire_info):
         # bondwire_objects_def=a dictionary of dictionary.{'Wire': {'info_file': 'C:\\Users\\ialrazi\\Desktop\\REU_Data_collection_input\\attachments\\bond_wire_info.wire'}}
         # table_info=list of lists.[['I1],['BW1', 'Wire', 'D1_Source_B4', 'B1', '2', '0.1'],['I2'], ['BW5', 'Wire', 'D2_Source_B9', 'B11', '1', '0.1']]
         bondwire_objects_def,table_info = ScriptMethod.read_bondwire_info(bondwire_info=bond_wire_info)
-        layer_wise_table={}
         for i in range(len(table_info)):
             if table_info[i][0][0] == 'I':
                 name = table_info[i][0]

@@ -6,7 +6,32 @@ import tempfile
 from core.general.settings import settings
 from core.CmdRun.cmd_interface import Cmd_Handler
 
+def GetRoot(RootDir=""):
+    if not len(RootDir):
+        if os.name == 'nt':
+        #default on windows PowerSynth2.0\Lib\site-packages\core
+            RootDir="/../../../../"
+        else:
+        #default on linux PowerSynth2.0/lib/python3.x/site-packages/core
+            RootDir="/../../../../../"
+
+    RootDir = os.path.abspath(os.path.realpath(__file__)+RootDir)
+
+    settings.MATERIAL_LIB_PATH = os.path.join(RootDir,settings.MATERIAL_LIB_PATH)
+    settings.FASTHENRY_EXE = os.path.join(RootDir,settings.FASTHENRY_EXE)
+    if os.name == 'nt' and not settings.FASTHENRY_EXE.endswith(".exe"):
+        settings.FASTHENRY_EXE+=".exe"
+
+    settings.PARAPOWER_CODEBASE = os.path.join(RootDir,settings.PARAPOWER_CODEBASE)
+    settings.MANUAL = os.path.join(RootDir,settings.MANUAL)
+
+    settings.PSRoot=RootDir
+
+    return settings.PSRoot
+
 class PS2Core:
+    PSRoot=GetRoot()
+
     def __init__(self,MacroScript,TempDir=""):
         if not os.path.isfile(MacroScript):
             sys.exit(f"ERROR: Not a valid macro script {MacroScript}")
@@ -16,30 +41,21 @@ class PS2Core:
         self.cwd = os.getcwd()
         self.cmd = None
 
-        if len(TempDir)>2:
+        if len(TempDir):
             self.TempDir=None
             self.PSTemp=os.path.abspath(TempDir)
         else:
             self.TempDir=tempfile.TemporaryDirectory()
             self.PSTemp=self.TempDir.name
 
-        if os.name == 'nt':
-        #default on windows PowerSynth2.0\Lib\site-packages\core
-            self.PSRoot="/../../../../"
-        else:
-        #default on linux PowerSynth2.0/lib/python3.x/site-packages/core
-            self.PSRoot="/../../../../../"
-
-        self.PSRoot=os.path.abspath(os.path.realpath(__file__)+self.PSRoot)
         self.PSWork=os.path.dirname(self.MacroScript)
 
-        settings.PSRoot=self.PSRoot
         settings.PSWork=self.PSWork
         settings.PSTemp=self.PSTemp
 
-        print(f"INFO: PowerSynth Root: {self.PSRoot}")
-        print(f"INFO: PowerSynth Work: {self.PSWork}")
-        print(f"INFO: PowerSynth Temp: {self.PSTemp}")
+        print(f"INFO: PowerSynth Root: {settings.PSRoot}")
+        print(f"INFO: PowerSynth Work: {settings.PSWork}")
+        print(f"INFO: PowerSynth Temp: {settings.PSTemp}")
 
         settings.FASTHENRY_FOLDER = os.path.join(self.PSTemp,settings.FASTHENRY_FOLDER)
         settings.PARAPOWER_FOLDER = os.path.join(self.PSTemp,settings.PARAPOWER_FOLDER)
@@ -47,13 +63,6 @@ class PS2Core:
         os.makedirs(settings.FASTHENRY_FOLDER, exist_ok=True)
         os.makedirs(settings.PARAPOWER_FOLDER, exist_ok=True)
 
-        settings.MATERIAL_LIB_PATH = os.path.join(self.PSRoot,settings.MATERIAL_LIB_PATH)
-        settings.FASTHENRY_EXE = os.path.join(self.PSRoot,settings.FASTHENRY_EXE)
-        if os.name == 'nt':
-            settings.FASTHENRY_EXE+=".exe"
-
-        settings.PARAPOWER_CODEBASE = os.path.join(self.PSRoot,settings.PARAPOWER_CODEBASE)
-        settings.MANUAL = os.path.join(self.PSRoot,settings.MANUAL)
 
     def run(self):
         print("INFO: Run Macro File "+self.MacroScript)

@@ -4,7 +4,6 @@ This is used by developers only to parse a material libary from Ansys and genera
 from core.MDK.Design.library_structures import MaterialProperties
 import csv
 import re
-from core.general.settings.settings import MATERIAL_LIB_PATH
 import os
 class Material_lib:
     def __init__(self):
@@ -207,7 +206,7 @@ class Material_lib:
 
 if __name__ == "__main__":
     ML=Material_lib()
-    csv_dir="..//"+MATERIAL_LIB_PATH
+    csv_dir="../pkg/MDK/Materials.csv"
     #ML.load_q3d('C://Users//Quang//Google Drive//MSCAD PowerSynth Archives//Internal//MDK//Layer Stack Quang//Materials.amat')
     #ML.save_csv(csv_dir)
     ML.load_csv(csv_dir)
