@@ -5,7 +5,12 @@ import sys, os
 import tempfile
 from core.general.settings import settings
 from core.CmdRun.cmd_interface import Cmd_Handler
-import readline
+
+if os.name != 'nt':
+    import readline
+    readline.parse_and_bind('tab: complete')
+    readline.parse_and_bind('set editing-mode vi')
+
 import re
 
 def is_float(element: any) -> bool:
@@ -111,10 +116,7 @@ class PS2Core:
         os.makedirs(settings.PARAPOWER_FOLDER, exist_ok=True)
 
     def create(self):
-        print(f"INFO: New Macro File {self.MacroScript}. Follow prompt and use tab for file search")
-
-        readline.parse_and_bind('tab: complete')
-        readline.parse_and_bind('set editing-mode vi')
+        print(f"INFO: New Macro File {self.MacroScript}.")
 
         template= '''\
 Layout_script: ?r?
@@ -200,15 +202,15 @@ End_Thermal_Setup.
 
         self.cmd = Cmd_Handler(debug=False)
 
-        os.chdir(self.PSWork)
         self.cmd.load_macro_file(self.MacroScript)
-        os.chdir(self.cwd)
 
     def run(self):
+        os.chdir(self.PSWork)
         if self.interactive:
             self.create()
         else:
             self.excute()
+        os.chdir(self.cwd)
 
 if __name__ == "__main__":  
     if len(sys.argv)<2 :
