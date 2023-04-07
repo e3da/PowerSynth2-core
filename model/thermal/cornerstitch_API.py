@@ -3,7 +3,6 @@
 #from PySide.QtGui import QFileDialog
 import sys
 from time import perf_counter
-from core.MDK.LayerStack.layer_stack_import import LayerStackHandler
 
 from core.APIs.PowerSynth.solution_structures import PSFeature
 from core.MDK.Design.parts import Part

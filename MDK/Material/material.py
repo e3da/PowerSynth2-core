@@ -132,7 +132,7 @@ class Material_lib:
             self.mat_lib=[]
             print('overwrite material list')
         print(fname)
-        with open(fname) as csvfile:
+        with open(fname,newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 tm_cond=None
@@ -174,7 +174,7 @@ class Material_lib:
         :param fname:
         :return:
         '''
-        with open(fname, 'wb') as csvfile:
+        with open(fname, 'w', newline='') as csvfile:
             header=['name', 'thermal_cond', 'spec_heat_cap', 'density',
                      'electrical_res', 'rel_permit', 'rel_permeab','q3d_id', 'young_modulus','poissons_ratios'
                      ,'thermal_expansion_coeffcient']

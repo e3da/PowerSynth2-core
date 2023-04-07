@@ -111,7 +111,7 @@ class LayerStack:
         debug = False
         max_width = 0
         max_length =0
-        with open(filename) as csvfile:
+        with open(filename, newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 layer_id = int(row['ID'])
