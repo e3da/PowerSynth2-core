@@ -12,7 +12,7 @@ import pickle
 
 import matplotlib.pyplot as plt
 from matplotlib import lines
-from pyDOE import *
+from pyDOE2 import bbdesign,ccdesign
 from pykrige.ok import OrdinaryKriging as ok
 from pykrige.uk import UniversalKriging as uk
 from scipy.interpolate import *
