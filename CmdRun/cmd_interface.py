@@ -29,12 +29,9 @@ from matplotlib.figure import Figure
 import json
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
 
-
 def read_settings_file(filepath): #reads settings file given by user in the argument
-    
     if os.path.isfile(filepath): 
-        filename = os.path.basename(filepath)
-        with open(filename, 'r') as inputfile:
+        with open(filepath, 'r') as inputfile:
             for line in inputfile.readlines():
                 line= line.rstrip()
                 info = line.split(" ")
@@ -84,7 +81,7 @@ class Cmd_Handler:
         self.raw_layout_info = {}
         self.min_size_rect_patches = {}
         # Struture
-        self.layer_stack = None
+        self.layer_stack = LayerStack() 
         # APIs
         self.measures = []
         self.e_api = None
@@ -115,6 +112,20 @@ class Cmd_Handler:
         if not(os.path.isfile(self.macro)):
             print ("macro file path is wrong, please give another input")
             sys.exit()
+
+    def check_file(self,file):
+        return os.path.isfile(file) and os.access(file, os.R_OK)
+
+    def check_dir(self,dir):
+        try:
+            if os.path.isdir(dir) and os.access(dir, os.W_OK):
+                #deleting existing content in a folder
+                shutil.rmtree(dir)
+            os.mkdir(dir)
+        except:
+            print (f"ERROR: Cannot clean up directory {dir}")
+
+        return os.path.isdir(dir) and os.access(dir, os.W_OK)
 
     def run_parse(self):
         if self.macro!=None:
@@ -157,7 +168,7 @@ class Cmd_Handler:
                     self.layout_script = os.path.abspath(info[1])
                     
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    if info[1] !='None':
+                    if len(info)>1:
                         self.connectivity_setup = os.path.abspath(info[1])
                     else:
                         self.connectivity_setup=None
@@ -300,50 +311,30 @@ class Cmd_Handler:
                         self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
                     if info[0] == 'Frequency:':
                         self.electrical_models_info['frequency']= float(info[1])
-        try:
-            proceed = self.check_input_files() # only proceed if all input files are good. 
-        except:
-            print("Permission Denided")
-            proceed = True # Mannually set by Dev for now
-        if proceed:
-            self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
-            self.init_cs_objects(run_option=run_option)
-            self.set_up_db() # temp commented1 out
-            
-            #self.init_export_tasks(self.run_option)
+
+        if not self.check_input_files(): # only proceed if all input files are good. 
+            return False
+
+        self.layer_stack.import_layer_stack_from_csv(self.layer_stack_file) # reading layer stack file
+        self.init_cs_objects(run_option=run_option)
+        self.set_up_db() # temp commented1 out
+        
+        #self.init_export_tasks(self.run_option)
 
 
-            if self.run_option == 0: # layout generation only, no need initial evaluation
-                self.run_options() # Start the tool here...
-            else:
-                self.setup_models(mode=0) # setup thermal model
-                self.check_main_loops()
-                self.electrical_init_setup() # init electrical loop model using PEEC one time
-                self.setup_models(mode=1) # setup electrical model
-                self.structure_3D = Structure_3D() # Clean it up
-                self.init_cs_objects(run_option=run_option)
-                self.run_options() # Run options with the initial loop model ready
-            # Export figures, ANsysEM, Netlist etc.     
-            #self.generate_export_files()    
+        if self.run_option == 0: # layout generation only, no need initial evaluation
+            self.run_options() # Start the tool here...
         else:
-            # First check all file path
-            check_file = os.path.isfile
-            check_dir = os.path.isdir
-            if not (check_file(self.layout_script)):
-                print(("{} is not a valid layout geometry script file path".format(self.layout_script)))
-            
-            elif not (check_file(self.layer_stack_file)):
-                print(( "{} is not a valid layer stack file path".format(self.layer_stack_file)))
-            
-            elif not (check_dir(self.fig_dir)):
-                print(("{} is not a valid Figure directory".format(self.fig_dir)))
-            elif not (check_dir(self.db_dir)):
-                print(( "{} is not a valid Solution directory".format(self.db_dir)))
-            elif not(check_file(self.constraint_file)):
-                print(( "{} is not a valid file path".format(self.constraint_file)))
-            
-            print ("Check your input again ! ")
-            return proceed
+            self.setup_models(mode=0) # setup thermal model
+            self.check_main_loops()
+            self.electrical_init_setup() # init electrical loop model using PEEC one time
+            self.setup_models(mode=1) # setup electrical model
+            self.structure_3D = Structure_3D() # Clean it up
+            self.init_cs_objects(run_option=run_option)
+            self.run_options() # Run options with the initial loop model ready
+        # Export figures, ANsysEM, Netlist etc.     
+        #self.generate_export_files()    
+        return True
     
     def layout_generation_only(self):
         '''
@@ -425,60 +416,23 @@ class Cmd_Handler:
     def check_input_files(self):
         '''
         This functions verifies if the macros_script directories and files are valides
-        :return: True if valid, False otherwise
         '''
-        check_file = os.path.isfile
-        check_dir = os.path.isdir
-        #self.rs_model_file = 'default'
-        rs_model_check = True
             
-        cont = check_file(self.layout_script) \
-               and check_file(self.layer_stack_file) \
-               and rs_model_check\
-               and check_file(self.constraint_file)
-        if self.connectivity_setup != None:
-            cont = check_file(self.connectivity_setup)
+        rfiles = [self.layout_script, self.layer_stack_file, self.constraint_file ]
+        if self.connectivity_setup is not None:
+            rfiles.append(self.connectivity_setup)
         
-        # Making Output Dirs for Figure
-        if not (check_dir(self.fig_dir)):
-            try:
-                os.mkdir(self.fig_dir)
-            except:
-                print ("Cant make directory for figures")
-                cont =False
-        else:
-            #deleting existing content in a folder
-            for f in os.listdir(self.fig_dir):
-                try:
-                    shutil.rmtree(os.path.join(self.fig_dir, f))
-                except:
-                    os.remove(os.path.join(self.fig_dir, f))
-        # Making Output Dirs for Model Char
-        if not(check_dir(self.model_char_path)):
-            try:
-                os.mkdir(self.model_char_path)
-            except:
-                print("Cant make directory for model characterization")
-                cont =False
-        else:
-            #deleting existing content in a folder
-            for f in os.listdir(self.model_char_path):
-                os.remove(os.path.join(self.model_char_path, f))
-        # Making Output Dirs for DataBase
-        if not(check_dir(self.db_dir)):
-            try:
-                os.mkdir(self.db_dir)
-            except:
-                print ("Cant make directory for database")
-                cont =False
-        else:
-            for f in os.listdir(self.db_dir):
-                try:
-                    shutil.rmtree(os.path.join(self.db_dir, f))
-                except:
-                    os.remove(os.path.join(self.db_dir, f))
-                
-        return cont 
+        for rfile in rfiles:
+            if not self.check_file(rfile):
+                print(f"ERROR: Cannot read input file {rfile}")
+                return False
+        
+        wdirs = [self.fig_dir, self.model_char_path, self.db_dir ]
+        for wdir in wdirs:
+            if not self.check_dir(wdir):
+                print(f"ERROR: Cannot write to dir {wdir}")
+                return False
+        return True
 
     def setup_models(self, mode = 0):
         '''
@@ -1028,7 +982,7 @@ class Cmd_Handler:
         if len(arguments) <= 1: # Turn on simple user interface mode
             print("This is the command line mode for PowerSynth layout optimization")
             print("Type -m [macro file] to run a macro file")
-            print("Type -f to go through a step by step setup")
+            print("Type -f to go through a step by step flow")
             print("Type -quit to quit")
 
             cont = True
@@ -1078,7 +1032,6 @@ class Cmd_Handler:
                 setting_file = arg_dict['-settings'][0]
                 read_settings_file(setting_file)
                 print("This will change the default settings file location")
-            self.layer_stack = LayerStack()
             if "-m" in arg_dict.keys(): # - m: macro flag
                 filep = arg_dict['-m'][0]
                 print("Loading macro file")
