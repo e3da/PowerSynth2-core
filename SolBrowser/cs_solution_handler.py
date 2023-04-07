@@ -225,7 +225,7 @@ def plot_solutions(file_location=None):
             all_data[name]=data
     print(all_data)
     file_name = head + '/' + 'plot_data' + '.csv'
-    with open(file_name, 'wb') as my_csv:
+    with open(file_name, 'w', newline='') as my_csv:
         csv_writer = csv.writer(my_csv, delimiter=',')
         for k, v in list(all_data.items()):
             keys = list(v.keys())
@@ -349,7 +349,7 @@ if __name__ == '__main__':
     pareto_data = pareto_frontiter2D(sol_data)
     print(len(pareto_data))
     file_name='D:\Demo\\New_Flow_w_Hierarchy\Journal_Case\Journal_Result_collection\Cmd_flow_case\Half_Bridge_Layout\Test_solutions_kelvin\Result_Processing\\final_pareto.csv'
-    with open(file_name, 'wb') as my_csv:
+    with open(file_name, 'w',newline='') as my_csv:
         csv_writer = csv.writer(my_csv, delimiter=',')
         for k,v in list(pareto_data.items()):
             data=[k,v[0],v[1]]

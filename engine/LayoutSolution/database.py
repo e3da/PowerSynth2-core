@@ -95,7 +95,7 @@ def main():
         '''
         all_data=retrieve_data(conn, table)
         file_name='D:\\sqlite\db'+'\out.csv'
-        with open(file_name, 'wb') as my_csv:
+        with open(file_name, 'w', newline='') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')
 
             # csv_writer.writerow(data) #Name, [x,y,w,h,color,zorder],......,W,H
