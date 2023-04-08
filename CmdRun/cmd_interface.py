@@ -152,165 +152,170 @@ class Cmd_Handler:
         self.algorithm = None
         self.num_gen=None
         
-        with open(file, 'r') as inputfile:
-            # Load the macrofile and loop through each line to collect the infomation
-            for line in inputfile.readlines():
-                #line = line.strip("\r\n")
-                line = line.rstrip()
-                info = line.split(" ")
-                if line == '':
-                    continue
-                if line[0] == '#':  # Comments
-                    continue
-                if len(info)<2:     #default to None
-                    info.append(None)
+        try:
+            with open(file, 'r') as inputfile:
+                # Load the macrofile and loop through each line to collect the infomation
+                for line in inputfile.readlines():
+                    #line = line.strip("\r\n")
+                    line = line.rstrip()
+                    info = line.split(" ")
+                    if line == '':
+                        continue
+                    if line[0] == '#':  # Comments
+                        continue
+                    if len(info)<2:     #default to None
+                        info.append(None)
 
-                if info[0] == "Trace_Ori:": # Will be removed
-                    self.layout_ori_file = os.path.abspath(info[1])
-                if info[0] == "Layout_script:":
-                    self.layout_script = os.path.abspath(info[1])
-                    
-                if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    self.connectivity_setup = os.path.abspath(info[1])
-                if info[0] == "Layer_stack:":
-                    self.layer_stack_file = os.path.abspath(info[1])
-                if info[0] == "Parasitic_model:":
-                    if info[1]!= 'default': # use the equations
-                        self.rs_model_file = os.path.abspath(info[1])
-                    else:
-                        self.rs_model_file = 'default'
-                if info[0] == "Fig_dir:":
-                    self.fig_dir = os.path.abspath(info[1])
-                if info[0] == "Model_char:": # Require # all model characterization/ device-states/ Analysis Ouput/ Debug
-                    self.model_char_path = os.path.abspath(info[1])
-                if info[0] == "Solution_dir:":
-                    self.db_dir = os.path.abspath(info[1])
-                if info[0] == "Constraint_file:":
-                    self.constraint_file = os.path.abspath(info[1])
-                if info[0] == "Reliability-awareness:":
-                    self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
-                if info[0] =="New:":
-                    self.new_mode = int(info[1])
-                if info[0]=="Plot_Solution:":
-                    if int(info[1])==1:
-                        self.plot=True
-                    else:
-                        self.plot = False
-                if info[0]=="Flexible_Wire:":
-                    if int(info[1])==1:
-                        self.flexible=True
-                    else:
-                        self.flexible = False
-                if info[0] == "Option:":  # engine option
-                    self.run_option = int(info[1])
-                if info[0] == "Num_of_layouts:":  # engine option
-                    self.num_layouts = int(info[1])
-                if info[0] == "Seed:":  # engine option
-                    self.seed = int(info[1])
-                if info[0] == "Optimization_Algorithm:":  # engine option
-                    self.algorithm = info[1]
-                if info[0] == "Layout_Mode:":  # engine option
-                    self.layout_mode = int(info[1])
-                if info[0] == "Floor_plan:":
-                    try:
-                        floor_plan = info[1]
-                        floor_plan = floor_plan.split(",")
-                        self.floor_plan = [float(i) for i in floor_plan]
-                    except:
-                        self.floor_plan= [1,1] # handle those cases when floorplan is not required.
-                if info[0] == 'Num_generations:':
-                    self.num_gen = int(info[1])
-                if info[0] == 'Export_AnsysEM_Setup:':
-                    self.export_ansys_em = True
-                if info[0] == 'End_Export_AnsysEM_Setup.':
-                    self.export_ansys_em = False
-                if info[0]== 'Thermal_Setup:':
-                    self.thermal_mode = True
-                if info[0] == 'End_Thermal_Setup.':
-                    self.thermal_mode = False
-                if info[0] == 'Electrical_Setup:':
-                    self.electrical_mode = True
-                if info[0] == 'End_Electrical_Setup.':
-                    self.electrical_mode = False
-                if info[0] == 'Output_Script':
-                    self.output_option = True
-                if info[0] == 'End_Output_Script.':
-                    self.output_option = False
-                if self.output_option !=None:
-                    if info[0] == 'Netlist_Dir':
-                        self.netlist_dir = info[1]
-                    if info[0] == 'Netlist_Mode':
-                        self.netlist_mode = int(info[1])
-                if(self.export_ansys_em):
-                    if info[0] == 'Design_name:':
-                        self.export_ansys_em_info['design_name']= info[1]
-                    if info[0] == 'Version:':
-                        self.export_ansys_em_info['version']= info[1]
-                    if info[0] == 'Run_mode:':
-                        self.export_ansys_em_info['run_mode']= int(info[1])
-                    if info[0] == 'Simulator:':
-                        self.export_ansys_em_info['simulator'] = int(info[1])
-                if(self.thermal_mode): # Get info for thermal setup
-                    if info[0] == 'Model_Select:':
-                        self.thermal_models_info['model'] = int(info[1])
-                    if info[0] == 'Measure_Name:' and t_name==None:
-                        self.thermal_models_info['measure_name']= info[1]
-                        t_name = info[1]
-                    if info[0] == 'Selected_Devices:':
-                        self.thermal_models_info['devices']= info[1].split(",")
-                    if info[0] == 'Device_Power:':
-                        power = info[1].split(",")
-                        power = [float(i) for i in power]
-                        self.thermal_models_info['devices_power']= power
-                    if info[0] == 'Heat_Convection:':
-                        try:
-                            h_conv = float(info[1])
-                            h_conv=[h_conv,0]
-                        except:
-                            h_val = info[1].split(",")
-                            h_conv = [float(i) for i in h_val]
-                        self.thermal_models_info['heat_convection']= h_conv
+                    if info[0] == "Trace_Ori:": # Will be removed
+                        self.layout_ori_file = os.path.abspath(info[1])
+                    if info[0] == "Layout_script:":
+                        self.layout_script = os.path.abspath(info[1])
                         
-                    if info[0] == 'Ambient_Temperature:':
-                        t_amb = float(info[1])
-                        self.thermal_models_info['ambient_temperature'] = t_amb
-                if self.electrical_mode != None:
-                    self.electrical_models_info['multiport'] = 0 # Default
-                    if info[0] == 'Measure_Name:' and e_name==None:
-                        e_name = info[1]
-                        self.electrical_models_info['measure_name']= e_name
-                    if info[0] == 'Model_Type:':
-                        e_mdl_type = info[1]
-                        self.electrical_models_info['model_type']= e_mdl_type
-                    if info[0] == 'Netlist:':
-                        self.electrical_models_info['netlist'] = info[1]
-                    if info[0] == 'Measure_Type:':
-                        e_measure_type = int(info[1])
-                        self.electrical_models_info['measure_type']= e_measure_type
+                    if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
+                        self.connectivity_setup = os.path.abspath(info[1])
+                    if info[0] == "Layer_stack:":
+                        self.layer_stack_file = os.path.abspath(info[1])
+                    if info[0] == "Parasitic_model:":
+                        if info[1]!= 'default': # use the equations
+                            self.rs_model_file = os.path.abspath(info[1])
+                        else:
+                            self.rs_model_file = 'default'
+                    if info[0] == "Fig_dir:":
+                        self.fig_dir = os.path.abspath(info[1])
+                    if info[0] == "Model_char:": # Require # all model characterization/ device-states/ Analysis Ouput/ Debug
+                        self.model_char_path = os.path.abspath(info[1])
+                    if info[0] == "Solution_dir:":
+                        self.db_dir = os.path.abspath(info[1])
+                    if info[0] == "Constraint_file:":
+                        self.constraint_file = os.path.abspath(info[1])
+                    if info[0] == "Reliability-awareness:":
+                        self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
+                    if info[0] =="New:":
+                        self.new_mode = int(info[1])
+                    if info[0]=="Plot_Solution:":
+                        if int(info[1])==1:
+                            self.plot=True
+                        else:
+                            self.plot = False
+                    if info[0]=="Flexible_Wire:":
+                        if int(info[1])==1:
+                            self.flexible=True
+                        else:
+                            self.flexible = False
+                    if info[0] == "Option:":  # engine option
+                        self.run_option = int(info[1])
+                    if info[0] == "Num_of_layouts:":  # engine option
+                        self.num_layouts = int(info[1])
+                    if info[0] == "Seed:":  # engine option
+                        self.seed = int(info[1])
+                    if info[0] == "Optimization_Algorithm:":  # engine option
+                        self.algorithm = info[1]
+                    if info[0] == "Layout_Mode:":  # engine option
+                        self.layout_mode = int(info[1])
+                    if info[0] == "Floor_plan:":
+                        try:
+                            floor_plan = info[1]
+                            floor_plan = floor_plan.split(",")
+                            self.floor_plan = [float(i) for i in floor_plan]
+                        except:
+                            self.floor_plan= [1,1] # handle those cases when floorplan is not required.
+                    if info[0] == 'Num_generations:':
+                        self.num_gen = int(info[1])
+                    if info[0] == 'Export_AnsysEM_Setup:':
+                        self.export_ansys_em = True
+                    if info[0] == 'End_Export_AnsysEM_Setup.':
+                        self.export_ansys_em = False
+                    if info[0]== 'Thermal_Setup:':
+                        self.thermal_mode = True
+                    if info[0] == 'End_Thermal_Setup.':
+                        self.thermal_mode = False
+                    if info[0] == 'Electrical_Setup:':
+                        self.electrical_mode = True
+                    if info[0] == 'End_Electrical_Setup.':
+                        self.electrical_mode = False
+                    if info[0] == 'Output_Script':
+                        self.output_option = True
+                    if info[0] == 'End_Output_Script.':
+                        self.output_option = False
+                    if self.output_option !=None:
+                        if info[0] == 'Netlist_Dir':
+                            self.netlist_dir = info[1]
+                        if info[0] == 'Netlist_Mode':
+                            self.netlist_mode = int(info[1])
+                    if(self.export_ansys_em):
+                        if info[0] == 'Design_name:':
+                            self.export_ansys_em_info['design_name']= info[1]
+                        if info[0] == 'Version:':
+                            self.export_ansys_em_info['version']= info[1]
+                        if info[0] == 'Run_mode:':
+                            self.export_ansys_em_info['run_mode']= int(info[1])
+                        if info[0] == 'Simulator:':
+                            self.export_ansys_em_info['simulator'] = int(info[1])
+                    if(self.thermal_mode): # Get info for thermal setup
+                        if info[0] == 'Model_Select:':
+                            self.thermal_models_info['model'] = int(info[1])
+                        if info[0] == 'Measure_Name:' and t_name==None:
+                            self.thermal_models_info['measure_name']= info[1]
+                            t_name = info[1]
+                        if info[0] == 'Selected_Devices:':
+                            self.thermal_models_info['devices']= info[1].split(",")
+                        if info[0] == 'Device_Power:':
+                            power = info[1].split(",")
+                            power = [float(i) for i in power]
+                            self.thermal_models_info['devices_power']= power
+                        if info[0] == 'Heat_Convection:':
+                            try:
+                                h_conv = float(info[1])
+                                h_conv=[h_conv,0]
+                            except:
+                                h_val = info[1].split(",")
+                                h_conv = [float(i) for i in h_val]
+                            self.thermal_models_info['heat_convection']= h_conv
+                            
+                        if info[0] == 'Ambient_Temperature:':
+                            t_amb = float(info[1])
+                            self.thermal_models_info['ambient_temperature'] = t_amb
+                    if self.electrical_mode != None:
+                        self.electrical_models_info['multiport'] = 0 # Default
+                        if info[0] == 'Measure_Name:' and e_name==None:
+                            e_name = info[1]
+                            self.electrical_models_info['measure_name']= e_name
+                        if info[0] == 'Model_Type:':
+                            e_mdl_type = info[1]
+                            self.electrical_models_info['model_type']= e_mdl_type
+                        if info[0] == 'Netlist:':
+                            self.electrical_models_info['netlist'] = info[1]
+                        if info[0] == 'Measure_Type:':
+                            e_measure_type = int(info[1])
+                            self.electrical_models_info['measure_type']= e_measure_type
 
-                    if info[0] == 'End_Device_Connection.':
-                        dev_conn_mode = False
-                    if dev_conn_mode:
-                        dev_name = info[0]
-                        conn = info[1].split(",")
-                        conn = [int(i) for i in conn]
-                        dev_conn[dev_name] = conn
-                        self.electrical_models_info['device_connections']= dev_conn
-                    if info[0] == 'Device_Connection:':
-                        dev_conn_mode = True
-                    # old code for single objective - single loop    
-                    if info[0] == 'Source:':
-                        self.electrical_models_info['source']= info[1]
+                        if info[0] == 'End_Device_Connection.':
+                            dev_conn_mode = False
+                        if dev_conn_mode:
+                            dev_name = info[0]
+                            conn = info[1].split(",")
+                            conn = [int(i) for i in conn]
+                            dev_conn[dev_name] = conn
+                            self.electrical_models_info['device_connections']= dev_conn
+                        if info[0] == 'Device_Connection:':
+                            dev_conn_mode = True
+                        # old code for single objective - single loop    
+                        if info[0] == 'Source:':
+                            self.electrical_models_info['source']= info[1]
 
-                    if info[0] == 'Sink:':
-                        self.electrical_models_info['sink']= info[1]
+                        if info[0] == 'Sink:':
+                            self.electrical_models_info['sink']= info[1]
 
-                    if info[0] == 'Main_Loops:':
-                        self.electrical_models_info['main_loops'] = info[1:]
-                    if info[0] == 'Multiport:':
-                        self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
-                    if info[0] == 'Frequency:':
-                        self.electrical_models_info['frequency']= float(info[1])
+                        if info[0] == 'Main_Loops:':
+                            self.electrical_models_info['main_loops'] = info[1:]
+                        if info[0] == 'Multiport:':
+                            self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
+                        if info[0] == 'Frequency:':
+                            self.electrical_models_info['frequency']= float(info[1])
+        except Exception as e:
+            print(e)
+            sys.exit("ERROR: Failed to parse macro file.")
+
 
         if not self.check_input_files(): # only proceed if all input files are good. 
             return False
