@@ -116,7 +116,7 @@ class PS2Core:
         os.makedirs(settings.PARAPOWER_FOLDER, exist_ok=True)
 
     def create(self):
-        print(f"INFO: New Macro File {self.MacroScript}.")
+        print(f"INFO: New Macro File {self.MacroScript}")
 
         template= '''\
 Layout_script: ?r?

@@ -162,16 +162,16 @@ class Cmd_Handler:
                     continue
                 if line[0] == '#':  # Comments
                     continue
+                if len(info)<2:     #default to None
+                    info.append(None)
+
                 if info[0] == "Trace_Ori:": # Will be removed
                     self.layout_ori_file = os.path.abspath(info[1])
                 if info[0] == "Layout_script:":
                     self.layout_script = os.path.abspath(info[1])
                     
                 if info[0] == "Connectivity_script:": # This used to be "Bondwire_setup". However we have the Vias too. Hence the change
-                    if len(info)>1:
-                        self.connectivity_setup = os.path.abspath(info[1])
-                    else:
-                        self.connectivity_setup=None
+                    self.connectivity_setup = os.path.abspath(info[1])
                 if info[0] == "Layer_stack:":
                     self.layer_stack_file = os.path.abspath(info[1])
                 if info[0] == "Parasitic_model:":
