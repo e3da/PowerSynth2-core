@@ -49,8 +49,6 @@ class PS2Core:
     PSRoot=GetRoot()
     fulltype={"r": "<readable file>","w": "<writable file>","R": "<readable folder>","W": "<writable folder>","i": "<integer>","f": "<float>","s": "<string>"}
     checkfunc={
-        "0": lambda n: False, 
-        "1": lambda n: True, 
         "r": lambda r: os.path.isfile(r) and os.access(r,os.R_OK), 
         "w": lambda w: os.access(os.path.dirname(w) or ".",os.W_OK), 
         "R": lambda R: os.path.isdir(R) and os.access(R,os.R_OK), 
@@ -62,6 +60,12 @@ class PS2Core:
 
     def check(answer,type,count=1):
         #when count=0, allow any count
+
+        if type is None or type == "0":
+            return 0
+        if type == "1":
+            return 1
+
         fields = answer.split(",")
         checked = []
         for field in fields:
@@ -173,7 +177,11 @@ Heat_Convection: ?f?
 Ambient_Temperature: ?f?
 End_Thermal_Setup.
 '''        
-        
+        nocheck=0
+        answer = input("Q: Do you want to disable input checking, y/n? ")
+        if answer.lower() == 'yes' or answer.lower() == 'y':
+            nocheck=1
+
         lines=[]
         for line in template.splitlines():
             answer=""
@@ -181,15 +189,20 @@ End_Thermal_Setup.
             count=0
             while(not PS2Core.check(answer,type,count)):
                 if result := re.search(r"^(.*)\?([rwRWifs])(\d*)\?", line):
+                    head=result.group(1)
                     type=result.group(2)
                     count=int(result.group(3)) if len(result.group(3)) else 1
-                    prompt = result.group(1)+PS2Core.fulltype[type]+"x"+(str(count) if count else "*")+ "? "
+                    prompt = head+PS2Core.fulltype[type]+"x"+(str(count) if count else "*")+ "? "
                     answer = input(prompt)
-                    lines.append(result.group(1)+answer+'\n')
+                    if nocheck:
+                        type="1"
+
                 else:
                     type="1"
                     print(line)
-                    lines.append(line+ '\n')
+                    head=line
+            
+            lines.append(head+answer+'\n')
             
 
         with open(self.MacroScript,"w") as ofile:
