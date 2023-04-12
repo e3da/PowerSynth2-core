@@ -16,7 +16,6 @@ Development Checklist:
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import matplotlib.pyplot as plt
-import plotly.graph_objects as go
 import json
 class PSFeature(object):
     """Class definition for individual features in a PowerSynth solution."""

@@ -42,7 +42,7 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
     for i in range(len(solutions)):
         item='Solution_'+str(solutions[i].solution_id)
         
-        file_name = sol_path + item + '.csv'
+        file_name = sol_path + '/' + item + '.csv'
         
         with open(file_name, 'w', newline='') as my_csv:
             csv_writer = csv.writer(my_csv, delimiter=',')
