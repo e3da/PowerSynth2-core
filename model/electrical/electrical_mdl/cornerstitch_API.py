@@ -10,7 +10,7 @@ from core.model.electrical.electrical_mdl.e_module import EWires,EModule,EComp,E
 from core.model.electrical.electrical_mdl.e_hierarchy import EHier
 from core.model.electrical.electrical_mdl.e_struct import E_plate,Sheet
 from core.MDK.Design.parts import Part
-from core.general.data_struct.util import Rect
+from core.engine.CornerStitch.CSinterface import Rect
 from core.model.electrical.electrical_mdl.e_netlist import ENetlist
 from core.MDK.Design.Routing_paths import RoutingPath
 from core.model.electrical.parasitics.mdl_compare import load_mdl

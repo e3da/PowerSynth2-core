@@ -4,7 +4,7 @@
 # A generic method to detect all concave vs convex corners
 # A method to form trace islands after placement
 
-from core.general.data_struct.util import Rect
+from core.engine.CornerStitch.CSinterface import Rect
 
 class TraceCell(Rect):
     def __init__(self, **kwargs):

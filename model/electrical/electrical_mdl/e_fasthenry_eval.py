@@ -5,7 +5,6 @@ This is an interface to FastHenry, developed for CornerStitching layout engine. 
 3. Can be used for post optimization extraction
 '''
 # Collecting layout information from CornerStitch, ask user to setup the connection and show the loop
-from core.APIs.FastHenry.Standard_Trace_Model import write_to_file
 from core.APIs.FastHenry.fh_layers import Trace,equiv,Begin,FH_point,bondwire_simple,measure,freq_set,Plane_Text
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API
 import os,subprocess
@@ -543,7 +542,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
     def generate_fasthenry_inputs(self,parent_id = 0):
         script_name = 'eval{}.inp'.format(parent_id)
         script_file = os.path.join(self.work_space+'/Solutions/s{}'.format(parent_id),script_name)
-        write_to_file(script=self.out_text,file_des=script_file)    
+        with open(script_file, 'w') as sf:
+            sf.write(self.out_text)
         cmd=[self.fh_env, "-siterative", "-mmulti","-pcube",script_file]
         self.commands.append(cmd)
 
@@ -630,7 +630,8 @@ class FastHenryAPI(CornerStitch_Emodel_API):
 
         script_name = 'eval'+str(parent_id)+'.inp'
         script_file = os.path.join(self.work_space,script_name)
-        write_to_file(script=self.out_text,file_des=script_file)    
+        with open(script_file, 'w') as sf:
+            sf.write(self.out_text)
         curdir = os.getcwd()
         outputfile = os.path.join(curdir,'Zc.mat')
         if os.path.isfile(outputfile):

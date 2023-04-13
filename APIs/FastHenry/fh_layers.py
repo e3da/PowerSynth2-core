@@ -1,15 +1,11 @@
 """A simple script to write planes for use in FastHenry
-@author: tmevans
 """
 
 import numpy as np
 import time
 import operator
 import itertools
-from core.APIs.FastHenry.uni_mesh import Connect_line,form_conn_line,Conn_point,two_pt_dis,group_dis,ave_pt,trace_splits_rect
-from core.general.data_struct.util import translate_pt
-from core.general.data_struct.util import Rect, draw_rect_list
-#from core.MDK.Design.module_design import ModuleDesign # this module not available in PowerSynth 2
+from core.APIs.FastHenry.uni_mesh import Connect_line,form_conn_line,Conn_point,two_pt_dis
 import matplotlib.pyplot as plt
 import math
 import networkx as nx

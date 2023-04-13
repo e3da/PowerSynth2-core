@@ -18,9 +18,9 @@ import joblib
 from sklearn.preprocessing import PolynomialFeatures
 
 # PowerCad
+from core.engine.CornerStitch.CSinterface import Rect
 from core.model.electrical.electrical_mdl.e_module import EModule
 from core.model.electrical.electrical_mdl.plot3D import network_plot_3D,plot_combined_I_map_layer,plot_v_map_3D,plot_J_map_3D
-from core.general.data_struct.util import Rect
 from core.model.electrical.parasitics.mdl_compare import trace_ind_krige, trace_res_krige, trace_capacitance, trace_resistance, \
     trace_inductance,trace_resistance_full,trace_ind_lm
 #from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval

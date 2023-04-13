@@ -21,8 +21,6 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.svm import SVR
 
 from core.model.electrical.response_surface.RS_build_function import f_ms
-from core.general.data_struct.Abstract_Data import *
-from core.general.data_struct.BasicsFunction import *
 from core.general.data_struct.Unit import Unit
 from core.general.settings.Error_messages import InputError, Notifier
 from core.model.electrical.parasitics.mdl_compare import trace_inductance
@@ -298,7 +296,7 @@ class RS_model:
         mins=[]   # list of all min values
         maxs=[]   # list of all max values
         cur_id=[] # current data id
-        stack=Stack()           # initialize a stack
+        stack=[]           # initialize a stack
         for b in self.data_bound:  # update all min and max value
             mins.append(b[0]) 
             maxs.append(b[1])
@@ -310,7 +308,7 @@ class RS_model:
                 a=np.linspace(mins[i], maxs[i], num_data[i])
                 lnsp_all.append(a.tolist())
                                 
-        row_size=list_mult(num_data) # compute row_size using all number of data for each parameter
+        row_size=math.prod(num_data) # compute row_size using all number of data for each parameter
         self.test_data=np.zeros((row_size,col_size)) # create a blank matrix for DOE
         col_chk=col_size-1  # id to check all column 
         not_ready=True     

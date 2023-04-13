@@ -162,19 +162,6 @@ class ParaPowerInterface(object):
                       'PottingMaterial': self.PottingMaterial}
         return model_dict
 
-    def init_matlab(self):
-        """Initializes the MATLAB for Python engine and starts it in the working directory specified in the path
-        attribute.
-
-        :return eng: An instance of the MATLAB engine.
-        """
-        import matlab.engine
-        self.matlab_engine = matlab.engine.start_matlab()
-        # TODO: MATLAB path is hardcoded
-        self.matlab_engine.cd('/nethome/qmle/ParaPower/ARL_ParaPower')
-
-        
-
     def run_parapower_thermal(self, matlab_engine=None, visualize=False):
         """Executes the ParaPower thermal analysis on the given PowerSynth design and returns temperature results.
 
@@ -194,11 +181,9 @@ class ParaPowerInterface(object):
         :rtype temperature: float
         """
 
-
         if self.matlab_engine == None:
             if matlab_engine == None:
-                print("Starting new MATLAB engine")
-                self.init_matlab()
+                sys.exit("Failed to start new MATLAB engine")
             else:
                 self.matlab_engine = matlab_engine
         md_json = json.dumps(self.to_dict())

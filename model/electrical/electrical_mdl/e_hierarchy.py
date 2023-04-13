@@ -1,4 +1,3 @@
-from core.general.data_struct.Tree import T_Node,Tree
 from networkx import fruchterman_reingold_layout as layout
 import warnings
 import matplotlib.pyplot as plt
@@ -25,7 +24,6 @@ class EHier():
             module (_type_): _description_
         """
         self.module = module
-        self.tree = None
         self.hyper_net_graph = None #  hypergraph for island-trace to every net
         self.hyper_trace_graph = None # hypergraph for island-name to  traceisland
         self.hyper_comp_graph = None # hypergraph for component-name to nets

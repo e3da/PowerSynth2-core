@@ -220,54 +220,6 @@ class CS_to_CG():
         ledge_width = self.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name)
         ledge_dims=[ledge_width,ledge_height]
         return ledge_dims
-        
-    
-    
-    
-    def Sym_to_CS(self, Input_rects, Htree, Vtree):
-        '''
-
-        Args:
-            Input_rects: Modified input rectangles from symbolic layout
-            Htree: Horizontal CS tree
-            Vtree: Vertical CS tree
-
-        Returns:Mapped rectangles from CS to Sym {T1:[[R1],[R2],....],T2:[....]}
-
-        '''
-        ALL_RECTS = {}
-        DIM = []
-
-        for j in Htree.hNodeList[0].stitchList:
-            p = [j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.type]
-            DIM.append(p)
-        ALL_RECTS['H'] = DIM
-        DIM = []
-        for j in Vtree.vNodeList[0].stitchList:
-            p = [j.cell.x, j.cell.y, j.getWidth(), j.getHeight(), j.cell.type]
-            DIM.append(p)
-        ALL_RECTS['V'] = DIM
-
-        SYM_CS = {}
-        for rect in Input_rects:
-            x1 = rect.x
-            y1 = rect.y
-            x2 = rect.x + rect.width
-            y2 = rect.y + rect.height
-            type = rect.type
-            name = rect.name
-            for k, v in list(ALL_RECTS.items()):
-                if k == 'H':
-                    key = name
-                    SYM_CS.setdefault(key, [])
-                    for i in v:
-                        if i[0] >= x1 and i[1] >= y1 and i[0] + i[2] <= x2 and i[1] + i[3] <= y2 and i[4] == type:
-                            SYM_CS[key].append(i)
-                        else:
-                            continue
-        return SYM_CS
-
-    
     
     def create_cg(self, Htree, Vtree, bondwires, cs_islands, rel_cons,root,flexible,constraint_info):
         '''
@@ -310,52 +262,6 @@ class CS_to_CG():
         
         return forward_cg, backward_cg
     
-    def evaluate_cg():
-        '''
-        performs cg evaluation to get top-down location propagation done
-        '''
-
-    
-    ## Evaluates constraint graph depending on modes of operation
-    def evaluation(self, Htree, Vtree, bondwires, N, cs_islands, W, H, XLoc, YLoc, seed, individual, Types, rel_cons,root,flexible):
-        '''
-        :param Htree: Horizontal tree
-        :param Vtree: Vertical tree
-        :param N: No. of layouts to be generated
-        :param W: Width of floorplan
-        :param H: Height of floorplan
-        :param XLoc: Location of horizontal nodes
-        :param YLoc: Location of vertical nodes
-        :param root: list of root node h and v of the tree
-        :return: Updated x,y locations of nodes
-        '''
-        if self.level == 1:
-            CG = constraintGraph(W=None, H=None, XLocation=None, YLocation=None)
-            CG.graphFromLayer(Htree.hNodeList, Vtree.vNodeList, bondwires, self.level, cs_islands, N, seed, individual,
-                              Types=Types, flexible=flexible, rel_cons=rel_cons,root=root)
-        elif self.level == 2 or self.level == 3:  # or self.level==1
-            # if self.level!=1:
-            if W == None or H == None:
-                print("Please enter Width and Height of the floorplan")
-            if N == None:
-                print("Please enter Number of layouts to be generated")
-            else:
-                CG = constraintGraph(W, H, XLoc, YLoc)
-                CG.graphFromLayer(Htree.hNodeList, Vtree.vNodeList, bondwires, self.level, cs_islands, N, seed,
-                                  individual, Types=Types, flexible=flexible, rel_cons=rel_cons,root=root)
-            
-        else:
-
-            CG = constraintGraph(W=None, H=None, XLocation=None, YLocation=None)
-            CG.graphFromLayer(Htree.hNodeList, Vtree.vNodeList, bondwires, self.level, cs_islands, Types=Types,
-                              flexible=flexible, rel_cons=rel_cons,root=root)
-                             
-        return CG
-        
-
-    
-    
-
     def update_min(self, minx, miny, sym_to_cs, bondwires,origin, s=1000.0):
         '''
 

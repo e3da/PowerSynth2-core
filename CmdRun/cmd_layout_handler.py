@@ -24,7 +24,6 @@ from core.engine.ConstrGraph.CGStructures import Vertex
 
 from core.engine.LayoutEngine.cons_engine import New_layout_engine
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
-from core.SolBrowser.cs_solution_handler import pareto_solutions,export_solutions
 from core.model.electrical.electrical_mdl.cornerstitch_API import ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 
@@ -87,27 +86,6 @@ def export_solution_layout_attributes(sol_path=None,solutions=None,size=[0,0],db
         
         my_csv.close()
         
-
-def opt_choices(algorithm=None): # for step-by-step mode option.
-    
-    if algorithm==None:
-        choices = ["NG-RANDOM", "NSGAII", "WS", "SA"]
-        print("Enter a mode below to choose an optimization algorithm")
-        print("List of choices:")
-        for mode_id in range(len(choices)):
-            print("+mode id:", mode_id, "--> algorithm:", choices[mode_id])
-        cont = True
-        while cont:
-            try:
-                id = int(input("Enter selected id here:"))
-            except:
-                cont = True
-            if id in range(4):
-                return choices[id]
-    else:
-        return algorithm
-
-
 
 
 

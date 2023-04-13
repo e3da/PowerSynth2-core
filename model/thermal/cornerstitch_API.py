@@ -13,7 +13,6 @@ import shutil
 
 from numpy import min, max, array, average
 
-from core.general.data_struct.util import Rect
 import copy
 import numpy as np
 import os
@@ -71,10 +70,8 @@ class CornerStitch_Tmodel_API:
         
         import matlab.engine
         self.matlab_engine = matlab.engine.start_matlab()
-        # TODO: MATLAB path is hardcoded
         if ParaPower_dir=='':
             print("ParaaPower Directory Not Found!")
-
             exit()
         else:
             self.matlab_engine.cd(ParaPower_dir)

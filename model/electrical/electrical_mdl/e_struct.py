@@ -1,4 +1,3 @@
-from core.general.data_struct.util import Rect
 import mpl_toolkits.mplot3d as a3d
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -180,39 +179,3 @@ def plot_rect3D(rect2ds=None, ax=None):
         else:
             ax.text(obj.rect.center_x(), obj.rect.center_y(), z0, obj.name)
 
-
-def get_traces_from_md(md):
-    plates=[]
-    traces=md.traces
-    trace_z = md.zpos[3]
-    for r in traces:
-        plates.append(E_plate(rect=r, z=trace_z, dz=0.2))
-    return plates
-def get_bw_from_md(md):
-    sheets=[]
-    bw_z = md.zpos[4]
-    for bw in md.bondwires:
-        radi = bw.eff_diameter/2
-
-        rect = Rect()
-
-if __name__ == "__main__":
-    fig = plt.figure()
-    ax = a3d.Axes3D(fig)
-    ax.set_xlim3d(0, 15)
-    ax.set_ylim3d(0, 15)
-    ax.set_zlim3d(0, 15)
-    r1 = Rect(10, 0, 0, 5)
-    R1 = E_plate(rect=r1, z=0, dz=0.2)
-    sh1 = Rect(3, 1, 1, 3)
-    S1 = Sheet(rect=sh1, net_name='N1', type='point', n=(0, 0, 1))
-    r2 = Rect(10,0,0,5)
-    R2 = E_plate(rect=r2, n=(0, 1, 0), z=0, dz=0)
-    r3 = Rect(10,0,6,10)
-    R3 = E_plate(rect=r3, n=(1, 0, 0), z=0, dz=-0.5)
-    r4 = Rect(14, 10, 0, 10)
-
-    R4 = E_plate(rect=r4, n=(0, 0, 1), z=0, dz=-0.5)
-
-    plot_rect3D([R1,R2,R3,R4,S1], ax=ax)
-    plt.show()

@@ -598,103 +598,6 @@ class Cmd_Handler:
                         ansysem_export.translate_powersynth_solution_to_ansysem(sol)
                         ansysem_export.write_script()
     
-    # ------------------ File Request -------------------------------------------------
-    def database_dir_request(self):
-        print ("Please enter a directory to save layout database")
-        correct = True
-        while (correct):
-            db_dir = (eval(input("Database dir:")))
-            if os.path.isdir(db_dir):
-                self.db_dir = db_dir
-                correct = False
-            else:
-                print ("wrong input")
-
-    def fig_dir_request(self):
-        print("Please enter a directory to save figures")
-        correct = True
-        while (correct):
-            fig_dir = eval(input("Fig dir:"))
-            if os.path.isdir(fig_dir):
-                self.fig_dir = fig_dir
-                correct = False
-            else:
-                print("wrong input")
-
-    def layout_script_request(self):
-        print("Please enter a layout file directory")
-        correct = True
-        while (correct):
-            file = eval(input("Layout Script File:"))
-            if os.path.isfile(file):
-                self.layout_script = file
-                correct = False
-            else:
-                print("wrong input")
-
-    def bondwire_file_request(self):
-        print("Please enter a bondwire setup file directory")
-        correct = True
-        while (correct):
-            file = eval(input("Bondwire Setup File:"))
-            if os.path.isfile(file):
-                self.connectivity_setup = file
-                correct = False
-            else:
-                print("wrong input")
-
-    def layer_stack_request(self):
-        print("Please enter a layer stack file directory")
-        correct = True
-        while (correct):
-            file = eval(input("Layer Stack File:"))
-            if os.path.isfile(file):
-                self.layer_stack_file = file
-                correct = False
-            else:
-                print("wrong input")
-
-    def res_model_request(self):
-        print("Please enter a model file directory")
-        correct = True
-        while (correct):
-            file = eval(input("Model File:"))
-            if os.path.isfile(file):
-                self.rs_model_file = file
-                correct = False
-            else:
-                print("wrong input")
-
-    def cons_dir_request(self):
-        print("Please enter a constraint file directory")
-        correct = True
-        while (correct):
-            file = eval(input("Constraint File:"))
-            if os.path.isfile(file):
-                self.constraint_file = file
-                correct = False
-            else:
-                print("wrong input")
-    def rel_cons_request(self):
-        self.i_v_constraint=int(eval(input("Please eneter: 1 if you want to apply reliability constraints for worst case, 2 if you want to evaluate average case, 0 if there is no reliability constraints")))
-    def cons_file_edit_request(self):
-        self.new_mode=int(eval(input( "If you want to edit the constraint file, enter 1. Else enter 0: ")))
-
-    def option_request(self):
-        print("Please enter an option:")
-        print("0: layout generation, 1:single layout evaluation, 2:layout optimization, quit:to quit,help:to get help")
-        correct = True
-        while (correct):
-            opt = eval(input("Option:"))
-            if opt in ['0', '1', '2']:
-                return True, int(opt)
-            elif opt == 'quit':
-                return False, opt
-            elif opt == 'help':
-                self.help()
-            else:
-                print("wrong input")
-
     def help(self):
         print("Layout Generation Mode: generate layout only without evaluation")
         print("Layout Evaluation Mode: single layout evaluation")
@@ -738,17 +641,6 @@ class Cmd_Handler:
         with conn:
             create_table(conn)
         conn.close()
-
-    def input_request(self):
-        self.layout_script_request()
-        self.bondwire_file_request()
-        self.layer_stack_request()
-        self.res_model_request()
-        self.fig_dir_request()
-        self.database_dir_request()
-        self.cons_dir_request()
-        self.rel_cons_request()
-        self.cons_file_edit_request()
 
     def init_cs_objects(self,run_option=None):
         '''
@@ -906,39 +798,6 @@ class Cmd_Handler:
         # Update the measurement goals 
         self.measures += self.e_api.measurement_setup(measure_data)
         
-    def setup_electrical_old(self,mode='command',dev_conn={},frequency=None,type ='PowerSynthPEEC',netlist = ''):
-
-        if type == 'Loop':
-            self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
-        if type == 'PEEC': # always being run in init mode to create loop definition
-            self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
-            if self.rs_model_file != 'default':
-                self.e_api.load_rs_model(self.rs_model_file)
-            else:
-                self.e_api.rs_model = None
-        elif type == 'FastHenry':
-            self.e_api = FastHenryAPI(comp_dict = self.layout_obj_dict, wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
-            self.e_api.rs_model = None
-            self.e_api.set_fasthenry_env(settings.FASTHENRY_EXE)
-            
-        elif type == 'LoopFHcompare':
-            self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
-            
-        #print mode
-        if mode == 'command':
-            self.e_api.form_connection_table(mode='command')
-            self.e_api.set_solver_frequency()
-            # self.measures += self.e_api.measurement_setup() # MUST SETUP USING LOOPS
-        elif mode == 'macro' and self.e_api!=None:
-            print("macro mode")
-            if type!=None:
-                self.e_api.form_connection_table(mode='macro',dev_conn=dev_conn)
-                self.e_api.set_solver_frequency(frequency)
-                self.e_api.set_layer_stack(self.layer_stack)
-                if type =='LoopFHcompare':
-                    self.e_api.e_mdl = "LoopFHcompare"
-                
-
     def setup_thermal(self,mode = 'command',meas_data ={},setup_data={},model_type=2):
         '''
         Set up thermal evaluation, by default return max temp of the given device list
@@ -993,13 +852,7 @@ class Cmd_Handler:
             cont = True
             while (cont):
                 mode = input("Enter command here")
-                if mode == '-f':
-                    self.input_request()
-                    self.init_cs_objects()
-                    self.set_up_db()
-                    self.cmd_loop()
-                    cont = False
-                elif mode == '-quit':
+                if mode == '-quit':
                     cont = False
                 elif mode[0:2] == '-m':
                     m, filep = mode.split(" ")
@@ -1052,98 +905,6 @@ class Cmd_Handler:
             if '-help' in arg_dict.keys():
                 print("This is PowerSynth cmd mode, more flags will be added in the future")
                 
-
-    def cmd_loop(self):
-        cont = True
-        while (cont):
-            cont, opt = self.option_request()
-            self.init_cs_objects()
-            self.set_up_db()
-            if opt == 0:  # Perform layout generation only without evaluation
-                cont, layout_mode = self.option_layout_gen()
-                if layout_mode in range(3):
-                    self.set_up_db()
-                    self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
-                                         optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan,dbunit=self.dbunit)
-                    self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
-
-            if opt == 1:
-
-                self.init_apis()
-                # Convert a list of patch to rectangles
-                patch_dict = self.engine.init_data[0]
-                init_data_islands = self.engine.init_data[3]
-                init_cs_islands = self.engine.init_data[2]
-                #print init_data_islands
-                fp_width, fp_height = self.engine.init_size
-                fig_dict = {(fp_width, fp_height): []}
-                for k, v in list(patch_dict.items()):
-                    fig_dict[(fp_width, fp_height)].append(v)
-                init_rects = {}
-                # print self.engine.init_data
-                # print "here"
-                for k, v in list(self.engine.init_data[1].items()):  # sym_to_cs={'T1':[[x1,y1,x2,y2],[nodeid],type,hierarchy_level]
-
-                    rect = v[0]
-                    x, y, width, height = [rect[0], rect[1], rect[2] - rect[0], rect[3] - rect[1]]
-                    type = v[2]
-                    # rect = Rectangle(x=x * 1000, y=y * 1000, width=width * 1000, height=height * 1000, type=type)
-                    rect_up = [type, x, y, width, height]
-                    # rects.append(rect)
-                    init_rects[k] = rect_up
-                cs_sym_info = {(fp_width * 1000, fp_height * 1000): init_rects}
-                for isl in init_cs_islands:
-                    for node in isl.mesh_nodes:
-                        node.pos[0] = node.pos[0] * 1000
-                        node.pos[1] = node.pos[1] * 1000
-                for island in init_data_islands:
-                    for element in island.elements:
-                        element[1] = element[1] * 1000
-                        element[2] = element[2] * 1000
-                        element[3] = element[3] * 1000
-                        element[4] = element[4] * 1000
-
-                    if len(island.child) > 0:
-                        for element in island.child:
-                            element[1] = element[1] * 1000
-                            element[2] = element[2] * 1000
-                            element[3] = element[3] * 1000
-                            element[4] = element[4] * 1000
-
-                    for isl in init_cs_islands:
-                        if isl.name == island.name:
-                            island.mesh_nodes = copy.deepcopy(isl.mesh_nodes)
-
-                md_data = ModuleDataCornerStitch()
-                md_data.islands[0] = init_data_islands
-                md_data.footprint = [fp_width * 1000, fp_height * 1000]
-
-                self.solutions = eval_single_layout(layout_engine=self.engine, layout_data=cs_sym_info,
-                                                    apis={'E': self.e_api,
-                                                          'T': self.t_api}, measures=self.measures,
-                                                    module_info=md_data)
-
-            elif opt == 2:  # Peform layout evaluation based on the list of measures
-                self.init_apis()  # Setup measurement
-                cont, layout_mode = self.option_layout_gen()
-                if layout_mode in range(3):
-                    self.set_up_db()
-
-                    self.soluions = generate_optimize_layout(layout_engine=self.engine, mode=layout_mode,
-                                                             optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,
-                                                             apis={'E': self.e_api, 'T': self.t_api},
-                                                             measures=self.measures,seed=seed)
-
-
-                
-                    self.export_solution_params(self.fig_dir,self.db_dir, self.solutions,layout_mode)
-                    
-                        
-            elif opt == 'quit':
-                cont = False
-
-
     def find_pareto_dataset(self,sol_dir=None,opt=None,fig_dir=None,perf_names=None):
         
         if opt>0:

@@ -1,7 +1,7 @@
 import sys
 sys.path.append('..')
 from core.engine.ConstrGraph.CGStructures import Edge,find_longest_path, is_connected
-from scipy.stats import distributions, truncnorm
+from scipy.stats import truncnorm
 import numpy.random as random
 import numpy as np
 import copy

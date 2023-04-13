@@ -1,6 +1,5 @@
 import math
 import numpy as np
-from core.general.data_struct.util import Rect
 
 
 class Connect_line:
@@ -41,24 +40,6 @@ def check_exist_line(line,conn_list):
 
 def two_pt_dis(pt1,pt2):
     return math.sqrt((pt1.x-pt2.x)**2+(pt1.y-pt2.y)**2)
-
-def group_dis(pt_list,min=0.5):
-    if len(pt_list)==1:
-        return min
-    else:
-        return max([two_pt_dis(pt_list[i],pt_list[i+1]) for i in range(len(pt_list)-1)])
-
-def ave_pt(pt_list):
-    a_x =[]
-    a_y =[]
-    z=pt_list[0].z
-    for pt in pt_list:
-        a_x.append(pt.x)
-        a_y.append(pt.y)
-
-    ave_x=np.average(a_x)
-    ave_y=np.average(a_y)
-    return Conn_point('ave',ave_x,ave_y,z)
 
 def form_conn_line(traces,conn_mesh):
     " return the list of connection lines"
@@ -104,58 +85,6 @@ def form_conn_line(traces,conn_mesh):
     for line in conn_line:
         print(line.pt1, line.pt2)
     return conn_line
-''''''
-def trace_splits_rect(trace,split_list,orient):
-    '''
-    Split a trace into multiple traces
-    :param trace: trace in interested
-    :param split_list: list of rectangle to be ommited
-    :param orient: 0:Horizontal, 1 Vertical
-    :return: List of traces with connection points
-    '''
-    if orient==0:
-        x_list=split_list
-        y=trace.bottom+trace.height()/2
-        xbegin=trace.left
-        xends=trace.right
-        x_trace=[]
-        for group in x_list:
-            if xbegin!=group[0]:
-                x_trace.append([xbegin,group[0]])
-                xbegin=group[1]
-            else:
-                xbegin=group[1]
-        last_group=x_list[-1]
-        if last_group[1]!=xends:
-            x_trace.append([last_group[1],xends])
-
-        all_trace=[]
-        for group in x_trace:
-            all_trace.append(Rect(left=group[0],right=group[1],bottom=trace.bottom,top=trace.top))
-        pts=[list(zip(x_trace[i],[y,y])) for i in range(len(x_trace))]
-        ori=[0 for i in range(len(x_trace))]
-        return list(zip(all_trace,pts,ori))
-
-    if orient==1:
-        y_list = split_list
-        x = trace.left +trace.width() / 2
-        ybegin = trace.bottom
-        yends = trace.top
-        y_trace=[]
-        for group in y_list:
-            if ybegin!=group[0]:
-                y_trace.append([ybegin,group[0]])
-            else:
-                ybegin=group[1]
-        last_group=y_list[-1]
-        if last_group[1]!=yends:
-            y_trace.append([last_group[1],yends])
-        all_trace = []
-        for group in y_trace:
-            all_trace.append(Rect(bottom=group[0], top=group[1], left=trace.left, right=trace.right))
-        pts = [list(zip([x, x],y_trace[i])) for i in range(len(y_trace))]
-        ori = [1 for i in range(len(y_trace))]
-        return list(zip(all_trace, pts, ori))
 
 class Conn_point:
     # Plane connection point / FH format

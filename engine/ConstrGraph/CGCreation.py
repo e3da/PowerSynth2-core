@@ -1235,15 +1235,6 @@ class ConstraintGraph:
         ## adding missing edges for shared coordinate patterns
         self.add_edges_from_shared_coordinates_patterns(horizontal_patterns=horizontal_patterns, vertical_patterns=vertical_patterns, Types=Types,ID=ID)
         
-    def add_forward_edges_for_via_bonding_wires(self,ID):
-        '''
-            adds necessary edges in between via and bonding wire vertices
-        '''
-        # no need to handle this case seperately. It should be handled in bw case already
-        pass
-
-
-
 
     def add_forward_missing_edges(self,ID):   
         # adding missing edges in between two consecutive vertices to make sure that relative location is there

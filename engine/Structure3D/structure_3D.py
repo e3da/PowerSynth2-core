@@ -18,11 +18,29 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution
 from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath
-from core.engine.Structure3D.cell_3D import Cell3D
 from core.MDK.Constraint.constraint_up import constraint_name_list
 from core.engine.LayoutSolution.color_list import color_list_generator
 from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
 from core.engine.OptAlgoSupport.optimization_algorithm_support import DesignString
+
+class Cell3D():
+
+    def __init__ (self,name,x=0.0,y=0.0,z=0.0,w=0.0,l=0.0,h=0.0,material=None):
+        self.name=name # layout component id from input geometry script
+        self.x=x # bottom-left corner x coordinate
+        self.y=y # bottom-left corner y coordinate
+        self.z=z # bottom-left corner z coordinate
+        self.w=w # width along x axis
+        self.l=l # length along y axis
+        self.h=h # height along z axis
+        self.material=material# material for each object
+
+    def print_cell_3D(self):
+        '''
+        print cell attributes for debugging
+        '''
+        print("Component_name: {}, x: {}, y: {}, z: {}, width: {}, length: {}, height: {}".format(self.name, self.x, self.y, self.z, self.w, self.l, self.h) )
+
 
 class Structure_3D():
     def __init__(self):

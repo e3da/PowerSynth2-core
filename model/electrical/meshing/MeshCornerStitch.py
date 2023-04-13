@@ -4,13 +4,11 @@ Getting mesh directly from CornerStitch points and islands data
 '''
 
 from numpy.lib.ufunclike import fix
+from core.engine.CornerStitch.CSinterface import Rect
 from core.model.electrical.meshing.MeshStructure import EMesh
-from core.general.data_struct.util import Rect, draw_rect_list
-from core.model.electrical.electrical_mdl.e_hierarchy import T_Node
 from core.model.electrical.electrical_mdl.e_loop_element import form_skd
 from core.model.electrical.meshing.MeshAlgorithm import TraceIslandMesh
 from core.model.electrical.meshing.MeshObjects import RectCell,MeshEdge,MeshNode,TraceCell,MeshNodeTable
-from core.general.data_struct.Tree import Tree
 import matplotlib.patches as patches
 from core.model.electrical.e_exceptions import NeighbourSearchError
 import numpy as np
