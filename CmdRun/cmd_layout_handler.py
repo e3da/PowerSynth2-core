@@ -1,6 +1,4 @@
 #@Author: Quang & Imam
-import sys
-sys.path.append('..')
 import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

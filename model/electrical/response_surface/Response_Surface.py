@@ -11,6 +11,7 @@ import os
 import pickle
 
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import lines
 from pyDOE2 import bbdesign,ccdesign
 from pykrige.ok import OrdinaryKriging as ok
@@ -20,11 +21,92 @@ from scipy.optimize import curve_fit,least_squares
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.svm import SVR
 
-from core.model.electrical.response_surface.RS_build_function import f_ms
-from core.general.data_struct.Unit import Unit
 from core.general.settings.Error_messages import InputError, Notifier
-from core.model.electrical.parasitics.mdl_compare import trace_inductance
+from core.model.electrical.parasitics.mdl_compare import f_ms,trace_inductance
 import math
+
+class Unit(object):
+    '''
+    This class is mainly used for Unit conversion in PowerSynth
+    '''
+
+
+    def __init__(self, prefix='',suffix='m'):
+        '''
+        Constructor
+            prefix: k,M,G ...etc: km
+            suffix: Hz,m,V.... etc: GHz
+        '''
+        self.base=prefix
+        self.suffix=suffix
+        self.all_prefix={'y':10e-24, 'z':10e-21,'a':10e-18,'f':10e-15,\
+                         'p':10e-12,'n':10e-9,'u':10e-6,'m':10e-3,'c':10e-2,\
+                         'd':10e-1,'':1,'k':10e3,'M':10e6,'G':10e9,'T':10e12,'P':10e15,\
+                         'E':10e18}
+    def convert(self,base):
+        '''
+        Convert from some base to this unit base
+            base: a prefix of the new base
+        '''
+        if self!=None:
+            get_base=self.all_prefix[base]
+            ratio=get_base/self.all_prefix[self.base]
+            #print ratio
+            return ratio
+        else:
+            Notifier('This method was not called')
+    def detect_unit(self,str):
+        '''
+        Read a string and detect the unit in there
+        '''
+        all_keys=list(self.all_prefix.keys())
+        if self.suffix in str:
+            for prefix in all_keys:
+                unit=prefix +self.suffix
+                if unit in str and prefix!='':
+                    #print "Found unit: " +prefix+self.suffix
+                    return prefix
+            return ''
+        else:
+            print('keyword ['+self.suffix+'] is not found in this string')
+
+    def to_string(self):
+        return self.base+self.suffix
+
+
+class Stack():
+    # A stack can be present as a list in Python, however only allow single data to go in and out each time
+    # then we just add the push and pop function, peek will
+    # tell which data is on top and size will tell the len of stack's list.
+    # This example can be found at:
+    # https://interactivepython.org/runestone/static/pythonds/BasicDS/ImplementingaStackinPython.html
+    def __init__(self):
+        self.data = []  # initialize stack's list
+
+    def eraseAll(self):
+        # Erase everything in the stack
+        self.data = []
+
+    def isEmpty(self):
+        # check if the stack is Empty or not
+        if self.data == []:
+            return True
+        else:
+            return False
+
+    def push(self, item):
+        # push an item into the stack
+        self.data.append(item)  #
+
+    def pop(self):
+        # pop out an item
+        if not (self.isEmpty()):
+            return self.data.pop()
+
+    def peek(self):
+        # check which item is on top
+        return self.data[len(self.data) - 1]
+
 
 class RS_model:
     '''Surrogate/Response Surface model 
@@ -296,7 +378,7 @@ class RS_model:
         mins=[]   # list of all min values
         maxs=[]   # list of all max values
         cur_id=[] # current data id
-        stack=[]           # initialize a stack
+        stack=Stack()           # initialize a stack
         for b in self.data_bound:  # update all min and max value
             mins.append(b[0]) 
             maxs.append(b[1])

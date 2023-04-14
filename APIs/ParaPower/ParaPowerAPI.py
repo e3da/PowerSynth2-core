@@ -281,12 +281,8 @@ class ParaPowerWrapper(object):
         """
         features_list = []
         for feature in self.solution.features_list:
-            # TODO: Power dissipation is hardcoded at 10 W/ device right now
             if feature.name[0] == 'D':
-                try:
-                    feature.power=feature.power
-                except:
-                    feature.power = 10
+                feature.power=feature.power
 
             pp_feature = convert_to_pp_feature(feature)
             features_list.append(pp_feature)
