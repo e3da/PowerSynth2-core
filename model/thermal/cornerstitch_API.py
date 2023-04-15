@@ -1,13 +1,13 @@
 # @author: qmle, ialrazi, tmevans
 # for corner stitch need to use analytical model since the layout size can be changed
 #from PySide.QtGui import QFileDialog
-import sys
 from time import perf_counter
+
+from core.general.settings import settings
 
 from core.APIs.PowerSynth.solution_structures import PSFeature
 from core.MDK.Design.parts import Part
 import core.APIs.ParaPower.ParaPowerAPI as pp
-import sys
 from collections import deque
 import shutil
 
@@ -15,7 +15,7 @@ from numpy import min, max, array, average
 
 import copy
 import numpy as np
-import os
+import sys
 
 
 class ThermalMeasure(object):
@@ -58,7 +58,7 @@ class CornerStitch_Tmodel_API:
         self.pp_json_path= None # to store PP json file
         # print("Starting cornerstitch_API thermal interface")
 
-    def init_matlab(self,ParaPower_dir):
+    def init_matlab(self):
         """Initializes the MATLAB for Python engine and starts it in the working directory specified in the path
         attribute.
 
@@ -69,13 +69,11 @@ class CornerStitch_Tmodel_API:
             import matlab.engine
         except Exception as e:
             print(str(e))
-            os.exit("ERROR: Failed to init Matlab Engine.")
+            sys.exit("ERROR: Failed to Start Matlab Engine.")
 
         if self.matlab_engine is None:
-            self.matlab_engine = matlab.engine.start_matlab()
-
-        self.matlab_engine.cd(ParaPower_dir)
-
+            print("INFO: Starting Matlab Engine: "+settings.PARAPOWER_CODEBASE)
+            self.matlab_engine = matlab.engine.start_matlab("-sd "+settings.PARAPOWER_CODEBASE)
     
 
     def dev_result_table_eval(self, module_data=None,solution=None):
@@ -129,6 +127,7 @@ class CornerStitch_Tmodel_API:
                 ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")
+            print("INFO: Running ParaPower: "+self.pp_json_path)
             self.temp_res =ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
             
             return
@@ -250,8 +249,3 @@ class CornerStitch_Tmodel_API:
         
         return rth_dict
 
-
-
-if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
-    cs_temp = CornerStitch_Tmodel_API()

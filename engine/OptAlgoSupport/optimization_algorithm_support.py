@@ -209,7 +209,7 @@ class new_engine_opt:
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
 
-        print("Added Solution_", solutions[i].solution_id,"Perf_values: ", solutions[i].parameters)
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
         self.solutions.append(solutions[0])
 
         self.count += 1

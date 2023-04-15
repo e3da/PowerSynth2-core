@@ -133,7 +133,7 @@ class ParaPowerInterface(object):
 
     """
     def __init__(self, external_conditions=ExternalConditions(), parameters=Params(), features=None
-                 ,pp_json_path='/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/',solution_name='PSData',matlab_engine=None):
+                 ,pp_json_path=None,solution_name='PSData',matlab_engine=None):
         self.ExternalConditions = external_conditions
         self.Params = parameters
         self.Features = features
@@ -141,10 +141,6 @@ class ParaPowerInterface(object):
         self.temperature = None
         self.matlab_engine = matlab_engine
         self.path = pp_json_path
-        # TODO: Save location is hardcoded 
-        #self.path = "/nethome/qmle//ParaPower/JSON_output"
-		#self.path="/nethome/ialrazi/PowerSynth_V2/misc/ParaPower_json/"
-        #self.eng = self.init_matlab()
         self.solution_name = solution_name
         self.save_parapower()
         
@@ -218,7 +214,7 @@ class ParaPowerInterface(object):
         :return: None
         """
         sol_name = self.solution_name
-        print(self.path)
+        # print(self.path)
         fname = self.path +'/'+ sol_name +  '_JSON.json'
         with open(fname, 'w') as outfile:
             json.dump(self.to_dict(), outfile)
