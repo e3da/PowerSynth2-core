@@ -99,8 +99,8 @@ class PS2Core:
         self.cwd = os.getcwd()
         self.cmd = None
 
-        if len(TempDir):
-            self.TempDir=None
+        self.TempDir=None
+        if TempDir:
             self.PSTemp=os.path.abspath(TempDir)
         else:
             self.TempDir=tempfile.TemporaryDirectory()
@@ -219,11 +219,18 @@ End_Thermal_Setup.
 
     def run(self):
         os.chdir(self.PSWork)
-        if self.interactive:
-            self.create()
-        else:
-            self.excute()
+        try:
+            if self.interactive:
+                self.create()
+            else:
+                self.excute()
+            return 0
+        except Exception as e:
+            print(str(e))
+            print("ERROR: PowerSynth failed to run :(")
+
         os.chdir(self.cwd)
+        return 1
 
 if __name__ == "__main__":  
     if len(sys.argv)<2 :
