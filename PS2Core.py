@@ -26,14 +26,19 @@ def is_float(element: any) -> bool:
 
 def GetRoot(RootDir=""):
     if not len(RootDir):
-        if os.name == 'nt':
+        #get core folder
+        RootDir = os.path.dirname(os.path.realpath(__file__))
+        if os.path.isdir(RootDir+"/../pkg"):
+        #search for pkg in parent forlder
+            RootDir+="/../"
+        elif os.name == 'nt':
         #default on windows PowerSynth2.0\Lib\site-packages\core
-            RootDir="/../../../../"
+            RootDir+="/../../../"
         else:
         #default on linux PowerSynth2.0/lib/python3.x/site-packages/core
-            RootDir="/../../../../../"
+            RootDir+="/../../../../"
 
-    RootDir = os.path.abspath(os.path.realpath(__file__)+RootDir)
+    RootDir = os.path.abspath(RootDir)
 
     settings.MATERIAL_LIB_PATH = os.path.join(RootDir,settings.MATERIAL_LIB_PATH)
     settings.FASTHENRY_EXE = os.path.join(RootDir,settings.FASTHENRY_EXE)
