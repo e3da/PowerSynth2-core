@@ -366,7 +366,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 for i in range(len(solution.layer_solutions)):
                     size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
 
-                    print("Min-size", solution.layer_solutions[i].name,size[0] / dbunit, size[1] / dbunit)
+                    print(f"INFO: Layer {solution.layer_solutions[i].name}: Min {size[0] / dbunit} x {size[1] / dbunit}")
                     solution.layout_plot(layout_ind=solution.index, layer_name= solution.layer_solutions[i].name,db=db_file, fig_dir=sol_path, bw_type=bw_type)
 
             if len((solution.layer_solutions))>1: # plotting all layers on a single figure to see if vias are aligned

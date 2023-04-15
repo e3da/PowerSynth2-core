@@ -18,9 +18,6 @@ import numpy as np
 import os
 
 
-
-
-
 class ThermalMeasure(object):
     UNIT = ('K', 'Kelvin')
     def __init__(self, devices=None, name=None):
@@ -50,7 +47,7 @@ class CornerStitch_Tmodel_API:
         #self.thermal_main = Thermal_data_collect_main()  # a fake main window to link with some dialogs
         self.devices = {}
         self.dev_powerload_table = {}
-        self.mat_lib = '..//..//..//tech_lib//Material//Materials.csv'
+        #self.mat_lib = '..//..//..//tech_lib//Material//Materials.csv'
         self.measure = []
         self.model = 1
         self.temp_res={}
@@ -59,22 +56,25 @@ class CornerStitch_Tmodel_API:
         self.sub_thermal_feature = None
         self.matlab_engine = None
         self.pp_json_path= None # to store PP json file
-        print("Starting cornerstitch_API thermal interface")
+        # print("Starting cornerstitch_API thermal interface")
 
-    def init_matlab(self,ParaPower_dir=''):
+    def init_matlab(self,ParaPower_dir):
         """Initializes the MATLAB for Python engine and starts it in the working directory specified in the path
         attribute.
 
         :return eng: An instance of the MATLAB engine.
         """
         
-        import matlab.engine
-        self.matlab_engine = matlab.engine.start_matlab()
-        if ParaPower_dir=='':
-            print("ParaaPower Directory Not Found!")
-            exit()
-        else:
-            self.matlab_engine.cd(ParaPower_dir)
+        try:
+            import matlab.engine
+        except Exception as e:
+            print(str(e))
+            os.exit("ERROR: Failed to init Matlab Engine.")
+
+        if self.matlab_engine is None:
+            self.matlab_engine = matlab.engine.start_matlab()
+
+        self.matlab_engine.cd(ParaPower_dir)
 
     
 
@@ -117,10 +117,6 @@ class CornerStitch_Tmodel_API:
                 feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
                 solution.features_list.append(feature)
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
-            
-            if self.matlab_engine == None:
-                #print("starting MATLAB engine from cornerstitch_API")
-                self.init_matlab()
             
             ambient_temp=self.t_amb
             h_val=self.bp_conv

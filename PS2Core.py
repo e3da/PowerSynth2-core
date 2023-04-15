@@ -6,6 +6,8 @@ import tempfile
 from core.general.settings import settings
 from core.CmdRun.cmd_interface import Cmd_Handler
 
+import traceback
+
 if os.name != 'nt':
     import readline
     readline.parse_and_bind('tab: complete')
@@ -225,8 +227,8 @@ End_Thermal_Setup.
             else:
                 self.excute()
             return 0
-        except Exception as e:
-            print(str(e))
+        except Exception:
+            print(traceback.format_exc())
             print("ERROR: PowerSynth failed to run :(")
 
         os.chdir(self.cwd)

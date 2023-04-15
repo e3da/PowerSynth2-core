@@ -32,14 +32,6 @@ import pandas as pd
 
 class ElectricalMeasure():
     
-    # Need to rethink a bit about these. 
-    MEASURE_RES = 1
-    MEASURE_IND = 2
-    UNIT_RES = ('mOhm', 'milliOhm')
-    UNIT_IND = ('nH', 'nanoHenry')
-
-    # UNIT_CAP = ('pF', 'picoFarad')
-
     def __init__(self, measure, name='', main_loops = '', source='', sink='',multiport =0):
         """This object is used for electrical model setup
         Args:

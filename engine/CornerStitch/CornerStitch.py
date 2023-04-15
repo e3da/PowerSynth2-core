@@ -8,8 +8,6 @@ Updated from Aug,2017
 @ author: Imam Al Razi(ialrazi)
 '''
 import os
-import sys
-sys.path.append('..')
 import matplotlib
 import matplotlib.patches as patches
 import copy

@@ -539,7 +539,6 @@ class Cmd_Handler:
         self.e_api_init.handle_net_hierachy(lvs_check=True) # Set to True for lvs check mode
         self.e_api_init.hier.form_connectivity_graph()# Form this hierachy only once and reuse
         if self.e_model_dim == '2D': # Only run PEEC for 2D mode. Note: this PEEC model can run in 3D mode too
-            print("Detected {} layout: Using PEEC electrical model".format(self.e_model_dim))
             self.e_api_init.form_initial_trace_mesh('init')
             # Setup wire connection
             # Go through every loop and ask for the device mode # run one time
@@ -560,11 +559,11 @@ class Cmd_Handler:
             self.e_model_choice = 'PEEC'
         
         elif self.e_model_dim == '3D': # decide to go with FastHenry or Loop-based models (Dev mode) 
-            print("Dectected {} layout: Using FasHenry electrical model".format(self.e_model_dim))
 
             self.e_model_choice = 'FastHenry' # PEEC # Loop # This is for release mode, if you change the FH by Loop model here it will use Loop only. 
             #PEEC works for any layout, but need to optimize the mesh for 3D later 
         
+        print(f"INFO: {self.e_model_dim} Layout. Use {self.e_model_choice} Model")
         # Note: Once all of the models are stable, write this function to perform PEEC-init to Loop-eval
         #self.e_model_choice = self.e_api_init.process_and_select_best_model()
         
@@ -831,8 +830,7 @@ class Cmd_Handler:
                 self.t_api.characterize_with_gmsh_and_elmer()
             if model_type==2:
                 self.t_api.init_matlab(ParaPower_dir=settings.PARAPOWER_CODEBASE)
-                #print(settings.PARAPOWER_CODEBASE)
-                #input()
+
     def init_apis(self):
         '''
         initialize electrical and thermal APIs

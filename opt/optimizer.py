@@ -1,10 +1,3 @@
-'''
-Created on Jan 29, 2013
-
-@author: shook
-'''
-
-import pickle
 import numpy.random as nprandom
 import random
 import array
@@ -25,18 +18,7 @@ from core.opt.simulated_anneal import Annealer
 
 
 import time
-import platform
 
-
-class Solution():
-    def __init__(self, ind,fval):
-        '''
-
-        :param ind: individual
-        :param fval: evaluated result
-        '''
-        self.fval=fval
-        self.individual=ind
 
 class DesignVar(object):
     def __init__(self, constraints, init_values):
@@ -49,6 +31,7 @@ class DesignVar(object):
         """
         self.constraints = constraints
         self.init_values = init_values     
+
 class NSGAII_Optimizer(object):
     def __init__(self, design_vars, eval_fn, num_measures, seed, num_gen, 
                  mu = 40, ilambda=10, cxpb=0.7, mutpb=0.2): #sxm original values; cxpb=0.5, mutpb=0.2
@@ -224,44 +207,6 @@ class SimulatedAnnealing(Annealer):
         # self.state[i]+=0.1
         # print self.state
 
-    """
-    def move(self):
-
-        #random.shuffle(self.state)
-        individual = []
-        for i in self.state:
-            if i != 0.0:
-                '''
-                if self.T>=self.Tmax*(3/4):
-                    #j=(random.randint(600000000,1000000000))/100000000.0
-                    j = (random.uniform(6, 10))
-                    #j=round(j,8)
-                    individual.append(j)
-                '''
-                #random.seed(900+i*100)
-                if self.T >= self.Tmax * (1 / 2):
-                    # j = (random.randint(400000000, 600000000)) / 100000000.0
-                    j = (random.uniform(0, 8))
-                    # j=round(j,3)
-                    individual.append(j)
-                else:
-                    # j = (random.randint(000000000, 400000000)) / 100000000.0
-                    # j = round(random.uniform(0, 4), 8)
-                    j = (random.uniform(0, 4))
-                    # j=round(j,3)
-                    individual.append(j)
-
-            else:
-                individual.append(i)
-        self.state = [i for i in individual]
-        '''
-        for i in self.state:
-            if i != 0.0:
-                i += 0.1
-         '''
-        #print "move",self.state
-
-    """
 
     def energy(self):
         """Calculates the length of the route."""

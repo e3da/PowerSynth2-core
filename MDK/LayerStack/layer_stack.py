@@ -1,11 +1,8 @@
-import os,sys
-sys.path.append('..')
+import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from collections import OrderedDict
 import csv
-import getpass
-
 
 from mpl_toolkits.mplot3d import Axes3D
 from core.general.material.material import *
@@ -166,21 +163,6 @@ class LayerStack:
         layer.material = material
 
 
-    def plot_layer_3d(self,view = 90): # in progress....
-        fig, ax = plt.subplots()
-
-        for key in self.all_layers_info:
-            layer = self.all_layers_info[key]
-            if view == 0:
-                patch = patches.Rectangle((-layer.width / 2, layer.z_level), layer.width, layer.thick, fill=True,
-                                          edgecolor='black', facecolor=layer.color, linewidth=1, alpha=1)
-                plt.text(0, layer.z_level + layer.thick / 2.0, layer.name)
-            ax.add_patch(patch)
-        if view == 0:
-            plt.xlim(-self.foot_print[0] / 2 - 1, self.foot_print[0] / 2 + 1)
-            plt.ylim(0, self.max_z + 1)
-        plt.show()
-
     def plot_layer_2d(self, view=0):
         '''
 
@@ -248,41 +230,3 @@ class LayerStack:
                 t_conds.append(dev_mat.thermal_cond)
         return t_conds
 
-def test_simple_layer_stack():
-    "This sample shows a flip chip configuration"
-    layer_stack = LayerStack()
-    layer_stack.foot_print=[60,60]
-    layer_stack.add_new_layer(width=60, length=60, thick=2, type='p', color='brown')  # Baseplate
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='gray')  # Solder
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=48, length=48, thick=0.45, type='p', color='blue')  # Isulation
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=48, length=48, thick=0.45, type='p', color='blue')  # Isulation
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=48, length=48, thick=0.45, type='p', color='blue')  # Isulation
-    layer_stack.add_new_layer(width=50, length=50, thick=0.2, type='p', color='orange')  # Copper
-    layer_stack.add_new_layer(width=50, length=50, thick=1, type='a', color='green')  # Active Layer
-
-    layer_stack.plot_layer_2d(view=0)
-
-def test_load_layer_stack_from_csv():
-    """
-    Test file format
-    ID,Name,Width,Length,Thickness,Material,Type
-    1,B1,60,60,6,copper,p
-    2,SA1,40,50,0.08,solder,p
-    3,M1,36,46,0.2,copper,p
-    4,D1,40,50,0.64,Al_N,p
-    5,I1,40,50,0.2,copper,p
-    6,C1,40,50,0.2,None,a
-    """
-    new_layer_stack_file = "/nethome/ialrazi/PS_2_test_Cases/Regression_Test_Suits/Code_Migration_Test/layer_stack.csv"
-    layer_stack = LayerStack(debug=False)
-    layer_stack.import_layer_stack_from_csv(filename=new_layer_stack_file)
-    #print(layer_stack.all_layers_info)
-
-if __name__ == "__main__":
-    test_load_layer_stack_from_csv()
-    #test_load_layer_stack_from_csv()

@@ -16,13 +16,8 @@ import numpy as np
 import multiprocessing
 from multiprocessing import Pool
 
-# OLD TEAM MEMBER CONSTANTs FOR DEBUGING ONLY
-IMAM_path = '/nethome/ialrazi/PS_2_test_Cases/fasthenry'
-QLE_path = '/nethome/qmle/temp_fh'
-
 class FastHenryAPI(CornerStitch_Emodel_API):
-    fh_default = QLE_path # or IMAM_path
-    def __init__(self, layout_obj={}, wire_conn={},ws = fh_default):
+    def __init__(self, layout_obj, wire_conn,ws):
         """
         Inherited to CornerStitch_Emodel_API
         A layout to FastHenry API. This is used to generate FastHenry script for parasitic extraction.

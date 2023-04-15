@@ -1,8 +1,5 @@
 # all constraint graph related data structures are implemented here
 # Author: Imam al Razi (ialrazi@uark.edu)
-import sys
-sys.path.append('..')
-
 import networkx as nx 
 import matplotlib.pyplot as plt
 from collections import defaultdict, deque

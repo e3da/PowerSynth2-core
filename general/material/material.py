@@ -88,13 +88,9 @@ class Material_lib:
         :param fname:
         :return:
         '''
-        if self.mat_lib==[]:
-            print('loading material from csv')
-        else:
-            self.mat_lib=[]
-            print('overwrite material list')
-        print(fname)
-        with open(fname) as csvfile:
+        print('INFO: Load Materials: '+fname)
+        self.mat_lib=[]
+        with open(fname,newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 tm_cond=None

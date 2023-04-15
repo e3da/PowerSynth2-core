@@ -2,9 +2,6 @@ import os
 import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import platform
-#if platform.system() == 'Windows': # Easygui doesnt work on linux, this must be fixed later
-#    import easygui as eg
 
 from collections import OrderedDict
 
@@ -257,48 +254,3 @@ class Part:
             plt.gca().set_aspect('equal', adjustable='box')
             plt.show()
             option = input("Enter option here:")
-
-
-def test_load():
-    dir = "C:\\Users\qmle\Desktop\\New Layout Engine\Component"
-    for file in os.listdir(dir):
-        if file.endswith(".part"):
-            file_dir = os.path.join(dir, file)
-            P = Part(info_file=file_dir)
-            P.load_part()
-def test_setup():
-    dir = "C:\\Users\qmle\Desktop\\New_Layout_Engine\Component"
-    Parts = []
-
-    for file in os.listdir(dir):
-        if file.endswith(".part"):
-            file_dir = os.path.join(dir, file)
-            P = Part(info_file=file_dir)
-            P.load_part()
-            Parts.append(P)
-    NewParts=[]
-    for P in Parts:
-        new_part = copy.deepcopy(P)
-        new_part.name = new_part.raw_name
-        new_part.layout_component_id=1
-        NewParts.append(new_part)
-
-    set_up_pins_connections(NewParts)
-
-def test_rotate():
-    dir = "C:\\Users\ialrazi\Desktop\REU_Data_collection_input"
-    print("type a file name from a list below to select a device:")
-    for file in os.listdir(dir):
-        if file.endswith(".part"):
-            print(file)
-    file =input("Enter file name:")
-    file_dir = os.path.join(dir, file)
-
-    P = Part(info_file=file_dir)
-    P.load_part()
-    P.show_2D()
-
-if __name__ == "__main__":
-    #test_load()
-    test_setup()
-    #test_rotate()

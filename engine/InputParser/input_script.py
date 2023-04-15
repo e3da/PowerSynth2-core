@@ -4,8 +4,6 @@
 from pathlib import Path
 import os
 import re
-import sys
-sys.path.append('..')
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import pandas as pd

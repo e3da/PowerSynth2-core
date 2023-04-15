@@ -1,14 +1,6 @@
 # Get parasitic package here
 import re
-import sys
 import pandas as pd
-cur_path =sys.path[0] # get current path (meaning this file location)
-
-cur_path = cur_path[0:-36] #exclude 
-# print ("cur path",cur_path)
-
-sys.path.append(cur_path)
-# print (sys.path[0])
 # get the 3 fold integral mutual equation.
 #from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind # 
 

@@ -1,7 +1,5 @@
 # Author: Imam Al Razi (ialrazi@uark.edu)
 # Preparing constraints and passing necessary info to call constraint graph generation and evaluation function
-import sys
-sys.path.append('..')
 import math
 import copy
 from core.MDK.Constraint.constraint_up import constraint_name_list, Constraint
