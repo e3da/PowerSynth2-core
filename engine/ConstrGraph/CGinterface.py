@@ -2,7 +2,7 @@
 # Preparing constraints and passing necessary info to call constraint graph generation and evaluation function
 import math
 import copy
-from core.MDK.Constraint.constraint_up import constraint_name_list, Constraint
+from core.MDK.Constraint.constraint import constraint_name_list, Constraint
 from core.engine.ConstrGraph.CGCreation import ConstraintGraph
 
 class CS_Type_Map():

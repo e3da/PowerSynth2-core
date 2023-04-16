@@ -75,7 +75,6 @@ class CornerStitch_Tmodel_API:
             print("INFO: Starting Matlab Engine: "+PSCore.PPSrc)
             self.matlab_engine = matlab.engine.start_matlab()
         self.matlab_engine.cd(PSCore.PPSrc)
-    
 
     def dev_result_table_eval(self, module_data=None,solution=None):
         solution = copy.deepcopy(solution) # Has to add this to prevent some removes functions

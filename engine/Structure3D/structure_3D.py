@@ -1,6 +1,4 @@
 
-
-
 from collections import defaultdict
 import networkx as nx
 import pandas as pd
@@ -18,7 +16,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 from core.APIs.PowerSynth.solution_structures import PSFeature, PSSolution
 from core.MDK.Design.parts import Part
 from core.MDK.Design.Routing_paths import RoutingPath
-from core.MDK.Constraint.constraint_up import constraint_name_list
+from core.MDK.Constraint.constraint import constraint_name_list
 from core.engine.LayoutSolution.color_list import color_list_generator
 from core.engine.LayoutGenAlgos.fixed_floorplan_algorithms_up import solution_eval
 from core.engine.OptAlgoSupport.optimization_algorithm_support import DesignString
