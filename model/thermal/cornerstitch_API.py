@@ -73,7 +73,8 @@ class CornerStitch_Tmodel_API:
 
         if self.matlab_engine is None:
             print("INFO: Starting Matlab Engine: "+settings.PARAPOWER_CODEBASE)
-            self.matlab_engine = matlab.engine.start_matlab("-sd "+settings.PARAPOWER_CODEBASE)
+            self.matlab_engine = matlab.engine.start_matlab()
+        self.matlab_engine.cd(settings.PARAPOWER_CODEBASE)
     
 
     def dev_result_table_eval(self, module_data=None,solution=None):
