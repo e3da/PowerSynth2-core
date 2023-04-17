@@ -417,12 +417,6 @@ class Structure_3D():
             
             cons_df = pd.read_csv(constraint_file) #reading constraint info from csv file.
 
-        elif mode == 99:
-
-            # THIS IS A SPECIAL MODE JUST FOR THE GUI TO BYPASS TAKING INPUT
-            self.save_constraint_table(cons_df=self.constraint_df, file=constraint_file)
-            cons_df = pd.read_csv(constraint_file)
-
         else:
             
 
