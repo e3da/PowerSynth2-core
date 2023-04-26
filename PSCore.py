@@ -1,19 +1,12 @@
-#!/usr/bin/env python
-# This is the main file for the PowerSynth 2 backend with the command line interface (CLI)
-
 import sys, os
-import tempfile
-from core.general.settings import settings
-from core.CmdRun.cmd_interface import Cmd_Handler
 
-import traceback
+import re
+import tempfile
 
 if os.name != 'nt':
     import readline
     readline.parse_and_bind('tab: complete')
     readline.parse_and_bind('set editing-mode vi')
-
-import re
 
 def is_float(element: any) -> bool:
     if element is None: 
@@ -38,22 +31,22 @@ def GetRoot(RootDir=""):
         #default on linux PowerSynth2.0/lib/python3.x/site-packages/core
             RootDir+="/../../../../"
 
-    RootDir = os.path.abspath(RootDir)
+    return os.path.abspath(RootDir)
 
-    settings.MATERIAL_LIB_PATH = os.path.join(RootDir,settings.MATERIAL_LIB_PATH)
-    settings.FASTHENRY_EXE = os.path.join(RootDir,settings.FASTHENRY_EXE)
-    if os.name == 'nt' and not settings.FASTHENRY_EXE.endswith(".exe"):
-        settings.FASTHENRY_EXE+=".exe"
-
-    settings.PARAPOWER_CODEBASE = os.path.join(RootDir,settings.PARAPOWER_CODEBASE)
-    settings.MANUAL = os.path.join(RootDir,settings.MANUAL)
-
-    settings.PSRoot=RootDir
-
-    return settings.PSRoot
-
-class PS2Core:
+class PSEnv():
+    #read-only, set on boot
     PSRoot=GetRoot()
+
+    MatLib = os.path.join(PSRoot,'pkg','MDK','Materials.csv')
+    FHExe = os.path.join(PSRoot,'pkg','bin','fasthenry')
+    if os.name == 'nt' and not FHExe.endswith(".exe"):
+        FHExe+=".exe"
+
+    PPSrc = os.path.join(PSRoot,'pkg','ParaPower')
+    ManPDF = os.path.join(PSRoot,'pkg','man','PowerSynth_v2.0.pdf')
+
+
+class PSCore(PSEnv):
     fulltype={"r": "<readable file>","w": "<writable file>","R": "<readable folder>","W": "<writable folder>","i": "<integer>","f": "<float>","s": "<string>"}
     checkfunc={
         "r": lambda r: os.path.isfile(r) and os.access(r,os.R_OK), 
@@ -76,7 +69,7 @@ class PS2Core:
         fields = answer.split(",")
         checked = []
         for field in fields:
-            if PS2Core.checkfunc[type](field):
+            if PSCore.checkfunc[type](field):
                 checked.append(field)
             else:
                 return 0
@@ -85,11 +78,11 @@ class PS2Core:
         return len(checked)
 
     def __init__(self,MacroScript,TempDir=""):
-        #If TempDir is given, does not remove it on exit
-
+        #Only write to PSWork and PSTemp
         self.MacroScript=os.path.abspath(MacroScript)
         self.PSWork=os.path.dirname(self.MacroScript)
 
+        #If TempDir is given, does not remove it on exit
         try:
             os.makedirs(self.PSWork, exist_ok=True)
 
@@ -102,7 +95,7 @@ class PS2Core:
         except:
             sys.exit(f"ERROR: Work folder {self.PSWork} not writable.")
 
-        print("INFO: Initializing PowerSynth 2")
+        print("INFO: Initializing PowerSynth Core")
         self.cwd = os.getcwd()
         self.cmd = None
 
@@ -113,18 +106,15 @@ class PS2Core:
             self.TempDir=tempfile.TemporaryDirectory()
             self.PSTemp=self.TempDir.name
 
-        settings.PSWork=self.PSWork
-        settings.PSTemp=self.PSTemp
+        print(f"INFO: PowerSynth Root: {self.PSRoot}")
+        print(f"INFO: PowerSynth Work: {self.PSWork}")
+        print(f"INFO: PowerSynth Temp: {self.PSTemp}")
 
-        print(f"INFO: PowerSynth Root: {settings.PSRoot}")
-        print(f"INFO: PowerSynth Work: {settings.PSWork}")
-        print(f"INFO: PowerSynth Temp: {settings.PSTemp}")
+        self.FHDir = os.path.join(self.PSTemp,'FastHenry')
+        self.PPDir = os.path.join(self.PSTemp,'ParaPower')
 
-        settings.FASTHENRY_FOLDER = os.path.join(self.PSTemp,settings.FASTHENRY_FOLDER)
-        settings.PARAPOWER_FOLDER = os.path.join(self.PSTemp,settings.PARAPOWER_FOLDER)
-
-        os.makedirs(settings.FASTHENRY_FOLDER, exist_ok=True)
-        os.makedirs(settings.PARAPOWER_FOLDER, exist_ok=True)
+        os.makedirs(self.FHDir, exist_ok=True)
+        os.makedirs(self.PPDir, exist_ok=True)
 
     def create(self):
         print(f"INFO: New Macro File {self.MacroScript}")
@@ -194,12 +184,12 @@ End_Thermal_Setup.
             answer=""
             type="0"
             count=0
-            while(not PS2Core.check(answer,type,count)):
+            while(not check(answer,type,count)):
                 if result := re.search(r"^(.*)\?([rwRWifs])(\d*)\?", line):
                     head=result.group(1)
                     type=result.group(2)
                     count=int(result.group(3)) if len(result.group(3)) else 1
-                    prompt = head+PS2Core.fulltype[type]+"x"+(str(count) if count else "*")+ "? "
+                    prompt = head+fulltype[type]+"x"+(str(count) if count else "*")+ "? "
                     answer = input(prompt)
                     if nocheck:
                         type="1"
@@ -216,33 +206,4 @@ End_Thermal_Setup.
             ofile.writelines(lines)
 
         print(f"INFO: Macro file {self.MacroScript} generated. You must double check and complete Device_Connection section.")
-
-    def excute(self):
-        print("INFO: Running Macro File "+self.MacroScript)
-
-        self.cmd = Cmd_Handler(debug=False)
-
-        self.cmd.load_macro_file(self.MacroScript)
-
-    def run(self):
-        os.chdir(self.PSWork)
-        try:
-            if self.interactive:
-                self.create()
-            else:
-                self.excute()
-            return 0
-        except Exception:
-            print(traceback.format_exc())
-            print("ERROR: PowerSynth failed to run :(")
-
-        os.chdir(self.cwd)
-        return 1
-
-if __name__ == "__main__":  
-    if len(sys.argv)<2 :
-        sys.exit(f"Usage: {sys.argv[0]} Macrofile(if not exist, run interactive flow) [TempDir]")
-    
-    core=PS2Core(sys.argv[1],sys.argv[2] if len(sys.argv)>2 else "")
-    core.run()
 

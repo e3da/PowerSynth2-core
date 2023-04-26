@@ -1,8 +1,12 @@
-#!/bin/env python
-# This is the layout generation and optimization flow using command line only
 import sys, os
-# Remember to setenv PYTHONPATH yourself.
 import shutil
+import glob
+import copy
+import csv
+import json
+
+from core.PSCore import PSCore
+
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
@@ -12,49 +16,21 @@ from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine
 from core.engine.InputParser.input_script_up import script_translator as script_translator_up
 from core.engine.InputParser.input_script import script_translator as script_translator
 from core.engine.LayoutSolution.database import create_connection, insert_record, create_table
-from core.SolBrowser.cs_solution_handler import pareto_frontiter2D
+from core.CmdRun.cs_solution_handler import pareto_frontiter2D
 from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 from core.engine.Structure3D.structure_3D import Structure_3D
 from core.MDK.LayerStack.layer_stack import LayerStack
+from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
 import matplotlib.pyplot as plt
-import os
-import sys
-import glob
-import copy
-import csv
-from core.general.settings import settings
 
 from matplotlib.figure import Figure
 
-import json
-from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
 
-def read_settings_file(filepath): #reads settings file given by user in the argument
-    if os.path.isfile(filepath): 
-        with open(filepath, 'r') as inputfile:
-            for line in inputfile.readlines():
-                line= line.rstrip()
-                info = line.split(" ")
-                if line == '':
-                    continue
-                if line[0] == "#":
-                    continue
-                if info[0] == "MATERIAL_LIB_PATH:":
-                    settings.MATERIAL_LIB_PATH = os.path.abspath(info[1])
-                if info[0] == "FASTHENRY_FOLDER:":
-                    settings.FASTHENRY_FOLDER = os.path.abspath(info[1])
-                if info[0] == "FASTHENRY_EXE:":
-                    settings.FASTHENRY_EXE = os.path.abspath(info[1])
-                if info[0] == "PARAPOWER_FOLDER:":
-                    settings.PARAPOWER_FOLDER = os.path.abspath(info[1])
-                if info[0] == "PARAPOWER_CODEBASE:":
-                    settings.PARAPOWER_CODEBASE = os.path.abspath(info[1])
-                if info[0] == "MANUAL:":
-                    settings.MANUAL = os.path.abspath(info[1])
         
-        
-class Cmd_Handler: 
-    def __init__(self,debug=False):
+class CmdHandler: 
+    def __init__(self,PSCore,debug=False):
+        #writeable files
+        self.PSCore=PSCore
         # Input files
         self.debug=debug
         self.layout_script = None  # layout file dir
@@ -126,13 +102,6 @@ class Cmd_Handler:
             print (f"ERROR: Cannot clean up directory {dir}")
 
         return os.path.isdir(dir) and os.access(dir, os.W_OK)
-
-    def run_parse(self):
-        if self.macro!=None:
-            self.load_macro_file(self.macro)
-        else:
-            print ("Error, please check your test case")
-            sys.exit()
 
     def load_macro_file(self, file):
         '''
@@ -502,7 +471,7 @@ class Cmd_Handler:
         
         self.e_api_init.set_solver_frequency(self.electrical_models_info['frequency'])
         self.e_api_init.workspace_path = self.model_char_path
-        self.e_api_init.fasthenry_folder= settings.FASTHENRY_FOLDER
+        self.e_api_init.fasthenry_folder= self.PSCore.FHDir 
         e_layer_stack = self.layer_stack # deep-copy so it wont affect the thermal side
         
         self.e_api_init.set_layer_stack(e_layer_stack) # HERE, we can start calling the trace characterization if needed, or just call it from the lib
@@ -779,9 +748,9 @@ class Cmd_Handler:
             else:
                 self.e_api.rs_model = None
         elif self.e_model_choice == 'FastHenry': # For 3D only
-            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=settings.FASTHENRY_FOLDER)
+            self.e_api = FastHenryAPI(layout_obj = self.layout_obj_dict,wire_conn = self.wire_table,ws=self.PSCore.FHDir)
             
-            self.e_api.set_fasthenry_env(settings.FASTHENRY_EXE)
+            self.e_api.set_fasthenry_env(self.PSCore.FHExe)
             
         if self.e_model_choice == 'FastHenry' or self.e_model_choice == "Loop": # These 2 depends on the trace-ori setup to perform the meshing
             if self.layout_ori_file != None:
@@ -810,10 +779,7 @@ class Cmd_Handler:
 
         '''
         self.t_api = CornerStitch_Tmodel_API(comp_dict=self.layout_obj_dict)
-        if settings.PARAPOWER_FOLDER!='':
-            self.t_api.pp_json_path=settings.PARAPOWER_FOLDER
-        else:
-            print("Parapower json folder not found")
+        self.t_api.pp_json_path=self.PSCore.PPDir
         self.t_api.layer_stack=self.layer_stack
         #print("PP_FOLDER",self.t_api.pp_json_path)
         if mode == 'command':
@@ -884,10 +850,6 @@ class Cmd_Handler:
                         arg_dict[cur_flag].append(arguments[i]) 
                 i+=1
             # Process args
-            if "-settings" in arg_dict.keys(): # Special case
-                setting_file = arg_dict['-settings'][0]
-                read_settings_file(setting_file)
-                print("This will change the default settings file location")
             if "-m" in arg_dict.keys(): # - m: macro flag
                 filep = arg_dict['-m'][0]
                 print("Loading macro file")
@@ -1015,7 +977,6 @@ class Cmd_Handler:
             y_label=labels[1]
         
         
-        
         if plot:
             plt.scatter(data_x, data_y)  
             plt.xlim(min(data_x)-2, max(data_x)+2)
@@ -1032,68 +993,5 @@ class Cmd_Handler:
             #plt.show()
             plt.savefig(fig_dir+'/'+'plot_mode-'+str(opt)+'.png')
 
-
-
         if len(self.measures)==2:
             self.find_pareto_dataset(sol_dir,opt,fig_dir,perf_metrices)
-
-class Logger(object):
-    def __init__(self,file_name=None):
-        self.terminal = sys.stdout
-        self.log = open(file_name, "w")
-   
-    def write(self, message):
-        self.terminal.write(message)
-        self.log.write(message)  
-
-    def flush(self):
-        # this flush method is needed for python 3 compatibility.
-        # this handles the flush command by doing nothing.
-        # you might want to specify some extra behavior here.
-        pass    
-
-
-
-
-if __name__ == "__main__":  
-
-    print("----------------------PowerSynth Version 2.0: Command line version------------------")
-    if len(sys.argv)==3:
-        settings_file=os.path.abspath(sys.argv[1])
-        if not os.path.isfile(settings_file):
-            print("Please enter a valid path to the settings.info file\n")
-        macro_script=os.path.abspath(sys.argv[2])
-        if not os.path.isfile(macro_script):
-            print("Please enter a valid path to the macro script\n")
-        cmd = Cmd_Handler(debug=False)
-        args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
-        try:
-            log_file_name=os.path.dirname(macro_script)+'/output.log'
-            sys.stdout = Logger(file_name=log_file_name) 
-        except:
-            pass
-        cmd.cmd_handler_flow(arguments= args)
-        sys.exit(0)
-    else:
-        if len(sys.argv)<3:
-            sys.exit(" Please enter two arguments: 1. Path to the settings file, and 2. Path to the macro script.")
-            
-
-    '''else:
-        while (True):
-            settings_file= input("Please enter the full path to settings.info file: ")
-            if not os.path.isfile(settings_file):
-                print("Please enter a valid path to the settings.info file\n")
-            else:
-                macro_script= input("Please enter the full path to macro_script.txt: ")
-                if not os.path.isfile(macro_script):
-                    print("Please enter a valid path to the macro script\n")
-                else:
-                    cmd = Cmd_Handler(debug=False)
-                    args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
-                    log_file_name=os.path.dirname(macro_script)+'/output.log'
-                    sys.stdout = Logger(file_name=log_file_name) 
-                    cmd.cmd_handler_flow(arguments= args)
-                    break'''
-    
-    

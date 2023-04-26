@@ -3,7 +3,7 @@
 #from PySide.QtGui import QFileDialog
 from time import perf_counter
 
-from core.general.settings import settings
+from core.PSCore import PSCore
 
 from core.APIs.PowerSynth.solution_structures import PSFeature
 from core.MDK.Design.parts import Part
@@ -72,9 +72,9 @@ class CornerStitch_Tmodel_API:
             sys.exit("ERROR: Failed to Start Matlab Engine.")
 
         if self.matlab_engine is None:
-            print("INFO: Starting Matlab Engine: "+settings.PARAPOWER_CODEBASE)
+            print("INFO: Starting Matlab Engine: "+PSCore.PPSrc)
             self.matlab_engine = matlab.engine.start_matlab()
-        self.matlab_engine.cd(settings.PARAPOWER_CODEBASE)
+        self.matlab_engine.cd(PSCore.PPSrc)
     
 
     def dev_result_table_eval(self, module_data=None,solution=None):

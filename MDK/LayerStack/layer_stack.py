@@ -6,7 +6,7 @@ import csv
 
 from mpl_toolkits.mplot3d import Axes3D
 from core.general.material.material import *
-from core.general.settings import settings
+from core.PSCore import PSCore
 
 
 
@@ -73,7 +73,7 @@ class LayerStack:
         self.max_z = 0  # the z level of the highest layer
         self.material_lib = Material_lib()
         if material_path == None:
-            material_path = os.path.abspath(settings.MATERIAL_LIB_PATH)
+            material_path = os.path.abspath(PSCore.MatLib)
 
         #material_path = MATERIAL_LIB_PATH
         self.material_lib.load_csv(material_path) # load the mat_lib from the default directory
