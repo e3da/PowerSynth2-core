@@ -11,7 +11,7 @@ class PS2CLI(PSCore):
     def excute(self):
         print("INFO: Running Macro File "+self.MacroScript)
 
-        self.cmd = CmdHandler(super())
+        self.cmd = CmdHandler(self)
 
         self.cmd.load_macro_file(self.MacroScript)
 
