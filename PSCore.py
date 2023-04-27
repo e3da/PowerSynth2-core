@@ -184,12 +184,12 @@ End_Thermal_Setup.
             answer=""
             type="0"
             count=0
-            while(not check(answer,type,count)):
+            while(not PSCore.check(answer,type,count)):
                 if result := re.search(r"^(.*)\?([rwRWifs])(\d*)\?", line):
                     head=result.group(1)
                     type=result.group(2)
                     count=int(result.group(3)) if len(result.group(3)) else 1
-                    prompt = head+fulltype[type]+"x"+(str(count) if count else "*")+ "? "
+                    prompt = head+PSCore.fulltype[type]+"x"+(str(count) if count else "*")+ "? "
                     answer = input(prompt)
                     if nocheck:
                         type="1"
