@@ -5,7 +5,6 @@ import shutil
 from core.model.electrical.electrical_mdl.cornerstitch_API import CornerStitch_Emodel_API, ElectricalMeasure
 from core.model.thermal.cornerstitch_API import ThermalMeasure
 from core.model.electrical.electrical_mdl.e_fasthenry_eval import FastHenryAPI
-from core.APIs.AnsysEM.AnsysEM_API import AnsysEM_API
 from core.model.thermal.cornerstitch_API import CornerStitch_Tmodel_API
 from core.CmdRun.cmd_layout_handler import generate_optimize_layout,  eval_single_layout, update_PS_solution_data
 from core.engine.OptAlgoSupport.optimization_algorithm_support import new_engine_opt
@@ -25,7 +24,6 @@ import copy
 import csv
 from core.general.settings import settings
 
-import core.GUI.main as main
 from matplotlib.figure import Figure
 
 import json
@@ -76,12 +74,12 @@ def read_settings_file(filepath): #reads settings file given by user in the argu
                 if info[0] == "MANUAL:":
                     settings.MANUAL = os.path.abspath(info[1])
         print ("Settings loaded.")
-        #print ("settings.PARAPOWER_FOLDER",settings.PARAPOWER_FOLDER)
+        
         
 class Cmd_Handler: 
     def __init__(self,debug=False):
         # Input files
-
+        self.debug=debug
         self.layout_script = None  # layout file dir
         self.connectivity_setup = None  # bondwire setup dir
         self.layer_stack_file = None  # layerstack file dir
@@ -136,7 +134,7 @@ class Cmd_Handler:
     def setup_file(self,file):
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
-            print ("file path is wrong, please give another input")
+            print ("macro file path is wrong, please give another input")
             sys.exit()
 
     def run_parse(self):
@@ -332,7 +330,7 @@ class Cmd_Handler:
             self.init_cs_objects(run_option=run_option)
             self.set_up_db() # temp commented1 out
             
-            self.init_export_tasks(self.run_option)
+            #self.init_export_tasks(self.run_option)
 
 
             if self.run_option == 0: # layout generation only, no need initial evaluation
@@ -347,26 +345,25 @@ class Cmd_Handler:
                 self.run_options() # Run options with the initial loop model ready
 
             # Export figures, ANsysEM, Netlist etc.     
-            self.generate_export_files()    
+            #self.generate_export_files()    
 
         else:
             # First check all file path
             check_file = os.path.isfile
             check_dir = os.path.isdir
             if not (check_file(self.layout_script)):
-                print((self.layout_script, "is not a valid file path"))
-            #elif not(check_file(self.connectivity_setup)):
-            #    print((self.connectivity_setup, "is not a valid file path"))
+                print(("{} is not a valid layout geometry script file path".format(self.layout_script)))
+            
             elif not (check_file(self.layer_stack_file)):
-                print((self.layer_stack_file, "is not a valid file path"))
-            #elif not (check_file(self.rs_model_file)):
-            #    print((self.rs_model_file, "is not a valid file path"))
+                print(( "{} is not a valid layer stack file path".format(self.layer_stack_file)))
+            
             elif not (check_dir(self.fig_dir)):
-                print((self.fig_dir, "is not a valid directory"))
+                print(("{} is not a valid Figure directory".format(self.fig_dir)))
             elif not (check_dir(self.db_dir)):
-                print((self.db_dir, "is not a valid directory"))
+                print(( "{} is not a valid Solution directory".format(self.db_dir)))
             elif not(check_file(self.constraint_file)):
-                print((self.constraint_file, "is not a valid file path"))
+                print(( "{} is not a valid file path".format(self.constraint_file)))
+            
             print ("Check your input again ! ")
             
             return proceed
@@ -393,7 +390,6 @@ class Cmd_Handler:
             solution=initial_solutions[i]
             sol=PSSolution(solution_id=solution.index)
             sol.make_solution(mode=-1,cs_solution=solution,module_data=solution.module_data)
-            #plot_solution_structure(sol)
             sol.cs_solution=solution
             PS_solutions.append(sol)
         
@@ -418,10 +414,7 @@ class Cmd_Handler:
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
                                         floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=self.algorithm,num_gen=self.num_gen,dbunit=self.dbunit)
         
-        """self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=layout_mode,rel_cons=self.i_v_constraint,
-                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=num_layouts, seed=seed,
-                                         floor_plan=floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=algorithm,num_gen=num_gen,dbunit=self.dbunit)"""
-
+        
         self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,self.layout_mode,plot = self.plot)
 
 
@@ -480,12 +473,12 @@ class Cmd_Handler:
             try:
                 os.mkdir(self.model_char_path)
             except:
-                #print("Cant make directory for model characterization")
-                x=0
-            else:
-                #deleting existing content in a folder
-                for f in os.listdir(self.model_char_path):
-                    os.remove(os.path.join(self.model_char_path, f))
+                print("Cant make directory for model characterization")
+                cont =False
+        else:
+            #deleting existing content in a folder
+            for f in os.listdir(self.model_char_path):
+                os.remove(os.path.join(self.model_char_path, f))
         # Making Output Dirs for DataBase
         if not(check_dir(self.db_dir)):
             try:
@@ -530,11 +523,7 @@ class Cmd_Handler:
                         ,'main_loops': self.electrical_models_info['main_loops']\
                         ,'multiport': self.electrical_models_info['multiport']   }
             self.setup_electrical(measure_data = e_measure_data)
-            """self.setup_electrical(mode='macro', dev_conn=self.electrical_models_info['device_connections']\
-                ,frequency=self.electrical_models_info['frequency'], meas_data=e_measure_data,\
-                 type = self.electrical_models_info['model_type'], netlist = self.electrical_models_info['netlist'])"""
-    
-    
+            
     def check_main_loops(self):
         if not('main_loops' in self.electrical_models_info):
             # Then source and sink must be provided
@@ -862,12 +851,8 @@ class Cmd_Handler:
             layer.new_engine.rel_cons=self.i_v_constraint
             
             
-            #layer.plot_layout(fig_data=None,fig_dir=self.fig_dir,name=all_layers[i].name,rects=layer.input_rects,dbunit=self.dbunit) # plots initial layout
-            #input()
-            
             layer.plot_init_layout(fig_dir=self.fig_dir,dbunit=self.dbunit) # plotting each layer initial layout
             layer.new_engine.init_layout(input_format=input_info,islands=layer.new_engine.islands,all_cs_types=layer.all_cs_types,all_colors=layer.colors,bondwires=layer.bondwires,flexible=self.flexible,voltage_info=self.structure_3D.voltage_info,current_info=self.structure_3D.current_info,dbunit=self.dbunit) # added bondwires to populate node id information
-            #layer.plot_layout(fig_data=all_layers[i].new_engine.init_data[0],fig_dir=self.fig_dir,name=all_layers[i].name,dbunit=self.dbunit) # plots initial layout
             
             self.wire_table[layer.name]=layer.wire_table # for electrical model
             for comp in layer.all_components:    
@@ -887,10 +872,7 @@ class Cmd_Handler:
             all_colors=['blue','red','green','yellow','pink','violet']
             hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
             for i in range(len(self.structure_3D.layers)):
-                '''alpha=(i)*1/len(self.structure_3D.layers)
-                print(0.9-alpha)
-                if alpha==0:
-                    alpha=0.5'''
+                
                 if i==0:
                     alpha = 0.9
                     #pattern=None
@@ -902,8 +884,7 @@ class Cmd_Handler:
                 all_patches+=patches
 
             self.structure_3D.types_for_all_layers_plot=types_for_all_layers_plot
-            #print(self.structure_3D.types_for_all_layers_plot)
-            #input()
+            
             ax2=plt.subplots()[1]
             for p in all_patches:
                 ax2.add_patch(p)
@@ -923,8 +904,8 @@ class Cmd_Handler:
         self.structure_3D.update_initial_via_objects()
 
         ##------------------------Debugging-----------------------------------------###
-        debug=False
-        if debug:
+        
+        if self.debug:
             print("Plotting 3D layout structure")
             solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
             solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
@@ -944,21 +925,7 @@ class Cmd_Handler:
         self.structure_3D.assign_floorplan_size()
         
 
-        """
-        for node in self.structure_3D.root_node_h.child:
-            node.printNode()
-            if len(node.child)>0:
-                for child in node.child:
-                    print("C")
-                    child.printNode()
-                    if len(child.child)>0:
-                        print("G")
-                        for grand in child.child:
-                            print(grand.id)
-        input()
-        """
-        #self.structure_3D.root_node_h.printNode()
-        #self.structure_3D.root_node_v.printNode()
+        
         
         
     
@@ -997,7 +964,7 @@ class Cmd_Handler:
 
         if type == 'Loop':
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl = 'Loop')
-        if type == 'PowerSynthPEEC': # always being run in init mode to create loop definition
+        if type == 'PEEC': # always being run in init mode to create loop definition
             self.e_api = CornerStitch_Emodel_API(comp_dict=self.layout_obj_dict, wire_conn=self.wire_table,e_mdl='PowerSynthPEEC', netlist = netlist)
             if self.rs_model_file != 'default':
                 self.e_api.load_rs_model(self.rs_model_file)
@@ -1244,34 +1211,7 @@ class Cmd_Handler:
 
 
     def find_pareto_dataset(self,sol_dir=None,opt=None,fig_dir=None,perf_names=None):
-        #print "so",sol_dir
-        """
-        folder_name = sol_dir+'\\'+'Layout_Solutions'
-        if (os.path.exists(folder_name)):
-            all_data = []
-            i = 0
-            for filename in glob.glob(os.path.join(folder_name, '*.csv')):
-                with open(filename) as csvfile:
-                    base_name = os.path.basename(filename)
-                    readCSV = csv.reader(csvfile, delimiter=',')
-                    for row in readCSV:
-                        if row[0] == 'Size':
-                            continue
-                        else:
-                            #print (row, len(row))
-                            if row[0][0] == '[' and len(row)>2:
-                                try:
-                                    data = [base_name, float(row[1]), float(row[2])]
-                                except:
-                                    data = [None, None, None]
-                                all_data.append(data)
-
-                            else:
-                                continue
-                    i += 1
-            # for data in all_data:
-            # print data
-        """
+        
         if opt>0:
             
             for f in os.listdir(sol_dir):
@@ -1325,13 +1265,13 @@ class Cmd_Handler:
                 #print data_y
                 plt.cla()
 
-                '''plt.scatter(data_x, data_y)
+                plt.scatter(data_x, data_y)
 
                 x_label = perf_names[0]
                 y_label = perf_names[1]
 
-                #plt.xlim(min(data_x) - 2, max(data_x) + 2)
-                #plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
+                plt.xlim(min(data_x) - 2, max(data_x) + 2)
+                plt.ylim(min(data_y) - 0.5, max(data_y) + 0.5)
                 # naming the x axis
                 plt.xlabel(x_label)
                 # naming the y axis
@@ -1342,7 +1282,7 @@ class Cmd_Handler:
 
                 # function to show the plot
                 # plt.show()
-                plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')'''
+                plt.savefig(fig_dir + '/' + 'pareto_plot_mode-' + str(opt) + '.png')
 
     
 
@@ -1423,104 +1363,22 @@ class Logger(object):
 
 
 if __name__ == "__main__":  
-    
-    #'''
-    application = main.GUI()
-    application.run()
-
-    sys.exit()
-    '''
-    
-    
 
     print("----------------------PowerSynth Version 2.0: Command line version------------------")
+    while (True):
+        settings_file= input("Please enter the full path to settings.info file: ")
+        if not os.path.isfile(settings_file):
+            print("Please enter a valid path to the settings.info file\n")
+        else:
+            macro_script= input("Please enter the full path to macro_script.txt: ")
+            if not os.path.isfile(macro_script):
+                print("Please enter a valid path to the macro script\n")
+            else:
+                cmd = Cmd_Handler(debug=False)
+                args = ['python','cmd.py','-m',macro_script,'-settings',settings_file]
+                log_file_name=os.path.dirname(macro_script)+'/output.log'
+                sys.stdout = Logger(file_name=log_file_name) 
+                cmd.cmd_handler_flow(arguments= args)
+                break
     
-    cmd = Cmd_Handler(debug=False)
-    print (str(sys.argv))
-    debug = True
-    qmle_nethome = "/nethome/qmle/testcases"
-    imam_nethome="/nethome/ialrazi/PowerSynth_V2/PowerSynth2_Git_Repo/PowerSynth/test"
-    imam_nethome2="/nethome/ialrazi/PS_2_test_Cases/PS2.0_Release_Cases"
-    imam_nethome1 = ""
-    if debug: # you can mannualy add the argument in the list as shown here
-        tc_list = [{qmle_nethome:'Meshing/Planar/Xiaoling_Case_Opt/macro_script.txt'},
-                    {imam_nethome:'2D_Case_1/macro_script.txt'},
-                    {imam_nethome:'2D_Case_2/macro_script.txt'},
-                    {imam_nethome:'2D_Case_3/macro_script.txt'},
-                    {imam_nethome:'2D_Case_3_new/macro_script.txt'},
-                    {imam_nethome:'2D_Case_4/macro_script.txt'},
-                    {imam_nethome:'2D_Case_5/macro_script.txt'},
-                    {imam_nethome:'2D_Case_6/macro_script.txt'},
-                    {imam_nethome:'2D_Case_7/macro_script.txt'},
-                    {imam_nethome:'2D_Case_8/macro_script.txt'},
-                    {imam_nethome:'2D_Case_9/macro_script.txt'},
-                    {imam_nethome:'2D_Case_10/macro_script.txt'},
-                    {imam_nethome:'2D_Case_11_new/macro_script.txt'},
-                    {imam_nethome:'2D_Case_11/macro_script.txt'},
-                    {imam_nethome:'3D_Case_1/macro_script.txt'},
-                    {imam_nethome:'3D_Case_2/macro_script.txt'},
-                    {imam_nethome:'3D_Case_2_new/macro_script.txt'},
-                    {imam_nethome:'3D_Case_3/macro_script.txt'},
-                    {imam_nethome:'3D_Case_3_new/macro_script.txt'},
-                    {imam_nethome:'3D_Case_4_new/macro_script.txt'},
-                    {imam_nethome:'3D_Case_4/macro_script.txt'},
-                    {imam_nethome:'3D_Case_5/macro_script.txt'},
-                    {imam_nethome:'3D_Case_6/macro_script.txt'},
-                    {imam_nethome:'3D_Case_7/macro_script.txt'},
-                    {imam_nethome2:'3D_Case_3/macro_script_new.txt'},
-                    {qmle_nethome:'PS2release/Debug/3D_Case_5/macro_script.txt'},
-                    # Below are testcases with setup to option 0, some corner cases need to be fixed
-                    {qmle_nethome:'PS2release/test/3D_Case_1/macro_script.txt'}, # FH 1.04 nH  -- ParaPower (Pass)
-                    {qmle_nethome:'PS2release/test/3D_Case_2/macro_script.txt'}, # FH 1.12 nH -- ParaPower (Fail)
-                    {qmle_nethome:'PS2release/test/3D_Case_3_new/macro_script.txt'}, # FH  3.62 nH (new)  Para (Pass) # Old script fails
-                    {qmle_nethome:'PS2release/test/3D_Case_3/macro_script.txt'},# FH  3.88 nH (old)  Para (Pass) # Old script fails
-                    {qmle_nethome:'PS2release/test/3D_Case_4/macro_script.txt'}, # FH 1.42 nH Para (Pass)  
-                    {qmle_nethome:'PS2release/test/3D_Case_4_new/macro_script.txt'},  # FH 0.55 nH  Para (Pass)
-                    {qmle_nethome:'PS2release/test/3D_Case_5/macro_script.txt'}, # FH 11 nH (wtf ?) PEEC 2.88 nH Para (Pass)
-                    {qmle_nethome:'PS2release/test/3D_Case_6/macro_script.txt'}, # FH 3.65 nH Para (Pass)
-                    {qmle_nethome:'PS2release/test/3D_Case_7/macro_script.txt'}, # FH (not supported) PEEC 2.37 nH Para (Pass)
-                    {qmle_nethome:'PS2release/test/2D_Case_1/macro_script.txt'}, # 12.8 nH PEEC , resolve dummy trace :) 
-                    {qmle_nethome:'PS2release/test/2D_Case_2/macro_script.txt'}, # 37nH no RS
-                    {qmle_nethome:'PS2release/test/2D_Case_3_new/macro_script.txt'}, # Mesh issue old # Handle spc type based on generic types decided by layout engine
-                    {qmle_nethome:'PS2release/test/2D_Case_4/macro_script.txt'}, # 40 nH ? PD effect
-                    {qmle_nethome:'PS2release/test/2D_Case_5/macro_script.txt'}, # 16.4nH
-                    {qmle_nethome:'PS2release/test/2D_Case_6/macro_script.txt'}, # 16nH
-                    {qmle_nethome:'PS2release/test/2D_Case_7/macro_script.txt'}, # 10.6 nH
-                    {qmle_nethome:'PS2release/test/2D_Case_8/macro_script.txt'}, # 8.3 nH
-                    {qmle_nethome:'PS2release/test/2D_Case_9/macro_script.txt'}, # 22.4 nH (without RS)
-                    {qmle_nethome:'PS2release/test/2D_Case_10/macro_script.txt'}, # Quang 2nd journal, R comp Not supported yet!
-                    {qmle_nethome:'PS2release/test/2D_Case_11/macro_script.txt'}, # Meshing issue ? or the spc issue
-                    {qmle_nethome:'PS2release/test/2D_Case_11_new/macro_script.txt'}] # 9.98 nH
-        for tc in tc_list:
-            print("Case id:", tc_list.index(tc))
-            k = list(tc.keys())[0]
-            v = list(tc.values())[0]
-
-            print("----Test case folder:",k)
-            print("----Test case name:",v)
-
-        sel= int(input("select a test case to run:"))
-        tc = tc_list[sel]
-        k = list(tc.keys())[0]
-        v = list(tc.values())[0]
-        macro_dir = os.path.join(k,v)
-        
-        setting_dir = "/nethome/ialrazi/PS_2_test_Cases/settings_up.info"#os.path.join(k,"settings.info")
-        #setting_dir = "/nethome/qmle/testcases/settings_up.info"
-        print("MACRO DIR:", macro_dir)
-        print("SETTING DIR", setting_dir)
-        # From now all of these testcases serve for recursive test for the inductance model
-        args = ['python','cmd.py','-m',macro_dir,'-settings',setting_dir]
-        
-     
-        log_file_name=os.path.dirname(macro_dir)+'/output.log'
-        #sys.stdout = Logger(file_name=log_file_name)
-        
-        
-        cmd.cmd_handler_flow(arguments= args)
-           
-
-    else:
-        cmd.cmd_handler_flow(arguments=sys.argv) # Default
-
-    '''
+    

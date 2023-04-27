@@ -1,1 +1,0 @@
-# will have a set of Q3D setup in here

@@ -1,6 +1,0 @@
-ID,Name,Origin,Width,Length,Thickness,Material,Type,Electrical
-1,Baseplate,"0,0",60,50,1,copper,p,F
-2,Bottom_Metal,"0,0",50,50,0.2,copper,p,G
-3,Ceramic1,"0,0",50,50,0.64,Al_N,p,D
-4,I1,"0,0",50,50,0.2,copper,p,S
-5,C1,,50,50,0.18,None,a,C

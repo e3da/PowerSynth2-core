@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import operator
 
 from mpl_toolkits.mplot3d import Axes3D
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 
 from multiprocessing import Pool
 

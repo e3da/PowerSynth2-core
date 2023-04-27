@@ -7,7 +7,6 @@ import matplotlib.patches as patches
 import time
 import matplotlib
 import copy
-from PyQt5 import QtCore, QtGui, QtWidgets
 import pandas as pd
 import collections
 import csv

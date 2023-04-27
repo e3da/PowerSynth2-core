@@ -3,8 +3,8 @@ import copy
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import platform
-if platform.system() == 'Windows': # Easygui doesnt work on linux, this must be fixed later
-    import easygui as eg
+#if platform.system() == 'Windows': # Easygui doesnt work on linux, this must be fixed later
+#    import easygui as eg
 
 from collections import OrderedDict
 

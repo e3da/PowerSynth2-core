@@ -13,7 +13,7 @@ print (sys.path[0])
 from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars,bar_ind # 
 
 # Cython implementation:
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 # Python multiproces:
 from core.model.electrical.parasitics.equations import update_mutual_mat_64_py # JIT compoler based
 #from core.model.electrical.visualization.view_matrix import matrix_view_autoscale

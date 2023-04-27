@@ -20,7 +20,7 @@ from scipy.optimize import least_squares
 from scipy.optimize import curve_fit
 import math
 from core.model.electrical.electrical_mdl.e_loop_element import LoopEval,ETrace,form_skd,self_ind_py
-from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval, self_ind
+from core.model.electrical.parasitics.mutual_inductance.mutual_inductance import mutual_mat_eval
 from core.model.electrical.parasitics.mutual_inductance_64 import mutual_between_bars
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LinearRegression
