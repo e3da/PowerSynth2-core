@@ -153,7 +153,7 @@ class CornerStitchSolution():
     
         ax2.set_aspect('equal')
         
-        plt.legend(bbox_to_anchor = (0.8, 1.005))
+        plt.legend(loc='lower left', bbox_to_anchor = (1.005, 0.005))
         plt.savefig(sol_path+'/layout_all_layers_'+str(sol_ind)+'.png', pad_inches = 0, bbox_inches = 'tight')
         
         plt.close()

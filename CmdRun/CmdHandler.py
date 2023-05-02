@@ -697,8 +697,8 @@ class CmdHandler:
         
             ax2.set_aspect('equal')
             if self.fig_dir!=None:
-                plt.legend(bbox_to_anchor = (0.8, 1.005))
-                plt.savefig(self.fig_dir+'/initial_layout_all_layers.png')
+                plt.legend(loc='lower left', bbox_to_anchor = (1.005, 0.005))
+                plt.savefig(self.fig_dir+'/initial_layout_all_layers.png',bbox_inches='tight',pad_inches=0)
             plt.close()
 
         
