@@ -1,4 +1,4 @@
-import sys, os
+import os
 import shutil
 import glob
 import copy
@@ -87,7 +87,7 @@ class CmdHandler:
         self.macro=os.path.abspath(file)
         if not(os.path.isfile(self.macro)):
             print ("macro file path is wrong, please give another input")
-            sys.exit()
+            exit()
 
     def check_file(self,file):
         return os.path.isfile(file) and os.access(file, os.R_OK)
@@ -283,7 +283,7 @@ class CmdHandler:
                             self.electrical_models_info['frequency']= float(info[1])
         except Exception as e:
             print(e)
-            sys.exit("ERROR: Failed to parse macro file.")
+            raise Exception("ERROR: Failed to parse macro file.")
 
 
         if not self.check_input_files(): # only proceed if all input files are good. 

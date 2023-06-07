@@ -425,6 +425,8 @@ class Structure_3D():
 
         # if reliability constraints are available creates two dictionaries to have voltage and current values, where key=layout component id and value=[min voltage,max voltage], value=max current
         if rel_cons != 0:
+            v_end=None
+            c_end=None
             for index, row in cons_df.iterrows():
                 if row[0] == 'Voltage Specification':
                     v_start = index + 2
@@ -433,6 +435,10 @@ class Structure_3D():
                     c_start = index + 2
                 if row[0]=='Voltage Difference':
                     c_end = index-1
+            if c_end is None or v_end is None:
+                raise Exception("ERROR: I-V Constraints Missing in the constraint file.")
+            else:
+                print("INFO: I-V Reliability Contrainsts Enabled.")
             voltage_info = {}
             current_info = {}
             for index, row in cons_df.iterrows():

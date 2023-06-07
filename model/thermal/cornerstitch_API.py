@@ -15,7 +15,6 @@ from numpy import min, max, array, average
 
 import copy
 import numpy as np
-import sys
 
 
 class ThermalMeasure(object):
@@ -70,7 +69,7 @@ class CornerStitch_Tmodel_API:
             import matlab.engine
         except Exception as e:
             print(str(e))
-            sys.exit("ERROR: Failed to Start Matlab Engine.")
+            raise Exception("ERROR: Failed to Start Matlab Engine.")
 
         if self.matlab_engine is None:
             print("INFO: Starting Matlab Engine: "+PSCore.PPSrc)

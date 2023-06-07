@@ -179,7 +179,7 @@ class ParaPowerInterface(object):
 
         if self.matlab_engine == None:
             if matlab_engine == None:
-                sys.exit("Failed to start new MATLAB engine")
+                raise Exception("Failed to start new MATLAB engine")
             else:
                 self.matlab_engine = matlab_engine
         md_json = json.dumps(self.to_dict())
