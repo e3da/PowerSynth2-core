@@ -97,7 +97,7 @@ class NSGAII_Optimizer(object):
         ind = []
         #print("initialization")
         for dv in self.design_vars:
-            random.seed(self.seed)
+            # random.seed(self.seed)
             init0=dv.init_values[0]
             init1=dv.init_values[1]
             ind.append(random.uniform(init0, init1))
