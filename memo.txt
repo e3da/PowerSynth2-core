@@ -1,0 +1,7 @@
+PowerSynth Core: This is the PowerSynth backend with the command line interface (CLI)
+
+Naming scheme:
+Generally, if it is a single short (<10 character) word, use all lower case, like ‘core’ ‘engine’. Use abbreviations if needed, like ‘opt’ (optimization). 
+If it is a long multi-word phase, but it has a common abbreviation, use all caps, like ‘MDK’, ‘NSGAII’. Otherwise, use upper camel case with necessary abbreviations, like ‘ConstrGraph’, ‘AppNote’ (application note, such as Tristan’s API note to ARL). 
+Do not use space and underlines at all times. Do not start a name with a digit (like ‘3DEngine’, make it ‘Engine3D’). Try to limit your file/folder name within 16 characters. 
+

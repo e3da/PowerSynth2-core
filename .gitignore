@@ -1,8 +1,10 @@
 .*
 !/.gitignore
 !/.gitattributes
+!.gitkeep
 !/.project
 !/.pydevproject
-*.pyc
+__pycache__/
+*.py[cod]
 *.va
 *_ui.py
