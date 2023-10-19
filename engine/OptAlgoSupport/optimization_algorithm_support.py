@@ -389,6 +389,23 @@ class new_engine_opt:
                 def number_of_constraints(self) -> int:
                     return 0
 
+                def evaluate(self, solution: FloatSolution) -> FloatSolution:
+
+                    results = new_engine_opt.CostFuncMOPSO(self, solution.variables)
+
+                    solution.objectives[0] = results[0]
+                    solution.objectives[1] = results[1]
+
+                    self.__evaluate_constraints(solution)
+
+                    return solution
+                
+                def __evaluate_constraints(self, solution: FloatSolution) -> None:
+                    
+
+                def name(self):
+                    return "MyProblem"
+
 
         elif self.method == "FMINCON":
 
