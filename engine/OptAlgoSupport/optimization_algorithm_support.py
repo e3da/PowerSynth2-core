@@ -383,6 +383,12 @@ class new_engine_opt:
                     self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
                     self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
 
+                def number_of_objectives(self) -> int:
+                    return len(self.obj_directions)
+
+                def number_of_constraints(self) -> int:
+                    return 0
+
 
         elif self.method == "FMINCON":
 
