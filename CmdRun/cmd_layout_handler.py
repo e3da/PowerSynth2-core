@@ -572,6 +572,20 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 eval_time=opt_problem.eval_time
                 print("Gen_time",runtime)
                 print("Eval",eval_time)
+
+            # Using new algorithm Multi-Objevtive Particle Swarm Optimization (MOPSO)
+            elif: algorithm == 'MOPSO':
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample.get_design_strings()    
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts)
+                opt_problem.num_measure = 2  # number of performance metrics
+                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,Random=False,num_layouts=num_layouts,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,dbunit=dbunit,measure_names=measure_names)
+                PS_solutions=opt_problem.solutions
+                runtime=opt_problem.sol_gen_runtime
+                eval_time=opt_problem.eval_time
+                print("Gen_time",runtime)
+                print("Eval",eval_time)
+                
             else:
                 strt_random=time.time()
                 structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
