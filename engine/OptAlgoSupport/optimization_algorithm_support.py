@@ -228,7 +228,39 @@ class new_engine_opt:
 
         return results
 
+    
+    # Creating Cost function for MOPSO
+    # Inputs: self, individuals (Decision Variables)
+    # OutPuts: Returning the value of Inductance and Max Temperature
+    def CostFuncMOPSO(self, individual):
+        if not (isinstance(individual, list)):
+            individual = np.asarray(individual).tolist()
 
+        start=time.time()
+        self.structure.update_design_strings(individual)
+
+        structure_fixed,cg_interface = recreate_sols(structure=self.structure,cg_interface=self.cg_interface,mode=self.level,Random=False,seed=self.seed,num_layouts=1,floorplan=[self.W,self.H],algorithm=self.method)
+        end=time.time()
+        self.sol_gen_runtime+=(end-start)
+
+        solutions,module_info=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=self.level,num_layouts=1,db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.sol_dir,plot=True,dbunit=self.dbunit,count=self.count)
+  
+        for i in range(len(solutions)):
+            start2=time.time()
+            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+            end2=time.time()
+            self.eval_time+=(end2-start2)
+            solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
+
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+        self.solutions.append(solutions[0])
+
+        self.count += 1
+        self.seed+=1000
+
+        return results
+
+    
     def cost_func1(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
