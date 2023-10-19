@@ -406,7 +406,28 @@ class new_engine_opt:
                 def name(self):
                     return "MyProblem"
 
+            # Setting the algorithm (MOPSO) Parameters
+            nVars = len(self.Design_Vars) # Number of Variables
 
+            problem = MyProblem(nVars, solutions)
+
+            max_evaluations = 20 # Maximum Evaluation
+
+            swarm_size = 4 # Swarm Size
+            mutation_probability = 1.0 / problem.NumberVariables() # Mutation Rate
+            opt = OMOPSO(
+            problem=problem,
+            swarm_size=swarm_size,
+            epsilon=0.005,
+            uniform_mutation=UniformMutation(probability=mutation_probability, perturbation=0.5),
+            non_uniform_mutation=NonUniformMutation(
+                mutation_probability, perturbation=0.5, max_iterations=max_evaluations / swarm_size),
+            leaders=CrowdingDistanceArchive(100),
+            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations)
+                        )
+            
+            opt.run()
+            
         elif self.method == "FMINCON":
 
             
