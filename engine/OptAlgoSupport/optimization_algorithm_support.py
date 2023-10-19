@@ -369,6 +369,21 @@ class new_engine_opt:
             opt.run()
 
 
+
+        elif self.method == 'MOPSO'
+
+            # Defining the Class of Problem
+            class MyProblem(FloatProblem,new_engine_opt):
+
+                def __init__(self, NumberVariables):
+                    super(MyProblem,self).__init__()
+
+                    self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
+                    self.obj_labels = ["Inductance", "Temperature"] # Lables of Cost Functions
+                    self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
+                    self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
+
+
         elif self.method == "FMINCON":
 
             
