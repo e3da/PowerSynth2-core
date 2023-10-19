@@ -3,6 +3,17 @@
 from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
+# Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
+from jmetal.core.problem import FloatProblem, Problem
+from jmetal.core.solution import FloatSolution
+from jmetal.algorithm.multiobjective.smpso import SMPSO
+from jmetal.algorithm.multiobjective.omopso import OMOPSO
+from jmetal.operator import UniformMutation
+from jmetal.operator.mutation import NonUniformMutation
+from jmetal.util.archive import CrowdingDistanceArchive
+from jmetal.util.termination_criterion import StoppingByEvaluations
+
+
 import collections
 import numpy as np
 import random
