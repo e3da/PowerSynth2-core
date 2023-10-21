@@ -375,13 +375,33 @@ class new_engine_opt:
             # Defining the Class of Problem
             class MyProblem(FloatProblem,new_engine_opt):
 
-                def __init__(self, NumberVariables):
+                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions):
                     super(MyProblem,self).__init__()
 
                     self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
                     self.obj_labels = ["Inductance", "Temperature"] # Lables of Cost Functions
                     self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
                     self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
+
+                    self.structure=structure
+                    self.cg_interface=cg_interface
+                    self.W=floorplan[0]
+                    self.H=floorplan[1]
+                    self.db_file=db_file
+                    self.sol_dir=sol_dir
+                    self.fig_dir=fig_dir
+                    self.dbunit=dbunit
+                    self.measure_names=measure_names
+                    self.seed = seed
+                    self.level = level
+                    self.method = method
+                    self.sol_gen_runtime = 0
+                    self.count = 0
+                    self.measures = measures
+                    self.e_api = e_api
+                    self.t_api = t_api
+                    self.eval_time = 0
+                    self.solutions = solutions
 
                 def number_of_objectives(self) -> int:
                     return len(self.obj_directions)
@@ -407,7 +427,7 @@ class new_engine_opt:
                     return "MyProblem"
 
             # Setting the algorithm (MOPSO) Parameters
-            nVars = len(self.Design_Vars) # Number of Variables
+            nVars = len(self.Design_Vars) # Number of Variabless
 
             problem = MyProblem(nVars, solutions)
 
