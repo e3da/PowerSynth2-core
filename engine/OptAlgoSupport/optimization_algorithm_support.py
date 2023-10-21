@@ -436,7 +436,7 @@ class new_engine_opt:
             t_api = self.t_api
             solutions = self.solutions
 
-            problem = MyProblem(nVars, solutions)
+            problem = MyProblem(nVars, seed, levle, method, measures, e_api, t_api,solutions)
 
             max_evaluations = 20 # Maximum Evaluation
 
