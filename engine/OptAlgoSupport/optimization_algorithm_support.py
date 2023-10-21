@@ -427,7 +427,14 @@ class new_engine_opt:
                     return "MyProblem"
 
             # Setting the algorithm (MOPSO) Parameters
-            nVars = len(self.Design_Vars) # Number of Variabless
+            nVars = len(self.Design_Vars) # Number of Variables
+            level = self.level
+            seed = self.seed
+            method = self.method
+            measures = self.measures
+            e_api = self.e_api
+            t_api = self.t_api
+            solutions = self.solutions
 
             problem = MyProblem(nVars, solutions)
 
