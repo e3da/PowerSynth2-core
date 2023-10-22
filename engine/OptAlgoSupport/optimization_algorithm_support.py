@@ -370,7 +370,7 @@ class new_engine_opt:
 
 
 
-        elif self.method == 'MOPSO'
+        elif self.method == 'MOPSO':
 
             # Defining the Class of Problem
             class MyProblem(FloatProblem,new_engine_opt):
