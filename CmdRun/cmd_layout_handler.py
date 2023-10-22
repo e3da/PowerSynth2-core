@@ -574,7 +574,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 print("Eval",eval_time)
 
             # Using new algorithm Multi-Objevtive Particle Swarm Optimization (MOPSO)
-            elif: algorithm == 'MOPSO':
+            elif algorithm == 'MOPSO':
                 structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
                 structure_sample.get_design_strings()    
                 opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts)
