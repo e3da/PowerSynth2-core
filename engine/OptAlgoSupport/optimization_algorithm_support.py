@@ -416,13 +416,8 @@ class new_engine_opt:
                     solution.objectives[0] = results[0]
                     solution.objectives[1] = results[1]
 
-                    self.__evaluate_constraints(solution)
-
                     return solution
                 
-                def __evaluate_constraints(self, solution: FloatSolution) -> None:
-                    
-
                 def name(self):
                     return "MyProblem"
 
@@ -441,7 +436,7 @@ class new_engine_opt:
             max_evaluations = 20 # Maximum Evaluation
 
             swarm_size = 4 # Swarm Size
-            mutation_probability = 1.0 / problem.NumberVariables() # Mutation Rate
+            mutation_probability = 1.0 / problem.number_of_variables() # Mutation Rate
             opt = OMOPSO(
             problem=problem,
             swarm_size=swarm_size,
