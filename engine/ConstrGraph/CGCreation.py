@@ -3361,6 +3361,18 @@ class ConstraintGraph:
         :return: evaluated HCG for N layouts
         """
         #"""
+
+         ID = []
+        flag = False
+        for i in self.hcs_nodes:
+            if i.parent.id == -3:
+                flag = True
+            if i.id >1:
+                for j in i.stitchList:
+                    if j.cell.type == 'Type_1':
+                        ID.append(i.id)
+                        break
+                    
         if level == 2:
             for element in reversed(self.tb_eval_h):
                 
@@ -3427,9 +3439,23 @@ class ConstraintGraph:
                         loc_x[right]=loc_x[end]-ledge_dims[0]
                         
                     seed=seed+count*1000
+
+                    if flag == True:
+                        ID_N1 = [-2, -3]
+                    else:
+                        ID_N1 = [1]
+
+                    if Iteration == 0:
+                        ID_N = ID_N1 + ID
+                    elif Iteration ==1:
+                        ID_N = ID_N1 + ID
+                    elif Iteration == 2:
+                        ID_N = ID_N1 + ID
+                    else:
+                        ID_N = ID_N1 + ID
                    
                     
-                    if element.ID==1 and Random==False and algorithm==None:
+                    if element.ID in ID_N and Random==False and algorithm==None:
                             ds_found=DesignString(node_id=element.ID,direction='hor')
                             self.design_strings_h[element.ID]=ds_found
                     elif Random==False and element.ID in self.design_strings_h and algorithm!=None:
