@@ -383,12 +383,30 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
             connected_graph_eval=False
 
             evaluation_done=False
+            flage = True
+            flag1 = False
+            if ID == -2:
+                flag1 = True
+
             if Random!=None and num_layouts==1 and algorithm==None :
-                if len(longest_path)>0:
-                    Random.longest_paths.append(longest_path)
-                    Random.min_constraints.append(min_constraints)
-                    Random.new_weights.append(0)
-                    
+                if len(longest_path)>2: # For 2D Case len(longest_path)>2:
+                    if flag1:
+                        if ID!=1 and len(longest_path)>3:
+                            flage = False
+
+                        for num in min_constraints: # For 2D Case
+                            if num <0:
+                                flage = False
+
+                    if flage == True:
+                        Random.longest_paths.append(longest_path)
+                        Random.min_constraints.append(min_constraints)
+                        Random.new_weights.append(0)
+                    else:
+                        Random.longest_paths.append([])
+                        Random.min_constraints.append([])
+                        Random.new_weights.append([])
+                
                 else:
                     Random.longest_paths.append([])
                     Random.min_constraints.append([])
