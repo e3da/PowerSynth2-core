@@ -744,7 +744,14 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
     '''
     this function evaluates multiple source and multiple sink graph
     '''
-    
+    if Random!= None:
+        if longest_path in Random.longest_paths:
+            current_path=longest_path
+            current_index=Random.longest_paths.index(current_path)
+                        
+            new_weights = Random.new_weights[current_index]
+            new_weights = np.array(new_weights)
+            
     sources=[]
     sinks=[]
     non_fixed_vertices=[]
