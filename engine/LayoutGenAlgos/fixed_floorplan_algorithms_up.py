@@ -771,7 +771,8 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
     
 
     while(len(non_fixed_vertices)>0):
-        
+
+        index = 0
         
         min_val={}
         for i in sources:
@@ -825,13 +826,48 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
         else:
             if lower_limit < upper_limit:
                 random.seed(seed)
-                max_range=((upper_limit-lower_limit)/total_count)+lower_limit
-                if all_verts[current_vert].coordinate not in locations:
-                    locations[all_verts[current_vert].coordinate]=random.random_integers(low=lower_limit,high=max_range)
+                
+                if algorithm !=None and Random!=None:
+                
+                    if longest_path in Random.longest_paths:
+                        max_range1 = (upper_limit-lower_limit)
+                        sum_new_weights = sum(new_weights)
+                        if sum_new_weights==0:
+                            sum_new_weights=1
+                        norm_new_weights = new_weights[index]/sum_new_weights
+                        evaluation_weight = norm_new_weights*max_range1+lower_limit
+
+                        if all_verts[current_vert].coordinate not in locations:
+                            locations[all_verts[current_vert].coordinate]=evaluation_weight
+                        else:
+                            old_loc=locations[all_verts[current_vert].coordinate]
+                            new_loc=random.random_integers(low=lower_limit,high=max_range)
+                            locations[all_verts[current_vert].coordinate]=max(old_loc,new_loc)
+
+                    else:
+                        max_range=((upper_limit-lower_limit)/total_count)+lower_limit
+
+                    
+                        if all_verts[current_vert].coordinate not in locations:
+                            locations[all_verts[current_vert].coordinate]=random.random_integers(low=lower_limit,high=max_range)
+                        else:
+                            old_loc=locations[all_verts[current_vert].coordinate]
+                            new_loc=random.random_integers(low=lower_limit,high=max_range)
+                            locations[all_verts[current_vert].coordinate]=max(old_loc,new_loc)
+                
                 else:
-                    old_loc=locations[all_verts[current_vert].coordinate]
-                    new_loc=random.random_integers(low=lower_limit,high=max_range)
-                    locations[all_verts[current_vert].coordinate]=max(old_loc,new_loc)
+
+                    max_range=((upper_limit-lower_limit)/total_count)+lower_limit
+
+                    
+                    if all_verts[current_vert].coordinate not in locations:
+                        locations[all_verts[current_vert].coordinate]=random.random_integers(low=lower_limit,high=max_range)
+                        print(locations[all_verts[current_vert].coordinate])
+                    else:
+                        old_loc=locations[all_verts[current_vert].coordinate]
+                        new_loc=random.random_integers(low=lower_limit,high=max_range)
+                        locations[all_verts[current_vert].coordinate]=max(old_loc,new_loc)
+
             else:
                 
                 if all_verts[current_vert].coordinate not in locations:
