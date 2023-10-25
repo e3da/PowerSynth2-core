@@ -444,16 +444,27 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                        
 
                         if longest_distance>0:
+
                             randomization_range=allocated_distance-longest_distance
                             distributed_room=[i for i in Random.min_constraints[current_index]]
                             if randomization_range>0:
-                                #print(Random.new_weights[current_index])
-                                evaluation_weights=[int(i*randomization_range) for i in Random.new_weights[current_index]]
-                                rest_weight=randomization_range-sum(evaluation_weights)
-                                #print(distributed_room,evaluation_weights,randomization_range)
-                                for i in range(len(distributed_room)-1):
-                                    distributed_room[i]+=evaluation_weights[i]
-                                distributed_room[-1]+=rest_weight
+                                print(Random.new_weights[current_index])
+                                
+                                if len(Random.new_weights[current_index])==1:
+                                    evaluation_weights=[int(i*randomization_range) for i in Random.new_weights[current_index]]
+                                    distributed_room+=evaluation_weights 
+
+                                else:
+                                    sum_weights = sum(Random.new_weights[current_index])
+                                    if sum_weights == 0:
+                                        sum_weights = 1
+                                    evaluation_weights=[int(i*randomization_range/sum_weights) for i in Random.new_weights[current_index]]
+                                
+                                    rest_weight=randomization_range-sum(evaluation_weights)
+                                    for i in range(len(distributed_room)):
+                                        distributed_room[i]+=evaluation_weights[i]
+                                    if rest_weight>0:
+                                        distributed_room[-1]-=rest_weight
                                 evaluation_done=True
 
             if evaluation_done==False :
