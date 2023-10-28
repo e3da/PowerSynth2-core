@@ -380,6 +380,7 @@ class new_engine_opt:
 
                     self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
                     self.obj_labels = ["Inductance", "Temperature"] # Lables of Cost Functions
+                    self.SubVars = L # Sub Variables based on hierarchical structure
                     self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
                     self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
 
@@ -445,7 +446,8 @@ class new_engine_opt:
             non_uniform_mutation=NonUniformMutation(
                 mutation_probability, perturbation=0.5, max_iterations=max_evaluations / swarm_size),
             leaders=CrowdingDistanceArchive(100),
-            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations)
+            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
+            SubVars=L,
                         )
             
             opt.run()
