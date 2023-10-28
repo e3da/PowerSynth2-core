@@ -600,9 +600,9 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                     
 
 
-                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII', ,Iteration=i)
 
-                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII', ,Iteration=i)
 
                     
 
