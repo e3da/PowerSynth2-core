@@ -352,10 +352,17 @@ class new_engine_opt:
         
         all_hcg_strings=[]
         all_vcg_strings=[]
+        L=[]
         for list_ in self.structure.hcg_design_strings:
+            l=len(list_)
+            if l>0:
+                L.append(l)
             for element in list_:
                 all_hcg_strings.append(element)
         for list_ in self.structure.vcg_design_strings:
+            l=len(list_)
+            if l>0:
+                L.append(l)
             for element in list_:
                 all_vcg_strings.append(element)
         
