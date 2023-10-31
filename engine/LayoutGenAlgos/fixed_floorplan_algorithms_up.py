@@ -487,7 +487,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
             
                 if connected_graph_eval==True:
                     
-                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID)
+                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID, Random, algorithm)
                     
                     
                     for edge in graph.nx_graph_edges:
@@ -552,7 +552,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
             else:
                 if connected_graph_eval==True:
                     
-                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID)
+                    locations=connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID, Random, algorithm)
                     
 
                     for edge in graph.nx_graph_edges:
@@ -740,7 +740,7 @@ def randomization_room_distributor(randomization_range=0,min_constraints=[],Rand
 
 
 
-def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID=None):
+def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locations,longest_path,ID=None, Random=None, algorithm=None):
     '''
     this function evaluates multiple source and multiple sink graph
     '''
