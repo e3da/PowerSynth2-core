@@ -3353,7 +3353,7 @@ class ConstraintGraph:
                     #return  abs(voltage1['DC']-voltage2['DC'])+abs(voltage1['AC']+voltage2['AC'])
 
 
-    def HcgEval(self, level,Random,seed, N,algorithm,ds=None):
+    def HcgEval(self, level,Random,seed, N,algorithm,Iteration, ds=None):
         """
 
         :param level: mode of operation
@@ -3362,7 +3362,7 @@ class ConstraintGraph:
         """
         #"""
 
-         ID = []
+        ID = []
         flag = False
         for i in self.hcs_nodes:
             if i.parent.id == -3:
@@ -3488,7 +3488,7 @@ class ConstraintGraph:
 
 
     
-    def VcgEval(self, level,Random,seed, N,algorithm,ds=None):
+    def VcgEval(self, level,Random,seed, N,algorithm,Iteration, ds=None):
 
         ID = []
         flag = False
