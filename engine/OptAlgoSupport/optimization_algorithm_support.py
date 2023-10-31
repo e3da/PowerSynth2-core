@@ -454,7 +454,7 @@ class new_engine_opt:
                 mutation_probability, perturbation=0.5, max_iterations=max_evaluations / swarm_size),
             leaders=CrowdingDistanceArchive(100),
             termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
-            SubVars=L,
+            sub_vars=L,
                         )
             
             opt.run()
