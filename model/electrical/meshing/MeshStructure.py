@@ -791,7 +791,7 @@ class EMesh2():
 
                             # print "data collection finished",time.time()-start
 
-    def update_mutual(self, mode=0, lang="Cython"):
+    def update_mutual(self, mode=0, lang="Python"):
         '''
 
         Args:
