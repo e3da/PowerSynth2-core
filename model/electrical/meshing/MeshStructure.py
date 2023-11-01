@@ -15,7 +15,7 @@ from matplotlib import cm
 import matplotlib.lines as lines
 import networkx as nx
 import joblib
-from sklearn.preprocessing import PolynomialFeatures
+#from sklearn.preprocessing import PolynomialFeatures
 
 # PowerCad
 from core.engine.CornerStitch.CSinterface import Rect
@@ -196,7 +196,8 @@ class EMesh(): # rewrite and clean up old EMesh
                         self.comp_net_id[sheet_data.net] = self.node_count
                         self.add_node(cp_node)
                         self.comp_nodes[group].append(cp_node)
-    
+
+#Not used in release package
 class EMesh2():
     # Electrical Meshing for one selected layer
     def __init__(self, hier_E=None, freq=1000, mdl=None,mdl_type = 0):

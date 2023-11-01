@@ -22,7 +22,7 @@ from matplotlib import cm
 import matplotlib as mpl
 from collections import OrderedDict
 import joblib
-from sklearn.preprocessing import PolynomialFeatures
+#from sklearn.preprocessing import PolynomialFeatures
 from core.model.electrical.parasitics.equations import self_ind_py # Trace indcutance for a rectangular bar w,l,t
 from core.model.electrical.parasitics.equations import form_skd,self_imp_py_mat, CalVal2
 
@@ -518,6 +518,7 @@ class EFilament():
                 print ('error',M)
             return M
 
+#Not used in release package
 class LoopEval():
     def __init__(self,name=""):
         self.num_loops = 0
