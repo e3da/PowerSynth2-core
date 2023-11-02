@@ -4,7 +4,7 @@ from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
 # Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
-from core.opt.MOPSO import FloatProblem, Problem, OMOPSO
+from core.opt.MOPSO import FloatProblem, OMOPSO
 from jmetal.core.solution import FloatSolution
 from jmetal.operator import UniformMutation
 from jmetal.operator.mutation import NonUniformMutation
@@ -385,7 +385,7 @@ class new_engine_opt:
 
                     self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
                     self.obj_labels = ["Inductance", "Temperature"] # Lables of Cost Functions
-                    self.SubVars = L # Sub Variables based on hierarchical structure
+                    self.sub_vars = L # Sub Variables based on hierarchical structure
                     self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
                     self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
 
