@@ -448,7 +448,7 @@ def solution_eval(graph_in=None, locations={}, ID=None, Random=None, seed=None, 
                             randomization_range=allocated_distance-longest_distance
                             distributed_room=[i for i in Random.min_constraints[current_index]]
                             if randomization_range>0:
-                                print(Random.new_weights[current_index])
+                                #print(Random.new_weights[current_index])
                                 
                                 if len(Random.new_weights[current_index])==1:
                                     evaluation_weights=[int(i*randomization_range) for i in Random.new_weights[current_index]]
@@ -862,7 +862,7 @@ def connected_graph_evaluation(adj_matrix,sub_graph,graph,source,sink,seed,locat
                     
                     if all_verts[current_vert].coordinate not in locations:
                         locations[all_verts[current_vert].coordinate]=random.random_integers(low=lower_limit,high=max_range)
-                        print(locations[all_verts[current_vert].coordinate])
+                        #print(locations[all_verts[current_vert].coordinate])
                     else:
                         old_loc=locations[all_verts[current_vert].coordinate]
                         new_loc=random.random_integers(low=lower_limit,high=max_range)
