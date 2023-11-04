@@ -439,7 +439,7 @@ class new_engine_opt:
 
             problem = MyProblem(nVars, seed, level, method, measures, e_api, t_api,solutions)
 
-            max_evaluations = 20 # Maximum Evaluation
+            max_evaluations = self.num_gen # Maximum Evaluation
 
             swarm_size = 4 # Swarm Size
             mutation_probability = 1.0 / problem.number_of_variables() # Mutation Rate
