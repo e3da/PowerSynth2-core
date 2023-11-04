@@ -34,7 +34,7 @@ class DesignVar(object):
 
 class NSGAII_Optimizer(object):
     def __init__(self, design_vars, eval_fn, num_measures, seed, num_gen, 
-                 mu = 40, ilambda=10, cxpb=0.8, mutpb=0.2): #sxm original values; cxpb=0.5, mutpb=0.2
+                 mu = 50, ilambda=10, cxpb=0.8, mutpb=0.2): #sxm original values; cxpb=0.5, mutpb=0.2
         """
         http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=996017&tag=1
         Creates a new NSGAII_Optimizer object
