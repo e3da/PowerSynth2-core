@@ -44,7 +44,7 @@ class PSEnv():
     if os.name == 'nt' and not FHExe.endswith(".exe"):
         FHExe+=".exe"
 
-    PPSrc = os.path.join(PSRoot,'pkg','ParaPower')
+    PPSrc = os.path.join(PSRoot,'pkg','lib','ParaPower')
     ManPDF = os.path.join(PSRoot,'pkg','man',f'PowerSynth_v{PSVers}.pdf')
 
 
