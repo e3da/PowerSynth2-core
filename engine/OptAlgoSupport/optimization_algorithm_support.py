@@ -374,7 +374,8 @@ class new_engine_opt:
             
             
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
-                                   num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen)
+                                   num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen,
+                                   NumPop=self.NumPop, CrossProb=self.CrossProb, MutaProb=self.MutaProb)
             opt.run()
 
 
