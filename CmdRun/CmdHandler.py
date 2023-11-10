@@ -120,6 +120,10 @@ class CmdHandler:
         self.seed = None
         self.algorithm = None
         self.num_gen=None
+        self.NumPop = None # number of initial population for NSGAII and MOPSO
+        self.CrossProb = None # the crossover probablity for NSGAII
+        self.MutaProb = None # the mutation probality for NSGAII and MOPSO
+        self.Epsilon = None # the epsilon value for MOPSO
         
         try:
             with open(file, 'r') as inputfile:
@@ -179,6 +183,14 @@ class CmdHandler:
                         self.seed = int(info[1])
                     if info[0] == "Optimization_Algorithm:":  # engine option
                         self.algorithm = info[1]
+                    if info[0] == "Num_of_init_population:":  # engine option crossover probability
+                        self.NumPop = int(info[1])
+                    if info[0] == "crossover_probability:":  # engine option 
+                        self.CrossProb = float(info[1])
+                    if info[0] == "mutaion_probability:":  # engine option 
+                        self.MutaProb = float(info[1])
+                    if info[0] == "epsilon:":  # engine option 
+                        self.Epsilon = float(info[1])
                     if info[0] == "Layout_Mode:":  # engine option
                         self.layout_mode = int(info[1])
                     if info[0] == "Floor_plan:":
