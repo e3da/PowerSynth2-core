@@ -18,8 +18,8 @@ from pykrige.ok import OrdinaryKriging as ok
 from pykrige.uk import UniversalKriging as uk
 from scipy.interpolate import *
 from scipy.optimize import curve_fit,least_squares
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.svm import SVR
+#from sklearn.kernel_ridge import KernelRidge
+#from sklearn.svm import SVR
 
 from core.general.settings.Error_messages import InputError, Notifier
 from core.model.electrical.parasitics.mdl_compare import f_ms,trace_inductance
@@ -459,6 +459,9 @@ class RS_model:
             the model in this case will be the set of optimized parameters
         '''
 
+        '''
+        #Not supported in release pacakge
+        
         if mode=='SVR': # test all possible model and pick the one with highest accuracy
             kernel=['linear']
             best_score=[0 for i in range(len(self.input))]
@@ -505,8 +508,9 @@ class RS_model:
                 
                 self.model[i] = KernelRidge(alpha=best_alpha[i], kernel=best_kernel[i])
                 self.model[i].fit(self.DOE,self.input[i])
+        '''
 
-        elif mode=='OrKrigg':
+        if mode=='OrKrigg':
             variogram=['linear','power','gaussian','spherical','exponential']
             #variogram = ['power']
 
