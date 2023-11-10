@@ -25,7 +25,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100, NumPop=None, CrossProb=None, MutaProb=None, Epsilon=None):
         
         self.count = 0
         self.layout_data = []
@@ -39,6 +39,10 @@ class new_engine_opt:
         self.seed = seed
         self.level = level
         self.num_gen = num_gen
+        self.NumPop = NumPop
+        self.CrossProb=CrossProb
+        self.MutaProb=MutaProb
+        self.Epsilon=Epsilon
         # number of evaluation
         self.num_measure = 2
         # Sim Anneal
