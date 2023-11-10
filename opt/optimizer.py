@@ -57,7 +57,7 @@ class NSGAII_Optimizer(object):
         self.eval_fn = eval_fn
         self.num_measures = num_measures
         self.seed = seed
-        self.num_gen = int((num_gen - mu)/ilambda)
+        self.num_gen = int((num_gen - NumPop)/ilambda)
         
         self.mu = NumPop
         self.ilambda = ilambda
