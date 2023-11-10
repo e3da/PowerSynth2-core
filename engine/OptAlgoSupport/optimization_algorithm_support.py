@@ -445,12 +445,12 @@ class new_engine_opt:
 
             max_evaluations = self.num_gen # Maximum Evaluation
 
-            swarm_size = 50 # Swarm Size
-            mutation_probability = 1.0 / problem.number_of_variables() # Mutation Rate
+            swarm_size = self.NumPop # Swarm Size
+            mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
             opt = OMOPSO(
             problem=problem,
             swarm_size=swarm_size,
-            epsilon=0.005,
+            epsilon=self.Epsilon,
             uniform_mutation=UniformMutation(probability=mutation_probability, perturbation=0.5),
             non_uniform_mutation=NonUniformMutation(
                 mutation_probability, perturbation=0.5, max_iterations=max_evaluations / swarm_size),
