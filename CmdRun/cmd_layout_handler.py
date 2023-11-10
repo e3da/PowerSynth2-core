@@ -217,7 +217,7 @@ def get_dims(floor_plan = None,dbunit=1000): # for step-by-step approach
 
 
 def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None, dbunit=1000):
+                             num_layouts = None,num_gen= None , NumPop=None, CrossProb=None, MutaProb=None, Epsilon=None, num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None, dbunit=1000):
     '''
 
     :param structure: 3D structure object
@@ -238,6 +238,10 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     :param algorithm str -- type of algorithm NG-RANDOM,NSGAII,WS,SA
     :param num_layouts int -- provide a number of layouts used in NG RANDOM and WS(macro mode)
     :param num_gen int -- provide a number of generations used in NSGAII (macro mode)
+    :param NumPop int -- provide a number of initial population used in NSGAII and MOPSO (macro mode)
+    :param CrossProb float -- provide a crossover probality used in NSGAII (macro mode)
+    :param MutaProb float -- provide a crossover probality used in NSGAII and MOPSO (macro mode)
+    :param Epsilo float -- provide a Epsilon value used in MOPSO (macro mode)
     :param num_disc -- provide a number for intervals to create weights for objectives WS (macro mode)
     :param max_temp -- provide a max temp param for SA (macro mode)
     :return: list of CornerStitch Solution objects
@@ -564,7 +568,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             if algorithm=='NSGAII':
                 structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts, NumPop=NumPop, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,Random=False,num_layouts=num_layouts,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,dbunit=dbunit,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
@@ -577,7 +581,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             elif algorithm == 'MOPSO':
                 structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_gen=num_layouts ,NumPop=NumPop, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,Random=False,num_layouts=num_layouts,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,dbunit=dbunit,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
