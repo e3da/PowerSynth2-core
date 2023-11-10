@@ -1601,8 +1601,11 @@ class Structure_3D():
             normalized_vcg_new_weights_.append(new_weights)
 
 
-        normalized_hcg_new_weights=copy.deepcopy(normalized_hcg_new_weights_)
-        normalized_vcg_new_weights=copy.deepcopy(normalized_vcg_new_weights_)
+        #normalized_hcg_new_weights=copy.deepcopy(normalized_hcg_new_weights_)
+        #normalized_vcg_new_weights=copy.deepcopy(normalized_vcg_new_weights_)
+
+        normalized_hcg_new_weights=copy.deepcopy(hcg_new_weights)
+        normalized_vcg_new_weights=copy.deepcopy(vcg_new_weights)
      
         #update new_weights in design string objects
         if self.via_connected_layer_info!=None:
@@ -1640,22 +1643,42 @@ class Structure_3D():
                             new_weight=normalized_vcg_new_weights.pop(0)
 
                             node.design_strings[0].new_weights[i]=new_weight
-                        
 
-           
+            
+            sub_root=sub_root_node_list # root of each via connected layes subtree
             for i in range(len(self.layers)):
-               
-                ds_=self.layers[i].forward_cg.design_strings_h[1]
-                for i in range(len(ds_.min_constraints)):
-                    new_weight=normalized_hcg_new_weights.pop(0)
-                    ds_.new_weights[i]=new_weight
-                
-            for i in range(len(self.layers)):
-                dsv=self.layers[i].forward_cg.design_strings_v[1]
-                for i in range(len(dsv.min_constraints)):
-                    new_weight=normalized_vcg_new_weights.pop(0)
-                    dsv.new_weights[i]=new_weight
-               
+                if self.layers[i].new_engine.Htree.hNodeList[0].parent==sub_root[0] and self.layers[i].new_engine.Vtree.vNodeList[0].parent==sub_root[1]:
+
+                    
+                    for id in sorted(self.layers[i].forward_cg.design_strings_h.keys()):
+                        
+                      if id in self.layers[i].forward_cg.design_strings_h:
+                            ds_=self.layers[i].forward_cg.design_strings_h[id]
+                            if len(ds_.min_constraints)==0:
+                                
+                                continue
+                            else:
+                                for j in range(len(ds_.min_constraints)):
+
+                                    new_weight=normalized_hcg_new_weights.pop(0)
+ 
+                                    ds_.new_weights[j]=new_weight
+                                    
+                                
+                    #VCG
+                    for id in sorted(self.layers[i].forward_cg.design_strings_v.keys()):
+                        
+                        if id in self.layers[i].forward_cg.design_strings_v:
+                            dsv=self.layers[i].forward_cg.design_strings_v[id]
+
+                            
+                            if len(dsv.min_constraints)==0:
+                                
+                                continue
+                            else:
+                                for j in range(len(dsv.min_constraints)):
+                                    new_weight=normalized_vcg_new_weights.pop(0)
+                                    dsv.new_weights[j]=new_weight 
             
 
 

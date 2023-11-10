@@ -120,6 +120,10 @@ class CmdHandler:
         self.seed = None
         self.algorithm = None
         self.num_gen=None
+        self.NumPop = None # number of initial population for NSGAII and MOPSO
+        self.CrossProb = None # the crossover probablity for NSGAII
+        self.MutaProb = None # the mutation probality for NSGAII and MOPSO
+        self.Epsilon = None # the epsilon value for MOPSO
         
         try:
             with open(file, 'r') as inputfile:
@@ -179,6 +183,14 @@ class CmdHandler:
                         self.seed = int(info[1])
                     if info[0] == "Optimization_Algorithm:":  # engine option
                         self.algorithm = info[1]
+                    if info[0] == "Num_of_init_population:":  # engine option crossover probability
+                        self.NumPop = int(info[1])
+                    if info[0] == "crossover_probability:":  # engine option 
+                        self.CrossProb = float(info[1])
+                    if info[0] == "mutaion_probability:":  # engine option 
+                        self.MutaProb = float(info[1])
+                    if info[0] == "epsilon:":  # engine option 
+                        self.Epsilon = float(info[1])
                     if info[0] == "Layout_Mode:":  # engine option
                         self.layout_mode = int(info[1])
                     if info[0] == "Floor_plan:":
@@ -364,7 +376,8 @@ class CmdHandler:
         '''
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
-                                        floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=self.algorithm,num_gen=self.num_gen,dbunit=self.dbunit)
+                                        floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=self.algorithm,num_gen=self.num_gen,
+                                        NumPop=self.NumPop, CrossProb=self.CrossProb, MutaProb=self.MutaProb, Epsilon=self.Epsilon, dbunit=self.dbunit)
         
         
         self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,self.layout_mode,plot = self.plot)

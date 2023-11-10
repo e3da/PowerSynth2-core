@@ -34,7 +34,7 @@ class DesignVar(object):
 
 class NSGAII_Optimizer(object):
     def __init__(self, design_vars, eval_fn, num_measures, seed, num_gen, 
-                 mu = 40, ilambda=10, cxpb=0.7, mutpb=0.2): #sxm original values; cxpb=0.5, mutpb=0.2
+                  NumPop, CrossProb, MutaProb, ilambda=10): #sxm original values; cxpb=0.5, mutpb=0.2
         """
         http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=996017&tag=1
         Creates a new NSGAII_Optimizer object
@@ -57,12 +57,12 @@ class NSGAII_Optimizer(object):
         self.eval_fn = eval_fn
         self.num_measures = num_measures
         self.seed = seed
-        self.num_gen = num_gen
+        self.num_gen = int((num_gen - NumPop)/ilambda)
         
-        self.mu = mu
+        self.mu = NumPop
         self.ilambda = ilambda
-        self.cxpb = cxpb
-        self.mutpb = mutpb
+        self.cxpb = CrossProb
+        self.mutpb = MutaProb
         random.seed(self.seed)
         nprandom.seed(self.seed)
 
@@ -97,7 +97,7 @@ class NSGAII_Optimizer(object):
         ind = []
         #print("initialization")
         for dv in self.design_vars:
-            random.seed(self.seed)
+            # random.seed(self.seed)
             init0=dv.init_values[0]
             init1=dv.init_values[1]
             ind.append(random.uniform(init0, init1))
