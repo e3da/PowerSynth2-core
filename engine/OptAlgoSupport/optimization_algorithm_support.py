@@ -25,7 +25,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100, NumPop=None, CrossProb=None, MutaProb=None, Epsilon=None):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_layouts=100,num_gen=10, CrossProb=None, MutaProb=None, Epsilon=None):
         
         self.count = 0
         self.layout_data = []
@@ -38,8 +38,8 @@ class new_engine_opt:
         self.method = method
         self.seed = seed
         self.level = level
+        self.num_layouts = num_layouts
         self.num_gen = num_gen
-        self.NumPop = NumPop
         self.CrossProb=CrossProb
         self.MutaProb=MutaProb
         self.Epsilon=Epsilon
@@ -374,8 +374,8 @@ class new_engine_opt:
             
             
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
-                                   num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen,
-                                   NumPop=self.NumPop, CrossProb=self.CrossProb, MutaProb=self.MutaProb)
+                                   num_measures=self.num_measure, seed=self.seed, num_layouts=self.num_layouts, num_gen=self.num_gen,
+                                   CrossProb=self.CrossProb, MutaProb=self.MutaProb)
             opt.run()
 
 
@@ -444,9 +444,9 @@ class new_engine_opt:
 
             problem = MyProblem(nVars, seed, level, method, measures, e_api, t_api,solutions)
 
-            max_evaluations = self.num_gen # Maximum Evaluation
+            max_evaluations = self.num_layouts # Maximum Evaluation
 
-            swarm_size = self.NumPop # Swarm Size
+            swarm_size =  int(num_layouts/num_gen) # Swarm Size
             mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
             opt = OMOPSO(
             problem=problem,
@@ -462,15 +462,6 @@ class new_engine_opt:
             
             opt.run()
             
-        elif self.method == "FMINCON":
-
-            
-            opt = Matlab_weighted_sum_fmincon(len(Design_Vars), self.cost_func_fmincon, num_measures=self.num_measure,
-                                              num_gen=self.num_gen, num_disc=self.num_disc,
-                                              matlab_dir=os.path.abspath("../../../MATLAB"), individual=None)
-            opt.run()
-            
-
         elif self.method == "SA":
 
             # start = timeit.default_timer()

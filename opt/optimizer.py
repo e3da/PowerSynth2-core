@@ -33,8 +33,8 @@ class DesignVar(object):
         self.init_values = init_values     
 
 class NSGAII_Optimizer(object):
-    def __init__(self, design_vars, eval_fn, num_measures, seed, num_gen, 
-                  NumPop, CrossProb, MutaProb, ilambda=10): #sxm original values; cxpb=0.5, mutpb=0.2
+    def __init__(self, design_vars, eval_fn, num_measures, seed, num_layouts, num_gen,
+                  CrossProb, MutaProb):
         """
         http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=996017&tag=1
         Creates a new NSGAII_Optimizer object
@@ -57,10 +57,10 @@ class NSGAII_Optimizer(object):
         self.eval_fn = eval_fn
         self.num_measures = num_measures
         self.seed = seed
-        self.num_gen = int((num_gen - NumPop)/ilambda)
+        self.num_layouts = num_layouts
+        self.num_gen = num_gen
         
-        self.mu = NumPop
-        self.ilambda = ilambda
+        self.mu = int(num_layouts/num_gen)
         self.cxpb = CrossProb
         self.mutpb = MutaProb
         random.seed(self.seed)
@@ -106,7 +106,7 @@ class NSGAII_Optimizer(object):
     def run(self):
         """Runs the optimizer"""
         algorithms.eaMuPlusLambda(self.population, self.toolbox, 
-                                  mu=self.mu, lambda_=self.ilambda, 
+                                  mu=self.mu, lambda_=self.mu*2, 
                                   cxpb=self.cxpb, mutpb=self.mutpb, ngen=self.num_gen, 
                                   stats=self.stats, halloffame=self.solutions, verbose=False)
         
