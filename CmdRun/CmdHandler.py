@@ -72,7 +72,7 @@ class CmdHandler:
         self.thermal_mode = None
         self.electrical_mode = None
         self.export_ansys_em = None
-        self.num_gen = 0
+        self.num_gen = 1
         self.export_task = []
         self.export_ansys_em_info = {}
         self.thermal_models_info = {}
@@ -119,7 +119,7 @@ class CmdHandler:
         self.num_layouts = None
         self.seed = None
         self.algorithm = None
-        self.num_gen=None
+        self.num_gen=1
         self.CrossProb = None # the crossover probablity for NSGAII
         self.MutaProb = None # the mutation probality for NSGAII and MOPSO
         self.Epsilon = None # the epsilon value for MOPSO
@@ -816,64 +816,6 @@ class CmdHandler:
         if self.e_api!= None:
             self.setup_electrical()
 
-    def cmd_handler_flow(self, arguments =[]):
-        if len(arguments) <= 1: # Turn on simple user interface mode
-            print("This is the command line mode for PowerSynth layout optimization")
-            print("Type -m [macro file] to run a macro file")
-            print("Type -f to go through a step by step flow")
-            print("Type -quit to quit")
-
-            cont = True
-            while (cont):
-                mode = input("Enter command here")
-                if mode == '-quit':
-                    cont = False
-                elif mode[0:2] == '-m':
-                    m, filep = mode.split(" ")
-                    filep = os.path.abspath(filep)
-                    #print (filep)
-                    if os.path.isfile(filep):
-                        # macro file exists
-                        filename = os.path.basename(filep)
-                        checked = self.load_macro_file(filep)
-                        if not (checked):
-                            continue
-                    else:
-                        print("wrong macro file format or wrong directory, please try again !")
-                else:
-                    print("Wrong Input, please double check and try again !")
-        else: # Real CMD mode
-            arg_dict = {"temp":[]}
-            i = 0
-            #print (arguments)
-            cur_flag = "temp"
-            while i < len(arguments): # Read through a list of arguments and build a table 
-                #print(i,arguments[i])    
-                if i == 0: # cmd.py 
-                    i+=1
-                    continue
-                else:
-                    if arguments[i][0] == '-':
-                        cur_flag = arguments[i]
-                        arg_dict[cur_flag] = []
-                    else: # keep adding the arg_val until next flag 
-                        arg_dict[cur_flag].append(arguments[i]) 
-                i+=1
-            # Process args
-            if "-m" in arg_dict.keys(): # - m: macro flag
-                filep = arg_dict['-m'][0]
-                print("Loading macro file")
-                filep = os.path.abspath(filep)
-                #print (filep)
-                if os.path.isfile(filep):
-                    # macro file exists
-                    filename = os.path.basename(filep)
-                    checked = self.load_macro_file(filep)
-                else:
-                    print("wrong macro file format or wrong directory, please try again !")
-                    quit()
-            if '-help' in arg_dict.keys():
-                print("This is PowerSynth cmd mode, more flags will be added in the future")
                 
     def find_pareto_dataset(self,sol_dir=None,opt=None,fig_dir=None,perf_names=None):
         
