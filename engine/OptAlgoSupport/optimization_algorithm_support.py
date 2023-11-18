@@ -692,7 +692,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         if not os.path.exists(sol_path):
             os.makedirs(sol_path)
         for solution in Solutions:
-            print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
+            #print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
             for i in range(len(solution.layer_solutions)):
 
                 size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]

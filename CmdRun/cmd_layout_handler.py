@@ -258,6 +258,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     else:
         measure_names=["perf_1","perf_2"]
 
+    start=time.time()
     if mode == 0: # Minimum-sized layout generation
         
         structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
@@ -563,7 +564,6 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         
         
         if optimization == True:
-            start=time.time()
             if algorithm=='NSGAII':
                 structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
                 structure_sample.get_design_strings()    
@@ -571,10 +571,6 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
-                runtime=opt_problem.sol_gen_runtime
-                eval_time=opt_problem.eval_time
-                print("Gen_time",runtime)
-                print("Eval",eval_time)
 
             # Using new algorithm Multi-Objevtive Particle Swarm Optimization (MOPSO)
             elif algorithm == 'MOPSO':
@@ -584,38 +580,23 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
-                runtime=opt_problem.sol_gen_runtime
-                eval_time=opt_problem.eval_time
-                print("Gen_time",runtime)
-                print("Eval",eval_time)
                 
             else:
-                strt_random=time.time()
+                #layout generation
                 structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
-                end_random=time.time()-start
                 PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)
                 opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-                start_random_eval=time.time()
+                #layout evaluation
                 Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
-                end_random_eval=time.time()-start_random_eval
-                print("Eval",end_random_eval)
-                print("Random_generation",end_random)
-                
-        
-            
-                
 
         else:
             #layout generation only 
-            start=time.time()
             structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
             PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)      
             for solution in PS_solutions:
                 solution.parameters={'Perf_1':None,'Perf_2':None}
-                
-            end=time.time()
-            gen_time=end-start
-        
+
+        print(f"INFO: Total Optimization Runtime {time.time()-start:.2f}s")
         return PS_solutions
 
 
