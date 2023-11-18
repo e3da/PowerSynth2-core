@@ -60,7 +60,7 @@ class NSGAII_Optimizer(object):
         self.num_layouts = num_layouts
         self.num_gen = num_gen
         
-        self.mu = int(num_layouts/num_gen)
+        self.mu = int(num_layouts/(1+2*num_gen))
         self.cxpb = CrossProb
         self.mutpb = MutaProb
         random.seed(self.seed)

@@ -325,7 +325,7 @@ class new_engine_opt:
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
 
-        print(f"INFO: Using {self.method} algorithm with {self.num_layouts} layouts and {self.num_gen} generations.")
+        print(f"INFO: Using {self.method} algorithm to synthesize {self.num_layouts} designs in {self.num_gen} optimization iterations.")
         if self.method == "NSGAII":
             
             
@@ -402,7 +402,7 @@ class new_engine_opt:
 
             max_evaluations = self.num_layouts # Maximum Evaluation
 
-            swarm_size =  int(self.num_layouts/self.num_gen) # Swarm Size
+            swarm_size =  int(self.num_layouts/(1+self.num_gen)) # Swarm Size
             mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
             opt = OMOPSO(
             problem=problem,
