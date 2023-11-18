@@ -325,7 +325,7 @@ class new_engine_opt:
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
 
-        print("INFO: Using {self.method} algorithm with {self.num_layouts} layouts and {self.num_gen} generations.")
+        print(f"INFO: Using {self.method} algorithm with {self.num_layouts} layouts and {self.num_gen} generations.")
         if self.method == "NSGAII":
             
             
@@ -410,7 +410,7 @@ class new_engine_opt:
             epsilon=self.Epsilon,
             uniform_mutation=UniformMutation(probability=mutation_probability, perturbation=0.5),
             non_uniform_mutation=NonUniformMutation(
-                mutation_probability, perturbation=0.5, max_iterations=num_gen),
+                mutation_probability, perturbation=0.5, max_iterations=self.num_gen),
             leaders=CrowdingDistanceArchive(100),
             termination_criterion=StoppingByEvaluations(max_evaluations=self.num_layouts),
             sub_vars=L,

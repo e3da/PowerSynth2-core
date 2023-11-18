@@ -569,7 +569,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 structure_sample.get_design_strings()    
                 opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
                 opt_problem.num_measure = 2  # number of performance metrics
-                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floor_plan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
+                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
                 runtime=opt_problem.sol_gen_runtime
                 eval_time=opt_problem.eval_time
@@ -582,7 +582,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 structure_sample.get_design_strings()    
                 opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
                 opt_problem.num_measure = 2  # number of performance metrics
-                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floor_plan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
+                opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
                 runtime=opt_problem.sol_gen_runtime
                 eval_time=opt_problem.eval_time
