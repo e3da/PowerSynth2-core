@@ -5,9 +5,9 @@
 import random
 
 from typing import Generic, List, TypeVar, Optional
-from jmetal.core.problem import Problem as Problem_base
-from jmetal.core.problem import FloatProblem as FloatProblem_base
-from jmetal.algorithm.multiobjective.omopso import OMOPSO as OMOPSO_base
+from jmetal.core.problem import Problem
+from jmetal.core.problem import FloatProblem
+from jmetal.algorithm.multiobjective.omopso import OMOPSO
 from jmetal.core.solution import (
     BinarySolution,
     FloatSolution,
@@ -21,18 +21,9 @@ from jmetal.util.termination_criterion import TerminationCriterion
 from jmetal.config import store
 from jmetal.util.evaluator import Evaluator
 from jmetal.util.generator import Generator
-
-
-# add a propertie (sub_vars) to problem_base class
-class Problem(Problem_base):
-    def __init__(self, sub_vars):
-        super().__init__()
-        self.sub_vars: List[int] = []
-        
-        
-        
-# modify the create solutiom method in FloatProblem_base class
-class FloatProblem(FloatProblem_base):
+     
+# modify the create solutiom method in FloatProblem class
+class FloatProblemMOPSO(FloatProblem):
     def create_solution(self) -> FloatSolution:
         new_solution = FloatSolution(
             self.lower_bound, self.upper_bound, self.number_of_objectives(), self.number_of_constraints()
@@ -55,9 +46,9 @@ class FloatProblem(FloatProblem_base):
         return new_solution
 
 
-# add a propertie (sub_vars) to OMOPSO_base class
-# modify the update position method in OMOPSO_base class    
-class OMOPSO(OMOPSO_base):
+# add a propertie (sub_vars) to OMOPSO class
+# modify the update position method in OMOPSO class    
+class MOPSO(OMOPSO):
     def __init__(
         self,
         problem: FloatProblem,
