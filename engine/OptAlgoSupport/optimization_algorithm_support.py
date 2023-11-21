@@ -25,7 +25,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100, NumPop=None, CrossProb=None, MutaProb=None, Epsilon=None):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_layouts=100,num_gen=10,dbunit=1000,CrossProb=None, MutaProb=None, Epsilon=None):
         
         self.count = 0
         self.layout_data = []
@@ -33,13 +33,14 @@ class new_engine_opt:
         self.fig_data = []
         self.perf_results = []
         self.db=db
+        self.dbunit=dbunit
 
         
         self.method = method
         self.seed = seed
         self.level = level
+        self.num_layouts = num_layouts
         self.num_gen = num_gen
-        self.NumPop = NumPop
         self.CrossProb=CrossProb
         self.MutaProb=MutaProb
         self.Epsilon=Epsilon
@@ -279,52 +280,6 @@ class new_engine_opt:
         self.perf_results.append(result)
         return result
 
-    def cost_func_fmincon(self, individual=None, alpha=None, opt_mode=True, feval_init=[], update=None):
-        # OBJECTIVE CALCULATION
-        OBJS = self.cost_func1(individual)
-        if opt_mode == False:
-            return OBJS
-        OBJS_0 = feval_init
-        # CALCULATE WEIGHTED OBJECTIVE VALUE!
-        alpha_new = np.asarray(alpha)
-        objs_current = np.asarray(OBJS)
-        objs_0 = np.asarray(OBJS_0)
-        power = 2  # 2
-        obj_current = sum(alpha_new * (objs_current / objs_0) ** power)
-        OBJ = obj_current.tolist()
-        GRAD = []  # Will hold all data to transfer
-        GRAD.append(OBJ)
-        # PERFORM LOOP TO CALCULATE GRADIENT
-
-        deltaX = 0.1
-
-        for i in range(0, len(individual)):
-            DELTAX = np.empty(len(individual))
-
-            if update <= self.num_disc / 4:
-                for j in range(len(individual) / 4):
-                    DELTAX[j] = deltaX
-            elif update <= self.num_disc / 2:
-                for j in range(len(individual) / 4, len(individual) / 2):
-                    DELTAX[j] = deltaX
-            elif update <= 3 * self.num_disc / 4:
-                for j in range(len(individual) / 2, 3 * (len(individual)) / 4):
-                    DELTAX[j] = deltaX
-            else:
-                for j in range(3 * (len(individual)) / 4, len(individual)):
-                    DELTAX[j] = deltaX
-
-            INDIVIDUAL = individual + DELTAX
-
-            OBJS = self.cost_func1(INDIVIDUAL)
-            objs_new = np.asarray(OBJS)
-            obj_new = sum(alpha_new * (objs_new / objs_0) ** 2)
-            OBJ_NEW = obj_new.tolist()
-            GRAD.append((OBJ_NEW - OBJ) / deltaX)
-
-        XSEND = GRAD
-        return XSEND
-
     def cost_func_SA(self, individual):
         cs_sym_info,islands_info  = self.gen_layout_func(level=self.level, num_layouts=1, W=self.W, H=self.H,
                                               fixed_x_location=None, fixed_y_location=None, seed=self.seed,
@@ -340,7 +295,7 @@ class new_engine_opt:
         self.perf_results.append(result)
         return result[0], result[1]
 
-    def optimize(self,structure=None,cg_interface=None,Random=False,num_layouts=1,floorplan=[],db_file=None,sol_dir=None,fig_dir=None,dbunit=1000,measure_names=[]):
+    def optimize(self,structure=None,cg_interface=None,floorplan=[],db_file=None,sol_dir=None,fig_dir=None,measure_names=[]):
 
         self.structure=structure
         self.cg_interface=cg_interface
@@ -349,7 +304,6 @@ class new_engine_opt:
         self.db_file=db_file
         self.sol_dir=sol_dir
         self.fig_dir=fig_dir
-        self.dbunit=dbunit
         self.measure_names=measure_names
         
         all_hcg_strings=[]
@@ -370,12 +324,14 @@ class new_engine_opt:
         
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
+
+        print(f"INFO: Using {self.method} algorithm to synthesize {self.num_layouts} designs in {self.num_gen} optimization iterations.")
         if self.method == "NSGAII":
             
             
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
-                                   num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen,
-                                   NumPop=self.NumPop, CrossProb=self.CrossProb, MutaProb=self.MutaProb)
+                                   num_measures=self.num_measure, seed=self.seed, num_layouts=self.num_layouts, num_gen=self.num_gen,
+                                   CrossProb=self.CrossProb, MutaProb=self.MutaProb)
             opt.run()
 
 
@@ -385,7 +341,7 @@ class new_engine_opt:
             # Defining the Class of Problem
             class MyProblem(FloatProblem,new_engine_opt):
 
-                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions):
+                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, dbunit=self.dbunit):
                     super(MyProblem,self).__init__()
 
                     self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
@@ -444,9 +400,9 @@ class new_engine_opt:
 
             problem = MyProblem(nVars, seed, level, method, measures, e_api, t_api,solutions)
 
-            max_evaluations = self.num_gen # Maximum Evaluation
+            max_evaluations = self.num_layouts # Maximum Evaluation
 
-            swarm_size = self.NumPop # Swarm Size
+            swarm_size =  int(self.num_layouts/(1+self.num_gen)) # Swarm Size
             mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
             opt = OMOPSO(
             problem=problem,
@@ -454,23 +410,14 @@ class new_engine_opt:
             epsilon=self.Epsilon,
             uniform_mutation=UniformMutation(probability=mutation_probability, perturbation=0.5),
             non_uniform_mutation=NonUniformMutation(
-                mutation_probability, perturbation=0.5, max_iterations=max_evaluations / swarm_size),
+                mutation_probability, perturbation=0.5, max_iterations=self.num_gen),
             leaders=CrowdingDistanceArchive(100),
-            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
+            termination_criterion=StoppingByEvaluations(max_evaluations=self.num_layouts),
             sub_vars=L,
                         )
             
             opt.run()
             
-        elif self.method == "FMINCON":
-
-            
-            opt = Matlab_weighted_sum_fmincon(len(Design_Vars), self.cost_func_fmincon, num_measures=self.num_measure,
-                                              num_gen=self.num_gen, num_disc=self.num_disc,
-                                              matlab_dir=os.path.abspath("../../../MATLAB"), individual=None)
-            opt.run()
-            
-
         elif self.method == "SA":
 
             # start = timeit.default_timer()
@@ -745,7 +692,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
         if not os.path.exists(sol_path):
             os.makedirs(sol_path)
         for solution in Solutions:
-            print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
+            #print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
             for i in range(len(solution.layer_solutions)):
 
                 size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]
