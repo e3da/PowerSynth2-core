@@ -4,7 +4,7 @@ from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
 # Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
-from core.opt.MOPSO import FloatProblem, OMOPSO
+from core.opt.MOPSO import FloatProblemMOPSO, MOPSO
 from jmetal.core.solution import FloatSolution
 from jmetal.operator import UniformMutation
 from jmetal.operator.mutation import NonUniformMutation
@@ -339,7 +339,7 @@ class new_engine_opt:
         elif self.method == 'MOPSO':
 
             # Defining the Class of Problem
-            class MyProblem(FloatProblem,new_engine_opt):
+            class MyProblem(FloatProblemMOPSO,new_engine_opt):
 
                 def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, dbunit=self.dbunit):
                     super(MyProblem,self).__init__()
@@ -404,7 +404,7 @@ class new_engine_opt:
 
             swarm_size =  int(self.num_layouts/(1+self.num_gen)) # Swarm Size
             mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
-            opt = OMOPSO(
+            opt = MOPSO(
             problem=problem,
             swarm_size=swarm_size,
             epsilon=self.Epsilon,
