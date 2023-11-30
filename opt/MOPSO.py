@@ -33,15 +33,23 @@ class FloatProblemMOPSO(FloatProblem):
             for i in range(self.number_of_variables())
         ]
 
-        i = 0
-        j = 0
-        for k in self.sub_vars:
-            j += k
-            new_sol =  new_solution.variables[i:j]
-            for ii in range(k):
-                new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
-            new_solution.variables[i:j] = new_sol
-            i = j
+        if self.sub_vars[-1] == 1:
+            self.sub_vars[-1] = 2
+            for k in self.sub_vars[:-1]:
+                j += k
+                new_sol =  new_solution.variables[i:j]
+                for ii in range(k):
+                    new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
+                new_solution.variables[i:j] = new_sol
+                i = j
+        else:
+            for k in self.sub_vars:
+                j += k
+                new_sol =  new_solution.variables[i:j]
+                for ii in range(k):
+                    new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
+                new_solution.variables[i:j] = new_sol
+                i = j
         
         return new_solution
 
@@ -82,13 +90,26 @@ class MOPSO(OMOPSO):
 
             m = 0
             n = 0
-            for k in self.sub_vars:
-                n += k
-                new_sol =  particle.variables[m:n]
-                for ii in range(k):
-                    sum_sub_par = sum(particle.variables[m:n])
-                    if sum_sub_par==0:
-                        sum_sub_par=1
-                    new_sol[ii] = new_sol[ii]/sum_sub_par
-                particle.variables[m:n] = new_sol
-                m = n
+            if self.problem.sub_vars[-1] == 1:
+                self.sub_vars[-1] = 2
+                for k in self.problrm.sub_vars[:-1]:
+                    n += k
+                    new_sol =  particle.variables[m:n]
+                    for ii in range(k):
+                        sum_sub_par = sum(particle.variables[m:n])
+                        if sum_sub_par==0:
+                            sum_sub_par=1
+                        new_sol[ii] = new_sol[ii]/sum_sub_par
+                    particle.variables[m:n] = new_sol
+                    m = n
+            else:
+                for k in self.problem.sub_vars:
+                    n += k
+                    new_sol =  particle.variables[m:n]
+                    for ii in range(k):
+                        sum_sub_par = sum(particle.variables[m:n])
+                        if sum_sub_par==0:
+                            sum_sub_par=1
+                        new_sol[ii] = new_sol[ii]/sum_sub_par
+                    particle.variables[m:n] = new_sol
+                    m = n
