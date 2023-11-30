@@ -372,8 +372,8 @@ class CmdHandler:
             Final solutions are exported into the workspace/Fig_dir and workspace/Sol_dir.
         '''
         # Set the Optimization Parameters
+        SEssentialOptions(self.algorithm, self.num_layouts, self.num_gen)
         SettingParameters = OptimizationOptions(self.algorithm, self.num_layouts, self.num_gen, self.CrossProb, self.MutaProb, self.Epsilon, self.seed)
-        SettingParameters.DefaultValues()
 
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=SettingParameters.NumLayouts, seed=SettingParameters.Seed,
