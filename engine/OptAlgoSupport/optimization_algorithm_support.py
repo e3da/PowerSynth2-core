@@ -497,7 +497,8 @@ class DesignString():
 def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,algorithm):
 
 
-
+    if mode == 1:
+        mode = 2
 
     if mode==2:
 
@@ -726,7 +727,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
 
 
     if plot:
-        sol_path = fig_dir + '/Mode_2'
+        sol_path = fig_dir + '/Mode_' + str(mode)
         if not os.path.exists(sol_path):
             os.makedirs(sol_path)
         for solution in Solutions:
