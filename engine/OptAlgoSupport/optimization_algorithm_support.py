@@ -353,6 +353,8 @@ class new_engine_opt:
             for element in list_:
                 all_vcg_strings.append(element)
         
+        if self.level == 1:
+            L.append(int(len(floorplan)/2))
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
 
@@ -443,7 +445,7 @@ class new_engine_opt:
             non_uniform_mutation=NonUniformMutation(
                 mutation_probability, perturbation=0.5, max_iterations=self.num_gen),
             leaders=CrowdingDistanceArchive(100),
-            termination_criterion=StoppingByEvaluations(max_evaluations=self.num_layouts),
+            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
             sub_vars=L,
                         )
             
@@ -467,7 +469,12 @@ class new_engine_opt:
         
 
         Random = []
-        for i in range((len(all_hcg_strings) + len(all_vcg_strings))):
+        if self.level == 1:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings) + 2)
+        else:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings))
+
+        for i in range(NumVarDesign):
             r = random.uniform(0,1)
             Random.append(round(r, 2))
         #print(len(Random))
