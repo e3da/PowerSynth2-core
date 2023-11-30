@@ -21,6 +21,7 @@ from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 from core.engine.Structure3D.structure_3D import Structure_3D
 from core.MDK.LayerStack.layer_stack import LayerStack
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
+from core.opt.optimizer import OptimizationOptions, EssentialOptions
 import matplotlib.pyplot as plt
 
 from matplotlib.figure import Figure
