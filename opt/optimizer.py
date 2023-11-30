@@ -19,8 +19,24 @@ from core.opt.simulated_anneal import Annealer
 
 import time
 
-class OptimizationOptions:
-    def __init__(self, Algorithm, NumLayouts, NumGens, CrossProb, MutaProb, Epsilon, Seed):
+class EssentialOptions:
+    def __init__(self, Algorithm, NumLayouts, NumGens):
+        self.Algorithm = Algorithm
+        self.NumLayouts = NumLayouts
+        self.NumGens = NumGens
+
+class CommonOptions:
+    def __init__(self, MutaProb, Seed = 0):
+        self.MutaProb = MutaProb
+        self.Seed = Seed
+
+class MiscOptions:
+    def __init__(self, Epsilon, CrossProb):
+        self.CrossProb = CrossProb
+        self.Epsilon = Epsilon
+
+class OptimizationOptions(EssentialOptions, CommonOptions, MiscOptions):
+    def __init__(self, Algorithm, NumLayouts, NumGens, CrossProb = None, MutaProb = None, Epsilon = None, Seed = 0):
         '''
         Optimization Algorithms setting prameters structure
 
@@ -33,16 +49,9 @@ class OptimizationOptions:
         Seed -> Seed of random generation
         '''
 
-        self.Algorithm = Algorithm
-        self.NumLayouts = NumLayouts
-        self.NumGens = NumGens
-        self.CrossProb = CrossProb
-        self.MutaProb = MutaProb
-        self.Epsilon = Epsilon
-        self.Seed = Seed
-
-    # Default Values for setting parameters of NSGAII and MOPSO
-    def DefaultValues(self):
+        EssentialOptions.__init__(self, Algorithm, NumLayouts, NumGens)
+        CommonOptions.__init__(self, MutaProb, Seed)
+        MiscOptions.__init__(self, Epsilon, CrossProb)
 
         if self.Algorithm == 'NSGAII' and self.CrossProb == None:
             self.CrossProb = 0.8
