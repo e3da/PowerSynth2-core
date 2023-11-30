@@ -32,7 +32,9 @@ class FloatProblemMOPSO(FloatProblem):
             random.uniform(self.lower_bound[i] * 1.0, self.upper_bound[i] * 1.0)
             for i in range(self.number_of_variables())
         ]
-
+        i = 0
+        j = 0
+        
         if self.sub_vars[-1] == 1:
             self.sub_vars[-1] = 2
             for k in self.sub_vars[:-1]:

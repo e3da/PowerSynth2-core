@@ -373,7 +373,7 @@ class CmdHandler:
             Final solutions are exported into the workspace/Fig_dir and workspace/Sol_dir.
         '''
         # Set the Optimization Parameters
-        SEssentialOptions(self.algorithm, self.num_layouts, self.num_gen)
+        EssentialOptions(self.algorithm, self.num_layouts, self.num_gen)
         SettingParameters = OptimizationOptions(self.algorithm, self.num_layouts, self.num_gen, self.CrossProb, self.MutaProb, self.Epsilon, self.seed)
 
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
