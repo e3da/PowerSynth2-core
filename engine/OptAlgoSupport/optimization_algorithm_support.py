@@ -202,7 +202,22 @@ class new_engine_opt:
     def cost_func_NSGAII(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
-        
+            
+        if self.level == 1:
+            # Minimum and maximum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
+
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
         start=time.time()
         self.structure.update_design_strings(individual)
 
@@ -238,7 +253,23 @@ class new_engine_opt:
     def CostFuncMOPSO(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
+        
+        if self.level == 1:
+        
+            # Minimum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
 
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
         start=time.time()
         self.structure.update_design_strings(individual)
 
