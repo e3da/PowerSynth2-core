@@ -19,6 +19,48 @@ from core.opt.simulated_anneal import Annealer
 
 import time
 
+class EssentialOptions:
+    def __init__(self, Algorithm, NumLayouts, NumGens):
+        self.Algorithm = Algorithm
+        self.NumLayouts = NumLayouts
+        self.NumGens = NumGens
+
+class CommonOptions:
+    def __init__(self, MutaProb, Seed = 0):
+        self.MutaProb = MutaProb
+        self.Seed = Seed
+
+class MiscOptions:
+    def __init__(self, Epsilon, CrossProb):
+        self.CrossProb = CrossProb
+        self.Epsilon = Epsilon
+
+class OptimizationOptions(EssentialOptions, CommonOptions, MiscOptions):
+    def __init__(self, Algorithm, NumLayouts, NumGens, CrossProb = None, MutaProb = None, Epsilon = None, Seed = 0):
+        '''
+        Optimization Algorithms setting prameters structure
+
+        Algorithm -> Randomization, NSGAII, MOPSO
+        Numlayouts -> Number of layouts
+        NumGens -> number of generations / iterations
+        CrossProb -> Crossover probability
+        MutaProb -> Mutation probability
+        Epsilon -> MOPSO parameter
+        Seed -> Seed of random generation
+        '''
+
+        EssentialOptions.__init__(self, Algorithm, NumLayouts, NumGens)
+        CommonOptions.__init__(self, MutaProb, Seed)
+        MiscOptions.__init__(self, Epsilon, CrossProb)
+
+        if self.Algorithm == 'NSGAII' and self.CrossProb == None:
+            self.CrossProb = 0.8
+            self.MutaProb = 0.2
+
+        elif self.Algorithm == 'MOPSO' and self.Epsilon == None:
+            self.MutaProb = 0.1
+            self.Epsilon = 0.005
+
 
 class DesignVar(object):
     def __init__(self, constraints, init_values):

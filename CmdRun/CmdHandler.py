@@ -21,6 +21,7 @@ from core.MDK.Design.layout_module_data import ModuleDataCornerStitch
 from core.engine.Structure3D.structure_3D import Structure_3D
 from core.MDK.LayerStack.layer_stack import LayerStack
 from core.APIs.PowerSynth.solution_structures import PSSolution,plot_solution_structure
+from core.opt.optimizer import OptimizationOptions, EssentialOptions
 import matplotlib.pyplot as plt
 
 from matplotlib.figure import Figure
@@ -371,10 +372,14 @@ class CmdHandler:
             The electrical and thermal APIs are then connected with the optimizer to perform layout optimization.
             Final solutions are exported into the workspace/Fig_dir and workspace/Sol_dir.
         '''
+        # Set the Optimization Parameters
+        EssentialOptions(self.algorithm, self.num_layouts, self.num_gen)
+        SettingParameters = OptimizationOptions(self.algorithm, self.num_layouts, self.num_gen, self.CrossProb, self.MutaProb, self.Epsilon, self.seed)
+
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
-                                        optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
-                                        floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=self.algorithm,num_gen=self.num_gen,
-                                        CrossProb=self.CrossProb, MutaProb=self.MutaProb, Epsilon=self.Epsilon, dbunit=self.dbunit)
+                                        optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=SettingParameters.NumLayouts, seed=SettingParameters.Seed,
+                                        floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=SettingParameters.Algorithm,num_gen=SettingParameters.NumGens,
+                                        CrossProb=SettingParameters.CrossProb, MutaProb=SettingParameters.MutaProb, Epsilon=SettingParameters.Epsilon, dbunit=self.dbunit)
         
         
         self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,self.layout_mode,plot = self.plot)

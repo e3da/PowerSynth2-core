@@ -5,9 +5,9 @@
 import random
 
 from typing import Generic, List, TypeVar, Optional
-from jmetal.core.problem import Problem as Problem_base
-from jmetal.core.problem import FloatProblem as FloatProblem_base
-from jmetal.algorithm.multiobjective.omopso import OMOPSO as OMOPSO_base
+from jmetal.core.problem import Problem
+from jmetal.core.problem import FloatProblem
+from jmetal.algorithm.multiobjective.omopso import OMOPSO
 from jmetal.core.solution import (
     BinarySolution,
     FloatSolution,
@@ -21,18 +21,9 @@ from jmetal.util.termination_criterion import TerminationCriterion
 from jmetal.config import store
 from jmetal.util.evaluator import Evaluator
 from jmetal.util.generator import Generator
-
-
-# add a propertie (sub_vars) to problem_base class
-class Problem(Problem_base):
-    def __init__(self, sub_vars):
-        super().__init__()
-        self.sub_vars: List[int] = []
-        
-        
-        
-# modify the create solutiom method in FloatProblem_base class
-class FloatProblem(FloatProblem_base):
+     
+# modify the create solutiom method in FloatProblem class
+class FloatProblemMOPSO(FloatProblem):
     def create_solution(self) -> FloatSolution:
         new_solution = FloatSolution(
             self.lower_bound, self.upper_bound, self.number_of_objectives(), self.number_of_constraints()
@@ -41,23 +32,33 @@ class FloatProblem(FloatProblem_base):
             random.uniform(self.lower_bound[i] * 1.0, self.upper_bound[i] * 1.0)
             for i in range(self.number_of_variables())
         ]
-
         i = 0
         j = 0
-        for k in self.sub_vars:
-            j += k
-            new_sol =  new_solution.variables[i:j]
-            for ii in range(k):
-                new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
-            new_solution.variables[i:j] = new_sol
-            i = j
+        
+        if self.sub_vars[-1] == 1:
+            self.sub_vars[-1] = 2
+            for k in self.sub_vars[:-1]:
+                j += k
+                new_sol =  new_solution.variables[i:j]
+                for ii in range(k):
+                    new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
+                new_solution.variables[i:j] = new_sol
+                i = j
+        else:
+            for k in self.sub_vars:
+                j += k
+                new_sol =  new_solution.variables[i:j]
+                for ii in range(k):
+                    new_sol[ii] = new_sol[ii]/sum(new_solution.variables[i:j])
+                new_solution.variables[i:j] = new_sol
+                i = j
         
         return new_solution
 
 
-# add a propertie (sub_vars) to OMOPSO_base class
-# modify the update position method in OMOPSO_base class    
-class OMOPSO(OMOPSO_base):
+# add a propertie (sub_vars) to OMOPSO class
+# modify the update position method in OMOPSO class    
+class MOPSO(OMOPSO):
     def __init__(
         self,
         problem: FloatProblem,
@@ -91,13 +92,26 @@ class OMOPSO(OMOPSO_base):
 
             m = 0
             n = 0
-            for k in self.sub_vars:
-                n += k
-                new_sol =  particle.variables[m:n]
-                for ii in range(k):
-                    sum_sub_par = sum(particle.variables[m:n])
-                    if sum_sub_par==0:
-                        sum_sub_par=1
-                    new_sol[ii] = new_sol[ii]/sum_sub_par
-                particle.variables[m:n] = new_sol
-                m = n
+            if self.problem.sub_vars[-1] == 1:
+                self.sub_vars[-1] = 2
+                for k in self.problrm.sub_vars[:-1]:
+                    n += k
+                    new_sol =  particle.variables[m:n]
+                    for ii in range(k):
+                        sum_sub_par = sum(particle.variables[m:n])
+                        if sum_sub_par==0:
+                            sum_sub_par=1
+                        new_sol[ii] = new_sol[ii]/sum_sub_par
+                    particle.variables[m:n] = new_sol
+                    m = n
+            else:
+                for k in self.problem.sub_vars:
+                    n += k
+                    new_sol =  particle.variables[m:n]
+                    for ii in range(k):
+                        sum_sub_par = sum(particle.variables[m:n])
+                        if sum_sub_par==0:
+                            sum_sub_par=1
+                        new_sol[ii] = new_sol[ii]/sum_sub_par
+                    particle.variables[m:n] = new_sol
+                    m = n

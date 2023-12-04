@@ -4,7 +4,7 @@ from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
 # Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
-from core.opt.MOPSO import FloatProblem, OMOPSO
+from core.opt.MOPSO import FloatProblemMOPSO, MOPSO
 from jmetal.core.solution import FloatSolution
 from jmetal.operator import UniformMutation
 from jmetal.operator.mutation import NonUniformMutation
@@ -202,7 +202,22 @@ class new_engine_opt:
     def cost_func_NSGAII(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
-        
+            
+        if self.level == 1:
+            # Minimum and maximum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
+
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
         start=time.time()
         self.structure.update_design_strings(individual)
 
@@ -238,7 +253,23 @@ class new_engine_opt:
     def CostFuncMOPSO(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
+        
+        if self.level == 1:
+        
+            # Minimum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
 
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
         start=time.time()
         self.structure.update_design_strings(individual)
 
@@ -322,6 +353,8 @@ class new_engine_opt:
             for element in list_:
                 all_vcg_strings.append(element)
         
+        if self.level == 1:
+            L.append(int(len(floorplan)/2))
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
 
@@ -339,7 +372,7 @@ class new_engine_opt:
         elif self.method == 'MOPSO':
 
             # Defining the Class of Problem
-            class MyProblem(FloatProblem,new_engine_opt):
+            class MyProblem(FloatProblemMOPSO,new_engine_opt):
 
                 def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, dbunit=self.dbunit):
                     super(MyProblem,self).__init__()
@@ -404,7 +437,7 @@ class new_engine_opt:
 
             swarm_size =  int(self.num_layouts/(1+self.num_gen)) # Swarm Size
             mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
-            opt = OMOPSO(
+            opt = MOPSO(
             problem=problem,
             swarm_size=swarm_size,
             epsilon=self.Epsilon,
@@ -412,7 +445,7 @@ class new_engine_opt:
             non_uniform_mutation=NonUniformMutation(
                 mutation_probability, perturbation=0.5, max_iterations=self.num_gen),
             leaders=CrowdingDistanceArchive(100),
-            termination_criterion=StoppingByEvaluations(max_evaluations=self.num_layouts),
+            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
             sub_vars=L,
                         )
             
@@ -436,7 +469,12 @@ class new_engine_opt:
         
 
         Random = []
-        for i in range((len(all_hcg_strings) + len(all_vcg_strings))):
+        if self.level == 1:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings) + 2)
+        else:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings))
+
+        for i in range(NumVarDesign):
             r = random.uniform(0,1)
             Random.append(round(r, 2))
         #print(len(Random))
@@ -459,7 +497,8 @@ class DesignString():
 def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,algorithm):
 
 
-
+    if mode == 1:
+        mode = 2
 
     if mode==2:
 
@@ -688,7 +727,7 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
 
 
     if plot:
-        sol_path = fig_dir + '/Mode_2'
+        sol_path = fig_dir + '/Mode_' + str(mode)
         if not os.path.exists(sol_path):
             os.makedirs(sol_path)
         for solution in Solutions:
