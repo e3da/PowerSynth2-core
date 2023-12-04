@@ -22,13 +22,14 @@ class PS2CLI(PSCore):
                 self.create()
             else:
                 self.excute()
-            return 0
+            ExitCode=0
         except:
             traceback.print_exc()
             print("ERROR: PowerSynth failed to run :(")
+            ExitCode=1
 
         os.chdir(self.cwd)
-        return 1
+        return ExitCode
 
 if __name__ == "__main__":  
     if len(sys.argv)<2 :

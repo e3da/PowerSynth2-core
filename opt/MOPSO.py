@@ -3,6 +3,8 @@
 # PowerSynth to support Hierarchical structure
 
 import random
+import logging
+from jmetal.core.algorithm import logger
 
 from typing import Generic, List, TypeVar, Optional
 from jmetal.core.problem import Problem
@@ -22,6 +24,9 @@ from jmetal.config import store
 from jmetal.util.evaluator import Evaluator
 from jmetal.util.generator import Generator
      
+# turn off logger debug info
+logger.setLevel(logging.INFO)
+
 # modify the create solutiom method in FloatProblem class
 class FloatProblemMOPSO(FloatProblem):
     def create_solution(self) -> FloatSolution:

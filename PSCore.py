@@ -47,6 +47,8 @@ class PSEnv():
     PPSrc = os.path.join(PSRoot,'pkg','lib','ParaPower')
     ManPDF = os.path.join(PSRoot,'pkg','man',f'PowerSynth_v{PSVers}.pdf')
 
+    DebugLv=0
+
 
 class PSCore(PSEnv):
     fulltype={"r": "<readable file>","w": "<writable file>","R": "<readable folder>","W": "<writable folder>","i": "<integer>","f": "<float>","s": "<string>"}
