@@ -41,7 +41,6 @@ class FloatProblemMOPSO(FloatProblem):
         j = 0
         
         if self.sub_vars[-1] == 1:
-            self.sub_vars[-1] = 2
             for k in self.sub_vars[:-1]:
                 j += k
                 new_sol =  new_solution.variables[i:j]
@@ -98,8 +97,7 @@ class MOPSO(OMOPSO):
             m = 0
             n = 0
             if self.problem.sub_vars[-1] == 1:
-                self.sub_vars[-1] = 2
-                for k in self.problrm.sub_vars[:-1]:
+                for k in self.problem.sub_vars[:-1]:
                     n += k
                     new_sol =  particle.variables[m:n]
                     for ii in range(k):
