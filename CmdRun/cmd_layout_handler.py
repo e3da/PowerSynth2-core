@@ -132,7 +132,7 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
         solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
         if opt_problem.e_api!= None:
             if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
-                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         
     if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
         e_results = opt_problem.e_api.parallel_run(solutions)
@@ -146,7 +146,7 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
                 if value_==-1:
                     s.parameters[m_name]=value
 
-            print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+            print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         
     print(f"INFO: Evaluation Time: {time.time()-start:.2f}")
     return solutions
@@ -542,7 +542,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
                 if not os.path.exists(sol_path):
                     os.makedirs(sol_path)
                 for solution in Solutions:
-                    print("INFO: Solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
+                    print("INFO: Solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit,flush=True)
                     for i in range(len(solution.layer_solutions)):
 
                         size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]

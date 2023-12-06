@@ -238,7 +238,7 @@ class new_engine_opt:
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
 
-        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         self.solutions.append(solutions[0])
 
         self.count += 1
@@ -286,7 +286,7 @@ class new_engine_opt:
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
 
-        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         self.solutions.append(solutions[0])
 
         self.count += 1
