@@ -97,7 +97,10 @@ class PSCore(PSEnv):
                 self.interactive=True
                 print("INFO: Macrofile Writeable. Running Interactive Mode")
         except:
-            sys.exit(f"ERROR: Work folder {self.PSWork} not writable.")
+            sys.exit(f"ERROR: Failed to write Macrofile {self.MacroScript}, check permission.")
+
+        if not os.access(self.PSWork, os.W_OK):
+            sys.exit(f"ERROR: Work folder {self.PSWork} is not writable, check permission.")
 
         print("INFO: Initializing PowerSynth Core")
         self.cwd = os.getcwd()
