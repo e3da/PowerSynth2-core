@@ -1,8 +1,8 @@
 # PowerSynth 2 Release Series Core Repository
 ## Repository Overview
-This is the core repository for PowerSynth 2. Refer to the [PowerSynth2-gui](https://github.com/e3da/PowerSynth2-gui) and other related repos for the GUI and other parts. 
-This repository contains the main source code for the PowerSynth 2 layout engine, models, optimization algorithms, and the command line interface (CLI). 
+This is the core repository for PowerSynth 2. Refer to the [PowerSynth2-gui](https://github.com/e3da/PowerSynth2-gui) and other related repos for the GUI and other parts. The windows and linux installers are released through the [PowerSynth Release Website](https://e3da.csce.uark.edu/release/PowerSynth/), with installation instructions included in the [PowerSynth2-pkg](https://github.com/e3da/PowerSynth2-pkg) repo. 
 
+This repository contains the main source code for the PowerSynth 2 layout engine, models, optimization algorithms, and the command line interface (CLI). 
 The source code is re-created based on the release version v1.9. It is developed on linux and then ported to windows before release. The code is migrated to python 3 with additional modules from different research projects. It can be run in CLI mode together with the pkg repository without GUI.
 
 v2.0 is targeted at a minimum code base, thus many optional (or experimental) modules are removed in the initial release. Not all features of PowerSynth 2 are exposed in this release. But the capabilities will gradually grow with further research, development, and testing.
