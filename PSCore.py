@@ -37,13 +37,17 @@ class PSEnv():
     #read-only, set on boot
     PSRoot=GetRoot()
 
+    PSVers='2.1'
+
     MatLib = os.path.join(PSRoot,'pkg','MDK','Materials.csv')
     FHExe = os.path.join(PSRoot,'pkg','bin','fasthenry')
     if os.name == 'nt' and not FHExe.endswith(".exe"):
         FHExe+=".exe"
 
-    PPSrc = os.path.join(PSRoot,'pkg','ParaPower')
-    ManPDF = os.path.join(PSRoot,'pkg','man','PowerSynth_v2.0.pdf')
+    PPSrc = os.path.join(PSRoot,'pkg','lib','ParaPower')
+    ManPDF = os.path.join(PSRoot,'pkg','man',f'PowerSynth_v{PSVers}.pdf')
+
+    DebugLv=0
 
 
 class PSCore(PSEnv):
@@ -93,7 +97,10 @@ class PSCore(PSEnv):
                 self.interactive=True
                 print("INFO: Macrofile Writeable. Running Interactive Mode")
         except:
-            sys.exit(f"ERROR: Work folder {self.PSWork} not writable.")
+            sys.exit(f"ERROR: Failed to write Macrofile {self.MacroScript}, check permission.")
+
+        if not os.access(self.PSWork, os.W_OK):
+            sys.exit(f"ERROR: Work folder {self.PSWork} is not writable, check permission.")
 
         print("INFO: Initializing PowerSynth Core")
         self.cwd = os.getcwd()

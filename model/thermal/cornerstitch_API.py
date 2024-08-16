@@ -72,7 +72,7 @@ class CornerStitch_Tmodel_API:
             raise Exception("ERROR: Failed to Start Matlab Engine.")
 
         if self.matlab_engine is None:
-            print("INFO: Starting Matlab Engine: "+PSCore.PPSrc)
+            print("INFO: Starting Matlab Engine: "+PSCore.PPSrc,flush=True)
             self.matlab_engine = matlab.engine.start_matlab()
         self.matlab_engine.cd(PSCore.PPSrc)
 
@@ -125,7 +125,7 @@ class CornerStitch_Tmodel_API:
                 h_val.append(0) # single-sided cooling
             if self.matlab_engine != None:
                 if self.ppw is None:
-                    print("INFO: Running ParaPower: "+self.pp_json_path)
+                    print("INFO: Running ParaPower: "+self.pp_json_path,flush=True)
                 self.ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
             else:
                 print("Matlab engine not started")

@@ -19,6 +19,48 @@ from core.opt.simulated_anneal import Annealer
 
 import time
 
+class EssentialOptions:
+    def __init__(self, Algorithm, NumLayouts, NumGens):
+        self.Algorithm = Algorithm
+        self.NumLayouts = NumLayouts
+        self.NumGens = NumGens
+
+class CommonOptions:
+    def __init__(self, MutaProb, Seed = 0):
+        self.MutaProb = MutaProb
+        self.Seed = Seed
+
+class MiscOptions:
+    def __init__(self, Epsilon, CrossProb):
+        self.CrossProb = CrossProb
+        self.Epsilon = Epsilon
+
+class OptimizationOptions(EssentialOptions, CommonOptions, MiscOptions):
+    def __init__(self, Algorithm, NumLayouts, NumGens, CrossProb = None, MutaProb = None, Epsilon = None, Seed = 0):
+        '''
+        Optimization Algorithms setting prameters structure
+
+        Algorithm -> Randomization, NSGAII, MOPSO
+        Numlayouts -> Number of layouts
+        NumGens -> number of generations / iterations
+        CrossProb -> Crossover probability
+        MutaProb -> Mutation probability
+        Epsilon -> MOPSO parameter
+        Seed -> Seed of random generation
+        '''
+
+        EssentialOptions.__init__(self, Algorithm, NumLayouts, NumGens)
+        CommonOptions.__init__(self, MutaProb, Seed)
+        MiscOptions.__init__(self, Epsilon, CrossProb)
+
+        if self.Algorithm == 'NSGAII' and self.CrossProb == None:
+            self.CrossProb = 0.8
+            self.MutaProb = 0.2
+
+        elif self.Algorithm == 'MOPSO' and self.Epsilon == None:
+            self.MutaProb = 0.1
+            self.Epsilon = 0.005
+
 
 class DesignVar(object):
     def __init__(self, constraints, init_values):
@@ -33,8 +75,8 @@ class DesignVar(object):
         self.init_values = init_values     
 
 class NSGAII_Optimizer(object):
-    def __init__(self, design_vars, eval_fn, num_measures, seed, num_gen, 
-                 mu = 40, ilambda=10, cxpb=0.7, mutpb=0.2): #sxm original values; cxpb=0.5, mutpb=0.2
+    def __init__(self, design_vars, eval_fn, num_measures, seed, num_layouts, num_gen,
+                  CrossProb, MutaProb):
         """
         http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=996017&tag=1
         Creates a new NSGAII_Optimizer object
@@ -57,12 +99,12 @@ class NSGAII_Optimizer(object):
         self.eval_fn = eval_fn
         self.num_measures = num_measures
         self.seed = seed
+        self.num_layouts = num_layouts
         self.num_gen = num_gen
         
-        self.mu = mu
-        self.ilambda = ilambda
-        self.cxpb = cxpb
-        self.mutpb = mutpb
+        self.mu = int(num_layouts/(1+2*num_gen))
+        self.cxpb = CrossProb
+        self.mutpb = MutaProb
         random.seed(self.seed)
         nprandom.seed(self.seed)
 
@@ -97,7 +139,7 @@ class NSGAII_Optimizer(object):
         ind = []
         #print("initialization")
         for dv in self.design_vars:
-            random.seed(self.seed)
+            # random.seed(self.seed)
             init0=dv.init_values[0]
             init1=dv.init_values[1]
             ind.append(random.uniform(init0, init1))
@@ -106,7 +148,7 @@ class NSGAII_Optimizer(object):
     def run(self):
         """Runs the optimizer"""
         algorithms.eaMuPlusLambda(self.population, self.toolbox, 
-                                  mu=self.mu, lambda_=self.ilambda, 
+                                  mu=self.mu, lambda_=self.mu*2, 
                                   cxpb=self.cxpb, mutpb=self.mutpb, ngen=self.num_gen, 
                                   stats=self.stats, halloffame=self.solutions, verbose=False)
         

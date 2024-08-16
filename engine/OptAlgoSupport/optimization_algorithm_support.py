@@ -3,6 +3,15 @@
 from copy import deepcopy
 from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 
+# Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
+from core.opt.MOPSO import FloatProblemMOPSO, MOPSO
+from jmetal.core.solution import FloatSolution
+from jmetal.operator import UniformMutation
+from jmetal.operator.mutation import NonUniformMutation
+from jmetal.util.archive import CrowdingDistanceArchive
+from jmetal.util.termination_criterion import StoppingByEvaluations
+
+
 import collections
 import numpy as np
 import random
@@ -16,7 +25,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_gen=100):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_layouts=100,num_gen=10,dbunit=1000,CrossProb=None, MutaProb=None, Epsilon=None):
         
         self.count = 0
         self.layout_data = []
@@ -24,12 +33,17 @@ class new_engine_opt:
         self.fig_data = []
         self.perf_results = []
         self.db=db
+        self.dbunit=dbunit
 
         
         self.method = method
         self.seed = seed
         self.level = level
+        self.num_layouts = num_layouts
         self.num_gen = num_gen
+        self.CrossProb=CrossProb
+        self.MutaProb=MutaProb
+        self.Epsilon=Epsilon
         # number of evaluation
         self.num_measure = 2
         # Sim Anneal
@@ -188,7 +202,22 @@ class new_engine_opt:
     def cost_func_NSGAII(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
-        
+            
+        if self.level == 1:
+            # Minimum and maximum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
+
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
         start=time.time()
         self.structure.update_design_strings(individual)
 
@@ -209,7 +238,7 @@ class new_engine_opt:
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
 
-        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters)
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         self.solutions.append(solutions[0])
 
         self.count += 1
@@ -217,7 +246,55 @@ class new_engine_opt:
 
         return results
 
+    
+    # Creating Cost function for MOPSO
+    # Inputs: self, individuals (Decision Variables)
+    # OutPuts: Returning the value of Inductance and Max Temperature
+    def CostFuncMOPSO(self, individual):
+        if not (isinstance(individual, list)):
+            individual = np.asarray(individual).tolist()
+        
+        if self.level == 1:
+        
+            # Minimum size of the floorplan (Width, Hight)
+            wMin = list(self.structure.root_node_h.node_min_locations.values())[-1]
+            wMax = 4*wMin
 
+            hMin =  list(self.structure.root_node_v.node_min_locations.values())[-1]
+            hMax = 4* hMin
+
+            # Calculate the size of the floorplan
+            self.W = wMin + (wMax - wMin)*individual[-2]
+            self.H = hMin + (hMax - hMin)*individual[-1]
+
+            # Design vars (edge weights)
+            individual = individual[:-2]
+            
+        start=time.time()
+        self.structure.update_design_strings(individual)
+
+        structure_fixed,cg_interface = recreate_sols(structure=self.structure,cg_interface=self.cg_interface,mode=self.level,Random=False,seed=self.seed,num_layouts=1,floorplan=[self.W,self.H],algorithm=self.method)
+        end=time.time()
+        self.sol_gen_runtime+=(end-start)
+
+        solutions,module_info=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=self.level,num_layouts=1,db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.sol_dir,plot=True,dbunit=self.dbunit,count=self.count)
+  
+        for i in range(len(solutions)):
+            start2=time.time()
+            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+            end2=time.time()
+            self.eval_time+=(end2-start2)
+            solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
+
+        print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
+        self.solutions.append(solutions[0])
+
+        self.count += 1
+        self.seed+=1000
+
+        return results
+
+    
     def cost_func1(self, individual):
         if not (isinstance(individual, list)):
             individual = np.asarray(individual).tolist()
@@ -234,52 +311,6 @@ class new_engine_opt:
         self.perf_results.append(result)
         return result
 
-    def cost_func_fmincon(self, individual=None, alpha=None, opt_mode=True, feval_init=[], update=None):
-        # OBJECTIVE CALCULATION
-        OBJS = self.cost_func1(individual)
-        if opt_mode == False:
-            return OBJS
-        OBJS_0 = feval_init
-        # CALCULATE WEIGHTED OBJECTIVE VALUE!
-        alpha_new = np.asarray(alpha)
-        objs_current = np.asarray(OBJS)
-        objs_0 = np.asarray(OBJS_0)
-        power = 2  # 2
-        obj_current = sum(alpha_new * (objs_current / objs_0) ** power)
-        OBJ = obj_current.tolist()
-        GRAD = []  # Will hold all data to transfer
-        GRAD.append(OBJ)
-        # PERFORM LOOP TO CALCULATE GRADIENT
-
-        deltaX = 0.1
-
-        for i in range(0, len(individual)):
-            DELTAX = np.empty(len(individual))
-
-            if update <= self.num_disc / 4:
-                for j in range(len(individual) / 4):
-                    DELTAX[j] = deltaX
-            elif update <= self.num_disc / 2:
-                for j in range(len(individual) / 4, len(individual) / 2):
-                    DELTAX[j] = deltaX
-            elif update <= 3 * self.num_disc / 4:
-                for j in range(len(individual) / 2, 3 * (len(individual)) / 4):
-                    DELTAX[j] = deltaX
-            else:
-                for j in range(3 * (len(individual)) / 4, len(individual)):
-                    DELTAX[j] = deltaX
-
-            INDIVIDUAL = individual + DELTAX
-
-            OBJS = self.cost_func1(INDIVIDUAL)
-            objs_new = np.asarray(OBJS)
-            obj_new = sum(alpha_new * (objs_new / objs_0) ** 2)
-            OBJ_NEW = obj_new.tolist()
-            GRAD.append((OBJ_NEW - OBJ) / deltaX)
-
-        XSEND = GRAD
-        return XSEND
-
     def cost_func_SA(self, individual):
         cs_sym_info,islands_info  = self.gen_layout_func(level=self.level, num_layouts=1, W=self.W, H=self.H,
                                               fixed_x_location=None, fixed_y_location=None, seed=self.seed,
@@ -295,7 +326,7 @@ class new_engine_opt:
         self.perf_results.append(result)
         return result[0], result[1]
 
-    def optimize(self,structure=None,cg_interface=None,Random=False,num_layouts=1,floorplan=[],db_file=None,sol_dir=None,fig_dir=None,dbunit=1000,measure_names=[]):
+    def optimize(self,structure=None,cg_interface=None,floorplan=[],db_file=None,sol_dir=None,fig_dir=None,measure_names=[]):
 
         self.structure=structure
         self.cg_interface=cg_interface
@@ -304,37 +335,122 @@ class new_engine_opt:
         self.db_file=db_file
         self.sol_dir=sol_dir
         self.fig_dir=fig_dir
-        self.dbunit=dbunit
         self.measure_names=measure_names
         
         all_hcg_strings=[]
         all_vcg_strings=[]
+        L=[]
         for list_ in self.structure.hcg_design_strings:
+            l=len(list_)
+            if l>0:
+                L.append(l)
             for element in list_:
                 all_hcg_strings.append(element)
         for list_ in self.structure.vcg_design_strings:
+            l=len(list_)
+            if l>0:
+                L.append(l)
             for element in list_:
                 all_vcg_strings.append(element)
         
+        if self.level == 1:
+            L.append(int(len(floorplan)/2))
 
         self.Design_Vars= self.get_design_vars(all_hcg_strings,all_vcg_strings)
+
+        print(f"INFO: Using {self.method} algorithm to synthesize {self.num_layouts} designs in {self.num_gen} optimization iterations.")
         if self.method == "NSGAII":
             
             
             opt = NSGAII_Optimizer(design_vars=self.Design_Vars, eval_fn=self.cost_func_NSGAII,
-                                   num_measures=self.num_measure, seed=self.seed, num_gen=self.num_gen)
+                                   num_measures=self.num_measure, seed=self.seed, num_layouts=self.num_layouts, num_gen=self.num_gen,
+                                   CrossProb=self.CrossProb, MutaProb=self.MutaProb)
             opt.run()
 
 
-        elif self.method == "FMINCON":
 
+        elif self.method == 'MOPSO':
+
+            # Defining the Class of Problem
+            class MyProblem(FloatProblemMOPSO,new_engine_opt):
+
+                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, dbunit=self.dbunit):
+                    super(MyProblem,self).__init__()
+
+                    self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
+                    self.obj_labels = ["Inductance", "Temperature"] # Lables of Cost Functions
+                    self.sub_vars = L # Sub Variables based on hierarchical structure
+                    self.lower_bound = [0.0 for _ in range(NumberVariables)] # Lower Bound
+                    self.upper_bound = [1.0 for _ in range(NumberVariables)] # Upper Bound
+
+                    self.structure=structure
+                    self.cg_interface=cg_interface
+                    self.W=floorplan[0]
+                    self.H=floorplan[1]
+                    self.db_file=db_file
+                    self.sol_dir=sol_dir
+                    self.fig_dir=fig_dir
+                    self.dbunit=dbunit
+                    self.measure_names=measure_names
+                    self.seed = seed
+                    self.level = level
+                    self.method = method
+                    self.sol_gen_runtime = 0
+                    self.count = 0
+                    self.measures = measures
+                    self.e_api = e_api
+                    self.t_api = t_api
+                    self.eval_time = 0
+                    self.solutions = solutions
+
+                def number_of_objectives(self) -> int:
+                    return len(self.obj_directions)
+
+                def number_of_constraints(self) -> int:
+                    return 0
+
+                def evaluate(self, solution: FloatSolution) -> FloatSolution:
+
+                    results = new_engine_opt.CostFuncMOPSO(self, solution.variables)
+
+                    solution.objectives[0] = results[0]
+                    solution.objectives[1] = results[1]
+
+                    return solution
+                
+                def name(self):
+                    return "MyProblem"
+
+            # Setting the algorithm (MOPSO) Parameters
+            nVars = len(self.Design_Vars) # Number of Variables
+            level = self.level
+            seed = self.seed
+            method = self.method
+            measures = self.measures
+            e_api = self.e_api
+            t_api = self.t_api
+            solutions = self.solutions
+
+            problem = MyProblem(nVars, seed, level, method, measures, e_api, t_api,solutions)
+
+            max_evaluations = self.num_layouts # Maximum Evaluation
+
+            swarm_size =  int(self.num_layouts/(1+self.num_gen)) # Swarm Size
+            mutation_probability = 10*self.MutaProb / problem.number_of_variables() # Mutation Rate
+            opt = MOPSO(
+            problem=problem,
+            swarm_size=swarm_size,
+            epsilon=self.Epsilon,
+            uniform_mutation=UniformMutation(probability=mutation_probability, perturbation=0.5),
+            non_uniform_mutation=NonUniformMutation(
+                mutation_probability, perturbation=0.5, max_iterations=self.num_gen),
+            leaders=CrowdingDistanceArchive(100),
+            termination_criterion=StoppingByEvaluations(max_evaluations=max_evaluations),
+            sub_vars=L,
+                        )
             
-            opt = Matlab_weighted_sum_fmincon(len(Design_Vars), self.cost_func_fmincon, num_measures=self.num_measure,
-                                              num_gen=self.num_gen, num_disc=self.num_disc,
-                                              matlab_dir=os.path.abspath("../../../MATLAB"), individual=None)
             opt.run()
             
-
         elif self.method == "SA":
 
             # start = timeit.default_timer()
@@ -353,7 +469,12 @@ class new_engine_opt:
         
 
         Random = []
-        for i in range((len(all_hcg_strings) + len(all_vcg_strings))):
+        if self.level == 1:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings) + 2)
+        else:
+            NumVarDesign = (len(all_hcg_strings) + len(all_vcg_strings))
+
+        for i in range(NumVarDesign):
             r = random.uniform(0,1)
             Random.append(round(r, 2))
         #print(len(Random))
@@ -376,7 +497,8 @@ class DesignString():
 def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,algorithm):
 
 
-
+    if mode == 1:
+        mode = 2
 
     if mode==2:
 
@@ -474,9 +596,9 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                     
 
 
-                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
+                    structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII', Iteration=i)
 
-                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII')
+                    structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm='NSGAII', Iteration=i)
 
                     
 
@@ -492,8 +614,8 @@ def recreate_sols(structure,cg_interface,mode,Random,seed,num_layouts,floorplan,
                 structure.layers[i].forward_cg.LocationV[sub_tree_root[1].id]=sub_tree_root[1].node_mode_2_locations[sub_tree_root[1].id]
                 
 
-                structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
-                structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm)
+                structure.layers[i].mode_2_location_h= structure.layers[i].forward_cg.HcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm, Iteration=i)
+                structure.layers[i].mode_2_location_v = structure.layers[i].forward_cg.VcgEval( mode,Random=Random,seed=seed, N=num_layouts,algorithm=algorithm, Iteration=i)
 
 
 
@@ -605,11 +727,11 @@ def update_sols(structure=None,cg_interface=None,mode=0,num_layouts=0,db_file=No
 
 
     if plot:
-        sol_path = fig_dir + '/Mode_2'
+        sol_path = fig_dir + '/Mode_' + str(mode)
         if not os.path.exists(sol_path):
             os.makedirs(sol_path)
         for solution in Solutions:
-            print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
+            #print("Fixed_sized solution", solution.index,solution.floorplan_size[0] / dbunit, solution.floorplan_size[1] / dbunit)
             for i in range(len(solution.layer_solutions)):
 
                 size=list(solution.layer_solutions[i].layout_plot_info.keys())[0]

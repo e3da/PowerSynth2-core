@@ -6,9 +6,9 @@ from matplotlib.colors import Colormap
 from matplotlib.patches import Rectangle
 import pandas as pd
 import numpy as np
-#import plotly.plotly as py
-import plotly.graph_objs as go
-import plotly.express as px
+
+#import plotly.graph_objs as go
+#import plotly.express as px
 import pandas as pd
 #import pygame
 #from pygame.locals import *
@@ -155,6 +155,8 @@ def network_plot_3D(G, ax, cmap_node={}, cmap_edge={},show_labels = False,highli
         ax.set_ylabel('Y (mm)')
         ax.set_zlabel('Z (mm)')
         #plt.axis('equal')
+
+    #Not supported in release package
     elif engine == "plotly":
         lines=[]
         # Creating the plot
