@@ -152,6 +152,7 @@ class CornerStitch_Tmodel_API:
             self.t_amb = float(value)
         else:
             power_list = deque(data['Power'])  # pop from left to right
+            device_list = deque(data['Device'])
             for k in self.comp_dict:
                 comp = self.comp_dict[k]
                 #print("H",comp)
@@ -159,7 +160,8 @@ class CornerStitch_Tmodel_API:
                     if comp.type == 1 and comp.layout_component_id[0]=='D':  # if this is a component
                         
                         self.devices[comp.layout_component_id] = comp
-                        value = power_list.popleft()
+                        index = device_list.index(comp.layout_component_id)
+                        value = power_list[index]
                         self.dev_powerload_table[comp.layout_component_id] = float(value)
             try:
                 self.bp_conv = float(data['heat_conv'])

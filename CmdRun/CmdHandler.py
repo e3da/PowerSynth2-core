@@ -433,6 +433,7 @@ class CmdHandler:
         '''
         if self.thermal_mode!=None and mode ==0:
             t_setup_data = {'Power': self.thermal_models_info['devices_power'],\
+                            'Device': self.thermal_models_info['devices'],\
                             'heat_conv': self.thermal_models_info['heat_convection'],\
                             't_amb': self.thermal_models_info['ambient_temperature']}
             t_measure_data = {'name': self.thermal_models_info['measure_name'],\
