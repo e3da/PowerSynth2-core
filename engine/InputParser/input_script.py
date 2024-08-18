@@ -899,7 +899,7 @@ class ScriptInputMethod():
 
 
 # translates the input layout script and makes necessary information ready for corner stitch data structure
-def script_translator(input_script=None, bond_wire_info=None, flexible=False, layer_stack_info=None, dbunit=1000):
+def script_translator(input_script=None, bond_wire_info=None, flexible=False, layer_stack_info=None, designType=None, dbunit=1000):
     '''
     :param input_script: layout geometry script
     :param bond_wire_info: bondwire setup file
@@ -911,6 +911,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=False, la
     
     ScriptMethod = ScriptInputMethod(input_script)  # initializes the class with filename
     ScriptMethod.read_input_script()  # reads input script and create seperate sections accordingly
+    if designType == 'Converter':
+        devicePins, devices, pinsLayer = ScriptMethod.getDevicesPins()
     ScriptMethod.add_layer_id(layer_stack=layer_stack_info) # appends appropriate layer id to each geometry
     
 
@@ -1000,6 +1002,19 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=False, la
 
     
     for i in range(len(all_layers)):
+
+        if designType == 'Converter':
+            if i == 0:
+                ScriptMethod.updatePinsLocation(layout_info=all_layers[i].input_geometry, devicePins=devicePins, devices=devices)
+            else:
+                for key, value in list(pinsLayer.items()):
+                    if value[1] == i:
+                        for l in all_layers[0].input_geometry:
+                            if key in l:
+                                ##print(all_layers[i].input_geometry[value[0]])
+                                all_layers[i].input_geometry[value[0]][4] = l[5]
+                                all_layers[i].input_geometry[value[0]][5] = l[6]
+                                break
         
         all_layers[i].size,all_layers[i].cs_info,all_layers[i].component_to_cs_type,all_layers[i].all_components=ScriptMethod.gather_layout_info(layout_info=all_layers[i].input_geometry,dbunit=dbunit)  # gathers layout info
         
