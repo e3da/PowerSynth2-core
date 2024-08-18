@@ -677,6 +677,28 @@ class ScriptInputMethod():
         #----------------------------------------------------------------------------------
         return 
 
+    def updatePinsLocation(self, layout_info=None, devicePins=None, devices=None):
+        
+        layoutInfo = layout_info
+
+        for key, value in list(devicePins.items()):
+
+            for d in list(self.all_parts_info[value[0]]):
+                ##print(d.layout_component_id)        # for now in each component name we have one
+                if d.layout_component_id == key:
+                    ##print(d.name)
+                    x = layoutInfo[devices[key][1]][4]
+                    y = layoutInfo[devices[key][1]][5]
+                    ##print(f'x, y {x} {y}')
+                    for pin in range(len(d.pin_locs)):   #list(v.pin_locs.values()):
+                        X = list(d.pin_locs.values())[pin][0] + float(x)
+                        Y = list(d.pin_locs.values())[pin][1] + float(y)
+                        layoutInfo[devices[key][1] + pin + 1][5] = str(X)
+                        layoutInfo[devices[key][1] + pin + 1][6] = str(Y)
+                        
+        ##print(f'layout info inside the end fuction = {layout_info}')
+        return
+
     # creates list of list to convert parts and routing path objects into list of properties:[type, x, y, width, height, name, Schar, Echar, hierarchy_level, rotate_angle]
     def gather_layout_info(self,layout_info=None,dbunit=1000):
         '''
