@@ -310,7 +310,58 @@ class ScriptInputMethod():
         '''
         return
     
+    def getDevicesPins(self):
+        layout_info = self.layout_info
+        ##print(f'layout info [0] = {layout_info[3:6]}')
+        devicePins = {}
+        devices = {}
+        pin = []
+        index = []
+        for j in range(len(layout_info)):
+            if len(layout_info[j])>2:
+                for k in range(len(layout_info[j])):
+                    if layout_info[j][k][0] == 'D':      
+                       devices[(layout_info[j][k])] = [layout_info[j][k+1], j]   # devices[(layout_info[j][k+1])] = j
+                       break
+            elif len(layout_info[j]) == 2:
+                index.append(j)
+        for d in range(len(devices)):
 
+            start = list(devices.values())[d][1] + 1
+            if d<len(devices)-1:
+                end = list(devices.values())[d+1][1]
+            else:
+                end = index[1]
+            pins = layout_info[start:end]
+
+            for p in pins:
+                pin.append(p[3])
+            devicePins[list(devices.keys())[d]] = [list(devices.values())[d][0], copy.deepcopy(pin)]
+            pin.clear()
+
+        pinsLayer ={}
+        for d in list(devicePins.values()):
+            for pin in d[1]:
+                for i in range(1,len(index)):
+                    if i < len(index)-1:
+                        for j in range(index[i], index[i+1]):
+                            if len(layout_info[j])>2:
+                                for k in range(len(layout_info[j])):
+                                    if pin == layout_info[j][k]:
+                                        pinsLayer[pin] = [j-index[i], i]
+                                        break
+                    else:
+                         for j in range(index[i], len(layout_info)):
+                            if len(layout_info[j])>2:
+                                for k in range(len(layout_info[j])):
+                                    if pin == layout_info[j][k]:
+                                        pinsLayer[pin] = [j-index[i], i]
+                                        break
+  
+        ##print(f'devicePins = {devicePins}')
+        ##print(f'pins Layer = {pinsLayer}')
+
+        return devicePins, devices, pinsLayer
 
 
     # gathers layout component information : all parts (Devices, Leads) and all routing paths (Traces, Bonding wire pads)
