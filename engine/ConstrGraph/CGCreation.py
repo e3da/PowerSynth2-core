@@ -816,10 +816,22 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
-                    
-                    comp_type_='Flexible'
-                    type='non-fixed'
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value1 = rect.getHeight()
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+
+                            value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                        
+                            comp_type_='Flexible'
+                            type='non-fixed'
+                    else:
+                        value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                        
+                        comp_type_='Flexible'
+                        type='non-fixed'
                     
                     if rect.NORTH.voltage!=None and rect.SOUTH.voltage!=None: # reliability constraint checking
                         voltage_diff=self.find_voltage_difference(rect.NORTH.voltage,rect.SOUTH.voltage,rel_cons)
@@ -879,7 +891,17 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value = rect.getHeight()
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+                            value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name)
+                    
+                    
+                    else:
+                        value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     #"""
                     if rect.cell.type in comp_type['Fixed']:
                         if self.via_type in dest.associated_type:
@@ -907,7 +929,26 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value = rect.getHeight()
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+                            value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                            if rect.cell.type in comp_type['Fixed']:
+                                if self.via_type in dest.associated_type:
+                                    comp_type_='Fixed'
+                                    type='fixed'
+                            
+                                else:
+                                    comp_type_='Flexible'
+                                    type='non-fixed'
+                            else:
+                                comp_type_='Flexible'
+                                type='non-fixed'
+                    else:
+                        value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     if rect.cell.type in comp_type['Fixed']:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
@@ -1116,7 +1157,18 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value1 = rect.getWidth()
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+                            value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                        
+                            comp_type_='Flexible'
+                            type='non-fixed'
+                    else:
+                        value1 = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     
                     comp_type_='Flexible'
                     type='non-fixed'
@@ -1177,7 +1229,27 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value = rect.getWidth()
+                            #print('value1 = ', value)
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+                            value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name)
+                            if rect.cell.type in comp_type['Fixed']:
+                                if self.via_type in dest.associated_type:
+                                    comp_type_='Fixed'
+                                    type='fixed'
+                                
+                                else:
+                                    comp_type_='Flexible'
+                                    type='non-fixed'
+                            else:
+                                comp_type_='Flexible'
+                                type='non-fixed'
+                    else:
+                        value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     if rect.cell.type in comp_type['Fixed']:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
@@ -1205,7 +1277,26 @@ class ConstraintGraph:
                             index= self.constraint_info.constraints.index(constraint) 
 
                     type_=rect.cell.type
-                    value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                    if self.designType == 'Converter':
+                        if rect.cell.type in ['Type_6', 'Type_7', 'Type_8', 'Type_9', 'Type_10'] and cornerStitch_h.id >2:
+                            value = rect.getWidth()
+                            comp_type_='Fixed'
+                            type='fixed'
+                        else:
+                            value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
+                            if rect.cell.type in comp_type['Fixed']:
+                                if self.via_type in dest.associated_type:
+                                    comp_type_='Fixed'
+                                    type='fixed'
+                                
+                                else:
+                                    comp_type_='Flexible'
+                                    type='non-fixed'
+                            else:
+                                comp_type_='Flexible'
+                                type='non-fixed''
+                    else:
+                        value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     if rect.cell.type in comp_type['Fixed']:
                         if self.via_type in dest.associated_type:
                             comp_type_='Fixed'
