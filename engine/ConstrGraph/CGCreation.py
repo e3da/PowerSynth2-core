@@ -27,7 +27,7 @@ class ConstraintGraph:
     Constraint Grpah for layout solution generation and modification. Creation from CornerStitch information. Modification using Randomization/Optimization algorithms.
     """
 
-    def __init__(self,bondwires=[], rel_cons=0 ,root=[],flexible=False,constraint_info=None):
+    def __init__(self,bondwires=[], rel_cons=0 ,root=[],flexible=False,constraint_info=None, designType=None):
         """
         Default constructor
         """
@@ -84,6 +84,8 @@ class ConstraintGraph:
         self.minY={}
         self.LocationH={}
         self.LocationV={}
+        # Converter/Module
+        self.designType = designType
 
 
 
@@ -591,13 +593,13 @@ class ConstraintGraph:
         
         
 
-    def add_edges(self,direction='forward',Types=None,all_component_types=None,comp_type=None):
+    def add_edges(self,direction='forward',Types=None,all_component_types=None,comp_type=None, numLayer = None):
         # setting up edges for constraint graph from corner stitch tiles using minimum constraint values
         for i in range(len(self.hcs_nodes)):
             if direction =='forward':
-                self.create_forward_edges(self.hcs_nodes[i], self.vcs_nodes[i],Types=Types,rel_cons=self.rel_cons,comp_type=comp_type)
+                self.create_forward_edges(self.hcs_nodes[i], self.vcs_nodes[i],Types=Types,rel_cons=self.rel_cons,comp_type=comp_type, numLayer = None)
             elif direction == 'backward':
-                self.create_backward_edges(self.hcs_nodes[i], self.vcs_nodes[i],Types=Types,rel_cons=self.rel_cons,comp_type=comp_type)
+                self.create_backward_edges(self.hcs_nodes[i], self.vcs_nodes[i],Types=Types,rel_cons=self.rel_cons,comp_type=comp_type, numLayer = None)
         
         
 
@@ -609,7 +611,7 @@ class ConstraintGraph:
                 ID=self.hcs_nodes[i].id
                 self.add_forward_missing_edges(ID)
 
-    def create_forward_edges(self,cornerStitch_h=None, cornerStitch_v=None,Types=None,rel_cons=0,comp_type={}):
+    def create_forward_edges(self,cornerStitch_h=None, cornerStitch_v=None,Types=None,rel_cons=0,comp_type={}, numLayer = None):
         
         '''
         adds forward edges from corner stitch tile
