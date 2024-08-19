@@ -165,8 +165,8 @@ class CmdHandler:
                     # Design Info (Converter, Module)
                     if info[0] == 'Design_Type:':
                         self.designInfo['designType'] = info[1]
-                    if info[0] == 'Converter_Name:':
-                        self.designInfo['converterName:'] = info[1]
+                    if info[0] == 'Converter_Type:':
+                        self.designInfo['converterType:'] = info[1]
                     if info[0] == 'Input_Voltage:':
                         self.designInfo['inputVoltage'] = float(info[1])
                     if info[0] == 'Output_Voltage:':
