@@ -124,6 +124,7 @@ class CmdHandler:
         self.CrossProb = None # the crossover probablity for NSGAII
         self.MutaProb = None # the mutation probality for NSGAII and MOPSO
         self.Epsilon = None # the epsilon value for MOPSO
+        self.designInfo = {}  # Converter or Power Module Design Info
         
         try:
             with open(file, 'r') as inputfile:
@@ -161,6 +162,19 @@ class CmdHandler:
                         self.db_dir = os.path.abspath(info[1])
                     if info[0] == "Constraint_file:":
                         self.constraint_file = os.path.abspath(info[1])
+                    # Design Info (Converter, Module)
+                    if info[0] == 'Design_Type:':
+                        self.designInfo['designType'] = info[1]
+                    if info[0] == 'Converter_Name:':
+                        self.designInfo['converterName:'] = info[1]
+                    if info[0] == 'Input_Voltage:':
+                        self.designInfo['inputVoltage'] = float(info[1])
+                    if info[0] == 'Output_Voltage:':
+                        self.designInfo['outputVoltage'] = float(info[1])
+                    if info[0] == 'Output_Current:':
+                        self.designInfo['outputCurrent'] = float(info[1])
+                    if info[0] == 'Switching_Frequency:':
+                        self.designInfo['switchingFrequency'] = float(info[1])
                     if info[0] == "Reliability-awareness:":
                         self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
                     if info[0] =="New:":
