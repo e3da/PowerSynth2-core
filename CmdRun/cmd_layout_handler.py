@@ -608,33 +608,33 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         
         if optimization == True:
             if algorithm=='NSGAII':
-                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
 
             # Using new algorithm Multi-Objevtive Particle Swarm Optimization (MOPSO)
             elif algorithm == 'MOPSO':
-                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
                 
             else:
                 #layout generation
-                structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+                structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height], designType=designType)
                 PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)
-                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
+                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
                 #layout evaluation
-                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
 
         else:
             #layout generation only 
-            structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+            structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height], designType=designType)
             PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)      
             for solution in PS_solutions:
                 solution.parameters={'Perf_1':None,'Perf_2':None}
@@ -785,7 +785,7 @@ def get_unique_edges(edge_list=None):
 
 
 
-def variable_size_solution_generation(structure=None,num_layouts=None,Random=None,algorithm=None,mode=None,seed=None,dbunit=1000):
+def variable_size_solution_generation(structure=None,num_layouts=None,Random=None,algorithm=None,mode=None,seed=None,dbunit=1000, designType=None):
     '''
     :param structure: 3D structure object
     :param num_layouts int -- provide a number of layouts used in NG RANDOM(macro mode)
@@ -975,7 +975,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
     return structure, cg_interface
 
 def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,Random=None,dbunit=1000):
+                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,Random=None,dbunit=1000, designType=None):
     '''
 
     :param structure: 3D structure object
@@ -998,7 +998,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     '''
     width=floor_plan[0]
     height=floor_plan[1]
-    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():
