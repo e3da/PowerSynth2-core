@@ -273,7 +273,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     start=time.time()
     if mode == 0: # Minimum-sized layout generation
         
-        structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
+        structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)
         
         if structure.via_connected_layer_info!=None:
             # assign locations to each sub_root nodes (via nodes)
@@ -418,8 +418,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         #----------------------------------------------------------------
         if optimization==True:
 
-            opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-            PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+            opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
+            PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
             
 
         else:
