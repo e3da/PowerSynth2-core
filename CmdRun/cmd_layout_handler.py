@@ -439,9 +439,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts, alg=algorithm)
             num_layouts=params[0]
             
-            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
             structure_sample.get_design_strings()    
-            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
             opt_problem.num_measure = 2  # number of performance metrics
             opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
             PS_solutions=opt_problem.solutions
@@ -453,9 +453,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts, alg=algorithm)
             num_layouts=params[0]
             
-            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
             structure_sample.get_design_strings()    
-            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
             opt_problem.num_measure = 2  # number of performance metrics
             opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
             PS_solutions=opt_problem.solutions
@@ -466,7 +466,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts,alg='LAYOUT_GEN')
             num_layouts = params[0]
             seed = get_seed(seed)
-            structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed) # key function for layout generation
+            structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed, designType=designType) # key function for layout generation
             layer_solutions=[]
             width=0
             height=0
@@ -588,8 +588,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 
             if optimization==True:
-                    opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-                    Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                    opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
+                    Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
             else:
                 for solution in PS_solutions:
                     solution.parameters={'Perf_1':None,'Perf_2':None}
@@ -644,7 +644,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 
 
-def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate minimum-sized solution
+def get_min_size_sol_info(structure=None, dbunit=1000, designType=None): # function to generate minimum-sized solution
 
     cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw)
     if structure.via_connected_layer_info!=None:
@@ -795,7 +795,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
 
     '''
 
-    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=None, designType=designType)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():
