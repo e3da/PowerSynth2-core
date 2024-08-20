@@ -106,7 +106,7 @@ def eval_single_layout(layout_engine=None, layout_data=None, apis={}, measures=[
     print("Performance_results",results)
     return Solutions
 
-def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, measure_names=[], perf_results=[]):
+def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, measure_names=[], perf_results=[], designInfo=None, compsInfo=None):
     '''
     :param solutions: list of PS solutions object
     :param module_info: list of module data info
@@ -122,31 +122,37 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
 
         if opt_problem != None:  # Evaluation mode
 
-            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions))
+            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions), designInfo=designInfo, compsInfo=compsInfo)
             df = pd.DataFrame.from_dict(opt_problem.multiport_result)
             
         else:
             results = perf_results[i]
 
-        
-        solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
-        if opt_problem.e_api!= None:
-            if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
-                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
-        
-    if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
-        e_results = opt_problem.e_api.parallel_run(solutions)
-        #print(e_results)
-        type_= 1# opt_problem.e_api.measure[0].measure
-
-        for i in range(len(solutions)):
-            s=solutions[i]
-            value=e_results[i][type_]
-            for m_name,value_ in s.parameters.items():
-                if value_==-1:
-                    s.parameters[m_name]=value
-
+        if designInfo['designType'] == 'Converter':
+            measure_names = ['Efficiency', 'Maximum Temperature']
+            solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
             print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
+        else:
+        
+            solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
+            if opt_problem.e_api!= None:
+                if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
+                    print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
+        
+    if designInfo['designType'] != 'Converter':
+        if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
+            e_results = opt_problem.e_api.parallel_run(solutions)
+            #print(e_results)
+            type_= 1# opt_problem.e_api.measure[0].measure
+
+            for i in range(len(solutions)):
+                s=solutions[i]
+                value=e_results[i][type_]
+                for m_name,value_ in s.parameters.items():
+                    if value_==-1:
+                        s.parameters[m_name]=value
+
+                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         
     print(f"INFO: Evaluation Time: {time.time()-start:.2f}")
     return solutions
