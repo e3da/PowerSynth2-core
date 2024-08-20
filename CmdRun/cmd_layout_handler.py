@@ -223,7 +223,7 @@ def get_dims(floor_plan = None,dbunit=1000): # for step-by-step approach
 
 
 def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , CrossProb=None, MutaProb=None, Epsilon=None, num_disc=None,max_temp=None,floor_plan=None,algorithm=None, dbunit=1000):
+                             num_layouts = None,num_gen= None , CrossProb=None, MutaProb=None, Epsilon=None, num_disc=None,max_temp=None,floor_plan=None,algorithm=None, designInfo=None, dbunit=1000):
     '''
 
     :param structure: 3D structure object
@@ -252,7 +252,13 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     :return: list of CornerStitch Solution objects
     '''
     
-
+    compsInfo = {}
+    for comp in structure.layers[0].all_components:
+        if comp.name in ['MOSFET', 'Inductance', 'Capacitor', 'Diode']:
+            compInfo = [comp.ron, comp.trise, comp.tfall, comp.vf, comp.rd, comp.l, comp.rl]
+            compsInfo[comp.name] = compInfo       
+    
+    designType = designInfo['designType']
     
     measure_names = [None,None] # currently assuming two objectives only
     if len(measures)>0:
