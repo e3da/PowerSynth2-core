@@ -795,7 +795,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
 
     '''
 
-    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=None, designType=designType)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():

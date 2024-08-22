@@ -1294,7 +1294,7 @@ class ConstraintGraph:
                                     type='non-fixed'
                             else:
                                 comp_type_='Flexible'
-                                type='non-fixed''
+                                type='non-fixed'
                     else:
                         value = self.constraint_info.getConstraintVal(source=source_type,dest=dest_type,cons_name=cons_name) 
                     if rect.cell.type in comp_type['Fixed']:

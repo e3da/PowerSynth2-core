@@ -118,7 +118,6 @@ class CornerStitch_Tmodel_API:
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
             if bool(self.pLoss):
                 for f in solution.features_list:
-                    print(f.name, f.power)
                     if f.name == 'D1':
                         f.power = self.pLoss['MOSFET']
                     elif f.name == 'D2':

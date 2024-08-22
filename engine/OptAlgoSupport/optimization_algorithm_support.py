@@ -171,7 +171,7 @@ class new_engine_opt:
                         psloss = Pc + Ps
                         Pd = IOut * Vf * (1 - (VOut/VIn))
                         Pl = (IOut**2 + ((Ip - Iv)**2)/12) * DCR
-                        print(f'pswitch = {psloss} pdiode = {Pd} pincuctor = {Pl}')
+                        #print(f'pswitch = {psloss} pdiode = {Pd} pincuctor = {Pl}')
                         ploss = psloss + Pd + Pl
                         pLoss['MOSFET'] = psloss
                         pLoss['Inductance'] = Pl
@@ -197,7 +197,7 @@ class new_engine_opt:
                         psloss = Pc + Ps + pcc
                         Pd = (Rd * IOut**2 * (1-D)) + ((Rd * IOut**2/12) * D**2 * (1-D)**3)
                         Pl = (DCR * IOut**2) + ((DCR * IOut**2/12) * D**2 * (1-D)**2)
-                        print(f'pSwitch = {psloss} pDiode = {Pd} pIncuctor = {Pl}')
+                        #print(f'pSwitch = {psloss} pDiode = {Pd} pIncuctor = {Pl}')
                         ploss = psloss + Pd + Pl
                         ploss = psloss + Pd + Pl
                         pLoss['MOSFET'] = psloss
