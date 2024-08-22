@@ -341,7 +341,7 @@ class new_engine_opt:
         
         for i in range(len(solutions)):
             start2=time.time()
-            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i], designInfo=self.designInfo, compsInfo=self.compsInfo)
             end2=time.time()
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
@@ -443,6 +443,8 @@ class new_engine_opt:
         self.db_file=db_file
         self.sol_dir=sol_dir
         self.fig_dir=fig_dir
+        if self.designInfo['designType'] == 'Converter':
+            measure_names[0] = 'Efficiency'
         self.measure_names=measure_names
         
         all_hcg_strings=[]
