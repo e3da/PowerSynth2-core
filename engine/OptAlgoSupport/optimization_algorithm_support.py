@@ -25,7 +25,7 @@ from core.engine.LayoutSolution.cs_solution import CornerStitchSolution, LayerSo
 
 
 class new_engine_opt:
-    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_layouts=100,num_gen=10,dbunit=1000,CrossProb=None, MutaProb=None, Epsilon=None):
+    def __init__(self,  seed, level, method=None,db=None, apis={}, measures=[],num_layouts=100,num_gen=10,dbunit=1000,CrossProb=None, MutaProb=None, Epsilon=None, designInfo=None, compsInfo=None):
         
         self.count = 0
         self.layout_data = []
@@ -60,6 +60,8 @@ class new_engine_opt:
         self.sol_gen_runtime = 0
         self.eval_time = 0
         self.multiport_result = {}
+        self.designInfo = designInfo
+        self.compsInfo = compsInfo
 
     def solution_3D_to_electrical_meshing_process(self,module_data, obj_name_feature_map,id):
         
@@ -93,7 +95,7 @@ class new_engine_opt:
             
             #self.e_api.generate_fasthenry_solutions_dir(id)
             #self.e_api.generate_fasthenry_inputs(id)
-    def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1):
+    def eval_3D_layout(self,module_data = None, solution = None, init = False, sol_len =1, designInfo=None , compsInfo=None):
         result = []
         measures=[None,None]
         for measure in self.measures:
@@ -104,48 +106,154 @@ class new_engine_opt:
         self.measures=measures
         for i in range(len(self.measures)):
             measure=self.measures[i]
-            # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
-            if isinstance(measure, ElectricalMeasure):
-                if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
-                    ps_sol = solution
-                    features = ps_sol.features_list
-                    obj_name_feature_map = {}
-                    for f in features:
-                        f.z = round(f.z,4) # need to handle the Z location better in sol3D
-                        obj_name_feature_map[f.name] = f
-                    self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
-                    # EVALUATION PROCESS 
-                    if self.e_api.e_mdl == "PowerSynthPEEC":
-                        if measure.multiport:
-                            multiport_result = self.e_api.eval_multi_loop_impedances()
-                            self.multiport_result[solution.solution_id] = multiport_result
-                            # if possible, we can collect the data for a balancing layout optimization.
-                            # 1 Balancing
-                            # 2 Using the full matrix (without mutual for now) to estimate thermal performance
-                            result.append(0)    
-                        else:
-                            R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
-                            R_abs = abs(R)
-                            L_abs = abs(np.imag(L))
-                            R_abs = R_abs[0]
-                            L_abs = L_abs[0]
-                            if abs(R_abs)>1e3:
-                                print("ID:",solution.solution_id)
-                                print("EVALUATION ERROR: there is no path between Src and Sink leading to infinite resistance")
-                                assert False, "Check connectivity: via connections, device connections, loop setup"    
-                            result.append(L_abs)  
-                    elif self.e_api.e_mdl == 'FastHenry':
-                        self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
-                        self.e_api.generate_fasthenry_inputs(solution.solution_id)
-                        if sol_len==1:
-                            R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
-                            L_abs = abs(L)
-                            result.append(L_abs)  
-                        else:
-                            result.append(-1)
-                else:
-                    result.append(-1)
+            if designInfo['designType'] != 'Converter':
+                # TODO: APPLY LAYOUT INFO INTO ELECTRICAL MODEL
+                if isinstance(measure, ElectricalMeasure):
+                    if solution.solution_id != -2: # Can be use for debugging, in case a solution id throws some weird resultss
+                        ps_sol = solution
+                        features = ps_sol.features_list
+                        obj_name_feature_map = {}
+                        for f in features:
+                            f.z = round(f.z,4) # need to handle the Z location better in sol3D
+                            obj_name_feature_map[f.name] = f
+                        self.solution_3D_to_electrical_meshing_process(module_data,obj_name_feature_map,solution.solution_id)
+                        # EVALUATION PROCESS 
+                        if self.e_api.e_mdl == "PowerSynthPEEC":
+                            if measure.multiport:
+                                multiport_result = self.e_api.eval_multi_loop_impedances()
+                                self.multiport_result[solution.solution_id] = multiport_result
+                                # if possible, we can collect the data for a balancing layout optimization.
+                                # 1 Balancing
+                                # 2 Using the full matrix (without mutual for now) to estimate thermal performance
+                                result.append(0)    
+                            else:
+                                R, L = self.e_api.eval_single_loop_impedances(sol_id = solution.solution_id)
+                                R_abs = abs(R)
+                                L_abs = abs(np.imag(L))
+                                R_abs = R_abs[0]
+                                L_abs = L_abs[0]
+                                if abs(R_abs)>1e3:
+                                    print("ID:",solution.solution_id)
+                                    print("EVALUATION ERROR: there is no path between Src and Sink leading to infinite resistance")
+                                    assert False, "Check connectivity: via connections, device connections, loop setup"    
+                                result.append(L_abs)  
+                        elif self.e_api.e_mdl == 'FastHenry':
+                            self.e_api.generate_fasthenry_solutions_dir(solution.solution_id)
+                            self.e_api.generate_fasthenry_inputs(solution.solution_id)
+                            if sol_len==1:
+                                R,L = self.e_api.run_fast_henry_script(parent_id = solution.solution_id)
+                                L_abs = abs(L)
+                                result.append(L_abs)  
+                            else:
+                                result.append(-1)
+                    else:
+                        result.append(-1)
             if isinstance(measure, ThermalMeasure):
+                pLoss = {}
+                if designInfo['designType'] == 'Converter':
+                    converter = designInfo['converterType']
+                    # Buck Converter
+                    if converter == 'Buck':              
+                        f = designInfo['switchingFrequency']* 1000    #200e3
+                        VIn = designInfo['inputVoltage'] #24
+                        VOut = designInfo['outputVoltage']  #12
+                        IOut = designInfo['outputCurrent']  #10
+                        Vf = compsInfo['Diode'][3] #0.55   # SR540
+                        L = compsInfo['Inductance'][5]  #8e-6
+                        Ron = compsInfo['MOSFET'][0]   #35e-3 # IRLZ34N 55v 30A 0.035
+                        t = compsInfo['MOSFET'][1] + compsInfo['MOSFET'][2]   #129e-9  # Tr 100 ns   Tf 29 ns
+                        DCR = compsInfo['Inductance'][6]    #40e-3
+                        DIL = ((VIn - VOut)/(f*L))*(VOut/VIn)
+                        Ip = IOut + DIL/2
+                        Iv = IOut - DIL/2
+                        Pc = (IOut**2 + ((Ip - Iv)**2)/12) * Ron * (VOut/VIn)
+                        Ps = 0.5*VIn*IOut*t*f
+                        psloss = Pc + Ps
+                        Pd = IOut * Vf * (1 - (VOut/VIn))
+                        Pl = (IOut**2 + ((Ip - Iv)**2)/12) * DCR
+                        print(f'pswitch = {psloss} pdiode = {Pd} pincuctor = {Pl}')
+                        ploss = psloss + Pd + Pl
+                        pLoss['MOSFET'] = psloss
+                        pLoss['Inductance'] = Pl
+                        pLoss['Diode'] = Pd
+                        pLoss['Capacitor'] = 0.5
+                        efficiency = 100 * (VOut * IOut)/((VOut * IOut) + ploss)
+
+                    elif converter == 'Boost':
+                        #Boost Converter
+                        f = designInfo['switchingFrequency']* 1000    #200e3
+                        VIn = designInfo['inputVoltage'] #24
+                        VOut = designInfo['outputVoltage']  #48
+                        IOut = designInfo['outputCurrent']  #4.8
+                        L = compsInfo['Inductance'][5]  #4.7e-6
+                        Ron = compsInfo['MOSFET'][0]   #77e-3
+                        t = compsInfo['MOSFET'][1] + compsInfo['MOSFET'][2]   #97e-9
+                        DCR = compsInfo['Inductance'][6]    #80e-3 # Rl
+                        Rd = compsInfo['Diode'][4] #0.085   # SR5100
+                        D = (VOut - VIn)/VOut
+                        Pc = (Ron * IOut**2 * D) + ((Ron * IOut**2/12) * D**3 * (1-D)**2)
+                        Ps = 0.5*VOut*IOut*t*f  # IRF540
+                        pcc = (VOut * IOut/2) * t * f
+                        psloss = Pc + Ps + pcc
+                        Pd = (Rd * IOut**2 * (1-D)) + ((Rd * IOut**2/12) * D**2 * (1-D)**3)
+                        Pl = (DCR * IOut**2) + ((DCR * IOut**2/12) * D**2 * (1-D)**2)
+                        print(f'pSwitch = {psloss} pDiode = {Pd} pIncuctor = {Pl}')
+                        ploss = psloss + Pd + Pl
+                        ploss = psloss + Pd + Pl
+                        pLoss['MOSFET'] = psloss
+                        pLoss['Inductance'] = Pl
+                        pLoss['Diode'] = Pd
+                        pLoss['Capacitor'] = 0.5
+                        efficiency = 100 * (VOut * IOut)/((VOut * IOut) + ploss)
+                        
+                    elif converter == 'Bidirectional':
+                        # Switch C3M0021120D
+                        D = 0.5
+                        Vf_s1 = 3.6
+                        R_s1 = 21e-3    # 34e-3
+                        Vf_s2 = 3.6
+                        R_s2 = 21e-3
+                        Power = 24e3
+                        VH = 800
+                        VL = 400
+                        Fs = 200e3
+                        Ts = 1/Fs
+                        L1 = 21e-6
+                        L2 = 10e-6
+                        toff = 72e-9    #29e-9
+                        tr = 27e-9  #45e-9
+                        Qr = 879e-9 #406e-9
+                        Vr = 800
+                        RH = VH**2/Power
+                        IH = -VH/RH
+                        Io = -IH
+                        IL = -IH/(1-D)
+                        G = 1/(1-D)
+                        # Switch
+                        Pcond_s1= abs((Vf_s1 + R_s1*IL)*IL*D)
+                        Psw_s1 = abs((1/6)*Fs*VH*((-IH/(1-D)) + (VL*D*Ts/2)*((1/L1)+(1/L2)))*toff)
+
+                        Pcond_s2 = abs((Vf_s2 + (R_s2*IH)/(1-D))*IH)
+                        Psw_s2 = abs(Fs*Vr*Qr) # based on code
+                        #Psw_s2 = abs((-1/6)*Fs*VH*((-IH/(1-D)) - (VL*D*Ts/2)*((1/L1)+(1/L2)))*toff) # based on paper DMC2023
+                        # Inductor
+                        rL1 = 0.05
+                        rL2 = 0.05
+                        PcondL1 = (rL1 * IL**2)
+                        PcondL2 = (rL2 * ((VL*D*Ts)/(4*L2)))         
+
+                        # Capacitor
+                        rC1 = 0.01
+                        rC2 = 0.01
+                        PcondC = (rC1 * IH**2 * (D/(1-D))) + (rC2 * IH**2 * (D/(1-D)))
+                        pSwitch1 = Pcond_s1 + Psw_s1
+                        pSwitch2 = Pcond_s2 + Psw_s2
+                        ploss = pSwitch1 + pSwitch2 + PcondL1 + PcondL2 + PcondC
+                        print(f'pSwitch1 = {pSwitch1} pSwitch2 = {pSwitch2} pCapacitor = {PcondC} pIncuctor1 = {PcondL1} pIncuctor2 = {PcondL2}')
+                        efficiency = 100 * (Power)/(Power + ploss)
+
+
+                    result.append(efficiency)
                 #t_sol = copy.deepcopy(solution)
                 t_sol2 = copy.deepcopy(solution)
                 #t_solution=self.populate_thermal_info_to_sol_feat(t_sol) # populating heat generation and heat transfer coefficeint
@@ -155,7 +263,7 @@ class new_engine_opt:
                 t_solution=self.populate_thermal_info_to_sol_feat(t_sol2) # populating heat generation and heat transfer coefficeint
                 #print(self.t_api.matlab_engine)
                 #measure.mode = 1 #Need to input from macro
-                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0) # extract max temp
+                max_t = self.t_api.eval_thermal_performance(module_data=module_data,solution=t_solution, mode = 0, pLoss=pLoss) # extract max temp
                 result.append(max_t)
         return result
     
