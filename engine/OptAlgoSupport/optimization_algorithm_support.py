@@ -389,7 +389,7 @@ class new_engine_opt:
   
         for i in range(len(solutions)):
             start2=time.time()
-            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i])
+            results = self.eval_3D_layout(module_data=module_info[i], solution=solutions[i], designInfo=self.designInfo, compsInfo=self.compsInfo   )
             end2=time.time()
             self.eval_time+=(end2-start2)
             solutions[i].parameters = dict(list(zip(self.measure_names, results)))  # A dictionary formed by result and measurement name
@@ -484,7 +484,7 @@ class new_engine_opt:
             # Defining the Class of Problem
             class MyProblem(FloatProblemMOPSO,new_engine_opt):
 
-                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, dbunit=self.dbunit):
+                def __init__(self, NumberVariables, seed, level, method, measures, e_api, t_api, solutions, designInfo=self.designInfo, compsInfo=self.compsInfo, dbunit=self.dbunit):
                     super(MyProblem,self).__init__()
 
                     self.obj_directions = [self.MINIMIZE, self.MINIMIZE]
@@ -512,6 +512,8 @@ class new_engine_opt:
                     self.t_api = t_api
                     self.eval_time = 0
                     self.solutions = solutions
+                    self.designInfo = designInfo
+                    self.compsInfo = compsInfo
 
                 def number_of_objectives(self) -> int:
                     return len(self.obj_directions)
