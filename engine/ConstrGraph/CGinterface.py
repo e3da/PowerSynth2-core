@@ -46,7 +46,7 @@ class CS_Type_Map():
 
 
 class CS_to_CG():
-    def __init__(self, cs_type_map=None, min_enclosure_bw=0.0):
+    def __init__(self, cs_type_map=None, min_enclosure_bw=0.0, designType=None):
         '''
         : param: all_cs_types: list of corner stitch types
         min_enclosure_bw: minimum spacing/enclosure of bw groups
@@ -58,6 +58,7 @@ class CS_to_CG():
         self.all_cs_types = cs_type_map.types_name # list of corner stitch types (string) #'Type_1','Type_2',.....etc.
         self.types_index = cs_type_map.types_index
         self.min_enclosure_bw=min_enclosure_bw
+        self.designType = designType
         if cs_type_map != None:
             self.constraints=[] # list of constraint objects initialized with names declared in 'Constraint_up.py'
             self.initialize_constraint_info()
@@ -231,7 +232,7 @@ class CS_to_CG():
 
         '''
         
-        forward_cg= ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible,constraint_info=constraint_info) # left-to-right/ bottom-to-top
+        forward_cg= ConstraintGraph(bondwires=bondwires, rel_cons=rel_cons ,root=root,flexible=flexible,constraint_info=constraint_info, designType=self.designType) # left-to-right/ bottom-to-top
         forward_cg.select_nodes_from_tree(h_nodelist=Htree.hNodeList, v_nodelist=Vtree.vNodeList)
         forward_cg.get_x_y_coordinates(direction='forward')
         forward_cg.create_vertices(propagated=False)

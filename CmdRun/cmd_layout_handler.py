@@ -646,7 +646,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 def get_min_size_sol_info(structure=None, dbunit=1000, designType=None): # function to generate minimum-sized solution
 
-    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw)
+    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw, designType=designType)
     if structure.via_connected_layer_info!=None:
         for via_name, sub_root_node_list in structure.sub_roots.items():
             sub_tree_root=sub_root_node_list # root of each via connected layes subtree
