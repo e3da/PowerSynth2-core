@@ -220,7 +220,7 @@ class CS_to_CG():
         ledge_dims=[ledge_width,ledge_height]
         return ledge_dims
     
-    def create_cg(self, Htree, Vtree, bondwires, cs_islands, rel_cons,root,flexible,constraint_info):
+    def create_cg(self, Htree, Vtree, bondwires, cs_islands, rel_cons,root,flexible,constraint_info, numLayer):
         '''
         :param Htree: Horizontal corner stitch (HCS) tree
         :param Vtree: Vertical corner stitch (VCS) tree
@@ -242,7 +242,7 @@ class CS_to_CG():
         forward_cg.create_vertices(propagated=True)
         forward_cg.update_indices()
         
-        forward_cg.add_edges(direction='forward',Types=self.all_cs_types,all_component_types=self.component_types,comp_type=self.comp_type)
+        forward_cg.add_edges(direction='forward',Types=self.all_cs_types,all_component_types=self.component_types,comp_type=self.comp_type, numLayer = numLayer)
         
         # perform edge removal and prepare to propagate edges to parent node
         
