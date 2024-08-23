@@ -97,6 +97,13 @@ class Part:
         self.material_id = None # A string represent selected material in material lib
         self.parent_component_id=None # in hierarchy parent component layout id
         self.via_type=None # only for 'via' part objects. Two options: 'Through'--> connects two metal layers of a DBC (Through DBC). 'Buried'--> connects two inner layer (for Device Paad/Metallic Post type connection)
+        self.ron = None     # Ron of a MOSFET
+        self.trise = None  # Rise time of a MOSFET
+        self.tfall = None  # Fall time of a MOSFET
+        self.vf = None     # Forward voltage of a Diode
+        self.rd = None     # Resistace of a Diode
+        self.l = None      # inductace value of an Inductor
+        self.rl = None     # Resistance of an Inductor
 
     def load_part(self):
         # Update part info from file
@@ -115,8 +122,12 @@ class Part:
                 if info[0] == "Name":
                     self.raw_name = info[1]
                 elif info[0] == "Type":
-                    if info[1] == "component":
-                        self.type = 1
+                    if info[1] not in ['connector', 'MOSFET', 'Capacitor', 'Inductor', 'Diode', 'Terminal', 'Transformer']:  #== "component":
+                        raise Exception('check the type in component definition in part.lib folder. type should be connector, MOSFET, Capacitor, Inductor, Diode, Terminal, Transformer')
+                        print('type should be connector, MOSFET, Capacitor, Inductor, Diode, Terminal, Transformer')
+
+                    if info[1] in ['MOSFET', 'Capacitor', 'Inductor', 'Diode', 'Terminal', 'Transformer']:  #== "component":
+                            self.type = 1
                     elif info[1] == "connector":
                         self.type = 0
                 elif info[0] == "Link":
@@ -147,6 +158,8 @@ class Part:
                 if ("\t" in info[0]) and para_read:
                     name1 = info[0].strip("\t+")
                     name2 = info[1]
+                    if name1 == 'Drain' and name2 == 'Source':
+                        self.ron = float(info[2].strip("R:"))
                     connection = (name1, name2)
                     parasitc = {"R": 1e-6, "L": 1e-12, "C": 1e-15}
                     for para_val in info[2:len(info)]:
@@ -163,6 +176,25 @@ class Part:
                     all_parasitic.append(parasitc)
                 else:
                     para_read = False
+
+                if info[0] == "Timing":
+                    time_read = True
+                    continue
+                if ("\t" in info[0]) and time_read:
+                    if info[0].strip("\t") == 'tRise':
+                        self.trise = float(info[1])
+                    if info[0].strip("\t") == 'tFall':
+                        self.tfall = float(info[1])
+                else:
+                    time_read = False
+                if info[0] == 'Vf':
+                    self.vf = float(info[1])
+                if info[0] == 'Rd':
+                    self.rd = float(info[1])
+                if info[0] == 'Rl':
+                    self.rl = float(info[1])
+                if info[0] == 'L':
+                    self.l = float(info[1])
         # SET UP CONNECTION TABLE
         for i in range(len(all_conn)):
             self.conn_dict[all_conn[i]]=all_parasitic[i]

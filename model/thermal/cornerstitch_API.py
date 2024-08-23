@@ -56,6 +56,7 @@ class CornerStitch_Tmodel_API:
         self.matlab_engine = None
         self.pp_json_path= None # to store PP json file
         self.ppw=None
+        self.pLoss ={}
         # print("Starting cornerstitch_API thermal interface")
 
     def init_matlab(self):
@@ -115,7 +116,16 @@ class CornerStitch_Tmodel_API:
                 feature=PSFeature(name=name, x=x, y=y, z=z, width=width, length=length, height=height, material_name=material_name) # creating PSFeature object for each layer
                 solution.features_list.append(feature)
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
-            
+            if bool(self.pLoss):
+                for f in solution.features_list:
+                    if f.name == 'D1':
+                        f.power = self.pLoss['MOSFET']
+                    elif f.name == 'D2':
+                        f.power = self.pLoss['Inductance']
+                    elif f.name == 'D3':
+                        f.power = self.pLoss['Diode']
+                    elif f.name == 'D4':
+                        f.power = self.pLoss['Capacitor']
             ambient_temp=self.t_amb
             h_val=self.bp_conv
             solution.features_list.sort(key=lambda x: x.z, reverse=False)
@@ -189,7 +199,7 @@ class CornerStitch_Tmodel_API:
             self.measure.append(ThermalMeasure(devices=devices, name=name))
             return self.measure
 
-    def eval_thermal_performance(self, module_data = None , solution = None, mode = 0):
+    def eval_thermal_performance(self, module_data = None , solution = None, mode = 0, pLoss=None):
         """_summary_
 
         Args:
@@ -197,6 +207,8 @@ class CornerStitch_Tmodel_API:
             solution (_type_, optional): layout PSSolution object. Defaults to None.
             mode (int, optional): select between maxtemp 0 , thermal resistance 1 Defaults to 0.
         """
+        self.pLoss = pLoss
+
         if mode == 0:
             result = self.eval_max_temp(module_data,solution)
         if mode == 1:

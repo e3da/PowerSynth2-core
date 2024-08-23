@@ -106,7 +106,7 @@ def eval_single_layout(layout_engine=None, layout_data=None, apis={}, measures=[
     print("Performance_results",results)
     return Solutions
 
-def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, measure_names=[], perf_results=[]):
+def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, measure_names=[], perf_results=[], designInfo=None, compsInfo=None):
     '''
     :param solutions: list of PS solutions object
     :param module_info: list of module data info
@@ -122,31 +122,37 @@ def update_PS_solution_data(solutions=None,module_info=None, opt_problem=None, m
 
         if opt_problem != None:  # Evaluation mode
 
-            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions))
+            results = opt_problem.eval_3D_layout(module_data=module_info[i], solution=solutions[i],sol_len=len(solutions), designInfo=designInfo, compsInfo=compsInfo)
             df = pd.DataFrame.from_dict(opt_problem.multiport_result)
             
         else:
             results = perf_results[i]
 
-        
-        solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
-        if opt_problem.e_api!= None:
-            if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
-                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
-        
-    if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
-        e_results = opt_problem.e_api.parallel_run(solutions)
-        #print(e_results)
-        type_= 1# opt_problem.e_api.measure[0].measure
-
-        for i in range(len(solutions)):
-            s=solutions[i]
-            value=e_results[i][type_]
-            for m_name,value_ in s.parameters.items():
-                if value_==-1:
-                    s.parameters[m_name]=value
-
+        if designInfo['designType'] == 'Converter':
+            measure_names = ['Efficiency', 'Maximum Temperature']
+            solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
             print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
+        else:
+        
+            solutions[i].parameters = dict(list(zip(measure_names, results)))  # A dictionary formed by result and measurement name
+            if opt_problem.e_api!= None:
+                if opt_problem.e_api.e_mdl != "FastHenry" or len(solutions)==1:
+                    print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
+        
+    if designInfo['designType'] != 'Converter':
+        if opt_problem.e_api.e_mdl == "FastHenry" and len(solutions)>1:
+            e_results = opt_problem.e_api.parallel_run(solutions)
+            #print(e_results)
+            type_= 1# opt_problem.e_api.measure[0].measure
+
+            for i in range(len(solutions)):
+                s=solutions[i]
+                value=e_results[i][type_]
+                for m_name,value_ in s.parameters.items():
+                    if value_==-1:
+                        s.parameters[m_name]=value
+
+                print("INFO: Solution", solutions[i].solution_id, solutions[i].parameters,flush=True)
         
     print(f"INFO: Evaluation Time: {time.time()-start:.2f}")
     return solutions
@@ -217,7 +223,7 @@ def get_dims(floor_plan = None,dbunit=1000): # for step-by-step approach
 
 
 def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , CrossProb=None, MutaProb=None, Epsilon=None, num_disc=None,max_temp=None,floor_plan=None,algorithm=None, dbunit=1000):
+                             num_layouts = None,num_gen= None , CrossProb=None, MutaProb=None, Epsilon=None, num_disc=None,max_temp=None,floor_plan=None,algorithm=None, designInfo=None, dbunit=1000):
     '''
 
     :param structure: 3D structure object
@@ -246,7 +252,13 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     :return: list of CornerStitch Solution objects
     '''
     
-
+    compsInfo = {}
+    for comp in structure.layers[0].all_components:
+        if comp.name in ['MOSFET', 'Inductance', 'Capacitor', 'Diode']:
+            compInfo = [comp.ron, comp.trise, comp.tfall, comp.vf, comp.rd, comp.l, comp.rl]
+            compsInfo[comp.name] = compInfo       
+    
+    designType = designInfo['designType']
     
     measure_names = [None,None] # currently assuming two objectives only
     if len(measures)>0:
@@ -261,7 +273,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
     start=time.time()
     if mode == 0: # Minimum-sized layout generation
         
-        structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
+        structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)
         
         if structure.via_connected_layer_info!=None:
             # assign locations to each sub_root nodes (via nodes)
@@ -406,8 +418,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         #----------------------------------------------------------------
         if optimization==True:
 
-            opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-            PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+            opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
+            PS_solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
             
 
         else:
@@ -427,9 +439,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts, alg=algorithm)
             num_layouts=params[0]
             
-            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
             structure_sample.get_design_strings()    
-            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
             opt_problem.num_measure = 2  # number of performance metrics
             opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
             PS_solutions=opt_problem.solutions
@@ -441,9 +453,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts, alg=algorithm)
             num_layouts=params[0]
             
-            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+            structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=2,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
             structure_sample.get_design_strings()    
-            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+            opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
             opt_problem.num_measure = 2  # number of performance metrics
             opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
             PS_solutions=opt_problem.solutions
@@ -454,7 +466,7 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
             params = get_params(num_layouts=num_layouts,alg='LAYOUT_GEN')
             num_layouts = params[0]
             seed = get_seed(seed)
-            structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed) # key function for layout generation
+            structure_variable,cg_interface=variable_size_solution_generation(structure=structure,num_layouts=num_layouts,mode=mode,seed=seed, designType=designType) # key function for layout generation
             layer_solutions=[]
             width=0
             height=0
@@ -576,8 +588,8 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 
             if optimization==True:
-                    opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
-                    Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                    opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
+                    Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
             else:
                 for solution in PS_solutions:
                     solution.parameters={'Perf_1':None,'Perf_2':None}
@@ -596,33 +608,33 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
         
         if optimization == True:
             if algorithm=='NSGAII':
-                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit, CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
 
             # Using new algorithm Multi-Objevtive Particle Swarm Optimization (MOPSO)
             elif algorithm == 'MOPSO':
-                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False)
+                structure_sample,cg_interface_sample=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=1,seed=seed,floor_plan=[width,height],Random=False, designType=designType)
                 structure_sample.get_design_strings()    
-                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon)
+                opt_problem = new_engine_opt( seed=seed,level=mode, method=algorithm,apis=apis, measures=measures,num_layouts=num_layouts,num_gen=num_gen,dbunit=dbunit,CrossProb=CrossProb, MutaProb=MutaProb, Epsilon=Epsilon, designInfo=designInfo, compsInfo=compsInfo)
                 opt_problem.num_measure = 2  # number of performance metrics
                 opt_problem.optimize(structure=structure_sample,cg_interface=cg_interface_sample,floorplan=[width,height],db_file=db_file,sol_dir=sol_dir,fig_dir=fig_dir,measure_names=measure_names)
                 PS_solutions=opt_problem.solutions
                 
             else:
                 #layout generation
-                structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+                structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height], designType=designType)
                 PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)
-                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures)
+                opt_problem = new_engine_opt( seed=None,level=mode, method=None,apis=apis, measures=measures, designInfo=designInfo)
                 #layout evaluation
-                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+                Solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=designInfo, compsInfo=compsInfo)
 
         else:
             #layout generation only 
-            structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height])
+            structure_fixed,cg_interface=fixed_size_solution_generation(structure=structure,mode=mode,num_layouts=num_layouts,seed=seed,floor_plan=[width,height], designType=designType)
             PS_solutions,md_data=update_sols(structure=structure_fixed,cg_interface=cg_interface,mode=mode,num_layouts=num_layouts,db_file=db_file,fig_dir=fig_dir,sol_dir=sol_dir,plot=plot,dbunit=dbunit)      
             for solution in PS_solutions:
                 solution.parameters={'Perf_1':None,'Perf_2':None}
@@ -632,9 +644,9 @@ def generate_optimize_layout(structure=None, mode=0, optimization=True,rel_cons=
 
 
 
-def get_min_size_sol_info(structure=None, dbunit=1000): # function to generate minimum-sized solution
+def get_min_size_sol_info(structure=None, dbunit=1000, designType=None): # function to generate minimum-sized solution
 
-    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw)
+    cg_interface=CS_to_CG(cs_type_map=structure.cs_type_map,min_enclosure_bw=structure.min_enclosure_bw, designType=designType)
     if structure.via_connected_layer_info!=None:
         for via_name, sub_root_node_list in structure.sub_roots.items():
             sub_tree_root=sub_root_node_list # root of each via connected layes subtree
@@ -773,7 +785,7 @@ def get_unique_edges(edge_list=None):
 
 
 
-def variable_size_solution_generation(structure=None,num_layouts=None,Random=None,algorithm=None,mode=None,seed=None,dbunit=1000):
+def variable_size_solution_generation(structure=None,num_layouts=None,Random=None,algorithm=None,mode=None,seed=None,dbunit=1000, designType=None):
     '''
     :param structure: 3D structure object
     :param num_layouts int -- provide a number of layouts used in NG RANDOM(macro mode)
@@ -783,7 +795,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
 
     '''
 
-    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)  # gets minimum-sized floorplan evaluation (bottom-up constraint propagation only)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():
@@ -963,7 +975,7 @@ def variable_size_solution_generation(structure=None,num_layouts=None,Random=Non
     return structure, cg_interface
 
 def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel_cons=None, db_file=None,fig_dir=None,sol_dir=None,plot=None, apis={}, measures=[],seed=None,
-                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,Random=None,dbunit=1000):
+                             num_layouts = None,num_gen= None , num_disc=None,max_temp=None,floor_plan=None,algorithm=None,Random=None,dbunit=1000, designType=None):
     '''
 
     :param structure: 3D structure object
@@ -986,7 +998,7 @@ def fixed_size_solution_generation(structure=None, mode=0, optimization=True,rel
     '''
     width=floor_plan[0]
     height=floor_plan[1]
-    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit)
+    structure,cg_interface=get_min_size_sol_info(structure=structure,dbunit=dbunit, designType=designType)
     ZDL_H = {}
     ZDL_V = {}
     for k, v in structure.root_node_h.node_min_locations.items():

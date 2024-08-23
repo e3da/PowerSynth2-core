@@ -1226,7 +1226,7 @@ class Structure_3D():
                 initial_islands = self.layers[i].new_engine.init_data[3] # initial islands from input script
                 #print(self.layers[i].name)
                 
-                self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface)
+                self.layers[i].forward_cg,self.layers[i].backward_cg= cg_interface.create_cg( Htree=self.layers[i].new_engine.Htree, Vtree=self.layers[i].new_engine.Vtree, bondwires=self.layers[i].bondwires, cs_islands=cs_islands, rel_cons=self.layers[i].new_engine.rel_cons,root=root,flexible=self.layers[i].new_engine.flexible,constraint_info=cg_interface, numLayer = i)
                 
                 #--------------------------for debugging-------------------------------------------------##
                 """

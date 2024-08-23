@@ -124,6 +124,7 @@ class CmdHandler:
         self.CrossProb = None # the crossover probablity for NSGAII
         self.MutaProb = None # the mutation probality for NSGAII and MOPSO
         self.Epsilon = None # the epsilon value for MOPSO
+        self.designInfo = {}  # Converter or Power Module Design Info
         
         try:
             with open(file, 'r') as inputfile:
@@ -161,6 +162,19 @@ class CmdHandler:
                         self.db_dir = os.path.abspath(info[1])
                     if info[0] == "Constraint_file:":
                         self.constraint_file = os.path.abspath(info[1])
+                    # Design Info (Converter, Module)
+                    if info[0] == 'Design_Type:':
+                        self.designInfo['designType'] = info[1]
+                    if info[0] == 'Converter_Type:':
+                        self.designInfo['converterType'] = info[1]
+                    if info[0] == 'Input_Voltage:':
+                        self.designInfo['inputVoltage'] = float(info[1])
+                    if info[0] == 'Output_Voltage:':
+                        self.designInfo['outputVoltage'] = float(info[1])
+                    if info[0] == 'Output_Current:':
+                        self.designInfo['outputCurrent'] = float(info[1])
+                    if info[0] == 'Switching_Frequency:':
+                        self.designInfo['switchingFrequency'] = float(info[1])
                     if info[0] == "Reliability-awareness:":
                         self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
                     if info[0] =="New:":
@@ -310,8 +324,9 @@ class CmdHandler:
             self.run_options() # Start the tool here...
         else:
             self.setup_models(mode=0) # setup thermal model
-            self.check_main_loops()
-            self.electrical_init_setup() # init electrical loop model using PEEC one time
+            if self.designInfo['designType'] != 'Converter':
+                self.check_main_loops()
+                self.electrical_init_setup() # init electrical loop model using PEEC one time
             self.setup_models(mode=1) # setup electrical model
             self.structure_3D = Structure_3D() # Clean it up
             self.init_cs_objects(run_option=run_option)
@@ -327,7 +342,7 @@ class CmdHandler:
         '''
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                     optimization=False, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=self.num_layouts, seed=self.seed,
-                                    floor_plan=self.floor_plan,dbunit=self.dbunit)
+                                    floor_plan=self.floor_plan, designInfo=self.designInfo, dbunit=self.dbunit)
 
     def single_layout_evaluation(self, init = False):
         '''
@@ -339,6 +354,13 @@ class CmdHandler:
             Otherwise, it is default as False.
         :return md_data, solution if init == True
          '''
+        compsInfo = {}
+        for comp in self.structure_3D.layers[0].all_components:
+            print(comp.name)
+            if comp.name in ['MOSFET', 'Inductance', 'Capacitor', 'Diode']:
+                compInfo = [comp.ron, comp.trise, comp.tfall, comp.vf, comp.rd, comp.l, comp.rl]
+                compsInfo[comp.name] = compInfo
+
         solution=self.structure_3D.create_initial_solution(dbunit=self.dbunit)
         solution.module_data.solder_attach_info=self.structure_3D.solder_attach_required
         initial_solutions=[solution]
@@ -362,8 +384,8 @@ class CmdHandler:
                     measure_names[0]=m.name
                 if isinstance(m,ThermalMeasure):
                     measure_names[1]=m.name
-        opt_problem = new_engine_opt( seed=None,level=2, method=None,apis={'E': self.e_api,'T': self.t_api}, measures=self.measures)
-        self.structure_3D.solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names)
+        opt_problem = new_engine_opt( seed=None,level=2, method=None,apis={'E': self.e_api,'T': self.t_api}, measures=self.measures, designInfo=self.designInfo)
+        self.structure_3D.solutions = update_PS_solution_data(solutions=PS_solutions,module_info=md_data, opt_problem=opt_problem,measure_names=measure_names, designInfo=self.designInfo, compsInfo=compsInfo)
     
     def layout_optimization(self):
         '''
@@ -379,7 +401,7 @@ class CmdHandler:
         self.structure_3D.solutions=generate_optimize_layout(structure=self.structure_3D, mode=self.layout_mode,rel_cons=self.i_v_constraint,
                                         optimization=True, db_file=self.db_file,fig_dir=self.fig_dir,sol_dir=self.db_dir,plot=self.plot, num_layouts=SettingParameters.NumLayouts, seed=SettingParameters.Seed,
                                         floor_plan=self.floor_plan,apis={'E': self.e_api, 'T': self.t_api},measures=self.measures,algorithm=SettingParameters.Algorithm,num_gen=SettingParameters.NumGens,
-                                        CrossProb=SettingParameters.CrossProb, MutaProb=SettingParameters.MutaProb, Epsilon=SettingParameters.Epsilon, dbunit=self.dbunit)
+                                        CrossProb=SettingParameters.CrossProb, MutaProb=SettingParameters.MutaProb, Epsilon=SettingParameters.Epsilon, designInfo=self.designInfo, dbunit=self.dbunit)
         
         
         self.export_solution_params(self.fig_dir,self.db_dir,self.structure_3D.solutions,self.layout_mode,plot = self.plot)
@@ -447,7 +469,8 @@ class CmdHandler:
                         ,'type':self.electrical_models_info['measure_type']\
                         ,'main_loops': self.electrical_models_info['main_loops']\
                         ,'multiport': self.electrical_models_info['multiport']   }
-            self.setup_electrical(measure_data = e_measure_data)
+            if self.designInfo['designType'] != 'Converter':
+                self.setup_electrical(measure_data = e_measure_data)
             
     def check_main_loops(self):
         if not('main_loops' in self.electrical_models_info):
@@ -636,7 +659,7 @@ class CmdHandler:
         # calling script parser function to parse the geometry and bondwire setup script
         if self.connectivity_setup!=None:
             self.script_mode = 'Old' 
-            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
+            all_layers,via_connecting_layers,cs_type_map= script_translator(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack, designType=self.designInfo['designType'], dbunit=self.dbunit)
         else:
             self.script_mode = 'New' 
             all_layers,via_connecting_layers,cs_type_map= script_translator_up(input_script=self.layout_script, bond_wire_info=self.connectivity_setup,flexible=self.flexible, layer_stack_info=self.layer_stack,dbunit=self.dbunit)
@@ -714,7 +737,7 @@ class CmdHandler:
             ax2.set_aspect('equal')
             if self.fig_dir!=None:
                 plt.legend(loc='lower left', bbox_to_anchor = (1.005, 0.005))
-                plt.savefig(self.fig_dir+'/initial_layout_all_layers.png',bbox_inches='tight',pad_inches=0)
+                plt.savefig(self.fig_dir+'/initial_layout_all_layers.png',bbox_inches='tight',pad_inches=0, dpi = 100)
             plt.close()
 
         
