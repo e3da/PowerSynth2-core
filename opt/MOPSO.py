@@ -16,7 +16,7 @@ from jmetal.core.solution import (
     IntegerSolution,
     PermutationSolution,
     )
-from jmetal.operator import UniformMutation
+from jmetal.operator.mutation import UniformMutation
 from jmetal.operator.mutation import NonUniformMutation
 from jmetal.util.archive import BoundedArchive, NonDominatedSolutionsArchive
 from jmetal.util.termination_criterion import TerminationCriterion
@@ -83,7 +83,7 @@ class MOPSO(OMOPSO):
         for i in range(self.swarm_size):
             particle = swarm[i]
 
-            for j in range(particle.number_of_variables):
+            for j in range(len(particle.variables)):
                 particle.variables[j] += self.speed[i][j]
 
                 if particle.variables[j] < self.problem.lower_bound[j]:

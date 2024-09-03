@@ -6,7 +6,7 @@ from core.opt.optimizer import NSGAII_Optimizer, DesignVar, SimulatedAnnealing
 # Import jMetalpy (A framework for single/multi-objective optimization with metaheuristics)
 from core.opt.MOPSO import FloatProblemMOPSO, MOPSO
 from jmetal.core.solution import FloatSolution
-from jmetal.operator import UniformMutation
+from jmetal.operator.mutation import UniformMutation
 from jmetal.operator.mutation import NonUniformMutation
 from jmetal.util.archive import CrowdingDistanceArchive
 from jmetal.util.termination_criterion import StoppingByEvaluations
