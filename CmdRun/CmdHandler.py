@@ -165,16 +165,6 @@ class CmdHandler:
                     # Design Info (Converter, Module)
                     if info[0] == 'Design_Type:':
                         self.designInfo['designType'] = info[1]
-                    if info[0] == 'Converter_Type:':
-                        self.designInfo['converterType'] = info[1]
-                    if info[0] == 'Input_Voltage:':
-                        self.designInfo['inputVoltage'] = float(info[1])
-                    if info[0] == 'Output_Voltage:':
-                        self.designInfo['outputVoltage'] = float(info[1])
-                    if info[0] == 'Output_Current:':
-                        self.designInfo['outputCurrent'] = float(info[1])
-                    if info[0] == 'Switching_Frequency:':
-                        self.designInfo['switchingFrequency'] = float(info[1])
                     if info[0] == "Reliability-awareness:":
                         self.i_v_constraint = int(info[1])  # 0: no reliability constraints, 1: worst case, 2: average case
                     if info[0] =="New:":
@@ -276,6 +266,8 @@ class CmdHandler:
                         if info[0] == 'Model_Type:':
                             e_mdl_type = info[1]
                             self.electrical_models_info['model_type']= e_mdl_type
+                        if info[0] == 'Module_Type:':
+                            self.electrical_models_info['moduleType']= info[1]
                         if info[0] == 'Netlist:':
                             self.electrical_models_info['netlist'] = info[1]
                         if info[0] == 'Measure_Type:':
@@ -305,6 +297,16 @@ class CmdHandler:
                             self.electrical_models_info['multiport'] = int(info[1]) # 0 for single loop , 1 for multi loop
                         if info[0] == 'Frequency:':
                             self.electrical_models_info['frequency']= float(info[1])
+                        if info[0] == 'Converter_Type:':
+                            self.designInfo['converterType'] = info[1]
+                        if info[0] == 'Input_Voltage:':
+                            self.designInfo['inputVoltage'] = float(info[1])
+                        if info[0] == 'Output_Voltage:':
+                            self.designInfo['outputVoltage'] = float(info[1])
+                        if info[0] == 'Output_Current:':
+                            self.designInfo['outputCurrent'] = float(info[1])
+                        if info[0] == 'Frequency:':
+                            self.designInfo['switchingFrequency'] = float(info[1])
         except Exception as e:
             print(e)
             raise Exception("ERROR: Failed to parse macro file.")
@@ -327,7 +329,7 @@ class CmdHandler:
             if self.designInfo['designType'] != 'Converter':
                 self.check_main_loops()
                 self.electrical_init_setup() # init electrical loop model using PEEC one time
-            self.setup_models(mode=1) # setup electrical model
+                self.setup_models(mode=1) # setup electrical model
             self.structure_3D = Structure_3D() # Clean it up
             self.init_cs_objects(run_option=run_option)
             self.run_options() # Run options with the initial loop model ready
@@ -356,7 +358,6 @@ class CmdHandler:
          '''
         compsInfo = {}
         for comp in self.structure_3D.layers[0].all_components:
-            print(comp.name)
             if comp.name in ['MOSFET', 'Inductance', 'Capacitor', 'Diode']:
                 compInfo = [comp.ron, comp.trise, comp.tfall, comp.vf, comp.rd, comp.l, comp.rl]
                 compsInfo[comp.name] = compInfo
