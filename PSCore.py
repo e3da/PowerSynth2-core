@@ -138,7 +138,8 @@ Model_char: ?W?
 Trace_Ori: ?r?
 
 # --Layout Generation--
-
+# Design Type? "Module" or "Converter"
+Design_Type: ?s?
 # Reliability-awareness? 0:no, 1:worst case, 2:average case
 Reliability-awareness: ?i?
 # New? 0:reuse current file, 1:new constraints
@@ -158,7 +159,9 @@ Optimization_Algorithm: ?s?
 
 Electrical_Setup:
 Measure_Name: ?s?
+# Model Type: Parasitic (module) vs Efficiency (converter)
 Model_Type: ?s?
+Module_Type: ?s?
 # Measure_Type? 0:resistance, 1:inductance
 Measure_Type: ?i?
 # Device Connection Table
