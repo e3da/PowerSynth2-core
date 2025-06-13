@@ -3,6 +3,10 @@ import sys, os
 import re
 import tempfile
 
+#needed for numpy v2 to avoid printing types
+import numpy as np
+np.set_printoptions(legacy='1.25')
+
 if os.name != 'nt':
     import readline
     readline.parse_and_bind('tab: complete')

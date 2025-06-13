@@ -525,7 +525,7 @@ class ModifiedNodalAnalysis():
     def A_mat(self, num_nodes, num_branch):
         n = num_nodes
         m = num_branch
-        self.A = np.zeros((m + n, m + n), dtype=np.complex_)
+        self.A = np.zeros((m + n, m + n), dtype=np.complex128)
         first_row = np.concatenate((self.G,self.M),axis= 1) # form [G , M]
         second_row = np.concatenate((self.M_t, self.D), axis=1)  # form [M_t , D]
         self.A = np.concatenate((first_row,second_row),axis=0)
@@ -581,13 +581,13 @@ class ModifiedNodalAnalysis():
         """Initialize different matrices in the MNA solver
         """
         self.V = np.chararray((self.num_nodes,1), itemsize=20)
-        self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex_)
-        self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex_)  # also called Yr, the reduced nodal matrix
+        self.Ii = np.zeros((self.num_nodes, 1), dtype=np.complex128)
+        self.G = np.zeros((self.num_nodes, self.num_nodes), dtype=np.complex128)  # also called Yr, the reduced nodal matrix
         num_branch = len(self.cur_element)
-        self.M = np.zeros((self.num_nodes, num_branch), dtype=np.complex_)
-        self.M_t = np.zeros((num_branch, self.num_nodes), dtype=np.complex_)
-        self.D = np.zeros((num_branch, num_branch), dtype=np.complex_)
-        self.Vi = np.zeros((num_branch, 1), dtype=np.complex_)
+        self.M = np.zeros((self.num_nodes, num_branch), dtype=np.complex128)
+        self.M_t = np.zeros((num_branch, self.num_nodes), dtype=np.complex128)
+        self.D = np.zeros((num_branch, num_branch), dtype=np.complex128)
+        self.Vi = np.zeros((num_branch, 1), dtype=np.complex128)
         self.J = np.chararray((num_branch,1),itemsize =20)
         self.matrix_formation(num_branch)
         # Output preparation
