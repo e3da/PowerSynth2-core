@@ -41,7 +41,7 @@ class PSEnv():
     #read-only, set on boot
     PSRoot=GetRoot()
 
-    PSVers='2.1'
+    PSVers='2.2'
 
     MatLib = os.path.join(PSRoot,'pkg','MDK','Materials.csv')
     FHExe = os.path.join(PSRoot,'pkg','bin','fasthenry')
