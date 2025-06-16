@@ -3,7 +3,6 @@ author: Quang Le
 Getting mesh directly from CornerStitch points and islands data
 '''
 
-from numpy.lib.ufunclike import fix
 from core.engine.CornerStitch.CSinterface import Rect
 from core.model.electrical.meshing.MeshStructure import EMesh
 from core.model.electrical.electrical_mdl.e_loop_element import form_skd

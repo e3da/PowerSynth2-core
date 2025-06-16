@@ -3,6 +3,10 @@ import sys, os
 import re
 import tempfile
 
+#needed for numpy v2 to avoid printing types
+import numpy as np
+np.set_printoptions(legacy='1.25')
+
 if os.name != 'nt':
     import readline
     readline.parse_and_bind('tab: complete')
@@ -37,7 +41,7 @@ class PSEnv():
     #read-only, set on boot
     PSRoot=GetRoot()
 
-    PSVers='2.1'
+    PSVers='2.2'
 
     MatLib = os.path.join(PSRoot,'pkg','MDK','Materials.csv')
     FHExe = os.path.join(PSRoot,'pkg','bin','fasthenry')
@@ -138,7 +142,8 @@ Model_char: ?W?
 Trace_Ori: ?r?
 
 # --Layout Generation--
-
+# Design Type? "Module" or "Converter"
+Design_Type: ?s?
 # Reliability-awareness? 0:no, 1:worst case, 2:average case
 Reliability-awareness: ?i?
 # New? 0:reuse current file, 1:new constraints
@@ -158,7 +163,9 @@ Optimization_Algorithm: ?s?
 
 Electrical_Setup:
 Measure_Name: ?s?
+# Model Type: Parasitic (module) vs Efficiency (converter)
 Model_Type: ?s?
+Module_Type: ?s?
 # Measure_Type? 0:resistance, 1:inductance
 Measure_Type: ?i?
 # Device Connection Table

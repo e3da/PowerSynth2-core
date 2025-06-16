@@ -310,7 +310,58 @@ class ScriptInputMethod():
         '''
         return
     
+    def getDevicesPins(self):
+        layout_info = self.layout_info
+        ##print(f'layout info [0] = {layout_info[3:6]}')
+        devicePins = {}
+        devices = {}
+        pin = []
+        index = []
+        for j in range(len(layout_info)):
+            if len(layout_info[j])>2:
+                for k in range(len(layout_info[j])):
+                    if layout_info[j][k][0] == 'D':      
+                       devices[(layout_info[j][k])] = [layout_info[j][k+1], j]   # devices[(layout_info[j][k+1])] = j
+                       break
+            elif len(layout_info[j]) == 2:
+                index.append(j)
+        for d in range(len(devices)):
 
+            start = list(devices.values())[d][1] + 1
+            if d<len(devices)-1:
+                end = list(devices.values())[d+1][1]
+            else:
+                end = index[1]
+            pins = layout_info[start:end]
+
+            for p in pins:
+                pin.append(p[3])
+            devicePins[list(devices.keys())[d]] = [list(devices.values())[d][0], copy.deepcopy(pin)]
+            pin.clear()
+
+        pinsLayer ={}
+        for d in list(devicePins.values()):
+            for pin in d[1]:
+                for i in range(1,len(index)):
+                    if i < len(index)-1:
+                        for j in range(index[i], index[i+1]):
+                            if len(layout_info[j])>2:
+                                for k in range(len(layout_info[j])):
+                                    if pin == layout_info[j][k]:
+                                        pinsLayer[pin] = [j-index[i], i]
+                                        break
+                    else:
+                         for j in range(index[i], len(layout_info)):
+                            if len(layout_info[j])>2:
+                                for k in range(len(layout_info[j])):
+                                    if pin == layout_info[j][k]:
+                                        pinsLayer[pin] = [j-index[i], i]
+                                        break
+  
+        ##print(f'devicePins = {devicePins}')
+        ##print(f'pins Layer = {pinsLayer}')
+
+        return devicePins, devices, pinsLayer
 
 
     # gathers layout component information : all parts (Devices, Leads) and all routing paths (Traces, Bonding wire pads)
@@ -626,6 +677,28 @@ class ScriptInputMethod():
         #----------------------------------------------------------------------------------
         return 
 
+    def updatePinsLocation(self, layout_info=None, devicePins=None, devices=None):
+        
+        layoutInfo = layout_info
+
+        for key, value in list(devicePins.items()):
+
+            for d in list(self.all_parts_info[value[0]]):
+                ##print(d.layout_component_id)        # for now in each component name we have one
+                if d.layout_component_id == key:
+                    ##print(d.name)
+                    x = layoutInfo[devices[key][1]][4]
+                    y = layoutInfo[devices[key][1]][5]
+                    ##print(f'x, y {x} {y}')
+                    for pin in range(len(d.pin_locs)):   #list(v.pin_locs.values()):
+                        X = list(d.pin_locs.values())[pin][0] + float(x)
+                        Y = list(d.pin_locs.values())[pin][1] + float(y)
+                        layoutInfo[devices[key][1] + pin + 1][5] = str(X)
+                        layoutInfo[devices[key][1] + pin + 1][6] = str(Y)
+                        
+        ##print(f'layout info inside the end fuction = {layout_info}')
+        return
+
     # creates list of list to convert parts and routing path objects into list of properties:[type, x, y, width, height, name, Schar, Echar, hierarchy_level, rotate_angle]
     def gather_layout_info(self,layout_info=None,dbunit=1000):
         '''
@@ -826,7 +899,7 @@ class ScriptInputMethod():
 
 
 # translates the input layout script and makes necessary information ready for corner stitch data structure
-def script_translator(input_script=None, bond_wire_info=None, flexible=False, layer_stack_info=None, dbunit=1000):
+def script_translator(input_script=None, bond_wire_info=None, flexible=False, layer_stack_info=None, designType=None, dbunit=1000):
     '''
     :param input_script: layout geometry script
     :param bond_wire_info: bondwire setup file
@@ -838,6 +911,8 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=False, la
     
     ScriptMethod = ScriptInputMethod(input_script)  # initializes the class with filename
     ScriptMethod.read_input_script()  # reads input script and create seperate sections accordingly
+    if designType == 'Converter':
+        devicePins, devices, pinsLayer = ScriptMethod.getDevicesPins()
     ScriptMethod.add_layer_id(layer_stack=layer_stack_info) # appends appropriate layer id to each geometry
     
 
@@ -927,6 +1002,19 @@ def script_translator(input_script=None, bond_wire_info=None, flexible=False, la
 
     
     for i in range(len(all_layers)):
+
+        if designType == 'Converter':
+            if i == 0:
+                ScriptMethod.updatePinsLocation(layout_info=all_layers[i].input_geometry, devicePins=devicePins, devices=devices)
+            else:
+                for key, value in list(pinsLayer.items()):
+                    if value[1] == i:
+                        for l in all_layers[0].input_geometry:
+                            if key in l:
+                                ##print(all_layers[i].input_geometry[value[0]])
+                                all_layers[i].input_geometry[value[0]][4] = l[5]
+                                all_layers[i].input_geometry[value[0]][5] = l[6]
+                                break
         
         all_layers[i].size,all_layers[i].cs_info,all_layers[i].component_to_cs_type,all_layers[i].all_components=ScriptMethod.gather_layout_info(layout_info=all_layers[i].input_geometry,dbunit=dbunit)  # gathers layout info
         
