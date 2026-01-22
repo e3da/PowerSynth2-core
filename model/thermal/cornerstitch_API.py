@@ -133,14 +133,21 @@ class CornerStitch_Tmodel_API:
             self.temp_res = {}
             if len(h_val)==1:
                 h_val.append(0) # single-sided cooling
-            if self.matlab_engine != None:
-                if self.ppw is None:
-                    print("INFO: Running ParaPower: "+self.pp_json_path,flush=True)
-                self.ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
-            else:
-                print("Matlab engine not started")
-            self.temp_res = self.ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
-            
+
+            #if self.matlab_engine != None:
+            #    if self.ppw is None:
+            #        print("INFO: Running ParaPower: "+self.pp_json_path,flush=True)
+            #    self.ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
+            #else:
+            #    print("Matlab engine not started")
+
+            self.ppw = pp.ParaPowerWrapper(solution, ambient_temp, h_val,
+                                           self.matlab_engine,
+                                           self.pp_json_path)
+
+            self.temp_res = self.ppw.parapower.run_parapower_thermal(
+                matlab_engine=self.matlab_engine)
+
             return
     
 

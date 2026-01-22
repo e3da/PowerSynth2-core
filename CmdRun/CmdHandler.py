@@ -834,8 +834,8 @@ class CmdHandler:
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
-            if model_type==2:
-                self.t_api.init_matlab()
+            #if model_type==2:
+            #    self.t_api.init_matlab()
 
     def init_apis(self):
         '''

@@ -1,6 +1,21 @@
 import numpy as np
 import json
 
+import sys
+import os
+
+# 1. Get the absolute path to the folder containing the library
+#    This assumes the structure: workspace/pkg/lib/ParaPowerPython
+library_path = os.path.abspath(
+    os.path.join(os.getcwd(), 'pkg', 'lib', 'ParaPowerPython'))
+
+# 2. Add this path to sys.path if it's not already there
+if library_path not in sys.path:
+    sys.path.insert(0, library_path)
+
+# 3. Now perform the import
+from pkg.lib.ParaPowerPython.main import ParaPowerSynth
+
 class Params(object):
     """The :class:`Params` object contains attributes that are used in the solver setting of ParaPower.
 
@@ -177,33 +192,18 @@ class ParaPowerInterface(object):
         :rtype temperature: float
         """
 
-        if self.matlab_engine == None:
-            if matlab_engine == None:
-                raise Exception("Failed to start new MATLAB engine")
-            else:
-                self.matlab_engine = matlab_engine
-        md_json = json.dumps(self.to_dict())
-        # temperature = matlab_engine.PowerSynthImport_V2(md_json)
-        temperature = 5
-        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
-        #results_full = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
-        results = json.loads(results)
-        #results_full = json.loads(results_full)
-        #print(results)
-        '''temperature_dict = {}
-        for f in results_full:
-            name = f['feature']
-            if name[0] == 'D' and '_attach' not in name:
-                temperature_dict[name] = f['temperature'][-1] + 273.5'''
-                
+        # Remove matlab initialization check
+        #if self.matlab_engine == None:
+        #    if matlab_engine == None:
+        #        raise Exception("Failed to start new MATLAB engine")
+        #    else:
+        #        self.matlab_engine = matlab_engine
 
-        temperature = {'D1':results['temperature'][-1]+273.5}
-        # self.eng.workspace['test_md'] = self.eng.ImportPSModuleDesign(json.dumps(self.to_dict()), nargout=1)
-        # self.eng.save('test_md_file.mat', 'test_md')
-        # return temperature + 273.5
-        #self.save_parapower()
-        #print (temperature, ' K')
-        #return temperature_dict
+        md_json = json.dumps(self.to_dict())
+        temperature = 5
+        results = ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+
+        temperature = {'D1': results[-1] + 273.5}
         return temperature
 
 
