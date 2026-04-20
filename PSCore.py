@@ -49,6 +49,7 @@ class PSEnv():
         FHExe+=".exe"
 
     PPSrc = os.path.join(PSRoot,'pkg','lib','ParaPower')
+    PPPythonSrc = os.path.join(PSRoot,'pkg','lib','ParaPowerPython')
     ManPDF = os.path.join(PSRoot,'pkg','man',f'PowerSynth_v{PSVers}.pdf')
 
     DebugLv=0

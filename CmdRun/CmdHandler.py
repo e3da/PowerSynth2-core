@@ -235,6 +235,8 @@ class CmdHandler:
                         if info[0] == 'Simulator:':
                             self.export_ansys_em_info['simulator'] = int(info[1])
                     if(self.thermal_mode): # Get info for thermal setup
+                        if info[0] == 'Use_MATLAB:':
+                            self.thermal_models_info["use_matlab"] = int(info[1])
                         if info[0] == 'Model_Select:':
                             self.thermal_models_info['model'] = int(info[1])
                         if info[0] == 'Measure_Name:' and t_name==None:
@@ -821,6 +823,7 @@ class CmdHandler:
         self.t_api = CornerStitch_Tmodel_API(comp_dict=self.layout_obj_dict)
         self.t_api.pp_json_path=self.PSCore.PPDir
         self.t_api.layer_stack=self.layer_stack
+        self.t_api.use_matlab = bool(self.thermal_models_info.get("use_matlab", 1))
         #print("PP_FOLDER",self.t_api.pp_json_path)
         if mode == 'command':
             self.measures += self.t_api.measurement_setup()
@@ -834,7 +837,7 @@ class CmdHandler:
             self.t_api.model=model_type
             if model_type == 0: # Select TSFM model
                 self.t_api.characterize_with_gmsh_and_elmer()
-            if model_type==2:
+            if model_type==2 and self.thermal_models_info["use_matlab"] == 1:
                 self.t_api.init_matlab()
 
     def init_apis(self):

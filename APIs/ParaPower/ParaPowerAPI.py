@@ -1,5 +1,13 @@
 import numpy as np
 import json
+import sys
+from core.PSCore import PSCore
+
+PPPY_PATH = PSCore.PPPythonSrc
+if PPPY_PATH not in sys.path:
+    sys.path.insert(0, PPPY_PATH)
+
+from main import ParaPowerSynth  # preferred when PPPythonSrc is on sys.path
 
 class Params(object):
     """The :class:`Params` object contains attributes that are used in the solver setting of ParaPower.
@@ -133,13 +141,14 @@ class ParaPowerInterface(object):
 
     """
     def __init__(self, external_conditions=ExternalConditions(), parameters=Params(), features=None
-                 ,pp_json_path=None,solution_name='PSData',matlab_engine=None):
+                 ,pp_json_path=None,solution_name='PSData',matlab_engine=None, use_matlab = True):
         self.ExternalConditions = external_conditions
         self.Params = parameters
         self.Features = features
         self.PottingMaterial = 0
         self.temperature = None
         self.matlab_engine = matlab_engine
+        self.use_matlab = use_matlab
         self.path = pp_json_path
         self.solution_name = solution_name
         self.save_parapower()
@@ -177,17 +186,22 @@ class ParaPowerInterface(object):
         :rtype temperature: float
         """
 
-        if self.matlab_engine == None:
+        md_json = json.dumps(self.to_dict())
+        temperature = 5
+
+        if self.matlab_engine == None and self.use_matlab:
             if matlab_engine == None:
                 raise Exception("Failed to start new MATLAB engine")
             else:
                 self.matlab_engine = matlab_engine
-        md_json = json.dumps(self.to_dict())
+                results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+                temperature = {'D1':results['temperature'][-1]+273.5}
+        else:
+            results = ParaPowerSynth(md_json, 'thermal', 'static', 'global')
+            temperature = {'D1': results[-1] + 273.5}
+
         # temperature = matlab_engine.PowerSynthImport_V2(md_json)
-        temperature = 5
-        results = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'global')
         #results_full = self.matlab_engine.ParaPowerSynth(md_json, 'thermal', 'static', 'individual')
-        results = json.loads(results)
         #results_full = json.loads(results_full)
         #print(results)
         '''temperature_dict = {}
@@ -197,7 +211,6 @@ class ParaPowerInterface(object):
                 temperature_dict[name] = f['temperature'][-1] + 273.5'''
                 
 
-        temperature = {'D1':results['temperature'][-1]+273.5}
         # self.eng.workspace['test_md'] = self.eng.ImportPSModuleDesign(json.dumps(self.to_dict()), nargout=1)
         # self.eng.save('test_md_file.mat', 'test_md')
         # return temperature + 273.5
@@ -241,7 +254,7 @@ class ParaPowerWrapper(object):
 
     """
 
-    def __init__(self, solution,t_amb=None,h_val=None,matlab_engine=None,pp_json_path=None):
+    def __init__(self, solution,t_amb=None,h_val=None,matlab_engine=None,pp_json_path=None, use_matlab = True):
         self.c2k = 273.5
         self.solution = solution
         self.ref_locs = np.array([0,0,0])
@@ -265,7 +278,8 @@ class ParaPowerWrapper(object):
 
         self.parapower = ParaPowerInterface(self.external_conditions.to_dict(),
                                             self.parameters.to_dict(),
-                                            self.features,pp_json_path=self.pp_json_path,matlab_engine=matlab_engine)
+                                            self.features,pp_json_path=self.pp_json_path,matlab_engine=matlab_engine,
+                                            use_matlab=use_matlab)
         # self.output = PPEncoder().encode(self.parapower)
         # self.write_md_output()
     def get_features(self):

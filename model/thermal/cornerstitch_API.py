@@ -57,6 +57,7 @@ class CornerStitch_Tmodel_API:
         self.pp_json_path= None # to store PP json file
         self.ppw=None
         self.pLoss ={}
+        self.use_matlab = True
         # print("Starting cornerstitch_API thermal interface")
 
     def init_matlab(self):
@@ -133,14 +134,20 @@ class CornerStitch_Tmodel_API:
             self.temp_res = {}
             if len(h_val)==1:
                 h_val.append(0) # single-sided cooling
-            if self.matlab_engine != None:
-                if self.ppw is None:
-                    print("INFO: Running ParaPower: "+self.pp_json_path,flush=True)
-                self.ppw = pp.ParaPowerWrapper(solution,ambient_temp,h_val,self.matlab_engine,self.pp_json_path)
-            else:
-                print("Matlab engine not started")
-            self.temp_res = self.ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
             
+            if self.ppw is None:
+                if self.use_matlab:
+                    print("INFO: Running ParaPower in MATLAB: "+self.pp_json_path,flush=True)
+                else:
+                    print("INFO: Running ParaPower in Python: "+self.pp_json_path,flush=True)
+
+            self.ppw = pp.ParaPowerWrapper(solution, ambient_temp, h_val,
+                                        self.matlab_engine,
+                                        self.pp_json_path,
+                                        self.use_matlab)
+            
+            self.temp_res = self.ppw.parapower.run_parapower_thermal(matlab_engine=self.matlab_engine)
+                
             return
     
 
